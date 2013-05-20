@@ -39,7 +39,7 @@ foreach ( $wpdb->tables( 'ms_global' ) as $table => $prefixed_table )
  */
 function network_domain_check() {
 	global $wpdb;
-	if ( $wpdb->get_var( "SHOW TABLES LIKE '$wpdb->site'" ) )
+	if ( $wpdb->get_var( "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->site'" ) )
 		return $wpdb->get_var( "SELECT TOP 1 domain FROM $wpdb->site ORDER BY id ASC" );
 	return false;
 }

@@ -378,12 +378,12 @@ function upgrade_network() {
  */
 function maybe_create_table($table_name, $create_ddl) {
 	global $wpdb;
-	if ( $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name )
+	if ( $wpdb->get_var("SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'") == $table_name )
 		return true;
 	//didn't find it try to create it.
 	$q = $wpdb->query($create_ddl);
 	// we cannot directly tell that whether this succeeded!
-	if ( $wpdb->get_var("SHOW TABLES LIKE '$table_name'") == $table_name )
+	if ( $wpdb->get_var("SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'") == $table_name )
 		return true;
 	return false;
 }

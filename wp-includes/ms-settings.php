@@ -118,7 +118,7 @@ if ( !isset( $current_site ) || !isset( $current_blog ) ) {
 			$current_blog->blog_id = $blog_id = 1;
 		} else {
 			wp_load_translations_early();
-			$msg = ! $wpdb->get_var( "SHOW TABLES LIKE '$wpdb->site'" ) ? ' ' . __( 'Database tables are missing.' ) : '';
+			$msg = ! $wpdb->get_var( "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->site'" ) ? ' ' . __( 'Database tables are missing.' ) : '';
 			wp_die( __( 'No site by that name on this system.' ) . $msg );
 		}
 	}
