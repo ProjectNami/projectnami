@@ -575,7 +575,7 @@ function dbDelta( $queries = '', $execute = true ) {
 
 		// Fetch the table column structure from the database
 		$wpdb->suppress_errors();
-		$tablefields = $wpdb->get_results("exec sp_columns [$table]");
+		$tablefields = $wpdb->get_results("SELECT COLUMN_NAME as [Field], DATA_TYPE as [Type] FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME [$table]");
 		$wpdb->suppress_errors( false );
 
 		if ( ! $tablefields )
