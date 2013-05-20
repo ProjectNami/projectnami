@@ -14,7 +14,7 @@ Essentials supported include ( but are not limited to ) the following:
 * **posts**
 * **pages**
 * **user management**
-* **comments*
+* **comments**
 * **multisite**
 
 **In a nutshell, we're sure there are bugs, but we don't know of any right now.**
