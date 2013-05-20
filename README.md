@@ -11,8 +11,13 @@ Essentials supported include ( but are not limited to ) the following:
 * **import**
 * **export**
 * **media upload**
-* **post creation**
+* **posts**
+* **pages**
+* **user management**
+* **comments*
 * **multisite**
+
+**In a nutshell, we're sure there are bugs, but we don't know of any right now.**
 
 ###Why was Project Nami created?###
 The short answer here is, **WordPress doesn't work with MSSQL**. It's a sad story, but a true one. You may be so overjoyed this exists that you have no further questions on the matter. If so, that's great. Proceed to enjoy Project Nami. However, you may be asking yourself, why not just use some sort of database abstraction plugin, or simply write my own ( or use someone elses ) `wp-db.php` drop-in. After all, WordPress already supports replacing the database class with a custom one.
