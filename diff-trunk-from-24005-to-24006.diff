@@ -1,0 +1,800 @@
+Index: trunk/wp-admin/css/wp-admin-rtl.css
+===================================================================
+--- trunk/wp-admin/css/wp-admin-rtl.css	(revision 24005)
++++ trunk/wp-admin/css/wp-admin-rtl.css	(revision 24006)
+@@ -972,26 +972,5 @@
+ ------------------------------------------------------------------------------*/
+ 
+-.post-format-options a {
+-	border-left: 1px solid #ebebeb;
+-	border-right: none;
+-}
+-
+-.post-format-options a:first-child {
+-	-webkit-border-bottom-left-radius: 0;
+-	-webkit-border-top-left-radius: 0;
+-	border-bottom-left-radius: 0;
+-	border-top-left-radius: 0;
+-}
+-
+-.post-format-options a:last-child {
+-	-webkit-border-bottom-right-radius: 3px;
+-	-webkit-border-top-right-radius: 3px;
+-	border-bottom-right-radius: 3px;
+-	border-top-right-radius: 3px;
+-}
+-
+-.post-format-tip {
+-	float: left;
+-}
++
+ 
+ /*------------------------------------------------------------------------------
+Index: trunk/wp-admin/css/wp-admin.css
+===================================================================
+--- trunk/wp-admin/css/wp-admin.css	(revision 24005)
++++ trunk/wp-admin/css/wp-admin.css	(revision 24006)
+@@ -3025,5 +3025,5 @@
+ #titlediv {
+ 	position: relative;
+-	margin-bottom: 10px;
++	margin-bottom: 5px;
+ }
+ 
+@@ -3048,4 +3048,5 @@
+ 	width: 100%;
+ 	outline: none;
++	margin: 1px 0;
+ }
+ 
+@@ -3088,8 +3089,8 @@
+ 
+ #edit-slug-box {
+-	line-height: 23px;
+-	min-height: 23px;
++	line-height: 24px;
++	min-height: 25px; /* Yes, line-height + 1 */
+ 	margin-top: 5px;
+-	padding: 0 10px;
++	padding-right: 6px;
+ }
+ 
+@@ -3931,4 +3932,5 @@
+ .post-formats-fields {
+ 	display: none;
++	margin-bottom: 15px;
+ }
+ 
+@@ -3961,4 +3963,5 @@
+ }
+ 
++.wp-format-image label,
+ .wp-format-video label,
+ .wp-format-audio label {
+@@ -3970,14 +3973,8 @@
+ 	overflow: hidden;
+ 	width: 40%;
+-	height: 200px;
++	height: auto;
++	padding: 55px 0 20px;
+ 	border: 1px dashed #dfdfdf;
+ 	background: #f5f5f5 url(../images/media-button-2x.png) no-repeat 50% 25%;
+-}
+-
+-.wp-format-media-holder.empty,
+-.wp-format-audio .wp-format-media-holder,
+-.wp-format-video .wp-format-media-holder {
+-	height: auto;
+-	padding: 55px 0 20px;
+ }
+ 
+@@ -4006,7 +4003,5 @@
+ }
+ 
+-.empty .wp-format-media-select,
+-.wp-format-audio .wp-format-media-select,
+-.wp-format-video .wp-format-media-select {
++.wp-format-media-select {
+ 	height: 20px;
+ }
+@@ -4023,4 +4018,5 @@
+ }
+ 
++#wp_format_image,
+ #wp_format_audio,
+ #wp_format_video {
+@@ -4031,41 +4027,51 @@
+ }
+ 
+-#icon-edit.standard {
++#icon-edit.standard,
++.post-format-options .standard {
+ 	background: url(../images/post-formats32.png) no-repeat -3px -4px;
+ }
+ 
+-#icon-edit.image {
++#icon-edit.image,
++.post-format-options .image {
+ 	background: url(../images/post-formats32.png) no-repeat  -43px -4px;
+ }
+ 
+-#icon-edit.gallery {
++#icon-edit.gallery,
++.post-format-options .gallery {
+ 	background: url(../images/post-formats32.png) no-repeat -83px -4px;
+ }
+ 
+-#icon-edit.audio {
++#icon-edit.audio,
++.post-format-options .audio {
+ 	background: url(../images/post-formats32.png) no-repeat -123px -4px;
+ }
+ 
+-#icon-edit.video {
++#icon-edit.video,
++.post-format-options .video {
+ 	background: url(../images/post-formats32.png) no-repeat -163px -4px;
+ }
+ 
+-#icon-edit.chat {
++#icon-edit.chat,
++.post-format-options .chat {
+ 	background: url(../images/post-formats32.png) no-repeat -202px -4px;
+ }
+ 
+-#icon-edit.status {
++#icon-edit.status,
++.post-format-options .status {
+ 	background: url(../images/post-formats32.png) no-repeat -242px -4px;
+ }
+ 
+-#icon-edit.aside {
++#icon-edit.aside,
++.post-format-options .aside {
+ 	background: url(../images/post-formats32.png) no-repeat -282px -4px;
+ }
+ 
+-#icon-edit.quote {
++#icon-edit.quote,
++.post-format-options .quote {
+ 	background: url(../images/post-formats32.png) no-repeat -322px -4px;
+ }
+ 
+-#icon-edit.link {
++#icon-edit.link,
++.post-format-options .link {
+ 	background: url(../images/post-formats32.png) no-repeat -362px -4px;
+ }
+@@ -4073,103 +4079,154 @@
+ .post-format-description {
+ 	color: #666;
+-	display: none;
+-	margin: 10px 0;
++	font-size: 12px;
+ }
+ 
+ .post-format-options {
+-	height: 29px;
+-	background: #f9f9f9;
+-	border: 1px solid #dfdfdf;
+-	-webkit-border-radius: 3px;
+-	border-radius: 3px;
+-	margin: 0 0 9px 1px;
++	height: 50px;
++	margin: 13px 0 10px;
+ 	padding: 0;
+ }
+ 
+ .post-format-options a {
+-	border-right: 1px solid #ebebeb;
+ 	display: inline-block;
+-	height: 16px;
+-	width: 16px;
+-	padding: 6px;
++	height: 34px;
++	margin-right: 33px;
+ 	position: relative;
+ 	text-decoration: none;
+-}
+-
+-.post-format-options a:first-child {
+-	-webkit-border-bottom-left-radius: 3px;
+-	-webkit-border-top-left-radius: 3px;
+-	border-bottom-left-radius: 3px;
+-	border-top-left-radius: 3px;
+-}
+-
+-.post-format-options a.active,
+-.post-format-options a:focus,
+-.post-format-options a:hover {
+-	background: #eee;
+-	-webkit-box-shadow: inset 0 0 10px #ddd;
+-	box-shadow: inset 0 0 10px #ddd;
+-	outline: none;
+-	opacity: 1;
++	text-align: center;
+ }
+ 
+ .post-format-options a div {
++	height: 34px;
++	width: 34px;
++	margin: 0 auto;
++}
++
++.post-format-title {
++	color: #777;
++	display: block;
++	margin-top: 4px;
++}
++
++.post-format-change, .post-format-set .post-format-options {
++	display: none;
++}
++
++.post-format-set .post-format-change {
++	display: block;
++}
++
++#poststuff .post-format-change {
++	margin: 11px 0 13px;
++	padding: 0;
++	font-size: 1.5em;
++	line-height: 18px;
++	clear: left;
++}
++
++.post-format-change span.icon {
++	float: left;
+ 	height: 16px;
++	margin: 2px 5px 0 0;
+ 	width: 16px;
+-	opacity: 0.4;
+-}
+-
+-.post-format-options a.active div,
+-.post-format-options a:focus div,
+-.post-format-options a:hover div {
+-	opacity: 1;
+-}
+-
+-.post-format-options .standard {
++}
++
++.post-format-change span.icon.standard {
+ 	background: url(../images/post-formats.png) no-repeat -8px -8px;
+ }
+ 
+-.post-format-options .image {
++.post-format-change span.icon.image {
+ 	background: url(../images/post-formats.png) no-repeat -40px -8px;
+ }
+ 
+-.post-format-options .gallery {
++.post-format-change span.icon.gallery {
+ 	background: url(../images/post-formats.png) no-repeat -72px -8px;
+ }
+ 
+-.post-format-options .audio {
++.post-format-change span.icon.audio {
+ 	background: url(../images/post-formats.png) no-repeat -104px -8px;
+ }
+ 
+-.post-format-options .video {
++.post-format-change span.icon.video {
+ 	background: url(../images/post-formats.png) no-repeat -136px -8px;
+ }
+ 
+-.post-format-options .chat {
++.post-format-change span.icon.chat {
+ 	background: url(../images/post-formats.png) no-repeat -168px -8px;
+ }
+ 
+-.post-format-options .status {
++.post-format-change span.icon.status {
+ 	background: url(../images/post-formats.png) no-repeat -200px -8px;
+ }
+ 
+-.post-format-options .aside {
++.post-format-change span.icon.aside {
+ 	background: url(../images/post-formats.png) no-repeat -232px -8px;
+ }
+ 
+-.post-format-options .quote {
++.post-format-change span.icon.quote {
+ 	background: url(../images/post-formats.png) no-repeat -264px -8px;
+ }
+ 
+-.post-format-options .link {
++.post-format-change span.icon.link {
+ 	background: url(../images/post-formats.png) no-repeat -296px -8px;
+ }
+ 
+-.post-format-tip {
+-	color: #999;
+-	font-size: 14px;
+-	float: right;
+-	padding: 6px 10px;
+-	text-transform: capitalize;
++.post-format-change a {
++	font-size: 12px;
++}
++
++@media only screen and (max-width: 782px) {
++	.post-format-options {
++		height: 33px;
++	}
++
++	.post-format-options a {
++		margin-right: 19px;
++	}
++
++	.post-format-options a div {
++		height: 18px;
++		width: 16px;
++	}
++
++	.post-format-options .standard {
++		background: url(../images/post-formats.png) no-repeat -8px -8px;
++	}
++
++	.post-format-options .image {
++		background: url(../images/post-formats.png) no-repeat -40px -8px;
++	}
++
++	.post-format-options .gallery {
++		background: url(../images/post-formats.png) no-repeat -72px -8px;
++	}
++
++	.post-format-options .audio {
++		background: url(../images/post-formats.png) no-repeat -104px -8px;
++	}
++
++	.post-format-options .video {
++		background: url(../images/post-formats.png) no-repeat -136px -8px;
++	}
++
++	.post-format-options .chat {
++		background: url(../images/post-formats.png) no-repeat -168px -8px;
++	}
++
++	.post-format-options .status {
++		background: url(../images/post-formats.png) no-repeat -200px -8px;
++	}
++
++	.post-format-options .aside {
++		background: url(../images/post-formats.png) no-repeat -232px -8px;
++	}
++
++	.post-format-options .quote {
++		background: url(../images/post-formats.png) no-repeat -264px -8px;
++	}
++
++	.post-format-options .link {
++		background: url(../images/post-formats.png) no-repeat -296px -8px;
++	}
+ }
+ 
+Index: trunk/wp-admin/edit-form-advanced.php
+===================================================================
+--- trunk/wp-admin/edit-form-advanced.php	(revision 24005)
++++ trunk/wp-admin/edit-form-advanced.php	(revision 24006)
+@@ -134,7 +134,11 @@
+ 	wp_enqueue_style( 'wp-mediaelement' );
+ 	$post_format = get_post_format();
+-
+-	if ( ! $post_format )
++	$post_format_set_class = 'post-format-set';
++
++	if ( ! $post_format ) {
+ 		$post_format = 'standard';
++		if ( 'auto-draft' == $post->post_status )
++			$post_format_set_class = '';
++	}
+ 
+ 	$format_class = " class='wp-format-{$post_format}'";
+@@ -143,8 +147,8 @@
+ 	$all_post_formats = array(
+ 		'standard' => array (
+-			'description' => __( 'Add a title and use the editor to compose your post.' )
++			'description' => __( 'Use the editor below to compose your post.' )
+ 		),
+ 		'image' => array (
+-			'description' => __( 'Select or upload an image to use for your post.' )
++			'description' => __( 'Select or upload an image for your post.' )
+ 		),
+ 		'gallery' => array (
+@@ -167,8 +171,8 @@
+ 		),
+ 		'quote' => array (
+-			'description' => __( 'Copy a quotation into the box. Also add the source and URL if you have them.' )
++			'description' => __( 'Copy a quotation into the box below. Add a source and URL if you have them.' )
+ 		),
+ 		'aside' => array (
+-			'description' => __( 'An aside is a quick thought or side topic. Use the editor to compose one.' )
++			'description' => __( 'Use the editor to share a quick thought or side topic.' )
+ 		)
+ 	);
+@@ -182,5 +186,5 @@
+ 		}
+ 
+-		$post_format_options .= '<a ' . $class . ' href="?format=' . $slug . '" data-description="' . $attr['description'] . '" data-wp-format="' . $slug . '" title="' . ucfirst( sprintf( __( '%s Post' ), $slug ) ) . '"><div class="' . $slug . '"></div></a>';
++		$post_format_options .= '<a ' . $class . ' href="?format=' . $slug . '" data-description="' . $attr['description'] . '" data-wp-format="' . $slug . '" title="' . ucfirst( $slug ) . '"><div class="' . $slug . '"></div><span class="post-format-title">' . ucfirst( $slug ) . '</span></a>';
+ 	}
+ 
+@@ -359,5 +363,5 @@
+ ?>
+ 
+-<div class="wrap">
++<div class="wrap <?php echo $post_format_set_class; ?>">
+ <?php screen_icon(); ?>
+ <h2><?php
+@@ -375,4 +379,9 @@
+ 	<p><?php _e("You have lost your connection with the server, and saving has been disabled. This message will vanish once you've reconnected."); ?></p>
+ </div>
++<?php if ( ! empty( $post_format_options ) ) : ?>
++<div class="post-format-options">
++	<?php echo $post_format_options; ?>
++</div>
++<?php endif; ?>
+ <form name="post" action="post.php" method="post" id="post"<?php do_action('post_edit_form_tag'); ?>>
+ <?php wp_nonce_field($nonce_action); ?>
+@@ -401,12 +410,4 @@
+ <div id="post-body" class="metabox-holder columns-<?php echo 1 == get_current_screen()->get_columns() ? '1' : '2'; ?>">
+ <div id="post-body-content"<?php echo $format_class; ?>>
+-
+-<?php if ( ! empty( $post_format_options ) ) : ?>
+-<div class="post-format-options">
+-	<span class="post-format-tip">Standard Post</span>
+-	<?php echo $post_format_options; ?>
+-</div>
+-<?php endif; ?>
+-
+ <?php if ( post_type_supports($post_type, 'title') ) { ?>
+ <div id="titlediv">
+@@ -425,5 +426,5 @@
+ 	$has_sample_permalink = $sample_permalink_html && 'auto-draft' != $post->post_status;
+ ?>
+-	<div id="edit-slug-box" class="hide-if-no-js<?php if ( ! $has_sample_permalink ) echo ' hidden' ?>">
++	<div id="edit-slug-box" class="hide-if-no-js">
+ 	<?php
+ 		if ( $has_sample_permalink )
+Index: trunk/wp-admin/includes/post-formats.php
+===================================================================
+--- trunk/wp-admin/includes/post-formats.php	(revision 24005)
++++ trunk/wp-admin/includes/post-formats.php	(revision 24006)
+@@ -1,8 +1,9 @@
+ <?php
+ global $wp_embed;
++
+ $format_meta = get_post_format_meta( $post_ID );
+ 
+ ?>
+-<div class="post-format-description"></div>
++<div class="post-format-change"><span class="icon <?php echo esc_attr( $post_format ); ?>"></span> <span class="post-format-description"><?php echo $all_post_formats[$post_format]['description']; ?></span> <a href="#"><?php _e('Change format'); ?></a></div>
+ <div class="post-formats-fields">
+ 
+@@ -19,25 +20,36 @@
+ 	</div>
+ 
+-	<?php
+-	$image = false;
+-	if ( ! empty( $format_meta['image'] ) && is_numeric( $format_meta['image'] ) ) {
+-		$format_meta['image'] = absint( $format_meta['image'] );
+-		$image = wp_get_attachment_url( $format_meta['image'] );
+-	}
+-	?>
+ 	<div class="field wp-format-image">
+-		<div data-format="image" class="wp-format-media-holder hide-if-no-js<?php if ( ! $image ) echo ' empty'; ?>">
++		<?php if ( ! empty( $format_meta['image'] ) ) : ?>
++		<div id="image-preview" class="wp-format-media-preview">
++			<?php
++				if ( is_numeric( $format_meta['image'] ) ) {
++					$format_meta['image'] = absint( $format_meta['image'] );
++					$image = wp_get_attachment_url( $format_meta['image'] );
++					printf( '<img src="%s" alt="%s" />', esc_url( $image ), get_the_title( $format_meta['image'] ) );
++				} elseif ( preg_match( '/' . get_shortcode_regex() . '/s', $format_meta['image'] ) ) {
++					echo do_shortcode( $format_meta['image'] );
++				} elseif ( ! preg_match( '#<[^>]+>#', $format_meta['image'] ) ) {
++					printf( '<img src="%s" alt="" />', esc_url( $format_meta['image'] ) );
++				} else {
++					echo $format_meta['image'];
++				}
++			?>
++		</div>
++		<?php endif ?>
++		<label for="wp_format_image"><?php
++			if ( current_user_can( 'unfiltered_html' ) )
++				_e( 'Image HTML or URL' );
++			else
++				_e( 'Image URL' );
++		?></label>
++		<textarea id="wp_format_image" type="text" name="_wp_format_image" class="widefat"><?php esc_html_e( $format_meta['image'] ); ?></textarea>
++		<div data-format="image" class="wp-format-media-holder hide-if-no-js">
+ 			<a href="#" class="wp-format-media-select"
+ 				data-choose="<?php esc_attr_e( 'Choose an Image' ); ?>"
+ 				data-update="<?php esc_attr_e( 'Select Image' ); ?>">
+-				<?php
+-					if ( $image )
+-						printf( '<img src="%s" alt="%s" />', esc_url( $image ), get_the_title( $format_meta['image'] ) );
+-					else
+-						_e( 'Select / Upload Image' );
+-				?>
++				<?php _e( 'Select / Upload Image' ); ?>
+ 			</a>
+ 		</div>
+-		<input id="wp_format_image" type="hidden" name="_wp_format_image" value="<?php echo esc_attr( $format_meta['image'] ); ?>" />
+ 	</div>
+ 
+@@ -47,9 +59,6 @@
+ 	</div>
+ 
+-	<?php
+-	$show_video_preview = ! empty( $format_meta['video'] );
+-	?>
+-	<div class="field wp-format-video<?php if ( $show_video_preview ) echo ' has-media-preview'; ?>">
+-		<?php if ( $show_video_preview ): ?>
++	<div class="field wp-format-video">
++		<?php if ( ! empty( $format_meta['video'] ) ): ?>
+ 		<div id="video-preview" class="wp-format-media-preview">
+ 			<?php
+@@ -77,5 +86,5 @@
+ 		?></label>
+ 		<textarea id="wp_format_video" type="text" name="_wp_format_video" class="widefat"><?php esc_html_e( $format_meta['video'] ); ?></textarea>
+-		<div data-format="video" class="wp-format-media-holder hide-if-no-js<?php if ( ! $image ) echo ' empty'; ?>">
++		<div data-format="video" class="wp-format-media-holder hide-if-no-js">
+ 			<a href="#" class="wp-format-media-select"
+ 				data-choose="<?php esc_attr_e( 'Choose a Video' ); ?>"
+@@ -86,9 +95,6 @@
+ 	</div>
+ 
+-	<?php
+-	$show_audio_preview = ! empty( $format_meta['audio'] );
+-	?>
+-	<div class="field wp-format-audio<?php if ( $show_audio_preview ) echo ' has-media-preview' ?>">
+-		<?php if ( $show_audio_preview ): ?>
++	<div class="field wp-format-audio">
++		<?php if ( ! empty( $format_meta['audio'] ) ): ?>
+ 		<div id="audio-preview" class="wp-format-media-preview">
+ 			<?php
+@@ -115,7 +121,6 @@
+ 				_e( 'Audio URL' );
+ 		?></label>
+-		<textarea id="wp_format_audio" name="_wp_format_audio" class="widefat"><?php esc_html_e( $format_meta['audio'] );
+-?></textarea>
+-		<div data-format="audio" class="wp-format-media-holder hide-if-no-js<?php if ( empty( $format_meta['audio'] ) ) echo ' empty'; ?>">
++		<textarea id="wp_format_audio" name="_wp_format_audio" class="widefat"><?php esc_html_e( $format_meta['audio'] ); ?></textarea>
++		<div data-format="audio" class="wp-format-media-holder hide-if-no-js">
+ 			<a href="#" class="wp-format-media-select" data-choose="<?php esc_attr_e( 'Choose Audio' ); ?>" data-update="<?php esc_attr_e( 'Select Audio' ); ?>">
+ 				<?php _e( 'Select Audio From Media Library' ) ?>
+Index: trunk/wp-admin/js/post-formats.js
+===================================================================
+--- trunk/wp-admin/js/post-formats.js	(revision 24005)
++++ trunk/wp-admin/js/post-formats.js	(revision 24006)
+@@ -2,66 +2,75 @@
+ 
+ (function($) {
+-	var container, mediaFrame, lastMimeType, lastMenu, mediaPreview, noUIFormats = ['standard', 'chat', 'status', 'aside', 'gallery'];
++	var container, mediaFrame, lastMimeType, lastMenu, mediaPreview,
++		noUIFormats = ['standard', 'chat', 'status', 'aside', 'gallery'],
++		$container = $( '.post-formats-fields' );
+ 
+ 	function switchFormatClass( format ) {
+-		container.get(0).className = container.get(0).className.replace( /\bwp-format-[^ ]+/, '' );
++		container.get(0).className = container.get(0).className.replace( /\bwp-format-[^ ]+/g, '' );
+ 		container.addClass('wp-format-' + format);
+ 	}
+ 
++	function switchFormat ($this) {
++		var editor, body,
++			parent = $this.parent(),
++			format = $this.data('wp-format'),
++			description = $('.post-format-description'),
++			postTitle = $('#title');
++
++		if ( typeof container === 'undefined' )
++			container = $('#post-body-content');
++
++		parent.slideUp().find('a.active').removeClass('active');
++		$this.addClass('active');
++		$('#post_format').val(format);
++		$('.post-format-change').show().find('span.icon').removeClass(postFormats.currentPostFormat).addClass(format);
++		// container.addClass('wp-format-set');
++
++		if ( -1 < $.inArray( format, noUIFormats ) ) {
++			switchFormatClass( format ); // No slide
++			$container.hide();
++		} else {
++			$container.slideUp( 200, function(){
++				switchFormatClass( format );
++				$container.slideDown( 400 );
++			});
++		}
++
++		postTitle.focus();
++
++		if ( '' === postTitle.val() )
++			$('#title-prompt-text').removeClass('screen-reader-text');
++
++		// Update description line
++		description.html($this.data('description'));
++
++		if (description.not(':visible'))
++			description.slideDown('fast');
++
++		if ( typeof tinymce != 'undefined' ) {
++			editor = tinymce.get('content');
++
++			if ( editor ) {
++				body = editor.getBody();
++				body.className = body.className.replace( /\bpost-format-[^ ]+/, '' );
++				editor.dom.addClass( body, 'post-format-' + format );
++			}
++		}
++
++		postFormats.currentPostFormat = format;
++	}
++
+ 	$(function(){
+-		var $container = $( '.post-formats-fields' );
++
++		$('.post-format-change a').click(function () {
++			$('.post-formats-fields, .post-format-change').slideUp();
++			$('.post-format-options').slideDown();
++			return false;
++		});
+ 
+ 		// Post formats selection
+ 		$('.post-format-options').on( 'click', 'a', function(e){
+ 			e.preventDefault();
+-			var $this = $(this), editor, body,
+-				parent = $this.parent(),
+-				format = $this.data('wp-format'),
+-				description = $('.post-format-description');
+-
+-		if ( typeof container === 'undefined' )
+-			container = $('#post-body-content');
+-
+-			// Already on this post format. Bail.
+-			if ( format === postFormats.currentPostFormat )
+-				return;
+-
+-			parent.find('a.active').removeClass('active');
+-			$this.addClass('active');
+-			$('#icon-edit').removeClass(postFormats.currentPostFormat).addClass(format);
+-			$('#post_format').val(format);
+-
+-			if ( -1 < $.inArray( format, noUIFormats ) && -1 < $.inArray( postFormats.currentPostFormat, noUIFormats ) ) {
+-				switchFormatClass( format ); // No slide
+-			} else {
+-				$container.slideUp( 200, function(){
+-					switchFormatClass( format );
+-					$container.slideDown( 400 );
+-				});
+-			}
+-
+-			$('#title').focus();
+-
+-			// Update description line
+-			description.html($this.data('description'));
+-
+-			if (description.not(':visible'))
+-				description.slideDown('fast');
+-
+-			if ( typeof tinymce != 'undefined' ) {
+-				editor = tinymce.get('content');
+-
+-				if ( editor ) {
+-					body = editor.getBody();
+-					body.className = body.className.replace( /\bpost-format-[^ ]+/, '' );
+-					editor.dom.addClass( body, 'post-format-' + format );
+-				}
+-			}
+-
+-			postFormats.currentPostFormat = format;
+-		}).on('mouseenter focusin', 'a', function () {
+-			$('.post-format-tip').html( $(this).prop('title') );
+-		}).on('mouseleave focusout', 'a', function () {
+-			$('.post-format-tip').html( $('.post-format-options a.active').prop('title') );
++			switchFormat($(this));
+ 		});
+ 
+@@ -69,19 +78,12 @@
+ 		$('.wp-format-media-select').click(function (event) {
+ 			event.preventDefault();
+-			var $el = $(this), $holder, $field, mime = 'image', menu = '',
++			var $el = $(this), mime,
+ 			    $holder = $el.closest('.wp-format-media-holder'),
+ 			    $field = $( '#wp_format_' + $holder.data('format') );
+ 
+-			switch ( $holder.data('format') ) {
+-				case 'audio':
+-					mime = 'audio';
+-					break;
+-				case 'video':
+-					mime = 'video';
+-					break;
+-			}
++			mime = $holder.data('format');
+ 
+ 			// If the media frame already exists, reopen it.
+-			if ( mediaFrame && lastMimeType === mime && lastMenu === menu ) {
++			if ( mediaFrame && lastMimeType === mime ) {
+ 				mediaFrame.open();
+ 				return;
+@@ -89,5 +91,4 @@
+ 
+ 			lastMimeType = mime;
+-			lastMenu = menu;
+ 
+ 			// Create the media frame.
+@@ -95,7 +96,4 @@
+ 				// Set the title of the modal.
+ 				title: $el.data('choose'),
+-
+-				// Set the menu sidebar of the modal, if applicable
+-				toolbar: menu,
+ 
+ 				// Tell the modal to show only items matching the current mime type.
+@@ -143,5 +141,5 @@
+ 			mediaFrame.on( 'select', function () {
+ 				// Grab the selected attachment.
+-				var attachment = mediaFrame.state().get('selection').first().toJSON();
++				var w = 0, h = 0, html, attachment = mediaFrame.state().get('selection').first().toJSON();
+ 
+ 				if ( 0 === attachment.mime.indexOf('audio') ) {
+@@ -158,9 +156,20 @@
+ 					mediaPreview(attachment);
+ 				} else {
++					html = wp.media.string.image({}, attachment);
+ 					// set the hidden input's value
+-					$field.val(attachment.id);
+-					// Show the image in the placeholder
+-					$el.html('<img src="' + attachment.url + '" />');
+-					$holder.removeClass('empty').show();
++					$field.val(html);
++					$('#image-preview').remove();
++					if ( attachment.width )
++						w = attachment.width > 600 ? 600 : attachment.width;
++					if ( attachment.height )
++						h = attachment.height;
++					if ( w < attachment.width )
++						h = Math.round( ( h * w ) / attachment.width );
++					$holder.parent().prepend( ['<div id="image-preview" class="wp-format-media-preview">',
++						'<img src="', attachment.url, '"',
++						w ? ' width="' + w + '"' : '',
++						h ? ' height="' + h + '"' : '',
++						' />',
++					'</div>'].join('') );
+ 				}
+ 			});
+Index: trunk/wp-includes/js/media-editor.js
+===================================================================
+--- trunk/wp-includes/js/media-editor.js	(revision 24005)
++++ trunk/wp-includes/js/media-editor.js	(revision 24006)
+@@ -192,5 +192,5 @@
+ 			classes = props.classes || [];
+ 
+-			img.src = props.url;
++			img.src = attachment.url;
+ 			_.extend( img, _.pick( props, 'width', 'height', 'alt' ) );
+ 
+Index: trunk/wp-includes/media.php
+===================================================================
+--- trunk/wp-includes/media.php	(revision 24005)
++++ trunk/wp-includes/media.php	(revision 24006)
+@@ -2407,5 +2407,14 @@
+ 
+ 	if ( ! empty( $meta['image'] ) ) {
+-		$post->format_content = sprintf( $link_fmt, wp_get_attachment_image( $meta['image'], $attached_size ) );
++		if ( is_numeric( $meta['image'] ) )
++			$image = wp_get_attachment_image( absint( $meta['image'] ), $attached_size );
++		elseif ( preg_match( '/' . get_shortcode_regex() . '/s', $meta['image'] ) )
++			$image = do_shortcode( $meta['image'] );
++		elseif ( ! preg_match( '#<[^>]+>#', $meta['image'] ) )
++			$image = sprintf( '<img src="%s" alt="" />', esc_url( $meta['image'] ) );
++		else
++			$image = $meta['image'];
++
++		$post->format_content = sprintf( $link_fmt, $image );
+ 		return $post->format_content;
+ 	}
