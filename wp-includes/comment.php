@@ -382,7 +382,6 @@ class WP_Comment_Query {
 			$orderby = 'ORDER BY ' . $orderby;
 
 		$query = "SELECT $fields FROM $wpdb->comments $join WHERE $where $groupby $orderby $order $limits";
-		var_dump($query);
 
 		if ( $count )
 			return $wpdb->get_var( $query );
