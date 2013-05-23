@@ -23,12 +23,14 @@
  */
 function get_header( $name = null ) {
 	do_action( 'get_header', $name );
-
+	
 	$templates = array();
 	if ( isset($name) )
 		$templates[] = "header-{$name}.php";
 
 	$templates[] = 'header.php';
+
+	locate_template( $templates, true );
 }
 
 /**
@@ -54,6 +56,8 @@ function get_footer( $name = null ) {
 		$templates[] = "footer-{$name}.php";
 
 	$templates[] = 'footer.php';
+
+	locate_template( $templates, true );
 }
 
 /**
@@ -79,6 +83,8 @@ function get_sidebar( $name = null ) {
 		$templates[] = "sidebar-{$name}.php";
 
 	$templates[] = 'sidebar.php';
+
+	locate_template( $templates, true );
 }
 
 /**
