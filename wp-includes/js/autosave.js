@@ -488,6 +488,7 @@ wp.autosave.local = {
 		} else {
 			post_data = this.getData() || {};
 			$.extend( post_data, data );
+			post_data.autosave = true;
 		}
 
 		// If the content and title did not change since the last save, don't save again
@@ -501,10 +502,6 @@ wp.autosave.local = {
 		post_data['save_time'] = (new Date()).getTime();
 		post_data['status'] = $('#post_status').val() || '';
 		result = this.setData( post_data );
-
-		// temp logging
-		if ( typeof console != 'undefined' )
-			console.log( 'Local autosave: saved, post content = %s', post_data.content );
 
 		if ( result )
 			this.lastsaveddata = post_data.post_title + ': ' + post_data.content;
@@ -598,10 +595,6 @@ wp.autosave.local = {
 	checkPost: function() {
 		var self = this, post_data = this.getData(), content, check_data, strip_tags = false, notice,
 			post_id = $('#post_ID').val() || 0, cookie = wpCookies.get( 'wp-saving-post-' + post_id );
-
-		// temp logging
-		if ( typeof console != 'undefined' )
-			console.log( 'Local autosave: checkPost, cookie = %s, post content = %s', cookie, post_data && post_data.content );
 
 		if ( ! post_data )
 			return;

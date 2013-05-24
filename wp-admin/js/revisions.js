@@ -461,7 +461,7 @@ window.wp = window.wp || {};
 			adjustMax   = Diff.singleRevision ? 0 : 1;
 			tickWidth   = Math.floor( sliderWidth / ( sliderMax - adjustMax ) );
 			tickWidth   = ( tickWidth > 50 ) ? 50 : tickWidth; // set minimum and maximum widths for tick marks
-			tickWidth   = ( tickWidth < 10 ) ? 10 : tickWidth;
+			tickWidth   = ( tickWidth < 6 ) ? 6 : tickWidth;
 			sliderWidth = tickWidth * ( sliderMax - adjustMax ); // calculate the slider width
 			aTickWidth  = $( '.revision-tick' ).width();
 
@@ -561,7 +561,6 @@ window.wp = window.wp || {};
 	 *
 	 * Next/Prev buttons and the slider
 	 */
-	// TODO: Change Interact to something else.
 	revisions.view.Interact = Backbone.View.extend({
 		el: $( '#revision-interact' ),
 		template: wp.template( 'revision-interact' ),
@@ -637,7 +636,7 @@ window.wp = window.wp || {};
 	/**
 	 * wp.revisions.view.Diff
 	 *
-	 * Next/Prev buttons and the slider
+	 * Diff, compare two checkbox and restore button
 	 */
 	revisions.view.Diff = Backbone.View.extend({
 		el: $( '#revisions-diff' ),

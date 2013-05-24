@@ -1395,7 +1395,7 @@ function wp_new_comment( $commentdata ) {
 	$commentdata['comment_parent'] = ( 'approved' == $parent_status || 'unapproved' == $parent_status ) ? $commentdata['comment_parent'] : 0;
 
 	$commentdata['comment_author_IP'] = preg_replace( '/[^0-9a-fA-F:., ]/', '',$_SERVER['REMOTE_ADDR'] );
-	$commentdata['comment_agent']     = substr($_SERVER['HTTP_USER_AGENT'], 0, 254);
+	$commentdata['comment_agent']     = isset( $_SERVER['HTTP_USER_AGENT'] ) ? substr( $_SERVER['HTTP_USER_AGENT'], 0, 254 ) : '';
 
 	$commentdata['comment_date']     = current_time('mysql');
 	$commentdata['comment_date_gmt'] = current_time('mysql', 1);
@@ -1761,7 +1761,7 @@ function do_trackbacks($post_id) {
 	}
 
 	if ( empty($post->post_excerpt) )
-		$excerpt = apply_filters('the_content', $post->post_content);
+		$excerpt = apply_filters('the_content', $post->post_content, $post->ID);
 	else
 		$excerpt = apply_filters('the_excerpt', $post->post_excerpt);
 	$excerpt = str_replace(']]>', ']]&gt;', $excerpt);

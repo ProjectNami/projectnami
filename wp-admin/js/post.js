@@ -254,19 +254,15 @@ WPRemoveThumbnail = function(nonce){
 $(document).on( 'heartbeat-send.refresh-lock', function( e, data ) {
 	var lock = $('#active_post_lock').val(),
 		post_id = $('#post_ID').val(),
-		post_nonce = $('#_wpnonce').val(),
 		send = {};
 
-	if ( !post_id )
+	if ( ! post_id || ! $('#post-lock-dialog').length )
 		return;
 
 	send['post_id'] = post_id;
 
 	if ( lock )
 		send['lock'] = lock;
-
-	if ( post_nonce )
-		send['post_nonce'] = post_nonce;
 
 	data['wp-refresh-post-lock'] = send;
 });
@@ -280,7 +276,7 @@ $(document).on( 'heartbeat-tick.refresh-lock', function( e, data ) {
 
 		if ( received.lock_error ) {
 			// show "editing taken over" message
-			wrap = $('#notification-dialog-wrap');
+			wrap = $('#post-lock-dialog');
 
 			if ( wrap.length && ! wrap.is(':visible') ) {
 				if ( typeof autosave == 'function' ) {
@@ -309,16 +305,45 @@ $(document).on( 'heartbeat-tick.refresh-lock', function( e, data ) {
 		} else if ( received.new_lock ) {
 			$('#active_post_lock').val( received.new_lock );
 		}
+	}
+});
 
-		if ( received.update_nonces ) {
-			$.each( received.update_nonces, function( selector, value ) {
+}(jQuery));
+
+(function($) {
+	var check, timeout;
+
+	function schedule() {
+		check = false;
+		window.clearTimeout( timeout );
+		timeout = window.setTimeout( function(){ check = 1; }, 3600000 );
+	}
+
+	$(document).on( 'heartbeat-send.wp-refresh-nonces', function( e, data ) {
+		var nonce, post_id;
+
+		if ( check ) {
+			if ( ( post_id = $('#post_ID').val() ) && ( nonce = $('#_wpnonce').val() ) ) {
+				data['wp-refresh-post-nonces'] = {
+					post_id: post_id,
+					post_nonce: nonce
+				};
+			}
+			check = 2;
+		}
+	}).on( 'heartbeat-tick.wp-refresh-nonces', function( e, data ) {
+		if ( check === 2 )
+			schedule();
+
+		if ( data['wp-refresh-post-nonces'] ) {
+			$.each( data['wp-refresh-post-nonces'], function( selector, value ) {
 				if ( selector.match(/^replace-/) )
 					$( '#' + selector.replace('replace-', '') ).val( value );
 			});
 		}
-	}
-});
-
+	}).ready( function() {
+		schedule();
+	});
 }(jQuery));
 
 jQuery(document).ready( function($) {
@@ -327,7 +352,7 @@ jQuery(document).ready( function($) {
 	postboxes.add_postbox_toggles(pagenow);
 
 	// Post locks: contain focus inside the dialog. If the dialog is shown, focus the first item.
-	$('#notification-dialog').on( 'keydown', function(e) {
+	$('#post-lock-dialog .notification-dialog').on( 'keydown', function(e) {
 		if ( e.which != 9 )
 			return;
 

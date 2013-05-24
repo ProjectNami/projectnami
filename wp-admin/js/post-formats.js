@@ -35,7 +35,7 @@ window.wp = window.wp || {};
 		var $holder, $field, html = wp.media.string.image({
 			size : 'full',
 			align : false,
-			link : getUserSetting( 'urlbutton' )
+			link : 'none'
 		}, attachment.attributes );
 
 		$holder = $('.wp-format-media-holder[data-format=image]');
@@ -67,6 +67,8 @@ window.wp = window.wp || {};
 	}
 
 	var uploader = {
+		container: null,
+		browser:   null,
 		dropzone:  $('.wp-format-media-holder[data-format=image]'),
 		success:   imageFormatUploadSuccess,
 		error:     imageFormatUploadError,
@@ -77,9 +79,15 @@ window.wp = window.wp || {};
 		params:    {}
 	};
 	uploader = new wp.Uploader( uploader );
-	uploader.uploader.bind( 'BeforeUpload', imageFormatUploadStart );
-	uploader.uploader.bind( 'UploadProgress', imageFormatUploadProgress );
-	uploader.uploader.bind( 'FilesAdded', imageFormatUploadFilesAdded );
+
+	if ( uploader.supports.dragdrop ) {
+		uploader.uploader.bind( 'BeforeUpload', imageFormatUploadStart );
+		uploader.uploader.bind( 'UploadProgress', imageFormatUploadProgress );
+		uploader.uploader.bind( 'FilesAdded', imageFormatUploadFilesAdded );
+	} else {
+		uploader.uploader.destroy();
+		uploader = null;
+	}
 
 	function switchFormatClass( format ) {
 		formatField.val( format );
@@ -210,7 +218,12 @@ window.wp = window.wp || {};
 		}
 
 		$( '#show_post_format_ui' ).on( 'change', function () {
-			$( '.wp-post-format-ui' ).toggleClass( 'no-ui', ! this.checked );
+			body.toggleClass( 'wp-post-format-show-ui', this.checked );
+
+			// Reset the display properties of possibly hidden items.
+			insertMediaButton.css( 'display', '' );
+			$( '#titlewrap' ).css( 'display', '' );
+
 			$.post( ajaxurl, {
 				action: 'show-post-format-ui',
 				post_type: $( '#post_type' ).val(),
@@ -313,7 +326,7 @@ window.wp = window.wp || {};
 					html = wp.media.string.image({
 						size: 'full',
 						align : false,
-						link : getUserSetting( 'urlbutton' )
+						link : 'none'
 					}, attachment);
 
 					// set the hidden input's value

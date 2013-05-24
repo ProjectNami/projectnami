@@ -770,8 +770,8 @@ function gallery_shortcode($attr) {
 			#{$selector} .gallery-caption {
 				margin-left: 0;
 			}
-		</style>
-		<!-- see gallery_shortcode() in wp-includes/media.php -->";
+			/* see gallery_shortcode() in wp-includes/media.php */
+		</style>";
 	$size_class = sanitize_html_class( $size );
 	$gallery_div = "<div id='$selector' class='gallery galleryid-{$id} gallery-columns-{$columns} gallery-size-{$size_class}'>";
 	$output = apply_filters( 'gallery_style', $gallery_style . "\n\t\t" . $gallery_div );
@@ -861,7 +861,7 @@ function wp_audio_shortcode( $attr ) {
 	if ( ! empty( $src ) ) {
 		$type = wp_check_filetype( $src );
 		if ( ! in_array( $type['ext'], $default_types ) )
-			return sprintf( '<a class="wp-post-format-link-audio" href="%1$s">%1$s</a>', $src );
+			return sprintf( '<a class="wp-post-format-link-audio" href="%s">%s</a>', esc_url( $src ), esc_html( $src ) );
 		$primary = true;
 		array_unshift( $default_types, 'src' );
 	} else {
@@ -907,7 +907,7 @@ function wp_audio_shortcode( $attr ) {
 			if ( empty( $fileurl ) )
 				$fileurl = $$fallback;
 			$type = wp_check_filetype( $$fallback );
-			$html .= sprintf( $source, $type['type'], $$fallback );
+			$html .= sprintf( $source, $type['type'], esc_url( $$fallback ) );
 		}
 	}
 
@@ -979,7 +979,7 @@ function wp_video_shortcode( $attr ) {
 	if ( ! empty( $src ) ) {
 		$type = wp_check_filetype( $src );
 		if ( ! in_array( $type['ext'], $default_types ) )
-			return sprintf( '<a class="wp-post-format-link-video" href="%1$s">%1$s</a>', $src );
+			return sprintf( '<a class="wp-post-format-link-video" href="%s">%s</a>', esc_url( $src ), esc_html( $src ) );
 		$primary = true;
 		array_unshift( $default_types, 'src' );
 	} else {
@@ -1033,7 +1033,7 @@ function wp_video_shortcode( $attr ) {
 			// m4v sometimes shows up as video/mpeg which collides with mp4
 			if ( 'm4v' === $type['ext'] )
 				$type['type'] = 'video/m4v';
-			$html .= sprintf( $source, $type['type'], $$fallback );
+			$html .= sprintf( $source, $type['type'], esc_url( $$fallback ) );
 		}
 	}
 	if ( 'mediaelement' === $library )
