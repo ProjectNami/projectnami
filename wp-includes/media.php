@@ -1850,8 +1850,7 @@ function wp_enqueue_media( $args = array() ) {
  * @return array Found attachments
  */
 function get_attached_media( $type, $post_id = 0 ) {
-	$post = empty( $post_id ) ? get_post() : get_post( $post_id );
-	if ( empty( $post ) )
+	if ( ! $post = get_post( $post_id ) )
 		return;
 
 	$args = array(
@@ -1929,11 +1928,11 @@ function get_content_media( $type, &$content, $html = true, $remove = false, $li
 	$data = array();
 
 	foreach ( $items as $item ) {
-		preg_match_all( '#src=[\'"](.+?)[\'"]#is', $item, $src, PREG_SET_ORDER );
+		preg_match_all( '#src=([\'"])(.+?)\1#is', $item, $src, PREG_SET_ORDER );
 		if ( ! empty( $src ) ) {
 			$srcs = array();
 			foreach ( $src as $s )
-				$srcs[] = $s[1];
+				$srcs[] = $s[2];
 
 			$data[] = array_values( array_unique( $srcs ) );
 		}
@@ -2254,9 +2253,9 @@ function get_content_images( &$content, $html = true, $remove = false, $limit = 
 	$srcs = array();
 
 	foreach ( $tags as $tag ) {
-		preg_match( '#src=[\'"](.+?)[\'"]#is', $tag, $src );
-		if ( ! empty( $src[1] ) ) {
-			$srcs[] = $src[1];
+		preg_match( '#src=([\'"])(.+?)\1#is', $tag, $src );
+		if ( ! empty( $src[2] ) ) {
+			$srcs[] = $src[2];
 			if ( $limit > 0 && count( $srcs ) >= $limit )
 				break;
 		}
@@ -2310,10 +2309,10 @@ function get_content_galleries( &$content, $html = true, $remove = false, $limit
 				if ( $html ) {
 					$galleries[] = $gallery;
 				} else {
-					preg_match_all( '#src=[\'"](.+?)[\'"]#is', $gallery, $src, PREG_SET_ORDER );
+					preg_match_all( '#src=([\'"])(.+?)\1#is', $gallery, $src, PREG_SET_ORDER );
 					if ( ! empty( $src ) ) {
 						foreach ( $src as $s )
-							$srcs[] = $s[1];
+							$srcs[] = $s[2];
 					}
 
 					$data['src'] = array_values( array_unique( $srcs ) );
@@ -2340,8 +2339,10 @@ function get_content_galleries( &$content, $html = true, $remove = false, $limit
  *		from the expanded shortcode
  */
 function get_post_galleries( $post_id = 0, $html = true ) {
-	$post = empty( $post_id ) ? clone get_post() : get_post( $post_id );
-	if ( empty( $post ) || ! has_shortcode( $post->post_content, 'gallery' )  )
+	if ( ! $post = get_post( $post_id ) )
+		return array();
+
+	if ( ! has_shortcode( $post->post_content, 'gallery' )  )
 		return array();
 
 	return get_content_galleries( $post->post_content, $html );
@@ -2357,8 +2358,10 @@ function get_post_galleries( $post_id = 0, $html = true ) {
  *		from an expanded shortcode
  */
 function get_post_galleries_images( $post_id = 0 ) {
-	$post = empty( $post_id ) ? clone get_post() : get_post( $post_id );
-	if ( empty( $post ) || ! has_shortcode( $post->post_content, 'gallery' )  )
+	if ( ! $post = get_post( $post_id ) )
+		return array();
+
+	if ( ! has_shortcode( $post->post_content, 'gallery' )  )
 		return array();
 
 	$data = get_content_galleries( $post->post_content, false );
@@ -2375,8 +2378,10 @@ function get_post_galleries_images( $post_id = 0 ) {
  * @return array Gallery data and srcs parsed from the expanded shortcode
  */
 function get_post_gallery( $post_id = 0, $html = true ) {
-	$post = empty( $post_id ) ? clone get_post() : get_post( $post_id );
-	if ( empty( $post ) || ! has_shortcode( $post->post_content, 'gallery' ) )
+	if ( ! $post = get_post( $post_id ) )
+		return array();
+
+	if ( ! has_shortcode( $post->post_content, 'gallery' ) )
 		return array();
 
 	$data = get_content_galleries( $post->post_content, $html, false, 1 );
@@ -2453,13 +2458,33 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 					$meta['image']
 				);
 			}
+
+			$attachment_id = img_html_to_post_id( $meta['image'], $matched_html );
+			if ( $attachment_id && $matched_html ) {
+				$meta['image'] = str_replace( $matched_html, wp_get_attachment_image( $attachment_id, $attached_size ), $meta['image'] );
+				$attachment = wp_get_attachment_image_src( $attachment_id, $attached_size );
+				$attachment_width = ( ! empty( $attachment[1] ) ) ? $attachment[1] : 0;
+
+				if ( $attachment_width && preg_match_all( '#width=([\'"])(.+?)\1#is', $meta['image'], $matches ) && ! empty( $matches ) )
+					foreach ( $matches[2] as $width )
+						if ( $width != $attachment_width )
+							$meta['image'] = str_replace( $matches[0], sprintf( 'width="%d"', $attachment_width ), $meta['image'] );
+			}
+
 			$image = do_shortcode( $meta['image'] );
 		} elseif ( ! preg_match( '#<[^>]+>#', $meta['image'] ) ) {
 			// not HTML, assume URL
-			$image = sprintf( '<img src="%s" alt="" />', esc_url( $meta['image'] ) );
+			$attachment_id = attachment_url_to_postid( $meta['image'] );
+			if ( $attachment_id )
+				$image = wp_get_attachment_image( $attachment_id, $attached_size );
+			else
+				$image = sprintf( '<img src="%s" alt="" />', esc_url( $meta['image'] ) );
 		} else {
 			// assume HTML
 			$image = $meta['image'];
+			$attachment_id = img_html_to_post_id( $image, $matched_html );
+			if ( $attachment_id && $matched_html )
+				$image = str_replace( $matched_html, wp_get_attachment_image( $attachment_id, $attached_size ), $image );
 		}
 
 		if ( false === strpos( $image, '<a ' ) )
@@ -2532,6 +2557,11 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 	$htmls = get_content_images( $content, true, true, 1 );
 	if ( ! empty( $htmls ) ) {
 		$html = reset( $htmls );
+
+		$attachment_id = img_html_to_post_id( $html, $matched_html );
+		if ( $attachment_id && $matched_html )
+			$html = str_replace( $matched_html, wp_get_attachment_image( $attachment_id, $attached_size ), $html );
+
 		$post->split_content = $content;
 		$post->format_content[ $cache_key ] = sprintf( $link_fmt, $html );
 		return $post->format_content[ $cache_key ];
@@ -2568,4 +2598,39 @@ function attachment_url_to_postid( $url ) {
 	}
 
 	return 0;
+}
+/**
+ * Retrieve the attachment post id from HTML containing an image.
+ *
+ * @since 3.6.0
+ *
+ * @param string $html The html, possibly with an image
+ * @param string $matched_html Passed by reference, will be set to to the matched img string
+ * @return int The attachment id if found, or 0.
+ */
+function img_html_to_post_id( $html, &$matched_html = null ) {
+	$attachment_id = 0;
+
+	// Look for an <img /> tag
+	if ( ! preg_match( '#' . get_tag_regex( 'img' ) .  '#i', $html, $matches ) || empty( $matches ) )
+		return $attachment_id;
+
+	$matched_html = $matches[0];
+
+	// Look for attributes.
+	if ( ! preg_match_all( '#(src|class)=([\'"])(.+?)\2#is', $matched_html, $matches ) || empty( $matches ) )
+		return $attachment_id;
+
+	$attr = array();
+	foreach ( $matches[1] as $key => $attribute_name )
+		$attr[ $attribute_name ] = $matches[3][ $key ];
+
+	if ( ! empty( $attr['class'] ) && false !== strpos( $attr['class'], 'wp-image-' ) )
+		if ( preg_match( '#wp-image-([0-9]+)#i', $attr['class'], $matches ) )
+			$attachment_id = absint( $matches[1] );
+
+	if ( ! $attachment_id && ! empty( $attr['src'] ) )
+		$attachment_id = attachment_url_to_postid( $attr['src'] );
+
+	return $attachment_id;
 }

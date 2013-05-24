@@ -38,20 +38,31 @@ wp_nonce_field( 'show-post-format-ui_' . $post_type, 'show_post_format_ui_nonce'
 				?>
 			</div>
 			<?php endif ?>
-			<label for="wp_format_image"><?php
-				if ( current_user_can( 'unfiltered_html' ) )
-					_e( 'Image HTML or URL' );
-				else
-					_e( 'Image URL' );
-			?></label>
-			<textarea id="wp_format_image" type="text" name="_format_image" class="widefat"><?php esc_html_e( $format_meta['image'] ); ?></textarea>
 			<div data-format="image" class="wp-format-media-holder hide-if-no-js">
+				<div><h3><?php _e( 'Drop image file to upload' ); ?></h3></div>
 				<a href="#" class="wp-format-media-select"
 					data-choose="<?php esc_attr_e( 'Choose an Image' ); ?>"
 					data-update="<?php esc_attr_e( 'Select Image' ); ?>">
 					<?php _e( 'Select / Upload Image' ); ?>
 				</a>
 			</div>
+			<div class="wp-format-image-textarea hide-if-js">
+				<label for="wp_format_image"><?php
+					if ( current_user_can( 'unfiltered_html' ) )
+						_e( 'Image URL or HTML' );
+					else
+						_e( 'Image URL' );
+				?></label>
+				<textarea id="wp_format_image" type="text" name="_format_image" class="widefat"><?php echo esc_textarea( $format_meta['image'] ); ?></textarea>
+			</div>
+			<p class="use-url-or-html hide-if-no-js">
+				<span><?php
+					if ( current_user_can( 'unfiltered_html' ) )
+						_e( '(or <a href="#">use an image URL or HTML</a>)' );
+					else
+						_e( '(or <a href="#">use an image URL</a>)' );
+				?></span>
+				<span style="display: none"><?php _e( '(or <a href="#">select/upload an image</a>)' ); ?></span></p>
 		</div>
 
 		<div class="field wp-format-link">
@@ -97,7 +108,7 @@ wp_nonce_field( 'show-post-format-ui_' . $post_type, 'show_post_format_ui_nonce'
 				else
 					_e( 'Video URL' );
 			?></label>
-			<textarea id="wp_format_video" type="text" name="_format_video_embed" class="widefat"><?php esc_html_e( $format_meta['video_embed'] ); ?></textarea>
+			<textarea id="wp_format_video" type="text" name="_format_video_embed" class="widefat"><?php echo esc_textarea( $format_meta['video_embed'] ); ?></textarea>
 			<div data-format="video" class="wp-format-media-holder hide-if-no-js">
 				<a href="#" class="wp-format-media-select"
 					data-choose="<?php esc_attr_e( 'Choose a Video' ); ?>"
@@ -135,7 +146,7 @@ wp_nonce_field( 'show-post-format-ui_' . $post_type, 'show_post_format_ui_nonce'
 				else
 					_e( 'Audio URL' );
 			?></label>
-			<textarea id="wp_format_audio" name="_format_audio_embed" class="widefat"><?php esc_html_e( $format_meta['audio_embed'] ); ?></textarea>
+			<textarea id="wp_format_audio" name="_format_audio_embed" class="widefat"><?php echo esc_textarea( $format_meta['audio_embed'] ); ?></textarea>
 			<div data-format="audio" class="wp-format-media-holder hide-if-no-js">
 				<a href="#" class="wp-format-media-select" data-choose="<?php esc_attr_e( 'Choose Audio' ); ?>" data-update="<?php esc_attr_e( 'Select Audio' ); ?>">
 					<?php _e( 'Select Audio From Media Library' ) ?>

@@ -351,6 +351,11 @@ switch ( $action ) {
 		}
 		break;
 	case 'locations':
+		if ( ! $num_locations ) {
+			wp_redirect( admin_url( 'nav-menus.php' ) );
+			exit();
+		}
+
 		add_filter( 'screen_options_show_screen', '__return_false' );
 
 		if ( isset( $_POST['menu-locations'] ) ) {
@@ -436,11 +441,7 @@ if ( ! $nav_menu_selected_title && is_nav_menu( $nav_menu_selected_id ) ) {
 
 // Generate truncated menu names
 foreach( (array) $nav_menus as $key => $_nav_menu ) {
-	$_nav_menu->truncated_name = trim( wp_html_excerpt( $_nav_menu->name, 40 ) );
-	if ( $_nav_menu->truncated_name != $_nav_menu->name )
-		$_nav_menu->truncated_name .= '&hellip;';
-
-	$nav_menus[$key]->truncated_name = $_nav_menu->truncated_name;
+	$nav_menus[$key]->truncated_name = wp_html_excerpt( $_nav_menu->name, 40, '&hellip;' );
 }
 
 // Retrieve menu locations
@@ -470,12 +471,12 @@ add_filter('admin_body_class', 'wp_nav_menu_max_depth');
 wp_nav_menu_setup();
 wp_initial_nav_menu_meta_boxes();
 
-if ( ! current_theme_supports( 'menus' ) && ! wp_get_nav_menus() )
-	$messages[] = '<div id="message" class="updated"><p>' . __('The current theme does not natively support menus, but you can use the &#8220;Custom Menu&#8221; widget to add any menus you create here to the theme&#8217;s sidebar.') . '</p></div>';
+if ( ! current_theme_supports( 'menus' ) && ! $num_locations )
+	$messages[] = '<div id="message" class="updated"><p>' . sprintf( __( 'Your theme does not natively support menus, but you can use them in sidebars by adding a &#8220;Custom Menus&#8221; widget on the <a href="%s">Widgets</a> screen.' ), admin_url( 'widgets.php' ) ) . '</p></div>';
 
 if ( ! $locations_screen ) : // Main tab
 	$overview  = '<p>' . __( 'This screen is used for managing your custom navigation menus.' ) . '</p>';
-	$overview .= '<p>' . sprintf( __( 'Menus can be displayed in locations defined by your theme, even used in sidebars by adding a Custom Menus widget on the <a href="%s">Widgets</a> screen. ' ), admin_url( 'widgets.php') );
+	$overview .= '<p>' . sprintf( __( 'Menus can be displayed in locations defined by your theme, even used in sidebars by adding a &#8220;Custom Menus&#8221; widget on the <a href="%s">Widgets</a> screen. ' ), admin_url( 'widgets.php') );
 	$overview .= sprintf( __( 'If your theme does not support the custom menus feature (the default themes, %1$s and %2$s, do), you can learn about adding this support by following the Documentation link to the side.' ), 'Twenty Thirteen', 'Twenty Twelve' ) . '</p>';
 	$overview .= '<p>' . __( 'From this screen you can:' ) . '</p>';
 	$overview .= '<ul><li>' . __( 'Create, edit, and delete menus' ) . '</li>';
@@ -536,7 +537,9 @@ require_once( './admin-header.php' );
 	<?php screen_icon(); ?>
 	<h2 class="nav-tab-wrapper">
 		<a href="<?php echo admin_url( 'nav-menus.php' ); ?>" class="nav-tab<?php if ( ! isset( $_GET['action'] ) || isset( $_GET['action'] ) && 'locations' != $_GET['action'] ) echo ' nav-tab-active'; ?>"><?php esc_html_e( 'Edit Menus' ); ?></a>
-		<a href="<?php echo esc_url( add_query_arg( array( 'action' => 'locations' ), admin_url( 'nav-menus.php' ) ) ); ?>" class="nav-tab<?php if ( $locations_screen ) echo ' nav-tab-active'; ?>"><?php esc_html_e( 'Manage Locations' ); ?></a>
+		<?php if ( $num_locations && $menu_count ) : ?>
+			<a href="<?php echo esc_url( add_query_arg( array( 'action' => 'locations' ), admin_url( 'nav-menus.php' ) ) ); ?>" class="nav-tab<?php if ( $locations_screen ) echo ' nav-tab-active'; ?>"><?php esc_html_e( 'Manage Locations' ); ?></a>
+		<?php endif; ?>
 	</h2>
 	<?php
 	foreach( $messages as $message ) :
@@ -572,8 +575,7 @@ require_once( './admin-header.php' );
 								<?php foreach ( $nav_menus as $menu ) : ?>
 									<?php $selected = isset( $menu_locations[$_location] ) && $menu_locations[$_location] == $menu->term_id; ?>
 									<option <?php if ( $selected ) echo 'data-orig="true"'; ?> <?php selected( $selected ); ?> value="<?php echo $menu->term_id; ?>">
-										<?php $truncated_name = wp_html_excerpt( $menu->name, 40 );
-										echo $truncated_name == $menu->name ? $menu->name : trim( $truncated_name ) . '&hellip;'; ?>
+										<?php echo wp_html_excerpt( $menu->name, 40, '&hellip;' ); ?>
 									</option>
 								<?php endforeach; ?>
 							</select>

@@ -316,12 +316,11 @@ function post_format_content_class( $format ) {
  * @uses get_post_format_meta()
  *
  * @param string $content The post content.
- * @param int $id (optional) The post ID.
+ * @param int $post_id (optional) The post ID.
  * @return string Formatted output based on associated post format.
  */
-function post_formats_compat( $content, $id = 0 ) {
-	$post = empty( $id ) ? get_post() : get_post( $id );
-	if ( empty( $post ) )
+function post_formats_compat( $content, $post_id = 0 ) {
+	if ( ! $post = get_post( $post_id ) )
 		return $content;
 
 	$format = get_post_format( $post );
@@ -639,12 +638,11 @@ function get_content_chat( &$content, $remove = false ) {
  *
  * @since 3.6.0
  *
- * @param int $id (optional) The post ID.
+ * @param int $post_id (optional) The post ID.
  * @return array The chat content.
  */
-function get_the_post_format_chat( $id = 0 ) {
-	$post = empty( $id ) ? clone get_post() : get_post( $id );
-	if ( empty( $post ) )
+function get_the_post_format_chat( $post_id = 0 ) {
+	if ( ! $post = get_post( $post_id ) )
 		return array();
 
 	$data = get_content_chat( get_paged_content( $post->post_content ) );
@@ -791,8 +789,8 @@ function get_content_url( &$content, $remove = false ) {
 
 		return $trimmed;
 	// the content is HTML so we grab the first href
-	} elseif ( preg_match( '/<a\s[^>]*?href=[\'"](.+?)[\'"]/is', $content, $matches ) ) {
-		return esc_url_raw( $matches[1] );
+	} elseif ( preg_match( '/<a\s[^>]*?href=([\'"])(.+?)\1/is', $content, $matches ) ) {
+		return esc_url_raw( $matches[2] );
 	}
 
 	$lines = explode( "\n", $trimmed );
@@ -814,12 +812,11 @@ function get_content_url( &$content, $remove = false ) {
  *
  * @since 3.6.0
  *
- * @param int $id (optional) The post ID.
+ * @param int $post_id (optional) The post ID.
  * @return string A URL, if found.
  */
-function get_the_post_format_url( $id = 0 ) {
-	$post = empty( $id ) ? get_post() : get_post( $id );
-	if ( empty( $post ) )
+function get_the_post_format_url( $post_id = 0 ) {
+	if ( ! $post = get_post( $post_id ) )
 		return '';
 
 	$format = get_post_format( $post->ID );
@@ -877,7 +874,7 @@ function get_the_remaining_content( $more_link_text = null, $strip_teaser = fals
 	$post = get_post();
 
 	if ( null === $more_link_text )
-		$more_link_text = __( '(more...)' );
+		$more_link_text = __( '(more&hellip;)' );
 
 	$output = '';
 	$has_teaser = false;
@@ -979,10 +976,14 @@ function _post_formats_generate_title( $content, $post_format = '' ) {
 }
 
 /**
- * Runs during save_post, fixes empty titles for asides and statuses.
+ * Fixes empty titles for aside and status formats.
+ *
+ * Passes a generated post title to the 'wp_insert_post_data' filter.
  *
  * @since 3.6.0
  * @access private
+ *
+ * @uses _post_formats_generate_title()
  */
 function _post_formats_fix_empty_title( $data, $postarr ) {
 	if ( 'auto-draft' == $data['post_status'] || ! post_type_supports( $data['post_type'], 'post-formats' ) )

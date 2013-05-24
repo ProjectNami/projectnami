@@ -1074,7 +1074,7 @@ function get_post_types( $args = array(), $output = 'names', $operator = 'and' )
  *     * While the default settings of exclude_from_search, publicly_queryable, show_ui, and show_in_nav_menus are
  *       inherited from public, each does not rely on this relationship and controls a very specific intention.
  * - exclude_from_search - Whether to exclude posts with this post type from front end search results.
- *     * If not set, the the opposite of public's current value is used.
+ *     * If not set, the opposite of public's current value is used.
  * - publicly_queryable - Whether queries can be performed on the front end for the post type as part of parse_request().
  *     * ?post_type={post_type_key}
  *     * ?{post_type_key}={single_post_slug}
@@ -3348,7 +3348,7 @@ function trackback_url_list($tb_list, $post_id) {
 		$excerpt = strip_tags($post_excerpt ? $post_excerpt : $post_content);
 
 		if (strlen($excerpt) > 255) {
-			$excerpt = substr($excerpt,0,252) . '...';
+			$excerpt = substr($excerpt,0,252) . '&hellip;';
 		}
 
 		$trackback_urls = explode(',', $tb_list);
@@ -3694,15 +3694,15 @@ function get_pages($args = '') {
 
 	$join = '';
 	$where = "$exclusions $inclusions ";
-	if ( ! empty( $meta_key ) || ! empty( $meta_value ) ) {
+	if ( '' !== $meta_key || '' !== $meta_value ) {
 		$join = " LEFT JOIN $wpdb->postmeta ON ( $wpdb->posts.ID = $wpdb->postmeta.post_id )";
 
 		// meta_key and meta_value might be slashed
 		$meta_key = wp_unslash($meta_key);
 		$meta_value = wp_unslash($meta_value);
-		if ( ! empty( $meta_key ) )
+		if ( '' !== $meta_key )
 			$where .= $wpdb->prepare(" AND $wpdb->postmeta.meta_key = %s", $meta_key);
-		if ( ! empty( $meta_value ) )
+		if ( '' !== $meta_value )
 			$where .= $wpdb->prepare(" AND $wpdb->postmeta.meta_value = %s", $meta_value);
 
 	}

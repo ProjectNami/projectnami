@@ -223,7 +223,7 @@ function url_shorten( $url ) {
 	$short_url = str_replace( array( 'http://', 'www.' ), '', $url );
 	$short_url = untrailingslashit( $short_url );
 	if ( strlen( $short_url ) > 35 )
-		$short_url = substr( $short_url, 0, 32 ) . '...';
+		$short_url = substr( $short_url, 0, 32 ) . '&hellip;';
 	return $short_url;
 }
 
@@ -621,6 +621,17 @@ function wp_refresh_post_lock( $response, $data, $screen_id ) {
 		} else {
 			if ( $new_lock = wp_set_post_lock( $post_id ) )
 				$send['new_lock'] = implode( ':', $new_lock );
+		}
+
+		if ( ! empty( $received['post_nonce'] ) && 2 === wp_verify_nonce( $received['post_nonce'], 'update-post_' . $post_id ) ) {
+			$send['update_nonces'] = array(
+				'replace-autosavenonce' => wp_create_nonce('autosave'),
+				'replace-getpermalinknonce' => wp_create_nonce('getpermalink'),
+				'replace-samplepermalinknonce' => wp_create_nonce('samplepermalink'),
+				'replace-closedpostboxesnonce' => wp_create_nonce('closedpostboxes'),
+				'replace-_ajax_linking_nonce' => wp_create_nonce( 'internal-linking' ),
+				'replace-_wpnonce' => wp_create_nonce( 'update-post_' . $post_id ),
+			);
 		}
 
 		$response['wp-refresh-post-lock'] = $send;

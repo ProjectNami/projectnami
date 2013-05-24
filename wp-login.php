@@ -102,7 +102,6 @@ function login_header($title = 'Log In', $message = '', $wp_error = '') {
 		$classes[] = 'interim-login';
 		?>
 		<style type="text/css">html{background-color: transparent;}</style>
-		<base target="_blank">
 		<?php
 
 		if ( 'success' ===  $interim_login )
@@ -267,7 +266,7 @@ function retrieve_password() {
 	$message = apply_filters('retrieve_password_message', $message, $key);
 
 	if ( $message && !wp_mail($user_email, $title, $message) )
-		wp_die( __('The e-mail could not be sent.') . "<br />\n" . __('Possible reason: your host may have disabled the mail() function...') );
+		wp_die( __('The e-mail could not be sent.') . "<br />\n" . __('Possible reason: your host may have disabled the mail() function.') );
 
 	return true;
 }
@@ -357,7 +356,7 @@ function register_new_user( $user_login, $user_email ) {
 	$user_pass = wp_generate_password( 12, false);
 	$user_id = wp_create_user( $sanitized_user_login, $user_pass, $user_email );
 	if ( ! $user_id ) {
-		$errors->add( 'registerfail', sprintf( __( '<strong>ERROR</strong>: Couldn&#8217;t register you... please contact the <a href="mailto:%s">webmaster</a> !' ), get_option( 'admin_email' ) ) );
+		$errors->add( 'registerfail', sprintf( __( '<strong>ERROR</strong>: Couldn&#8217;t register you&hellip; please contact the <a href="mailto:%s">webmaster</a> !' ), get_option( 'admin_email' ) ) );
 		return $errors;
 	}
 
@@ -665,9 +664,7 @@ default:
 	if ( isset($_POST['testcookie']) && empty($_COOKIE[TEST_COOKIE]) )
 		$errors->add('test_cookie', __("<strong>ERROR</strong>: Cookies are blocked or not supported by your browser. You must <a href='http://www.google.com/cookies.html'>enable cookies</a> to use WordPress."));
 
-	$form_target = '';
 	if ( $interim_login ) {
-		$form_target = ' target="_self"';
 		if ( ! $errors->get_error_code() )
 			$errors->add('expired', __('Session expired. Please log in again. You will not move away from this page.'), 'message');
 	} else {
@@ -699,7 +696,7 @@ default:
 	$rememberme = ! empty( $_POST['rememberme'] );
 ?>
 
-<form name="loginform" id="loginform" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>" method="post"<?php echo $form_target; ?>>
+<form name="loginform" id="loginform" action="<?php echo esc_url( site_url( 'wp-login.php', 'login_post' ) ); ?>" method="post">
 	<p>
 		<label for="user_login"><?php _e('Username') ?><br />
 		<input type="text" name="log" id="user_login" class="input" value="<?php echo esc_attr($user_login); ?>" size="20" /></label>
@@ -759,6 +756,17 @@ d.select();
 wp_attempt_focus();
 <?php } ?>
 if(typeof wpOnload=='function')wpOnload();
+<?php if ( $interim_login ) { ?>
+(function(){
+try {
+	var i, links = document.getElementsByTagName('a');
+	for ( i in links ) {
+		if ( links[i].href )
+			links[i].target = '_blank';
+	}
+} catch(e){}
+}());
+<?php } ?>
 </script>
 
 <?php

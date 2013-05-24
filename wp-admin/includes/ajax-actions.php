@@ -1038,7 +1038,7 @@ function wp_ajax_add_user( $action ) {
 function wp_ajax_autosave() {
 	define( 'DOING_AUTOSAVE', true );
 
-	$nonce_age = check_ajax_referer( 'autosave', 'autosavenonce' );
+	check_ajax_referer( 'autosave', 'autosavenonce' );
 
 	$_POST['post_category'] = explode(",", $_POST['catslist']);
 	if ( $_POST['post_type'] == 'page' || empty($_POST['post_category']) )
@@ -1090,15 +1090,6 @@ function wp_ajax_autosave() {
 			$id = $post->ID;
 	}
 
-	if ( $nonce_age == 2 ) {
-		$supplemental['replace-autosavenonce'] = wp_create_nonce('autosave');
-		$supplemental['replace-getpermalinknonce'] = wp_create_nonce('getpermalink');
-		$supplemental['replace-samplepermalinknonce'] = wp_create_nonce('samplepermalink');
-		$supplemental['replace-closedpostboxesnonce'] = wp_create_nonce('closedpostboxes');
-		$supplemental['replace-_ajax_linking_nonce'] = wp_create_nonce( 'internal-linking' );
-		$supplemental['replace-_wpnonce'] = wp_create_nonce( 'update-post_' . $post->ID );
-	}
-
 	$x = new WP_Ajax_Response( array(
 		'what' => 'autosave',
 		'id' => $id,
@@ -1136,8 +1127,6 @@ function wp_ajax_closed_postboxes() {
 }
 
 function wp_ajax_show_post_format_ui() {
-	error_log( serialize( $_REQUEST ) );
-
 	if ( empty( $_POST['post_type'] ) )
 		wp_die( 0 );
 
@@ -1351,6 +1340,12 @@ function wp_ajax_inline_save() {
 		$data['comment_status'] = 'closed';
 	if ( empty($data['ping_status']) )
 		$data['ping_status'] = 'closed';
+
+	// Hack: wp_unique_post_slug() doesn't work for drafts, so we will fake that our post is published.
+	if ( ! empty( $data['post_name'] ) && in_array( $post['post_status'], array( 'draft', 'pending' ) ) ) {
+		$post['post_status'] = 'publish';
+		$data['post_name'] = wp_unique_post_slug( $data['post_name'], $post['ID'], $post['post_status'], $post['post_type'], $post['post_parent'] );
+	}
 
 	// update the post
 	edit_post();
@@ -2119,11 +2114,6 @@ function wp_ajax_revisions_data() {
 	$single_revision_id = ! empty( $_GET['single_revision_id'] ) ? absint( $_GET['single_revision_id'] ) : 0;
 	$compare_two_mode = (bool) $post_id;
 
-	//
-	//TODO: currently code returns all possible comparisons for the indicated 'compare_to' revision
-	//however, the front end prevents users from pulling the right handle past the left or the left pass the right,
-	//so only the possible diffs need be generated
-	//
 	$all_the_revisions = array();
 	if ( ! $post_id )
 		$post_id = $compare_to;
@@ -2136,8 +2126,8 @@ function wp_ajax_revisions_data() {
 
 	$left_revision = get_post( $compare_to );
 
-	//single model fetch mode
-	//return the diff of a single revision comparison
+	// single model fetch mode
+	// return the diff of a single revision comparison
 	if ( $single_revision_id ) {
 		$right_revision = get_post( $single_revision_id );
 
@@ -2153,7 +2143,7 @@ function wp_ajax_revisions_data() {
 
 		$lines_added = $lines_deleted = 0;
 		$content = '';
-		//compare from left to right, passed from application
+		// compare from left to right, passed from application
 		foreach ( _wp_post_revision_fields() as $field => $field_value ) {
 			$left_content = apply_filters( "_wp_post_revision_field_$field", $left_revision->$field, $field, $left_revision, 'left' );
 			$right_content = apply_filters( "_wp_post_revision_field_$field", $right_revision->$field, $field, $right_revision, 'right' );
@@ -2182,18 +2172,18 @@ function wp_ajax_revisions_data() {
 		$content = '' == $content ? __( 'No difference' ) : $content;
 
 		$all_the_revisions = array (
-			'diff'          => $content,
+			'diff'         => $content,
 			'linesDeleted' => $lines_deleted,
 			'linesAdded'   => $lines_added
 		);
 
 		echo json_encode( $all_the_revisions );
 		exit();
-	} //end single model fetch
+	} // end single model fetch
 
 	$count = -1;
 
-	//reverse the list to start with oldes revision
+	// reverse the list to start with oldest revision
 	$revisions = array_reverse( $revisions );
 
 	$previous_revision_id = 0;
@@ -2208,14 +2198,28 @@ function wp_ajax_revisions_data() {
 		$revision_from_date_author = '';
 		$is_current_revision = false;
 		$count++;
-		// return blank data for diffs to the left of the left handle (for right handel model)
-		// or to the right of the right handle (for left handel model)
-		if ( ( 0 != $left_handle_at && $count < $left_handle_at ) ||
-			 ( 0 != $right_handle_at && $count > ( $right_handle_at - 2 ) ) ) {
-			$all_the_revisions[] = array (
-				'ID' => $revision->ID,
-			);
-			continue;
+
+		/**
+		* return blank data for diffs to the left of the left handle (for right handel model)
+		* or to the right of the right handle (for left handel model)
+		* and visa versa in RTL mode
+		*/
+		if( ! is_rtl() ) {
+			if ( ( ( 0 != $left_handle_at && $count < $left_handle_at ) ||
+				 ( 0 != $right_handle_at && $count > ( $right_handle_at - 2 ) ) ) ) {
+				$all_the_revisions[] = array (
+					'ID' => $revision->ID,
+				);
+				continue;
+			}
+		} else { // is_rtl
+			if ( ( 0 != $left_handle_at && $count > ( $left_handle_at - 1 ) ||
+				 ( 0 != $left_handle_at && $count < $right_handle_at ) ) ) {
+				$all_the_revisions[] = array (
+					'ID' => $revision->ID,
+				);
+				continue;
+			}
 		}
 
 		if ( $compare_two_mode ) {
@@ -2306,6 +2310,10 @@ function wp_ajax_revisions_data() {
 		$previous_revision_id = $revision->ID;
 
 	endforeach;
+
+	// in RTL + single handle mode, reverse the revision direction
+	if ( is_rtl() && $compare_two_mode )
+		$all_the_revisions = array_reverse( $all_the_revisions );
 
 	echo json_encode( $all_the_revisions );
 	exit();

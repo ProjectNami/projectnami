@@ -79,7 +79,7 @@ class Walker_Nav_Menu_Edit extends Walker_Nav_Menu {
 			$title = sprintf( __('%s (Pending)'), $item->title );
 		}
 
-		$title = empty( $item->label ) ? $title : $item->label;
+		$title = ( ! isset( $item->label ) || '' == $item->label ) ? $title : $item->label;
 
 		$submenu_text = '';
 		if ( 0 == $depth )
@@ -515,10 +515,7 @@ function wp_nav_menu_locations_meta_box() {
 					<option value="0"></option>
 					<?php foreach ( $menus as $menu ) : ?>
 					<option<?php selected( isset( $menu_locations[ $location ] ) && $menu_locations[ $location ] == $menu->term_id ); ?>
-						value="<?php echo $menu->term_id; ?>"><?php
-						$truncated_name = wp_html_excerpt( $menu->name, 40 );
-						echo $truncated_name == $menu->name ? $menu->name : trim( $truncated_name ) . '&hellip;';
-					?></option>
+						value="<?php echo $menu->term_id; ?>"><?php echo wp_html_excerpt( $menu->name, 40, '&hellip;' ); ?></option>
 					<?php endforeach; ?>
 				</select>
 			</label>
@@ -1238,7 +1235,7 @@ function wp_nav_menu_update_menu_items ( $nav_menu_selected_id, $nav_menu_select
 		foreach( (array) $_POST['menu-item-db-id'] as $_key => $k ) {
 
 			// Menu item title can't be blank
-			if ( empty( $_POST['menu-item-title'][$_key] ) )
+			if ( ! isset( $_POST['menu-item-title'][ $_key ] ) || '' == $_POST['menu-item-title'][ $_key ] )
 				continue;
 
 			$args = array();
