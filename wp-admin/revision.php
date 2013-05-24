@@ -78,10 +78,6 @@ else
 
 wp_enqueue_script( 'revisions' );
 
-$strings = array(
-	'diffFromTitle' => _x( 'From: %s', 'revision from title'  ),
-	'diffToTitle'   => _x( 'To: %s', 'revision to title' )
-);
 
 $settings = array(
 	'post_id'     => $post->ID,
@@ -89,8 +85,28 @@ $settings = array(
 	'revision_id' => $revision_id
 );
 
-$strings['settings'] = $settings;
-wp_localize_script( 'revisions', 'wpRevisionsL10n', $strings );
+wp_localize_script( 'revisions', 'wpRevisionsSettings', $settings );
+
+/* Revisions Help Tab */
+
+$revisions_overview  = '<p>' . __( 'This screen is used for managing your content revisions.' ) . '</p>';
+$revisions_overview .= '<p>' . __( 'Revisions are saved copies of your post or page, which are periodically created as you update your content. The red text on the left shows the content that was removed. The green text on the right shows the content that was added.' ) . '</p>';
+$revisions_overview .= '<p>' . __( 'From this screen you can review, compare, and restore revisions:' ) . '</p>';
+$revisions_overview .= '<ul><li>' . __( 'To navigate between revisions, <strong>drag the slider arrow left or right</strong> or <strong>use the Previous or Next buttons</strong>.' ) . '</li>';
+$revisions_overview .= '<li>' . __( 'Compare two different revisions by <strong>selecting the &#8220;Compare two revisions&#8221; box</strong> to the side.' ) . '</li>';
+$revisions_overview .= '<li>' . __( 'To restore a revision, <strong>click Restore This Revision</strong>.' ) . '</li></ul>';
+
+get_current_screen()->add_help_tab( array(
+	'id'      => 'revisions-overview',
+	'title'   => __( 'Overview' ),
+	'content' => $revisions_overview
+) );
+
+$revisions_sidebar  = '<p><strong>' . __( 'For more information:' ) . '</strong></p>';
+$revisions_sidebar .= '<p>' . __( '<a href="http://codex.wordpress.org/Revision_Management" target="_blank">Revisions Management</a>' ) . '</p>';
+$revisions_sidebar .= '<p>' . __( '<a href="http://wordpress.org/support/" target="_blank">Support Forums</a>' ) . '</p>';
+
+get_current_screen()->set_help_sidebar( $revisions_sidebar );
 
 require_once( './admin-header.php' );
 
@@ -99,11 +115,11 @@ require_once( './admin-header.php' );
 <div class="wrap">
 	<?php screen_icon(); ?>
 	<div id="revision-diff-container" class="current-version right-model-loading">
-		<div id="loading-status" class="updated message">
-			<span class="spinner" ></span> <?php _e( 'Calculating revision diffs' ); ?>
-		</div>
-
 		<h2 class="long-header"><?php echo $h2; ?></h2>
+
+		<div id="loading-status" class="updated message">
+			<p><span class="spinner" ></span></p>
+		</div>
 
 		<div class="diff-slider-ticks-wrapper">
 			<div id="diff-slider-ticks"></div>
@@ -123,22 +139,22 @@ require_once( './admin-header.php' );
 		</label>
 	</div>
 
-	<div id="diff-header-from" class="diff-header">
-		<div id="diff-title-from-current-version" class="diff-title">
-			<?php printf( '<strong>%1$s</strong> %2$s.' , __( 'From:' ), __( 'the current version' ) ); ?>
+	<div id="diff-header">
+		<div id="diff-header-from" class="diff-header">
+			<div id="diff-title-from" class="diff-title">
+				<strong><?php _ex( 'From:', 'Followed by post revision info' ); ?></strong> {{{ data.titleFrom }}}
+			</div>
 		</div>
 
-		<div id="diff-title-from" class="diff-title">
-			<strong><?php _e( 'From:' ); ?></strong> {{{ data.titleFrom }}}
+		<div id="diff-header-to" class="diff-header">
+			<div id="diff-title-to" class="diff-title">
+				<strong><?php _ex( 'To:', 'Followed by post revision info' ); ?></strong> {{{ data.titleTo }}}
+			</div>
+
+			<input type="button" id="restore-revision" class="button button-primary" data-restore-link="{{{ data.restoreLink }}}" value="<?php esc_attr_e( 'Restore This Revision' )?>" />
 		</div>
 	</div>
 
-	<div id="diff-header-to" class="diff-header">
-		<div id="diff-title-to" class="diff-title">
-			<strong><?php _e( 'To:' ); ?></strong> {{{ data.titleTo }}}
-		</div>
-
-		<input type="button" id="restore-revision" class="button button-primary" data-restore-link="{{{ data.restoreLink }}}" value="<?php esc_attr_e( 'Restore This Revision' )?>" />
 	</div>
 
 	<div id="diff-table">{{{ data.diff }}}</div>
@@ -146,18 +162,20 @@ require_once( './admin-header.php' );
 
 <script id="tmpl-revision-interact" type="text/html">
 	<div id="diff-previous-revision">
-		<input class="button" type="button" id="previous" value="<?php esc_attr_e( 'Previous' ); ?>" />
+		<input class="button" type="button" id="previous" value="<?php echo esc_attr_x( 'Previous', 'Button label for a previous revision' ); ?>" />
 	</div>
 
 	<div id="diff-next-revision">
-		<input class="button" type="button" id="next" value="<?php esc_attr_e( 'Next' ); ?>" />
+		<input class="button" type="button" id="next" value="<?php echo esc_attr_x( 'Next', 'Button label for a next revision' ); ?>" />
 	</div>
 
 	<div id="diff-slider" class="wp-slider"></div>
 </script>
 
 <script id="tmpl-revision-ticks" type="text/html">
-	<div class="revision-tick completed-{{{ data.completed }}} scope-of-changes-{{{ data.scopeOfChanges }}}"></div>
+	<div class="revision-tick completed-{{{ data.completed }}} scope-of-changes-{{{ data.scopeOfChanges }}}">
+		<span class="ui-slider-tooltip ui-widget-content ui-corner-all hidden"></span>
+	</div>
 </script>
 <?php
 require_once( './admin-footer.php' );

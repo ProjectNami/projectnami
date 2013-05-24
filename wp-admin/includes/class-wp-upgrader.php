@@ -763,7 +763,7 @@ class Theme_Upgrader extends WP_Upgrader {
 		$this->run($options);
 
 		remove_filter('upgrader_source_selection', array(&$this, 'check_package') );
-		remove_filter('upgrader_post_install', array(&$this, 'check_parent_theme_filter'), 10, 3);
+		remove_filter('upgrader_post_install', array(&$this, 'check_parent_theme_filter'));
 
 		if ( ! $this->result || is_wp_error($this->result) )
 			return $this->result;
@@ -808,9 +808,9 @@ class Theme_Upgrader extends WP_Upgrader {
 
 		$this->run($options);
 
-		remove_filter('upgrader_pre_install', array(&$this, 'current_before'), 10, 2);
-		remove_filter('upgrader_post_install', array(&$this, 'current_after'), 10, 2);
-		remove_filter('upgrader_clear_destination', array(&$this, 'delete_old_theme'), 10, 4);
+		remove_filter('upgrader_pre_install', array(&$this, 'current_before'));
+		remove_filter('upgrader_post_install', array(&$this, 'current_after'));
+		remove_filter('upgrader_clear_destination', array(&$this, 'delete_old_theme'));
 
 		if ( ! $this->result || is_wp_error($this->result) )
 			return $this->result;
@@ -899,9 +899,9 @@ class Theme_Upgrader extends WP_Upgrader {
 		$this->skin->footer();
 
 		// Cleanup our hooks, in case something else does a upgrade on this connection.
-		remove_filter('upgrader_pre_install', array(&$this, 'current_before'), 10, 2);
-		remove_filter('upgrader_post_install', array(&$this, 'current_after'), 10, 2);
-		remove_filter('upgrader_clear_destination', array(&$this, 'delete_old_theme'), 10, 4);
+		remove_filter('upgrader_pre_install', array(&$this, 'current_before'));
+		remove_filter('upgrader_post_install', array(&$this, 'current_after'));
+		remove_filter('upgrader_clear_destination', array(&$this, 'delete_old_theme'));
 
 		// Force refresh of theme update information
 		wp_clean_themes_cache();
@@ -1029,9 +1029,6 @@ class Core_Upgrader extends WP_Upgrader {
 		$this->init();
 		$this->upgrade_strings();
 
-		if ( !empty($feedback) )
-			add_filter('update_feedback', $feedback);
-
 		// Is an update available?
 		if ( !isset( $current->response ) || $current->response == 'latest' )
 			return new WP_Error('up_to_date', $this->strings['up_to_date']);
@@ -1129,7 +1126,7 @@ class WP_Upgrader_Skin {
 			return;
 		$this->done_header = true;
 		echo '<div class="wrap">';
-		echo screen_icon();
+		screen_icon();
 		echo '<h2>' . $this->options['title'] . '</h2>';
 	}
 	function footer() {

@@ -29,6 +29,8 @@ $theme_field_defaults = array( 'description' => true, 'sections' => false, 'test
  * @return array
  */
 function install_themes_feature_list() {
+	_deprecated_function( __FUNCTION__, '3.1', 'get_theme_feature_list()' );
+
 	if ( !$cache = get_transient( 'wporg_theme_feature_list' ) )
 		set_transient( 'wporg_theme_feature_list', array(), 3 * HOUR_IN_SECONDS );
 
@@ -37,7 +39,7 @@ function install_themes_feature_list() {
 
 	$feature_list = themes_api( 'feature_list', array() );
 	if ( is_wp_error( $feature_list ) )
-		return $features;
+		return array();
 
 	set_transient( 'wporg_theme_feature_list', $feature_list, 3 * HOUR_IN_SECONDS );
 
@@ -153,7 +155,7 @@ add_action('install_themes_upload', 'install_themes_upload', 10, 1);
 function display_theme( $theme ) {
 	_deprecated_function( __FUNCTION__, '3.4' );
 	global $wp_list_table;
-	return $wp_list_table->single_row( $theme );
+	$wp_list_table->single_row( $theme );
 }
 
 /**

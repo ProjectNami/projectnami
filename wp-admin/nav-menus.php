@@ -379,7 +379,7 @@ $locations_screen = ( isset( $_GET['action'] ) && 'locations' == $_GET['action']
 $page_count = wp_count_posts( 'page' );
 $one_theme_location_no_menus = ( 1 == count( get_registered_nav_menus() ) && ! $add_new_screen && empty( $nav_menus ) && ! empty( $page_count->publish ) ) ? true : false;
 
-$l10n = array(
+$nav_menus_l10n = array(
 	'oneThemeLocationNoMenus' => $one_theme_location_no_menus,
 	'moveUp'       => __( 'Move up one' ),
 	'moveDown'     => __( 'Move down one' ),
@@ -397,7 +397,7 @@ $l10n = array(
 	/* translators: 1: item name, 2: item position, 3: parent item name */
 	'subMenuFocus' => __( '%1$s. Sub item number %2$d under %3$s.' ),
 );
-wp_localize_script( 'nav-menu', 'menus', $l10n );
+wp_localize_script( 'nav-menu', 'menus', $nav_menus_l10n );
 
 // Redirect to add screen if there are no menus and this users has either zero, or more than 1 theme locations
 if ( 0 == $menu_count && ! $add_new_screen && ! $one_theme_location_no_menus )
@@ -489,7 +489,7 @@ if ( ! $locations_screen ) : // Main tab
 
 	$menu_management  = '<p>' . __( 'The menu management box at the top of the screen is used to control which menu is opened in the editor below.' ) . '</p>';
 	$menu_management .= '<ul><li>' . __( 'To edit an existing menu, <strong>choose a menu from the drop down and click Select</strong>' ) . '</li>';
-	$menu_management .= '<li>' . __( 'If you haven&#8217;t yet created any menus, <strong>click the &#8217;create a new menu&#8217; link or the Add New button</strong> to get started' ) . '</li></ul>';
+	$menu_management .= '<li>' . __( 'If you haven&#8217;t yet created any menus, <strong>click the &#8217;create a new menu&#8217; link</strong> to get started' ) . '</li></ul>';
 	$menu_management .= '<p>' . __( 'You can assign theme locations to individual menus by <strong>selecting the desired settings</strong> at the bottom of the menu editor. To assign menus to all theme locations at once, <strong>visit the Manage Locations tab</strong> at the top of the screen.' ) . '</p>';
 
 	get_current_screen()->add_help_tab( array(
@@ -687,7 +687,7 @@ require_once( './admin-header.php' );
 						<div id="post-body-content">
 							<?php if ( ! $add_new_screen ) : ?>
 							<h3><?php _e( 'Menu Structure' ); ?></h3>
-							<?php $starter_copy = ( $one_theme_location_no_menus ) ? __( 'Edit your default menu by adding or removing items. Drag each item into the order you prefer. Click Create Menu to save your changes.' ) : __( 'Drag each item into the order you prefer. Click an item to reveal additional configuration options.' ); ?>
+							<?php $starter_copy = ( $one_theme_location_no_menus ) ? __( 'Edit your default menu by adding or removing items. Drag each item into the order you prefer. Click Create Menu to save your changes.' ) : __( 'Drag each item into the order you prefer. Click the arrow on the right of the item to reveal additional configuration options.' ); ?>
 							<div class="drag-instructions post-body-plain" <?php if ( isset( $menu_items ) && 0 == count( $menu_items ) ) { ?>style="display: none;"<?php } ?>>
 								<p><?php echo $starter_copy; ?></p>
 							</div>

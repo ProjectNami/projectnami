@@ -1415,7 +1415,7 @@ function wp_ajax_inline_save_tax() {
 		$parent = $parent_tag->parent;
 		$level++;
 	}
-	echo $wp_list_table->single_row( $tag, $level );
+	$wp_list_table->single_row( $tag, $level );
 	wp_die();
 }
 
@@ -2017,7 +2017,7 @@ function wp_ajax_send_attachment_to_editor() {
 		$html = '<a href="' . esc_url( $url ) . '"' . $rel . '>' . $html . '</a>';
 	}
 
-	remove_filter( 'media_send_to_editor', 'image_media_send_to_editor', 10, 3 );
+	remove_filter( 'media_send_to_editor', 'image_media_send_to_editor' );
 
 	if ( 'image' === substr( $post->post_mime_type, 0, 5 ) ) {
 		$align = isset( $attachment['align'] ) ? $attachment['align'] : 'none';
@@ -2158,7 +2158,7 @@ function wp_ajax_revisions_data() {
 			$left_content = apply_filters( "_wp_post_revision_field_$field", $left_revision->$field, $field, $left_revision, 'left' );
 			$right_content = apply_filters( "_wp_post_revision_field_$field", $right_revision->$field, $field, $right_revision, 'right' );
 
-			add_filter( "_wp_post_revision_field_$field", 'wp_kses_post' );
+			add_filter( "_wp_post_revision_field_$field", 'htmlspecialchars' );
 
 			$args = array();
 
@@ -2245,7 +2245,9 @@ function wp_ajax_revisions_data() {
 			$date
 		);
 
+		/* translators: 1: date */
 		$autosavef = _x( '%1$s [Autosave]', 'post revision title extra' );
+		/* translators: 1: date */
 		$currentf  = _x( '%1$s [Current Revision]', 'post revision title extra' );
 
 		if ( ! $post = get_post( $post_id ) )

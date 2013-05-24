@@ -580,7 +580,6 @@ function get_content_chat( &$content, $remove = false ) {
 				continue;
 		}
 
-		$matches = array();
 		$matched = preg_match( $newline_regex, $line, $matches );
 		if ( ! $matched )
 			continue;
@@ -709,7 +708,6 @@ function get_content_quote( &$content, $remove = false, $replace = '' ) {
 	if ( empty( $content ) )
 		return '';
 
-	$matches = array();
 	if ( ! preg_match( '/<blockquote[^>]*>(.+?)<\/blockquote>/is', $content, $matches ) ) {
 		$quote = $content;
 		if ( $remove || ! empty( $replace ) )
@@ -729,6 +727,7 @@ function get_content_quote( &$content, $remove = false, $replace = '' ) {
  * @since 3.6.0
  *
  * @uses get_content_quote()
+ * @uses apply_filters() Calls 'quote_source_format' filter to allow changing the typographical mark added to the quote source (em-dash prefix, by default)
  *
  * @param object $post (optional) A reference to the post object, falls back to get_post().
  * @return string The quote html.
@@ -751,6 +750,7 @@ function get_the_post_format_quote( &$post = null ) {
 
 	if ( ! empty( $meta['quote_source_name'] ) ) {
 		$source = ( empty( $meta['quote_source_url'] ) ) ? $meta['quote_source_name'] : sprintf( '<a href="%s">%s</a>', esc_url( $meta['quote_source_url'] ), $meta['quote_source_name'] );
+		$source = sprintf( apply_filters( 'quote_source_format', __( '&#8212;&#160;%s' ) ), $source );
 		$quote .= sprintf( '<figcaption class="quote-caption">%s</figcaption>', $source );
 	}
 
@@ -782,8 +782,6 @@ function the_post_format_quote() {
 function get_content_url( &$content, $remove = false ) {
 	if ( empty( $content ) )
 		return '';
-
-	$matches = array();
 
 	// the content is a URL
 	$trimmed = trim( $content );
@@ -883,7 +881,6 @@ function get_the_remaining_content( $more_link_text = null, $strip_teaser = fals
 
 	$output = '';
 	$has_teaser = false;
-	$matches = array();
 
 	// If post password required and it doesn't match the cookie.
 	if ( post_password_required() )
@@ -954,8 +951,8 @@ function the_remaining_content( $more_link_text = null, $strip_teaser = false ) 
  * @since 3.6.0
  * @access private
  */
-function _post_formats_title( $title, $post_id ) {
-	if ( is_admin() || is_feed() || ! in_array( get_post_format( $post_id ), array( 'aside', 'status' ) ) )
+function _post_formats_title( $title, $post_id = 0 ) {
+	if ( ! $post_id || is_admin() || is_feed() || ! in_array( get_post_format( $post_id ), array( 'aside', 'status' ) ) )
 		return $title;
 
 	// Return an empty string only if the title is auto-generated.
@@ -992,6 +989,7 @@ function _post_formats_fix_empty_title( $data, $postarr ) {
 		return $data;
 
 	$post_id = ( isset( $postarr['ID'] ) ) ? absint( $postarr['ID'] ) : 0;
+	$post_format = '';
 
 	if ( $post_id )
 		$post_format = get_post_format( $post_id );

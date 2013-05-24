@@ -185,7 +185,6 @@ function get_the_content( $more_link_text = null, $strip_teaser = false ) {
 
 	$output = '';
 	$has_teaser = false;
-	$matches = array();
 
 	// If post password required and it doesn't match the cookie.
 	if ( post_password_required() )
@@ -1276,13 +1275,13 @@ function is_page_template( $template = '' ) {
  *
  * @since 3.4.0
  *
- * @param int $post_id The page ID to check. Defaults to the current post, when used in the loop.
+ * @param int $post_id Optional. The page ID to check. Defaults to the current post, when used in the loop.
  * @return string|bool Page template filename. Returns an empty string when the default page template
  * 	is in use. Returns false if the post is not a page.
  */
 function get_page_template_slug( $post_id = null ) {
 	$post = get_post( $post_id );
-	if ( 'page' != $post->post_type )
+	if ( ! $post || 'page' != $post->post_type )
 		return false;
 	$template = get_post_meta( $post->ID, '_wp_page_template', true );
 	if ( ! $template || 'default' == $template )
@@ -1313,9 +1312,9 @@ function wp_post_revision_title( $revision, $link = true ) {
 	/* translators: revision date format, see http://php.net/date */
 	$datef = _x( 'j F, Y @ G:i', 'revision date format');
 	/* translators: 1: date */
-	$autosavef = __( '%1$s [Autosave]' );
+	$autosavef = _x( '%1$s [Autosave]', 'post revision title extra' );
 	/* translators: 1: date */
-	$currentf  = __( '%1$s [Current Revision]' );
+	$currentf  = _x( '%1$s [Current Revision]', 'post revision title extra' );
 
 	$date = date_i18n( $datef, strtotime( $revision->post_modified ) );
 	if ( $link && current_user_can( 'edit_post', $revision->ID ) && $link = get_edit_post_link( $revision->ID ) )
@@ -1385,131 +1384,71 @@ function wp_post_revision_title_expanded( $revision, $link = true ) {
  * Can output either a UL with edit links or a TABLE with diff interface, and
  * restore action links.
  *
- * Second argument controls parameters:
- *   (bool)   parent : include the parent (the "Current Revision") in the list.
- *                     Deprecated (ignored), since 3.6 the revisions always include
- *                     a copy of the current post.
- *   (string) format : 'list' or 'form-table'. 'list' outputs UL, 'form-table'
- *                     outputs TABLE with UI.
- *   (int)    right  : what revision is currently being viewed - used in
- *                     form-table format.
- *   (int)    left   : what revision is currently being diffed against right -
- *                     used in form-table format.
- *
  * @package WordPress
  * @subpackage Post_Revisions
  * @since 2.6.0
  *
  * @uses wp_get_post_revisions()
- * @uses wp_post_revision_title()
+ * @uses wp_post_revision_title_expanded()
  * @uses get_edit_post_link()
  * @uses get_the_author_meta()
  *
- * @todo split into two functions (list, form-table) ?
- *
  * @param int|object $post_id Post ID or post object.
- * @param string|array $args See description {@link wp_parse_args()}.
+ * @param string $type 'all' (default), 'revision' or 'autosave'
  * @return null
  */
-function wp_list_post_revisions( $post_id = 0, $args = null ) {
-	if ( !$post = get_post( $post_id ) )
+function wp_list_post_revisions( $post_id = 0, $type = 'all' ) {
+	if ( ! $post = get_post( $post_id ) )
 		return;
 
-	$defaults = array( 'right' => false, 'left' => false, 'format' => 'list', 'type' => 'all' );
-	extract( wp_parse_args( $args, $defaults ), EXTR_SKIP );
+	// $args array with (parent, format, right, left, type) deprecated since 3.6
+	if ( is_array( $type ) ) {
+		$type = ! empty( $type['type'] ) ? $type['type']  : $type;
+		_deprecated_argument( __FUNCTION__, '3.6' );
+	}
 
-	if ( !$revisions = wp_get_post_revisions( $post->ID ) )
+	if ( ! $revisions = wp_get_post_revisions( $post->ID ) )
 		return;
 
-	/* translators: post revision: 1: when, 2: author name */
-	$titlef = _x( '%1$s', 'post revision' );
-
-	$rows = $right_checked = '';
-	$class = false;
-	$can_edit_post = current_user_can( 'edit_post', $post->ID );
+	$rows = '';
 	foreach ( $revisions as $revision ) {
-		if ( !current_user_can( 'read_post', $revision->ID ) )
+		if ( ! current_user_can( 'read_post', $revision->ID ) )
 			continue;
 
 		$is_autosave = wp_is_post_autosave( $revision );
 		if ( ( 'revision' === $type && $is_autosave ) || ( 'autosave' === $type && ! $is_autosave ) )
 			continue;
 
-		$date = wp_post_revision_title_expanded( $revision );
-
-		$title = sprintf( $titlef, $date );
-		$rows .= "\t<li>$title</li>\n";
-
+		$rows .= "\t<li>" . wp_post_revision_title_expanded( $revision ) . "</li>\n";
 	}
 
-	if ( 'form-table' == $format ) : ?>
+	echo "<ul class='post-revisions'>\n";
+	echo $rows;
 
-<form action="revision.php" method="get">
-
-<div class="tablenav">
-	<div class="alignleft">
-		<input type="submit" class="button-secondary" value="<?php esc_attr_e( 'Compare Revisions' ); ?>" />
-		<input type="hidden" name="action" value="diff" />
-		<input type="hidden" name="post_type" value="<?php echo esc_attr($post->post_type); ?>" />
-	</div>
-</div>
-
-<br class="clear" />
-
-<table class="widefat post-revisions" cellspacing="0" id="post-revisions">
-	<col />
-	<col />
-	<col style="width: 33%" />
-	<col style="width: 33%" />
-	<col style="width: 33%" />
-<thead>
-<tr>
-	<th scope="col"><?php /* translators: column name in revisions */ _ex( 'Old', 'revisions column name' ); ?></th>
-	<th scope="col"><?php /* translators: column name in revisions */ _ex( 'New', 'revisions column name' ); ?></th>
-	<th scope="col"><?php /* translators: column name in revisions */ _ex( 'Date Created', 'revisions column name' ); ?></th>
-	<th scope="col"><?php _e( 'Author' ); ?></th>
-	<th scope="col" class="action-links"><?php _e( 'Actions' ); ?></th>
-</tr>
-</thead>
-<tbody>
-
-<?php echo $rows; ?>
-
-</tbody>
-</table>
-
-</form>
-
-<?php
-	else :
-		echo "<ul class='post-revisions'>\n";
-		echo $rows;
-
-		//
-		// if the post was previously restored from a revision
-		// show the restore event details
-		//
-		if ( $restored_from_meta = get_post_meta( $post->ID, '_post_restored_from', true ) ) {
-			$author = get_the_author_meta( 'display_name', $restored_from_meta[ 'restored_by_user' ] );
-			/* translators: revision date format, see http://php.net/date */
-			$datef = _x( 'j F, Y @ G:i:s', 'revision date format');
-			$date = date_i18n( $datef, strtotime( $restored_from_meta[ 'restored_time' ] ) );
-			$timesince = human_time_diff( $restored_from_meta[ 'restored_time' ], current_time( 'timestamp' ) ) ;
-			?>
-			<hr />
-			<div id="revisions-meta-restored">
-				<?php
-				/* translators: restored revision details: 1: revision ID, 2: time ago, 3: author name, 4: date */
-				printf( _x( 'Previously restored from revision ID %1$d, %2$s ago by %3$s (%4$s)', 'restored revision details' ),
-				$restored_from_meta[ 'restored_revision_id'],
-				$timesince,
-				$author,
-				$date );
-				?>
-			</div>
+	// if the post was previously restored from a revision
+	// show the restore event details
+	if ( $restored_from_meta = get_post_meta( $post->ID, '_post_restored_from', true ) ) {
+		$author = get_user_by( 'id', $restored_from_meta[ 'restored_by_user' ] );
+		/* translators: revision date format, see http://php.net/date */
+		$datef = _x( 'j F, Y @ G:i:s', 'revision date format');
+		$date = date_i18n( $datef, strtotime( $restored_from_meta[ 'restored_time' ] ) );
+		$time_diff = human_time_diff( $restored_from_meta[ 'restored_time' ] ) ;
+		?>
+		<hr />
+		<div id="revisions-meta-restored">
 			<?php
+			printf(
+				/* translators: restored revision details: 1: gravatar image, 2: author name, 3: time ago, 4: date */
+				__( 'Previously restored by %1$s %2$s, %3$s ago (%4$s)' ),
+				get_avatar( $author->ID, 24 ),
+				$author->display_name,
+				$time_diff,
+				$date
+			);
+			?>
+		</div>
+		<?php
 		echo "</ul>";
-		}
+	}
 
-	endif;
 }
