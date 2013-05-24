@@ -3938,6 +3938,10 @@ body .ui-tooltip {
 	padding-bottom: 0;
 }
 
+.no-ui {
+	display: none;
+}
+
 .post-formats-fields {
 	display: none;
 	margin-bottom: 15px;
@@ -3995,7 +3999,6 @@ body .ui-tooltip {
 	margin-bottom: 20px;
 }
 
-.wp-format-aside #titlewrap,
 .wp-format-status #titlewrap,
 .wp-format-aside .wp-media-buttons .insert-media,
 .wp-format-status .wp-media-buttons .insert-media {

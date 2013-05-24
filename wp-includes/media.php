@@ -1365,9 +1365,7 @@ function wp_embed_handler_googlevideo( $matches, $attr, $url, $rawattr ) {
  * @return string The embed HTML.
  */
 function wp_embed_handler_audio( $matches, $attr, $url, $rawattr ) {
-	$audio = $url;
-	if ( shortcode_exists( 'audio' ) )
-		$audio = do_shortcode( '[audio src="' . $url . '" /]' );
+	$audio = sprintf( '[audio src="%s" /]', esc_url( $url ) );
 	return apply_filters( 'wp_embed_handler_audio', $audio, $attr, $url, $rawattr );
 }
 
@@ -1384,23 +1382,21 @@ function wp_embed_handler_audio( $matches, $attr, $url, $rawattr ) {
  */
 function wp_embed_handler_video( $matches, $attr, $url, $rawattr ) {
 	$dimensions = '';
-	$video = $url;
-	if ( shortcode_exists( 'video' ) ) {
-		if ( ! empty( $rawattr['width'] ) && ! empty( $rawattr['height'] ) ) {
-			$dimensions .= sprintf( 'width="%d" ', (int) $rawattr['width'] );
-			$dimensions .= sprintf( 'height="%d" ', (int) $rawattr['height'] );
-		} elseif ( strstr( $url, home_url() ) ) {
-			$id = attachment_url_to_postid( $url );
-			if ( ! empty( $id ) ) {
-				$meta = wp_get_attachment_metadata( $id );
-				if ( ! empty( $meta['width'] ) )
-					$dimensions .= sprintf( 'width="%d" ', (int) $meta['width'] );
-				if ( ! empty( $meta['height'] ) )
-					$dimensions .= sprintf( 'height="%d" ', (int) $meta['height'] );
-			}
+	if ( ! empty( $rawattr['width'] ) && ! empty( $rawattr['height'] ) ) {
+		$dimensions .= sprintf( 'width="%d" ', (int) $rawattr['width'] );
+		$dimensions .= sprintf( 'height="%d" ', (int) $rawattr['height'] );
+	} elseif ( strstr( $url, home_url() ) ) {
+		$id = attachment_url_to_postid( $url );
+		if ( ! empty( $id ) ) {
+			$meta = wp_get_attachment_metadata( $id );
+			if ( ! empty( $meta['width'] ) )
+				$dimensions .= sprintf( 'width="%d" ', (int) $meta['width'] );
+			if ( ! empty( $meta['height'] ) )
+				$dimensions .= sprintf( 'height="%d" ', (int) $meta['height'] );
 		}
-		$video = do_shortcode( '[video ' . $dimensions . 'src="' . $url . '" /]' );
 	}
+
+	$video = sprintf( '[video %s src="%s" /]', $dimensions, esc_url( $url ) );
 	return apply_filters( 'wp_embed_handler_video', $video, $attr, $url, $rawattr );
 }
 
@@ -2067,8 +2063,13 @@ function get_the_post_format_media( $type, &$post = null, $limit = 0 ) {
 	if ( empty( $post ) )
 		return '';
 
-	if ( isset( $post->format_content ) )
-		return $post->format_content;
+	$cache_key = "media:{$type}";
+
+	if ( isset( $post->format_content[ $cache_key ] ) )
+		return $post->format_content[ $cache_key ];
+
+	if ( ! isset( $post->format_content ) )
+		$post->format_content = array();
 
 	$count = 1;
 
@@ -2082,21 +2083,21 @@ function get_the_post_format_media( $type, &$post = null, $limit = 0 ) {
 			} elseif ( preg_match( '/' . get_shortcode_regex() . '/s', $value ) ) {
 				$shortcode = $value;
 			} elseif ( preg_match( '#<[^>]+>#', $value ) ) {
-				$post->format_content = $value;
-				return $post->format_content;
+				$post->format_content[ $cache_key ] = $value;
+				return $post->format_content[ $cache_key ];
 			} elseif ( 0 === strpos( $value, 'http' ) ) {
 				$post->split_content = str_replace( $value, '', $post->post_content, $count );
 				if ( strstr( $value, home_url() ) ) {
 					$shortcode = sprintf( '[%s src="%s"]', $type, $value );
 				} else {
-					$post->format_content = $wp_embed->autoembed( $value );
-					return $post->format_content;
+					$post->format_content[ $cache_key ] = $wp_embed->autoembed( $value );
+					return $post->format_content[ $cache_key ];
 				}
 			}
 
 			if ( ! empty( $shortcode ) ) {
-				$post->format_content = do_shortcode( $shortcode );
-				return $post->format_content;
+				$post->format_content[ $cache_key ] = do_shortcode( $shortcode );
+				return $post->format_content[ $cache_key ];
 			}
 		}
 	}
@@ -2108,8 +2109,8 @@ function get_the_post_format_media( $type, &$post = null, $limit = 0 ) {
 	if ( ! empty( $htmls ) ) {
 		$html = reset( $htmls );
 		$post->split_content = $content;
-		$post->format_content = $html;
-		return $post->format_content;
+		$post->format_content[ $cache_key ] = $html;
+		return $post->format_content[ $cache_key ];
 	}
 
 	$embeds = get_embedded_media( $type, $content, true, 1 );
@@ -2118,14 +2119,14 @@ function get_the_post_format_media( $type, &$post = null, $limit = 0 ) {
 		$post->split_content = $content;
 		if ( 0 === strpos( $embed, 'http' ) ) {
 			if ( strstr( $embed, home_url() ) ) {
-				$post->format_content = do_shortcode( sprintf( '[%s src="%s"]', $type, $embed ) );
+				$post->format_content[ $cache_key ] = do_shortcode( sprintf( '[%s src="%s"]', $type, $embed ) );
 			} else {
-				$post->format_content = $wp_embed->autoembed( $embed );
+				$post->format_content[ $cache_key ] = $wp_embed->autoembed( $embed );
 			}
 		} else {
-			$post->format_content = $embed;
+			$post->format_content[ $cache_key ] = $embed;
 		}
-		return $post->format_content;
+		return $post->format_content[ $cache_key ];
 	}
 
 	$medias = call_user_func( 'get_attached_' . $type, $post->ID );
@@ -2133,8 +2134,8 @@ function get_the_post_format_media( $type, &$post = null, $limit = 0 ) {
 		$media = reset( $medias );
 		$url = wp_get_attachment_url( $media->ID );
 		$shortcode = sprintf( '[%s src="%s"]', $type, $url );
-		$post->format_content = do_shortcode( $shortcode );
-		return $post->format_content;
+		$post->format_content[ $cache_key ] = do_shortcode( $shortcode );
+		return $post->format_content[ $cache_key ];
 	}
 
 	return '';
@@ -2412,8 +2413,13 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 	if ( empty( $post ) )
 		return '';
 
-	if ( isset( $post->format_content ) )
-		return $post->format_content;
+	$cache_key = "image:{$attached_size}";
+
+	if ( isset( $post->format_content[ $cache_key ] ) )
+		return $post->format_content[ $cache_key ];
+
+	if ( ! isset( $post->format_content ) )
+		$post->format_content = array();
 
 	$matched = false;
 	$meta = get_post_format_meta( $post->ID );
@@ -2428,7 +2434,7 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 			// wrap image in <a>
 			if ( ! empty( $meta['url'] ) )
 				$image = sprint( $link_fmt, $image );
-		} elseif ( has_shortcode( $meta['image'], 'gallery' ) ) {
+		} elseif ( has_shortcode( $meta['image'], 'caption' ) ) {
 			// wrap <img> in <a>
 			if ( ! empty( $meta['url'] ) && false === strpos( $meta['image'], '<a ' ) ) {
 				$meta['image'] = preg_replace(
@@ -2447,10 +2453,10 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 		}
 
 		if ( false === strpos( $image, '<a ' ) )
-			$post->format_content = sprintf( $link_fmt, $image );
+			$post->format_content[ $cache_key ] = sprintf( $link_fmt, $image );
 		else
-			$post->format_content = $image;
-		return $post->format_content;
+			$post->format_content[ $cache_key ] = $image;
+		return $post->format_content[ $cache_key ];
 	}
 
 	$medias = get_attached_images( $post->ID );
@@ -2504,13 +2510,13 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 		$post->split_content = $content;
 		if ( ! $matched ) {
 			$image = wp_get_attachment_image( $media->ID, $attached_size );
-			$post->format_content = sprintf( $link_fmt, $image );
+			$post->format_content[ $cache_key ] = sprintf( $link_fmt, $image );
 		} else {
-			$post->format_content = $matched;
+			$post->format_content[ $cache_key ] = $matched;
 			if ( ! empty( $meta['url'] ) && false === stripos( $matched, '<a ' ) )
-				$post->format_content = sprintf( $link_fmt, $matched );
+				$post->format_content[ $cache_key ] = sprintf( $link_fmt, $matched );
 		}
-		return $post->format_content;
+		return $post->format_content[ $cache_key ];
 	}
 
 	$content = $post->post_content;
@@ -2518,8 +2524,8 @@ function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
 	if ( ! empty( $htmls ) ) {
 		$html = reset( $htmls );
 		$post->split_content = $content;
-		$post->format_content = sprintf( $link_fmt, $html );
-		return $post->format_content;
+		$post->format_content[ $cache_key ] = sprintf( $link_fmt, $html );
+		return $post->format_content[ $cache_key ];
 	}
 }
 
