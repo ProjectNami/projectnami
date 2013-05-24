@@ -1777,12 +1777,12 @@ class wpdb {
 	}
 
 	/**
-	 * Determine if a database supports a particular feature
+	 * Determine if a database supports a particular feature.
 	 *
 	 * @since 2.7.0
-	 * @see   wpdb::db_version()
+	 * @see wpdb::db_version()
 	 *
-	 * @param string $db_cap the feature
+	 * @param string $db_cap The feature to check for.
 	 * @return bool
 	 */
 	function has_cap( $db_cap ) {
@@ -1790,11 +1790,11 @@ class wpdb {
 
 		switch ( strtolower( $db_cap ) ) {
 			case 'collation' :    // @since 2.5.0
-			case 'group_concat' : // @since 2.7
-			case 'subqueries' :   // @since 2.7
+			case 'group_concat' : // @since 2.7.0
+			case 'subqueries' :   // @since 2.7.0
 				return version_compare( $version, '4.1', '>=' );
 			case 'set_charset' :
-				return version_compare($version, '5.0.7', '>=');
+				return version_compare( $version, '5.0.7', '>=' );
 		};
 
 		return false;
