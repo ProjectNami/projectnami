@@ -34,10 +34,3 @@ We needed a version of WordPress powered by MSSQL in the cloud on Windows Azure.
 * Project Nami requires ***MSSQL Server 2012*** in order to function properly. Until this version was released, there wasn't really an MSSQL native method of handling the MySQL `LIMIT` when using an offset. However, `OFFSET FETCH` can now be used in conjunction with an MSSQL `ORDER BY` to achieve the equivalent of a MySQL `LIMIT` with an offset.
 
 * Due to the use of the `sqlsrv` PHP extension, Project Nami will only run on Windows, at the moment.
-
-###Project Goals:###
-* Eventually, turn back around and support MySQL, but via true database abstraction.
-* Support for PostgreSQL abstraction layer.
-* Allow the option to choose at time of install the database engine to use.
-* Rebuild core to take a much more object oriented approach. For instance, using Interfaces to define the way database abstraction should be handled.
-* Remove all backwards-compatibility code from Core. This project is not focused on supporting old theme/plugin code, but rather moving forward with clean architecture.
