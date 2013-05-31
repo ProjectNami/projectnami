@@ -1024,8 +1024,14 @@ class wpdb {
 	function print_error( $str = '' ) {
 		global $EZSQL_ERROR;
 
-		if ( !$str )
-			$str = mysql_error( $this->dbh );
+		if ( ! $str ) {
+			$errors = sqlsrv_errors();
+
+			if( ! empty( $errors ) && is_array( $errors ) ) {
+				$str = $errors[ 0 ][ 'message' ];
+				
+		}
+
 		$EZSQL_ERROR[] = array( 'query' => $this->last_query, 'error_str' => $str );
 
 		if ( $this->suppress_errors )
