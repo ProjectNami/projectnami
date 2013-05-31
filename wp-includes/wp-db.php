@@ -1257,13 +1257,6 @@ class wpdb {
 		} else {
 			$num_rows = 0;
 			while ( $row = @sqlsrv_fetch_object( $this->query_statement_resource ) ) {
-				foreach( $row as $key => $column ) {
-					if( is_object( $column ) && get_class( $column ) == 'DateTime' ) {
-						$column = $column->format( 'Y-m-d H:i:s' );
-						//wp_die( var_dump( $column ) );
-						$row->$key = $column;
-					}
-				}
 				$this->last_result[$num_rows] = $row;
 				$num_rows++;
 			}
