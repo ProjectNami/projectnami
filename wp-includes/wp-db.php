@@ -1226,7 +1226,8 @@ class wpdb {
 			//wp_die(var_dump($backtrace));
 		}		
 
-        $this->query_statement_resource = $this->result;
+		$this->query_statement_resource = $this->result;
+		
 		$this->num_queries++;
 
 		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES )
