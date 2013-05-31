@@ -1217,15 +1217,6 @@ class wpdb {
 		
 		$this->result = sqlsrv_query( $this->dbh, $query );
 
-		//$errors = sqlsrv_errors();
-		if( ! empty( $errors ) ) {
-			//wp_die(var_dump($query));
-			$backtrace = debug_backtrace();
-			var_dump($errors);
-			var_dump($query);
-			//wp_die(var_dump($backtrace));
-		}		
-
 		$this->query_statement_resource = $this->result;
 		
 		$this->num_queries++;
@@ -1234,12 +1225,15 @@ class wpdb {
 			$this->queries[] = array( $query, $this->timer_stop(), $this->get_caller() );
 
 		// If there is an error then take note of it..
-		/*
-		if ( $this->last_error = mysql_error( $this->dbh ) ) {
+		$errors = sqlsrv_errors();
+		
+		if( ! empty( $errors ) && is_array( $errors ) ) {
+			$this->last_error = $errors[ 0 ][ 'message' ];
 			$this->print_error();
+			
 			return false;
-		}
-		*/
+		}		
+
 		if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
 			$return_val = $this->result;
 		} elseif ( preg_match( '/^\s*(insert|delete|update|replace)\s/i', $query ) && $this->query_statement_resource != false ) {
