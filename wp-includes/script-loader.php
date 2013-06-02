@@ -132,8 +132,8 @@ function wp_default_scripts( &$scripts ) {
 	$scripts->add( 'cropper', '/wp-includes/js/crop/cropper.js', array('scriptaculous-dragdrop') );
 
 	// jQuery
-	$scripts->add( 'jquery', false, array( 'jquery-core', 'jquery-migrate' ), '1.10.0' );
-	$scripts->add( 'jquery-core', '/wp-includes/js/jquery/jquery.js', array(), '1.10.0' );
+	$scripts->add( 'jquery', false, array( 'jquery-core', 'jquery-migrate' ), '1.10.1' );
+	$scripts->add( 'jquery-core', '/wp-includes/js/jquery/jquery.js', array(), '1.10.1' );
 	$scripts->add( 'jquery-migrate', '/wp-includes/js/jquery/jquery-migrate.js', array(), '1.2.1' );
 
 	// full jQuery UI
@@ -414,8 +414,6 @@ function wp_default_scripts( &$scripts ) {
 			'published' => __('Published'),
 			'comma' => _x( ',', 'tag delimiter' ),
 		) );
-
-		$scripts->add( 'post-formats', "/wp-admin/js/post-formats$suffix.js", array( 'media-models', 'wp-plupload' ), false, 1 );
 
 		$scripts->add( 'link', "/wp-admin/js/link$suffix.js", array( 'wp-lists', 'postbox' ), false, 1 );
 
