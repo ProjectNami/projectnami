@@ -1202,6 +1202,21 @@ function _admin_notice_post_locked() {
 		$locked = false;
 	}
 
+	if ( $locked && ( $sendback = wp_get_referer() ) && 
+		false === strpos( $sendback, 'post.php' ) && false === strpos( $sendback, 'post-new.php' ) ) {
+
+		$sendback_text = __('Go back');
+	} else {
+		$sendback = admin_url( 'edit.php' );
+
+		if ( 'post' != $post->post_type && ( $post_type_object = get_post_type_object( $post->post_type ) ) ) {
+			$sendback .= '?post_type=' . $post->post_type;
+			$sendback_text = sprintf( _x('Go to All %s', 'post type general name: Posts, Pages, etc.'), $post_type_object->labels->name );
+		} else {
+			$sendback_text = __('Go to All Posts');
+		}
+	}
+
 	$hidden = $locked ? '' : ' hidden';
 
 	?>
@@ -1229,7 +1244,7 @@ function _admin_notice_post_locked() {
 		<p class="currently-editing wp-tab-first" tabindex="0"><?php esc_html_e( sprintf( __( 'This content is currently locked. If you take over, %s will be blocked from continuing to edit.' ), $user->display_name ) ); ?></p>
 		<?php do_action( 'post_lock_text', $post ); ?>
 		<p>
-		<a class="button" href="<?php echo esc_url( wp_get_referer() ); ?>"><?php _e('Go back'); ?></a>
+		<a class="button" href="<?php echo esc_url( $sendback ); ?>"><?php echo $sendback_text; ?></a>
 		<a class="button<?php echo $tab_last; ?>" href="<?php echo esc_url( $preview_link ); ?>"><?php _e('Preview'); ?></a>
 		<?php
 
@@ -1254,7 +1269,7 @@ function _admin_notice_post_locked() {
 			<span class="locked-saved hidden"><?php _e('Your latest changes were saved as a revision.'); ?></span>
 			</p>
 			<?php do_action( 'post_lock_text', $post ); ?>
-			<p><a class="button button-primary wp-tab-last" href="<?php echo esc_url( admin_url('edit.php') ); ?>"><?php _e('Go to All Posts'); ?></a></p>
+			<p><a class="button button-primary wp-tab-last" href="<?php echo esc_url( $sendback ); ?>"><?php echo $sendback_text; ?></a></p>
 		</div>
 		<?php
 	}
@@ -1337,15 +1352,16 @@ function post_preview() {
 	$post = get_post($post_ID);
 
 	if ( 'page' == $post->post_type ) {
-		if ( !current_user_can('edit_page', $post_ID) )
-			wp_die(__('You are not allowed to edit this page.'));
+		if ( ! current_user_can('edit_page', $post_ID) )
+			wp_die( __('You are not allowed to edit this page.') );
 	} else {
-		if ( !current_user_can('edit_post', $post_ID) )
-			wp_die(__('You are not allowed to edit this post.'));
+		if ( ! current_user_can('edit_post', $post_ID) )
+			wp_die( __('You are not allowed to edit this post.') );
 	}
 
 	$user_id = get_current_user_id();
-	if ( 'draft' == $post->post_status && $user_id == $post->post_author ) {
+	$locked = wp_check_post_lock( $post->ID );
+	if ( ! $locked && 'draft' == $post->post_status && $user_id == $post->post_author ) {
 		$id = edit_post();
 	} else { // Non drafts are not overwritten. The autosave is stored in a special post revision.
 		$id = wp_create_post_autosave( $post->ID );
@@ -1356,11 +1372,20 @@ function post_preview() {
 	if ( is_wp_error($id) )
 		wp_die( $id->get_error_message() );
 
-	if ( $_POST['post_status'] == 'draft' && $user_id == $post->post_author ) {
+	if ( ! $locked && $_POST['post_status'] == 'draft' && $user_id == $post->post_author ) {
 		$url = add_query_arg( 'preview', 'true', get_permalink($id) );
 	} else {
 		$nonce = wp_create_nonce('post_preview_' . $id);
-		$url = add_query_arg( array( 'preview' => 'true', 'preview_id' => $id, 'preview_nonce' => $nonce ), get_permalink($id) );
+		$args = array(
+			'preview' => 'true',
+			'preview_id' => $id,
+			'preview_nonce' => $nonce,
+		);
+
+		if ( isset( $_POST['post_format'] ) )
+			$args['post_format'] = empty( $_POST['post_format'] ) ? 'standard' : sanitize_key( $_POST['post_format'] );
+
+		$url = add_query_arg( $args, get_permalink($id) );
 	}
 
 	return apply_filters( 'preview_post_link', $url );
