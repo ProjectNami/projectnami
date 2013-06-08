@@ -2219,7 +2219,6 @@ class WP_Query {
 		if ( !$this->is_singular ) {
 			$this->parse_tax_query( $q );
 			$clauses = $this->tax_query->get_sql( $wpdb->posts, 'ID' );
-			//var_dump($clauses);
 			$join .= $clauses['join'];
 			$where .= $clauses['where'];
 		}

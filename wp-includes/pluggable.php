@@ -34,8 +34,6 @@ function wp_set_current_user($id, $name = '') {
 
 	setup_userdata( $current_user->ID );
 
-	//wp_die( "current_user = " . var_dump( $current_user ) );
-
 	do_action('set_current_user');
 
 	return $current_user;

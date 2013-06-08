@@ -237,15 +237,6 @@ function get_weekstartend( $mysqlstring, $start_of_week = '' ) {
  */
 function maybe_unserialize( $original ) {
 	if ( is_serialized( $original ) ) { // don't attempt to unserialize data that wasn't serialized going in
-		//if( strlen( (string) $original) == 6497)
-		//	wp_die(var_dump($original));
-		
-		//$temp = str_replace( "\\", "", $original );
-		
-		//$temp = $original;
-		//echo "$temp\n\n";
-		//$unserialized = unserialize( $temp );
-	
 		return unserialize($original);
 	}
 	
@@ -1140,9 +1131,6 @@ function is_blog_installed() {
 	else
 		$installed = $alloptions['siteurl'];
 
-	//$installed = $wpdb->query( "SELECT * FROM [$wpdb->postmeta]" );
-	//wp_die("SELECT option_value FROM [$wpdb->options] WHERE option_name = 'siteurl'");
-	//wp_die( var_dump($installed));
 	$wpdb->suppress_errors( $suppress );
 
 	$installed = !empty( $installed );

@@ -1625,8 +1625,6 @@ function wp_update_comment_count_now($post_id) {
 	$new = (int) $wpdb->get_var( $wpdb->prepare("SELECT COUNT(*) FROM $wpdb->comments WHERE comment_post_ID = %d AND comment_approved = '1'", $post_id) );
 	$check = $wpdb->update( $wpdb->posts, array('comment_count' => $new), array('ID' => $post_id) );
 
-	//wp_die( var_dump($check) . var_dump( $new) );
-
 	clean_post_cache( $post );
 
 	do_action('wp_update_comment_count', $post_id, $new, $old);

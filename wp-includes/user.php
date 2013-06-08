@@ -180,7 +180,7 @@ function count_many_users_posts( $users, $post_type = 'post', $public_only = fal
 	$where = get_posts_by_author_sql( $post_type, true, null, $public_only );
 
 	$result = $wpdb->get_results( "SELECT post_author, COUNT(*) as [found_rows] FROM $wpdb->posts $where AND post_author IN ($userlist) GROUP BY post_author", ARRAY_N );
-	//var_dump("SELECT post_author, COUNT(*) FROM $wpdb->posts $where AND post_author IN ($userlist) GROUP BY post_author");
+
 	foreach ( $result as $row ) {
 		$count[ $row[0] ] = $row[1];
 	}
@@ -542,15 +542,10 @@ class WP_User_Query {
 			$this->results = $wpdb->get_results("SELECT $this->query_fields, COUNT(*) over() as [found_rows] $this->query_from $this->query_where $this->query_orderby $this->query_limit");
 		} else {
 			$this->results = $wpdb->get_col("SELECT $this->query_fields, COUNT(*) over() as [found_rows] $this->query_from $this->query_where $this->query_orderby $this->query_limit");
-			//var_dump("SELECT $this->query_fields, COUNT(*) over() as [found_rows] $this->query_from $this->query_where $this->query_limit");
-			//wp_die("SELECT total_rows = COUNT(*) over(), $this->query_fields $this->query_from $this->query_where");
 		}
 
 		if ( $qv['count_total'] )
 			$this->total_users = $wpdb->last_query_total_rows;
-			//wp_die();
-			//var_dump( $this->results );
-			//$this->total_users = $wpdb->get_var( apply_filters( 'found_users_query', 'SELECT @@row_count' ) );
 
 		if ( !$this->results )
 			return;
@@ -902,8 +897,9 @@ function count_users($strategy = 'time') {
 		$query = "SELECT $select_count, COUNT(*) AS [all] FROM $wpdb->usermeta WHERE meta_key = '{$blog_prefix}capabilities'";
 		$result = sqlsrv_query( $wpdb->dbh, $query );
 		$result = sqlsrv_fetch_array($result);
-		//wp_die(var_dump($result));
+
 		$row = $result;
+
 		// Run the previous loop again to associate results with role names.
 		$col = 0;
 		$role_counts = array();
@@ -971,8 +967,6 @@ function setup_userdata($for_user_id = '') {
 	if ( '' == $for_user_id )
 		$for_user_id = get_current_user_id();
 	$user = get_userdata( $for_user_id );
-
-	//wp_die( "current_user = " . var_dump( $user ) );
 
 	if ( ! $user ) {
 		$user_ID = 0;

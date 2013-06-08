@@ -4789,11 +4789,6 @@ function _transition_post_status($new_status, $old_status, $post) {
 	}
 
 	// Always clears the hook in case the post status bounced from future to draft.
-	/*if( ! isset( $post->ID ) ) {
-		$callstack = debug_backtrace();
-		//wp_die( var_dump($callstack));
-
-	}*/
 	wp_clear_scheduled_hook('publish_future_post', array( $post->ID ) );
 }
 

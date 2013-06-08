@@ -103,15 +103,6 @@ class WP_Roles {
 			$this->roles = get_option( $this->role_key );
 		}
 
-		//$var = update_option( $this->role_key, array('administrator'));
-		//$test = get_option( $this->role_key);
-		//wp_die( var_dump($test));
-		//$row = $wpdb->query( $wpdb->prepare( "SELECT TOP 1 option_value FROM $wpdb->options WHERE option_name = %s", $this->role_key ) );
-		//$row = sqlsrv_fetch_array($row);
-		//wp_die( var_dump($row) );
-
-		//wp_die(var_dump($this->roles));
-
 		if ( empty( $this->roles ) )
 			return;
 
@@ -756,8 +747,6 @@ class WP_User {
 		if ( is_array( $this->caps ) )
 			$this->roles = array_filter( array_keys( $this->caps ), array( $wp_roles, 'is_role' ) );
 
-		//wp_die( var_dump( $wp_ = array_keys( $this->caps ), array( $wp_roles, 'is_role' ) ) );
-
 		//Build $allcaps from role caps, overlay user's $caps
 		$this->allcaps = array();
 		foreach ( (array) $this->roles as $role ) {
@@ -1297,8 +1286,6 @@ function map_meta_cap( $cap, $user_id ) {
  */
 function current_user_can( $capability ) {
 	$current_user = wp_get_current_user();
-
-	//wp_die( var_dump( $current_user ) );
 
 	if ( empty( $current_user ) )
 		return false;

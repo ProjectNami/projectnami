@@ -289,8 +289,6 @@ function get_metadata($meta_type, $object_id, $meta_key = '', $single = false) {
 	if ( !$meta_key )
 		return $meta_cache;
 	
-	//wp_die( var_dump( maybe_unserialize( $meta_cache[$meta_key][0] ) ) );
-
 	if ( isset($meta_cache[$meta_key]) ) {
 		if ( $single )
 			return maybe_unserialize( $meta_cache[$meta_key][0] );
