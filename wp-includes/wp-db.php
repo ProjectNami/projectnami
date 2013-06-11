@@ -1027,7 +1027,7 @@ class wpdb {
 		if ( ! $str ) {
 			$errors = sqlsrv_errors();
 
-			if( ! empty( $errors ) && is_array( $errors ) ) {
+			if( ! empty( $errors ) && is_array( $errors ) )
 				$str = $errors[ 0 ][ 'message' ];
 				
 		}
