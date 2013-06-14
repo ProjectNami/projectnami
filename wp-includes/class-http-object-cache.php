@@ -120,7 +120,7 @@ class WP_Object_Cache {
 
 		//public function cs_cache_set( $key, $data, $expire, $secret, $host_name ) {
 
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_add',
 				'key' => $key,
@@ -167,7 +167,7 @@ class WP_Object_Cache {
 	function decr( $key, $offset = 1, $group = 'default' ) {
 		//public function cs_cache_set( $key, $data, $expire, $secret, $host_name ) {
 
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_decrement',
 				'key' => $key,
@@ -206,7 +206,7 @@ class WP_Object_Cache {
 	 * @return bool False if the contents weren't deleted and true on success
 	 */
 	function delete($key, $group = 'default', $force = false) {
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_delete',
 				'key' => $this->create_unique_key( $key ),
@@ -236,7 +236,7 @@ class WP_Object_Cache {
 		if( $this->multisite )
 			return false;
 
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_flush',
 				'secret' => $this->remote_cache_secret,
@@ -270,7 +270,7 @@ class WP_Object_Cache {
 	 *		contents on success
 	 */
 	function get( $key, $group = 'default', $force = false, &$found = null ) {
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_get',
 				'key' => $this->create_unique_key( $key ),
@@ -303,7 +303,7 @@ class WP_Object_Cache {
 	 * @return false|int False on failure, the item's new value on success.
 	 */
 	function incr( $key, $offset = 1, $group = 'default' ) {
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_increment',
 				'key' => $this->create_unique_key( $key ),
@@ -337,7 +337,7 @@ class WP_Object_Cache {
 	 * @return bool False if not exists, true if contents were replaced
 	 */
 	function replace( $key, $data, $group = 'default', $expire = '' ) {
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_replace',
 				'key' => $this->create_unique_key( $key ),
@@ -378,7 +378,7 @@ class WP_Object_Cache {
 	 * @return bool Always returns true
 	 */
 	function set( $key, $data, $group = 'default', $expire = '' ) {
-		$request = wp_remote_post( $this->remote_cache_endpoint, array(
+		$request = $this->remote_post( $this->remote_cache_endpoint, array(
 			'body' => array(
 				'handler' => 'cache_set',
 				'key' => $this->create_unique_key( $key ),
@@ -404,6 +404,25 @@ class WP_Object_Cache {
 
 		return $key;
 	}
+
+	private function remote_post( $url = '', $post_data = array() ) {
+		$curl_options = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_TIMEOUT => 1,
+			CURLOPT_POST => true,
+			CURLOPT_POSTFIELDS => http_build_query( $post_data ) );
+
+		$handle = curl_init( $url );
+
+		curl_setopt_array( $handle, $curl_options );
+
+		$request = curl_exec( $handle);
+
+		curl_close( $handle );
+
+		return $request;
+	}
+
 
 	/**
 	 * Echoes the stats of the caching.
