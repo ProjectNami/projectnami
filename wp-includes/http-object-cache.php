@@ -2,6 +2,9 @@
 
 require_once WPINC . '/class-http-object-cache.php';
 
+// Temporarily return while a few issues with object instancing are resolved.
+return;
+
 /**
  * HTTP Object Cache API
  *
