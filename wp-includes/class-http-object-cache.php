@@ -441,3 +441,7 @@ class WP_Object_Cache {
 		$this->blog_prefix = $this->multisite ? $blog_id . ':' : '';
 	}
 }
+
+global $wp_object_cache;
+
+$wp_object_cache = new WP_Object_Cache;
