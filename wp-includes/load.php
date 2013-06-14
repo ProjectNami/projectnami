@@ -383,7 +383,7 @@ function wp_start_object_cache() {
 			require_once( WP_CONTENT_DIR . '/object-cache.php' );
 			$_wp_using_ext_object_cache = true;
 		}
-		elseif( file_exists( WPINC . '/http-object-cache.php' ) && defined( PN_USE_HTTP_CACHE ) ) {
+		elseif( file_exists( WPINC . '/http-object-cache.php' ) && defined( 'PN_USE_HTTP_CACHE' ) ) {
 			require_once( WPINC . '/http-object-cache.php' );	
 			$_wp_using_ext_object_cache = true;
 		}
