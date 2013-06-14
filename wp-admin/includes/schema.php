@@ -602,8 +602,13 @@ function populate_options() {
 	foreach ( $unusedoptions as $option )
 		delete_option($option);
 
+	/*
+	 * Note ( Project Nami ): We aren't upgrading anything so we shouldn't have to worry about deleting old values.
+	 * Will remove line after confirmation it's useless.
+	 */
+
 	// delete obsolete magpie stuff
-	$wpdb->query("DELETE FROM $wpdb->options WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'");
+	// $wpdb->query("DELETE FROM $wpdb->options WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'");
 }
 
 /**
