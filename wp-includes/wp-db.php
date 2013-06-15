@@ -1360,14 +1360,6 @@ class wpdb {
 		}
 		$sql = "{$type} INTO [$table] ([" . implode( "],[", $fields ) . "]) VALUES (" . implode( ",", $formatted_fields ) . ")";
 
-		//wp_die( $this->prepare( $sql, $data ) );
-		//$sql = $this->prepare( $sql, $data );
-		//$sql = str_replace( "0000-00-00", "0001-01-01", $sql );
-		//return $this->query( $sql );
-
-		//if( $data['name'] == 'Uncategorized' )
-			//wp_die( $this->prepare( $sql, $data ) );
-
 		return $this->query( $this->prepare( $sql, $data ) );
 	}
 

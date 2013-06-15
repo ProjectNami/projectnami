@@ -2822,24 +2822,12 @@ class WP_Query {
 			return;
 
 		if( ! empty( $limits ) ) {
-			//$result = sqlsrv_query( $wpdb->dbh, $wpdb->last_query );
-			//$rows = sqlsrv_fetch_array( $wpdb->query_statement_resource );
-			//$rows = sqlsrv_fetch_array( $result );
-			
-			//wp_die("SELECT $distinct $fields $found_rows FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits");
-
-			//echo "<span style='color: green;'>found_rows = $this->found_posts</span>";
-			if( is_array( $wpdb->last_result ) && isset( $wpdb->last_result[0]->found_rows ) ) {
+			if( is_array( $wpdb->last_result ) && isset( $wpdb->last_result[0]->found_rows ) )
 				$this->found_posts = (int) $wpdb->last_result[0]->found_rows ;
-				//echo "<span style='color: green;'>found_rows = $this->found_posts</span>";
-			}
 		}
 		else {
 			$this->found_posts = count( $this->posts );
 		}
-
-		//if ( ! empty( $limits ) )
-		//	$this->found_posts = $wpdb->get_var( apply_filters_ref_array( 'found_posts_query', array( 'SELECT FOUND_ROWS()', &$this ) ) );
 
 		$this->found_posts = apply_filters_ref_array( 'found_posts', array( $this->found_posts, &$this ) );
 

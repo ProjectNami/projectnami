@@ -337,14 +337,13 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = 'yes' )
 	}
 
 	$result = $wpdb->query( $wpdb->prepare( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] WHERE [option_name] = '%s') INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES ('%s', '%s', '%s') else UPDATE [$wpdb->options] set [option_value] = '%s', [autoload] = '%s' where [option_name] = '%s'", array( $option, $option, $value, $autoload, $value, $autoload, $option ) ) );
-	//$result = $wpdb->query( $wpdb->prepare( "INSERT INTO [$wpdb->options] (option_name, option_value, autoload) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE option_name = VALUES(option_name), option_value = VALUES(option_value), autoload = VALUES(autoload)", $option, $value, $autoload ) );
-	//$late = $wpdb->prepare( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] WHERE [option_name] = '%s') INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES ('%s', '%s', '%s') else UPDATE [$wpdb->options] set [option_value] = '%s', [autoload] = '%s' where [option_name] = '%s'", array( $option, $option, $value, $autoload, $value, $autoload, $name ) );
-	//wp_die($late);
+
 	if ( $result ) {
 		do_action( "add_option_{$option}", $option, $_value );
 		do_action( 'added_option', $option, $_value );
 		return true;
 	}
+
 	return false;
 }
 
