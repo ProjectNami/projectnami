@@ -1131,7 +1131,7 @@ class wpdb {
 		$this->last_result = array();
 		$this->col_info    = null;
 		$this->last_query  = null;
-		$this->rows_affected = $this->num_rows = $this->insert_id = 0;
+		$this->rows_affected = $this->num_rows = 0;
 		$this->last_error  = '';
 
 		if ( is_resource( $this->result ) )
@@ -1345,6 +1345,7 @@ class wpdb {
 	function _insert_replace_helper( $table, $data, $format = null, $type = 'INSERT' ) {
 		if ( ! in_array( strtoupper( $type ), array( 'REPLACE', 'INSERT' ) ) )
 			return false;
+		$this->insert_id = 0;
 		$formats = $format = (array) $format;
 		$fields = array_keys( $data );
 
