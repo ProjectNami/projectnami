@@ -509,6 +509,7 @@ function wp_get_http( $url, $file_path = false, $red = 1 ) {
 
 	$options = array();
 	$options['redirection'] = 5;
+	$options['reject_unsafe_urls'] = true;
 
 	if ( false == $file_path )
 		$options['method'] = 'HEAD';
@@ -556,7 +557,7 @@ function wp_get_http_headers( $url, $deprecated = false ) {
 	if ( !empty( $deprecated ) )
 		_deprecated_argument( __FUNCTION__, '2.7' );
 
-	$response = wp_remote_head( $url );
+	$response = wp_remote_head( $url, array( 'reject_unsafe_urls' => true ) );
 
 	if ( is_wp_error( $response ) )
 		return false;
@@ -771,6 +772,7 @@ function wp_remote_fopen( $uri ) {
 
 	$options = array();
 	$options['timeout'] = 10;
+	$options['reject_unsafe_urls'] = true;
 
 	$response = wp_remote_get( $uri, $options );
 

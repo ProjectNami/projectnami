@@ -1131,6 +1131,8 @@ class wpdb {
 		$this->last_result = array();
 		$this->col_info    = null;
 		$this->last_query  = null;
+		$this->rows_affected = $this->num_rows = $this->insert_id = 0;
+		$this->last_error  = '';
 
 		if ( is_resource( $this->result ) )
 			sqlsrv_free_stmt( $this->result );

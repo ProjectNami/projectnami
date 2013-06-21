@@ -96,7 +96,7 @@ function the_title_attribute( $args = '' ) {
  *
  * @since 0.71
  *
- * @param mixed $post Optional. Post ID or object.
+ * @param int|object $post Optional. Post ID or object.
  * @return string
  */
 function get_the_title( $post = 0 ) {
@@ -588,8 +588,6 @@ function get_body_class( $class = '' ) {
  * @return bool false if a password is not required or the correct password cookie is present, true otherwise.
  */
 function post_password_required( $post = null ) {
-	global $wp_hasher;
-
 	$post = get_post($post);
 
 	if ( empty( $post->post_password ) )
@@ -598,15 +596,14 @@ function post_password_required( $post = null ) {
 	if ( ! isset( $_COOKIE['wp-postpass_' . COOKIEHASH] ) )
 		return true;
 
-	if ( empty( $wp_hasher ) ) {
-		require_once( ABSPATH . 'wp-includes/class-phpass.php');
-		// By default, use the portable hash from phpass
-		$wp_hasher = new PasswordHash(8, true);
-	}
+	require_once ABSPATH . 'wp-includes/class-phpass.php';
+	$hasher = new PasswordHash( 8, true );
 
 	$hash = wp_unslash( $_COOKIE[ 'wp-postpass_' . COOKIEHASH ] );
+	if ( 0 !== strpos( $hash, '$P$B' ) )
+		return true;
 
-	return ! $wp_hasher->CheckPassword( $post->post_password, $hash );
+	return ! $hasher->CheckPassword( $post->post_password, $hash );
 }
 
 /**
@@ -1268,7 +1265,7 @@ function get_the_password_form( $post = 0 ) {
  * @uses $wp_query
  *
  * @param string $template The specific template name if specific matching is required.
- * @return bool False on failure, true if success.
+ * @return bool True on success, false on failure.
  */
 function is_page_template( $template = '' ) {
 	if ( ! is_page() )
