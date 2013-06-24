@@ -1457,6 +1457,7 @@ class wpdb {
 		}
 
 		$sql = "DELETE FROM [$table] WHERE " . implode( ' AND ', $wheres );
+
 		return $this->query( $this->prepare( $sql, $where ) );
 	}
 
