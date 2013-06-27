@@ -284,7 +284,6 @@ http://wordpress.org/
 endif;
 
 if ( !function_exists('wp_upgrade') ) :
-return; // Remove after upgrade.php has been refactored. - Spencer
 /**
  * Run WordPress Upgrade functions.
  *
@@ -307,8 +306,7 @@ function wp_upgrade() {
 		return;
 
 	//wp_check_mysql_version();
-	//wp_cache_flush();
-	//pre_schema_upgrade();
+	wp_cache_flush();
 	//make_db_current_silent();
 	//upgrade_all();
 	if ( is_multisite() && is_main_site() )
@@ -1028,20 +1026,8 @@ function maybe_disable_link_manager() {
  * @since 2.9.0
  */
 function pre_schema_upgrade() {
-	global $wp_current_db_version, $wp_db_version, $wpdb;
-
-	// Upgrade versions prior to 2.9
-	if ( $wp_current_db_version < 11557 ) {
-		// Delete duplicate options. Keep the option with the highest option_id.
-		$wpdb->query("DELETE o1 FROM $wpdb->options AS o1 JOIN $wpdb->options AS o2 USING ([option_name]) WHERE o2.option_id > o1.option_id");
-
-		// Drop the old primary key and add the new.
-		$wpdb->query("ALTER TABLE $wpdb->options DROP PRIMARY KEY, ADD PRIMARY KEY(option_id)");
-
-		// Drop the old option_name index. dbDelta() doesn't do the drop.
-		$wpdb->query("ALTER TABLE $wpdb->options DROP INDEX option_name");
-	}
-
+	// Unused in Project Nami.
+	// To be removed.
 }
 
 /**
