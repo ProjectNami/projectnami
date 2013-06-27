@@ -305,9 +305,7 @@ function wp_upgrade() {
 	if ( ! is_blog_installed() )
 		return;
 
-	//wp_check_mysql_version();
 	wp_cache_flush();
-	make_db_current_silent();
 	upgrade_all();
 
 	if ( is_multisite() && is_main_site() )
