@@ -100,7 +100,7 @@ function core_update_footer( $msg = '' ) {
 
 	switch ( $cur->response ) {
 	case 'development' :
-		return sprintf( __( 'You are using a development version (%1$s). Cool! Please <a href="%2$s">stay updated</a>.' ), get_projectnami_version(), network_admin_url( 'update-core.php' ) );
+		return sprintf( __( 'You are using a development version ( %1$s ) of Project Nami compatible with WordPress version ( %2$s ). Cool!' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
 	break;
 
 	case 'upgrade' :
