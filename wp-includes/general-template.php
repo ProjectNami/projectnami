@@ -396,6 +396,12 @@ function wp_meta() {
 	do_action('wp_meta');
 }
 
+function get_projectnami_version() {
+	include ABSPATH . WPINC . '/pn-version.php';
+
+	return $pn_version;
+}
+
 /**
  * Display information about the blog.
  *

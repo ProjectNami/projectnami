@@ -83,7 +83,7 @@ function find_core_update( $version, $locale ) {
 
 function core_update_footer( $msg = '' ) {
 	if ( !current_user_can('update_core') )
-		return sprintf( __( 'Version %s' ), get_bloginfo( 'version', 'display' ) );
+		return sprintf( __( 'Version %s' ), get_projectnami_version() );
 
 	$cur = get_preferred_from_update_core();
 	if ( ! is_object( $cur ) )
@@ -100,7 +100,7 @@ function core_update_footer( $msg = '' ) {
 
 	switch ( $cur->response ) {
 	case 'development' :
-		return sprintf( __( 'You are using a development version (%1$s). Cool! Please <a href="%2$s">stay updated</a>.' ), get_bloginfo( 'version', 'display' ), network_admin_url( 'update-core.php' ) );
+		return sprintf( __( 'You are using a development version (%1$s). Cool! Please <a href="%2$s">stay updated</a>.' ), get_projectnami_version(), network_admin_url( 'update-core.php' ) );
 	break;
 
 	case 'upgrade' :
