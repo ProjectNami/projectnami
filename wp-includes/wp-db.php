@@ -1131,6 +1131,8 @@ class wpdb {
 		$this->last_result = array();
 		$this->col_info    = null;
 		$this->last_query  = null;
+		$this->rows_affected = $this->num_rows = 0;
+		$this->last_error  = '';
 
 		if ( is_resource( $this->result ) )
 			sqlsrv_free_stmt( $this->result );
@@ -1343,6 +1345,7 @@ class wpdb {
 	function _insert_replace_helper( $table, $data, $format = null, $type = 'INSERT' ) {
 		if ( ! in_array( strtoupper( $type ), array( 'REPLACE', 'INSERT' ) ) )
 			return false;
+		$this->insert_id = 0;
 		$formats = $format = (array) $format;
 		$fields = array_keys( $data );
 
@@ -1359,14 +1362,6 @@ class wpdb {
 			$formatted_fields[] = $form;
 		}
 		$sql = "{$type} INTO [$table] ([" . implode( "],[", $fields ) . "]) VALUES (" . implode( ",", $formatted_fields ) . ")";
-
-		//wp_die( $this->prepare( $sql, $data ) );
-		//$sql = $this->prepare( $sql, $data );
-		//$sql = str_replace( "0000-00-00", "0001-01-01", $sql );
-		//return $this->query( $sql );
-
-		//if( $data['name'] == 'Uncategorized' )
-			//wp_die( $this->prepare( $sql, $data ) );
 
 		return $this->query( $this->prepare( $sql, $data ) );
 	}
@@ -1462,6 +1457,7 @@ class wpdb {
 		}
 
 		$sql = "DELETE FROM [$table] WHERE " . implode( ' AND ', $wheres );
+
 		return $this->query( $this->prepare( $sql, $where ) );
 	}
 

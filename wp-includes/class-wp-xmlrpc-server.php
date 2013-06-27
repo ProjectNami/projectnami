@@ -281,7 +281,7 @@ class wp_xmlrpc_server extends IXR_Server {
 				$pmeta = get_metadata_by_mid( 'post', $meta['id'] );
 				if ( isset($meta['key']) ) {
 					$meta['key'] = wp_unslash( $meta['key'] );
-					if ( $meta['key'] != $pmeta->meta_key )
+					if ( $meta['key'] !== $pmeta->meta_key )
 						continue;
 					$meta['value'] = wp_unslash( $meta['value'] );
 					if ( current_user_can( 'edit_post_meta', $post_id, $meta['key'] ) )
@@ -5396,7 +5396,8 @@ class wp_xmlrpc_server extends IXR_Server {
 		sleep(1);
 
 		// Let's check the remote site
-		$linea = wp_remote_retrieve_body( wp_remote_get( $pagelinkedfrom, array( 'timeout' => 10, 'redirection' => 0 ) ) );
+		$linea = wp_remote_retrieve_body( wp_remote_get( $pagelinkedfrom, array( 'timeout' => 10, 'redirection' => 0, 'reject_unsafe_urls' => true ) ) );
+
 		if ( !$linea )
 	  		return $this->pingback_error( 16, __( 'The source URL does not exist.' ) );
 

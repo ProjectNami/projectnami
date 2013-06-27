@@ -2263,26 +2263,30 @@ class WP_Query {
 				}
 
 				$cat_query = wp_list_filter( $tax_query_in_and, array( 'taxonomy' => 'category' ) );
-				if ( !empty( $cat_query ) ) {
+				if ( ! empty( $cat_query ) ) {
 					$cat_query = reset( $cat_query );
-					$the_cat = get_term_by( $cat_query['field'], $cat_query['terms'][0], 'category' );
 					
-					if ( $the_cat ) {
-						$this->set( 'cat', $the_cat->term_id );
-						$this->set( 'category_name', $the_cat->slug );
+					if ( ! empty( $cat_query['terms'][0] ) ) {
+						$the_cat = get_term_by( $cat_query['field'], $cat_query['terms'][0], 'category' );
+						if ( $the_cat ) {
+							$this->set( 'cat', $the_cat->term_id );
+							$this->set( 'category_name', $the_cat->slug );
+						}
+						unset( $the_cat );
 					}
-					unset( $the_cat );
 				}
 				unset( $cat_query );
 
 				$tag_query = wp_list_filter( $tax_query_in_and, array( 'taxonomy' => 'post_tag' ) );
-				if ( !empty( $tag_query ) ) {
+				if ( ! empty( $tag_query ) ) {
 					$tag_query = reset( $tag_query );
-					$the_tag = get_term_by( $tag_query['field'], $tag_query['terms'][0], 'post_tag' );
-					if ( $the_tag ) {
-						$this->set( 'tag_id', $the_tag->term_id );
+
+					if ( ! empty( $tag_query['terms'][0] ) ) {
+						$the_tag = get_term_by( $tag_query['field'], $tag_query['terms'][0], 'post_tag' );
+						if ( $the_tag )
++                                                       $this->set( 'tag_id', $the_tag->term_id );
+						unset( $the_tag );
 					}
-					unset( $the_tag );
 				}
 				unset( $tag_query );
 			}
@@ -2822,24 +2826,12 @@ class WP_Query {
 			return;
 
 		if( ! empty( $limits ) ) {
-			//$result = sqlsrv_query( $wpdb->dbh, $wpdb->last_query );
-			//$rows = sqlsrv_fetch_array( $wpdb->query_statement_resource );
-			//$rows = sqlsrv_fetch_array( $result );
-			
-			//wp_die("SELECT $distinct $fields $found_rows FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits");
-
-			//echo "<span style='color: green;'>found_rows = $this->found_posts</span>";
-			if( is_array( $wpdb->last_result ) && isset( $wpdb->last_result[0]->found_rows ) ) {
+			if( is_array( $wpdb->last_result ) && isset( $wpdb->last_result[0]->found_rows ) )
 				$this->found_posts = (int) $wpdb->last_result[0]->found_rows ;
-				//echo "<span style='color: green;'>found_rows = $this->found_posts</span>";
-			}
 		}
 		else {
 			$this->found_posts = count( $this->posts );
 		}
-
-		//if ( ! empty( $limits ) )
-		//	$this->found_posts = $wpdb->get_var( apply_filters_ref_array( 'found_posts_query', array( 'SELECT FOUND_ROWS()', &$this ) ) );
 
 		$this->found_posts = apply_filters_ref_array( 'found_posts', array( $this->found_posts, &$this ) );
 
