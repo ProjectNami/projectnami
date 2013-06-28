@@ -141,7 +141,7 @@ add_action( 'network_admin_notices', 'update_nag', 3 );
 
 // Called directly from dashboard
 function update_right_now_message() {
-	$msg = sprintf( __( 'You are using <span class="b">WordPress %s</span>.' ), get_bloginfo( 'version', 'display' ) );
+	$msg = sprintf( __( 'You are using <span class="b">Project Nami %s</span> compatible with WordPress %s.' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
 
 	if ( current_user_can('update_core') ) {
 		$cur = get_preferred_from_update_core();
