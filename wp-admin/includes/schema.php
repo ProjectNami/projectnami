@@ -204,27 +204,8 @@ GO
 CREATE INDEX $wpdb->posts" . "_IDX4 on $wpdb->posts (post_author)
 GO\n";
 
-	// Single site users table. The multisite flavor of the users table is handled below.
-	$users_single_table = "CREATE TABLE $wpdb->users (
-  ID bigint NOT NULL identity(1,1),
-  user_login nvarchar(60) NOT NULL default '',
-  user_pass nvarchar(64) NOT NULL default '',
-  user_nicename nvarchar(50) NOT NULL default '',
-  user_email nvarchar(100) NOT NULL default '',
-  user_url nvarchar(100) NOT NULL default '',
-  user_registered datetime2 NOT NULL default '0001-01-01 00:00:00',
-  user_activation_key nvarchar(60) NOT NULL default '',
-  user_status int NOT NULL default 0,
-  display_name nvarchar(250) NOT NULL default '',
-  constraint $wpdb->users" . "_PK PRIMARY KEY  (ID)
-)
-GO
-CREATE INDEX $wpdb->users" . "_IDX1 on $wpdb->users (user_login)
-GO
-CREATE INDEX $wpdb->users" . "_IDX2 on $wpdb->users (user_nicename)
-GO\n";
-	// Multisite users table
-	$users_multi_table = "CREATE TABLE $wpdb->users (
+	// Users table
+	$users_table = "CREATE TABLE $wpdb->users (
   ID bigint NOT NULL identity(1,1),
   user_login nvarchar(60) NOT NULL default '',
   user_pass nvarchar(64) NOT NULL default '',
@@ -260,10 +241,7 @@ CREATE INDEX $wpdb->usermeta" . "_IDX2 on $wpdb->usermeta (meta_key)
 GO\n";
 
 	// Global tables
-	if ( $is_multisite )
-		$global_tables = $users_multi_table . $usermeta_table;
-	else
-		$global_tables = $users_single_table . $usermeta_table;
+	$global_tables = $users_table . $usermeta_table;
 
 	// Multisite global tables.
 	$ms_global_tables = "CREATE TABLE $wpdb->blogs (
@@ -343,8 +321,10 @@ CREATE TABLE $wpdb->signups (
   active tinyint NOT NULL default 0,
   activation_key nvarchar(50) NOT NULL default '',
   meta nvarchar(max),
-  constraint $wpdb->signups" . "_PK PRIMARY KEY (domain)
 )
+GO
+CREATE CLUSTERED INDEX $wpdb->signups" . "_IDX2 on $wpdb->signups (domain)
+
 GO
 CREATE INDEX $wpdb->signups" . "_IDX1 on $wpdb->signups (activation_key)
 GO";
