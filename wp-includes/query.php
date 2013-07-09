@@ -2052,7 +2052,7 @@ class WP_Query {
 			if ( strlen($q['m']) > 5 )
 				$where .= " AND MONTH($wpdb->posts.post_date)=" . substr($q['m'], 4, 2);
 			if ( strlen($q['m']) > 7 )
-				$where .= " AND DAYOFMONTH($wpdb->posts.post_date)=" . substr($q['m'], 6, 2);
+				$where .= " AND DAY($wpdb->posts.post_date)=" . substr($q['m'], 6, 2);
 			if ( strlen($q['m']) > 9 )
 				$where .= " AND HOUR($wpdb->posts.post_date)=" . substr($q['m'], 8, 2);
 			if ( strlen($q['m']) > 11 )
@@ -2077,7 +2077,7 @@ class WP_Query {
 			$where .= " AND MONTH($wpdb->posts.post_date)='" . $q['monthnum'] . "'";
 
 		if ( $q['day'] )
-			$where .= " AND DAYOFMONTH($wpdb->posts.post_date)='" . $q['day'] . "'";
+			$where .= " AND DAY($wpdb->posts.post_date)='" . $q['day'] . "'";
 
 		// If we've got a post_type AND it's not "any" post_type.
 		if ( !empty($q['post_type']) && 'any' != $q['post_type'] ) {
@@ -3619,7 +3619,7 @@ function wp_old_slug_redirect() {
 		if ( '' != $wp_query->query_vars['monthnum'] )
 			$query .= $wpdb->prepare(" AND MONTH(post_date) = %d", $wp_query->query_vars['monthnum']);
 		if ( '' != $wp_query->query_vars['day'] )
-			$query .= $wpdb->prepare(" AND DAYOFMONTH(post_date) = %d", $wp_query->query_vars['day']);
+			$query .= $wpdb->prepare(" AND DAY(post_date) = %d", $wp_query->query_vars['day']);
 
 		$id = (int) $wpdb->get_var($query);
 

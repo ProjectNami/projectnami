@@ -998,7 +998,7 @@ function wp_get_archives($args = '') {
 			}
 		}
 	} elseif ( 'daily' == $type ) {
-		$query = "SELECT YEAR(post_date) AS [year], MONTH(post_date) AS [month], DAYOFMONTH(post_date) AS [dayofmonth], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date), MONTH(post_date), DAYOFMONTH(post_date) ORDER BY post_date $order $limit";
+		$query = "SELECT YEAR(post_date) AS [year], MONTH(post_date) AS [month], DAY(post_date) AS [dayofmonth], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date), MONTH(post_date), DAY(post_date) ORDER BY post_date $order $limit";
 		$key = md5( $query );
 		$key = "wp_get_archives:$key:$last_changed";
 		if ( ! $results = wp_cache_get( $key, 'posts' ) ) {
@@ -1216,7 +1216,7 @@ function get_calendar($initial = true, $echo = true) {
 	<tr>';
 
 	// Get days with posts
-	$dayswithposts = $wpdb->get_results("SELECT DISTINCT DAYOFMONTH(post_date)
+	$dayswithposts = $wpdb->get_results("SELECT DISTINCT DAY(post_date)
 		FROM $wpdb->posts WHERE post_date >= '{$thisyear}-{$thismonth}-01 00:00:00'
 		AND post_type = 'post' AND post_status = 'publish'
 		AND post_date <= '{$thisyear}-{$thismonth}-{$last_day} 23:59:59'", ARRAY_N);
@@ -1234,7 +1234,7 @@ function get_calendar($initial = true, $echo = true) {
 		$ak_title_separator = ', ';
 
 	$ak_titles_for_day = array();
-	$ak_post_titles = $wpdb->get_results("SELECT ID, post_title, DAYOFMONTH(post_date) as dom "
+	$ak_post_titles = $wpdb->get_results("SELECT ID, post_title, DAY(post_date) as dom "
 		."FROM $wpdb->posts "
 		."WHERE post_date >= '{$thisyear}-{$thismonth}-01 00:00:00' "
 		."AND post_date <= '{$thisyear}-{$thismonth}-{$last_day} 23:59:59' "

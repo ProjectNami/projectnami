@@ -487,7 +487,7 @@ function redirect_guess_404_permalink() {
 		if ( get_query_var('monthnum') )
 			$where .= $wpdb->prepare(" AND MONTH(post_date) = %d", get_query_var('monthnum'));
 		if ( get_query_var('day') )
-			$where .= $wpdb->prepare(" AND DAYOFMONTH(post_date) = %d", get_query_var('day'));
+			$where .= $wpdb->prepare(" AND DAY(post_date) = %d", get_query_var('day'));
 
 		$post_id = $wpdb->get_var("SELECT ID FROM $wpdb->posts WHERE $where AND post_status = 'publish'");
 		if ( ! $post_id )
