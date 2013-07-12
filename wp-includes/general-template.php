@@ -980,7 +980,7 @@ function wp_get_archives($args = '') {
 			}
 		}
 	} elseif ('yearly' == $type) {
-		$query = "SELECT YEAR(post_date) AS [year], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date) ORDER BY post_date $order $limit";
+		$query = "SELECT YEAR(post_date) AS [year], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date) ORDER BY YEAR(post_date) $order $limit";
 		$key = md5( $query );
 		$key = "wp_get_archives:$key:$last_changed";
 		if ( ! $results = wp_cache_get( $key, 'posts' ) ) {
@@ -998,7 +998,7 @@ function wp_get_archives($args = '') {
 			}
 		}
 	} elseif ( 'daily' == $type ) {
-		$query = "SELECT YEAR(post_date) AS [year], MONTH(post_date) AS [month], DAY(post_date) AS [dayofmonth], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date), MONTH(post_date), DAY(post_date) ORDER BY post_date $order $limit";
+		$query = "SELECT YEAR(post_date) AS [year], MONTH(post_date) AS [month], DAY(post_date) AS [dayofmonth], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date), MONTH(post_date), DAY(post_date) ORDER BY YEAR(post_date) $order, MONTH(post_date) $order, DAY(post_date) $order $limit";
 		$key = md5( $query );
 		$key = "wp_get_archives:$key:$last_changed";
 		if ( ! $results = wp_cache_get( $key, 'posts' ) ) {
@@ -1161,12 +1161,12 @@ function get_calendar($initial = true, $echo = true) {
 		FROM $wpdb->posts
 		WHERE post_date < '$thisyear-$thismonth-01'
 		AND post_type = 'post' AND post_status = 'publish'
-			ORDER BY post_date DESC");
+			ORDER BY YEAR(post_date) DESC, MONTH(post_date) DESC");
 	$next = $wpdb->get_row("SELECT TOP 1 MONTH(post_date) AS month, YEAR(post_date) AS year
 		FROM $wpdb->posts
 		WHERE post_date > '$thisyear-$thismonth-{$last_day} 23:59:59'
 		AND post_type = 'post' AND post_status = 'publish'
-			ORDER BY post_date ASC");
+			ORDER BY YEAR(post_date) ASC, MONTH(post_date) ASC");
 
 	/* translators: Calendar caption: 1: month name, 2: 4-digit year */
 	$calendar_caption = _x('%1$s %2$s', 'calendar caption');

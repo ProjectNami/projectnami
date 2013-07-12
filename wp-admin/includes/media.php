@@ -2073,7 +2073,7 @@ if ( $page_links )
 <div class="alignleft actions">
 <?php
 
-$arc_query = "SELECT DISTINCT YEAR(post_date) AS yyear, MONTH(post_date) AS mmonth FROM $wpdb->posts WHERE post_type = 'attachment' ORDER BY post_date DESC";
+$arc_query = "SELECT DISTINCT YEAR(post_date) AS yyear, MONTH(post_date) AS mmonth FROM $wpdb->posts WHERE post_type = 'attachment' ORDER BY YEAR(post_date) DESC, MONTH(post_date) DESC";
 
 $arc_result = $wpdb->get_results( $arc_query );
 
