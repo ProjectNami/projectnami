@@ -984,6 +984,8 @@ function remove_meta_box($id, $screen, $context) {
 function do_accordion_sections( $screen, $context, $object ) {
 	global $wp_meta_boxes;
 
+	wp_enqueue_script( 'accordion' );
+
 	if ( empty( $screen ) )
 		$screen = get_current_screen();
 	elseif ( is_string( $screen ) )
@@ -1001,7 +1003,7 @@ function do_accordion_sections( $screen, $context, $object ) {
 		if ( ! isset( $wp_meta_boxes ) || ! isset( $wp_meta_boxes[$page] ) || ! isset( $wp_meta_boxes[$page][$context] ) )
 			break;
 
-		foreach ( array( 'high', 'sorted', 'core', 'default', 'low' ) as $priority ) {
+		foreach ( array( 'high', 'core', 'default', 'low' ) as $priority ) {
 			if ( isset( $wp_meta_boxes[$page][$context][$priority] ) ) {
 				foreach ( $wp_meta_boxes[$page][$context][$priority] as $box ) {
 					if ( false == $box || ! $box['title'] )

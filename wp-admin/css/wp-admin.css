@@ -3500,6 +3500,10 @@ td.plugin-title p {
 /*------------------------------------------------------------------------------
   11.2 - Post Revisions
 ------------------------------------------------------------------------------*/
+body.revision-php {
+	overflow-y: scroll; /* Force a scrollbar, so centering doesn't jump */
+}
+
 .revisions-control-frame,
 .revisions-diff-frame {
 	position: relative;
@@ -3510,6 +3514,12 @@ td.plugin-title p {
 	height: 100px;
 }
 
+.revisions-controls input[type="checkbox"] {
+	position: relative;
+	top: -1px;
+	vertical-align: text-bottom;
+}
+
 .revisions-tickmarks {
 	position: relative;
 	margin: 0 auto 0;
@@ -3517,6 +3527,9 @@ td.plugin-title p {
 	z-index: 2;
 	top: 7px;
 	width: 70%;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-ms-box-sizing: border-box; /* ie8 only */
 	box-sizing: border-box;
 }
 
@@ -3527,6 +3540,9 @@ td.plugin-title p {
 	z-index: 10002;
 	border-style: solid;
 	border-width: 0 0 0 1px;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-ms-box-sizing: border-box; /* ie8 only */
 	box-sizing: border-box;
 }
 
@@ -3536,6 +3552,39 @@ td.plugin-title p {
 
 .comparing-two-revisions .revisions-controls {
 	height: 140px;
+}
+
+.revisions .loading-indicator {
+	position: absolute;
+	text-align: center;
+	vertical-align: middle;
+	opacity: 0;
+	margin: 0 auto;
+	width: 100%;
+	height: 32px;
+	top: 3em;
+	background: #fff url(../images/wpspin_light-2x.gif) no-repeat center top;
+	-webkit-transition: opacity 0.5s;
+	-moz-transition:    opacity 0.5s;
+	-ms-transition:     opacity 0.5s;
+	-o-transition:      opacity 0.5s;
+	transition:         opacity 0.5s;
+}
+
+.revisions.loading .loading-indicator {
+	opacity: 1;
+}
+
+.revisions .diff {
+	-webkit-transition: opacity 0.5s;
+	-moz-transition:    opacity 0.5s;
+	-ms-transition:     opacity 0.5s;
+	-o-transition:      opacity 0.5s;
+	transition:         opacity 0.5s;
+}
+
+.revisions.loading .diff {
+	opacity: 0.5;
 }
 
 .revisions-meta {
@@ -3658,12 +3707,19 @@ table.diff .diff-addedline ins {
 .revisions-tooltip {
 	position: absolute;
 	bottom: 105px;
-	margin-left: -70px;
+	margin-left: -69px;
 	line-height: 28px;
 	z-index: 9999;
 	max-width: 350px;
 	min-width: 130px;
 	padding: 4px;
+	display: none;
+	opacity: 0;
+	-webkit-transition: left 15ms;
+	-moz-transition:    left 15ms;
+	-ms-transition:     left 15ms;
+	-o-transition:      left 15ms;
+	transition:         left 15ms;
 }
 
 .comparing-two-revisions .revisions-tooltip {
@@ -3708,6 +3764,10 @@ table.diff .diff-addedline ins {
 	border-style: solid;
 }
 
+div.revisions-controls > .wp-slider > .ui-slider-handle {
+	margin-left: -10px;
+}
+
  /* jQuery UI Slider */
 .wp-slider.ui-slider {
 	position: relative;
@@ -3733,9 +3793,9 @@ table.diff .diff-addedline ins {
 	content: "";
 	position: absolute;
 	top: 6px;
-	left: 4px;
+	left: 3px;
 	height: 8px;
-	width: 12px;
+	width: 13px;
 	background: url(../images/arrows-pr.png) no-repeat -2px -47px;
 }
 
@@ -3771,7 +3831,7 @@ table.diff .diff-addedline ins {
 }
 
 .wp-slider.ui-slider-horizontal .ui-slider-handle {
-	top: -.3em;
+	top: -.25em;
 	margin-left: -.6em;
 }
 
@@ -7127,7 +7187,7 @@ body.interim-login {
 
 .interim-login #login {
 	padding: 0;
-	margin: 25px auto 20px;
+	margin: 5px auto 20px;
 }
 
 .interim-login.login h1 a {
@@ -7450,14 +7510,24 @@ body.interim-login {
 	margin: 0;
 }
 
-.accordion-container .accordion-section:first-child {
+#nav-menu-meta .accordion-container .top {
+	border-top: 1px solid #dfdfdf;
+}
+
+#nav-menu-meta .accordion-container .accordion-section:first-child,
+#nav-menu-meta .accordion-container .accordion-section:first-child h3,
+#nav-menu-meta .accordion-container .top,
+#nav-menu-meta .accordion-container .top h3 {
 	-webkit-border-top-right-radius: 3px;
 	-webkit-border-top-left-radius: 3px;
 	border-top-right-radius: 3px;
 	border-top-left-radius: 3px;
 }
 
-.accordion-container .accordion-section:last-child {
+#nav-menu-meta .accordion-container .accordion-section:last-child,
+#nav-menu-meta .accordion-container .accordion-section:last-child .accordion-section-content,
+#nav-menu-meta .accordion-container .bottom,
+#nav-menu-meta .accordion-container .bottom:not(.open) h3 {
 	-webkit-border-bottom-right-radius: 3px;
 	-webkit-border-bottom-left-radius: 3px;
 	border-bottom-right-radius: 3px;
@@ -8918,14 +8988,16 @@ a.widget-control-edit {
 	border-left: 1px solid #dfdfdf;
 	border-right: 1px solid #dfdfdf;
 
-	cursor: pointer;
-
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	user-select: none;
 }
 
-.accordion-section-title:after {
+.js .accordion-section-title {
+	cursor: pointer;
+}
+
+.js .accordion-section-title:after {
 	content: '';
 	width: 0;
 	height: 0;
@@ -8978,10 +9050,10 @@ a.widget-control-edit {
 	border-color: #eee transparent;
 }
 
-.control-section:hover .accordion-section-title,
-.control-section .accordion-section-title:hover,
-.control-section.open .accordion-section-title,
-.control-section .accordion-section-title:focus {
+.js .control-section:hover .accordion-section-title,
+.js .control-section .accordion-section-title:hover,
+.js .control-section.open .accordion-section-title,
+.js .control-section .accordion-section-title:focus {
 	color: #fff;
 	text-shadow: 0 -1px 0 #333;
 	background: #808080;
@@ -8994,7 +9066,7 @@ a.widget-control-edit {
 	border-right: 1px solid #808080;
 }
 
-.control-section.accordion-section:hover,
+.js .control-section.accordion-section:hover,
 .control-section.accordion-section.open {
 	border-top-color: #808080;
 }

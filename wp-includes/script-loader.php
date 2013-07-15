@@ -113,6 +113,7 @@ function wp_default_scripts( &$scripts ) {
 	$scripts->add( 'wp-auth-check', "/wp-includes/js/wp-auth-check$suffix.js", array('heartbeat'), false, 1 );
 	did_action( 'init' ) && $scripts->localize( 'wp-auth-check', 'authcheckL10n', array(
 		'beforeunload' => __('Your session has expired. You can log in again from this page or go to the login page.'),
+		'interval' => apply_filters( 'wp_auth_check_interval', 3 * MINUTE_IN_SECONDS ),
 	) );
 
 	$scripts->add( 'wp-lists', "/wp-includes/js/wp-lists$suffix.js", array( 'wp-ajax-response', 'jquery-color' ), false, 1 );
@@ -276,7 +277,7 @@ function wp_default_scripts( &$scripts ) {
 
 	$scripts->add( 'wp-backbone', "/wp-includes/js/wp-backbone$suffix.js", array('backbone', 'wp-util'), false, 1 );
 
-	$scripts->add( 'revisions', "/wp-admin/js/revisions$suffix.js", array( 'wp-backbone', 'jquery-ui-slider' ), false, 1 );
+	$scripts->add( 'revisions', "/wp-admin/js/revisions$suffix.js", array( 'wp-backbone', 'jquery-ui-slider', 'hoverIntent' ), false, 1 );
 
 	$scripts->add( 'imgareaselect', "/wp-includes/js/imgareaselect/jquery.imgareaselect$suffix.js", array('jquery'), '0.9.8', 1 );
 
