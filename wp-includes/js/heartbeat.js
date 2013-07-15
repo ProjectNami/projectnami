@@ -1,5 +1,21 @@
 /**
  * Heartbeat API
+ *
+ * Heartbeat is a simple server polling API that sends XHR requests to
+ * the server every 15 seconds and triggers events (or callbacks) upon
+ * receiving data. Currently these 'ticks' handle transports for post locking,
+ * login-expiration warnings, and related tasks while a user is logged in.
+ *
+ * Available filters in ajax-actions.php:
+ * - heartbeat_received
+ * - heartbeat_send
+ * - heartbeat_tick
+ * - heartbeat_nopriv_received
+ * - heartbeat_nopriv_send
+ * - heartbeat_nopriv_tick
+ * @see wp_ajax_nopriv_heartbeat(), wp_ajax_heartbeat()
+ *
+ * @since 3.6.0
  */
 
  // Ensure the global `wp` object exists.
@@ -10,7 +26,6 @@ window.wp = window.wp || {};
 		var self = this,
 			running,
 			beat,
-			nonce,
 			screenId = typeof pagenow != 'undefined' ? pagenow : '',
 			url = typeof ajaxurl != 'undefined' ? ajaxurl : '',
 			settings,
@@ -30,15 +45,13 @@ window.wp = window.wp || {};
 		this.autostart = true;
 		this.connectionLost = false;
 
-		if ( typeof( window.heartbeatSettings ) != 'undefined' ) {
-			settings = window.heartbeatSettings;
+		if ( typeof( window.heartbeatSettings ) == 'object' ) {
+			settings = $.extend( {}, window.heartbeatSettings );
 
 			// Add private vars
-			nonce = settings.nonce || '';
-			delete settings.nonce;
-
 			url = settings.ajaxurl || url;
 			delete settings.ajaxurl;
+			delete settings.nonce;
 
 			interval = settings.interval || 15; // default interval
 			delete settings.interval;
@@ -110,7 +123,7 @@ window.wp = window.wp || {};
 
 				if ( trigger && ! self.connectionLost ) {
 					self.connectionLost = true;
-					$(document).trigger( 'heartbeat-connection-lost' );
+					$(document).trigger( 'heartbeat-connection-lost', [error] );
 				}
 			} else if ( self.connectionLost ) {
 				errorcount = 0;
@@ -120,7 +133,8 @@ window.wp = window.wp || {};
 		}
 
 		function connect() {
-			var send = {}, data, i, empty = true;
+			var send = {}, data, i, empty = true,
+			nonce = typeof window.heartbeatSettings == 'object' ? window.heartbeatSettings.nonce : '';
 			tick = time();
 
 			data = $.extend( {}, queue );
@@ -138,7 +152,7 @@ window.wp = window.wp || {};
 
 			// If nothing to send (nothing is expecting a response),
 			// schedule the next tick and bail
-			if ( empty ) {
+			if ( empty && ! self.connectionLost ) {
 				connecting = false;
 				next();
 				return;
@@ -167,6 +181,11 @@ window.wp = window.wp || {};
 				// Clear error state
 				if ( self.connectionLost )
 					errorstate();
+
+				if ( response.nonces_expired ) {
+					$(document).trigger( 'heartbeat-nonces-expired' );
+					return;
+				}
 
 				// Change the interval from PHP
 				if ( response.heartbeat_interval ) {
@@ -334,16 +353,19 @@ window.wp = window.wp || {};
 		 * If the window doesn't have focus, the interval slows down to 2 min.
 		 *
 		 * @param string speed Interval speed: 'fast' (5sec), 'standard' (15sec) default, 'slow' (60sec)
+		 * @param string ticks Used with speed = 'fast', how many ticks before the speed reverts back
 		 * @return int Current interval in seconds
 		 */
-		this.interval = function( speed ) {
+		this.interval = function( speed, ticks ) {
 			var reset, seconds;
+			ticks = parseInt( ticks, 10 ) || 30;
+			ticks = ticks < 1 || ticks > 30 ? 30 : ticks;
 
 			if ( speed ) {
 				switch ( speed ) {
 					case 'fast':
 						seconds = 5;
-						countdown = 30;
+						countdown = ticks;
 						break;
 					case 'slow':
 						seconds = 60;

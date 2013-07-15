@@ -496,9 +496,8 @@ function media_upload_form_handler() {
 
 	if ( !empty($_POST['attachments']) ) foreach ( $_POST['attachments'] as $attachment_id => $attachment ) {
 		$post = $_post = get_post($attachment_id, ARRAY_A);
-		$post_type_object = get_post_type_object( $post[ 'post_type' ] );
 
-		if ( !current_user_can( $post_type_object->cap->edit_post, $attachment_id ) )
+		if ( !current_user_can( 'edit_post', $attachment_id ) )
 			continue;
 
 		if ( isset($attachment['post_content']) )
@@ -2357,7 +2356,7 @@ function edit_form_image_editor( $post ) {
 	<?php
 	elseif ( $attachment_id && 0 === strpos( $post->post_mime_type, 'audio/' ) ):
 
-		echo do_shortcode( '[audio src="' . $att_url . '"]' );
+		echo wp_audio_shortcode( array( 'src' => $att_url ) );
 
 	elseif ( $attachment_id && 0 === strpos( $post->post_mime_type, 'video/' ) ):
 
@@ -2369,12 +2368,15 @@ function edit_form_image_editor( $post ) {
 		if ( $h && $w < $meta['width'] )
 			$h = round( ( $meta['height'] * $w ) / $meta['width'] );
 
-		$shortcode = sprintf( '[video src="%s"%s%s]',
-			$att_url,
-			empty( $meta['width'] ) ? '' : sprintf( ' width="%d"', $w ),
-			empty( $meta['height'] ) ? '' : sprintf( ' height="%d"', $h )
-		);
-		echo do_shortcode( $shortcode );
+		$attr = array( 'src' => $att_url );
+
+		if ( ! empty( $meta['width' ] ) )
+			$attr['width'] = $w;
+
+		if ( ! empty( $meta['height'] ) )
+			$attr['height'] = $h;
+
+		echo wp_video_shortcode( $attr );
 
 	endif; ?>
 	</div>
@@ -2420,7 +2422,7 @@ function edit_form_image_editor( $post ) {
 function attachment_submitbox_metadata() {
 	$post = get_post();
 
-	$filename = esc_html( basename( $post->guid ) );
+	$filename = esc_html( wp_basename( $post->guid ) );
 
 	$media_dims = '';
 	$meta = wp_get_attachment_metadata( $post->ID );

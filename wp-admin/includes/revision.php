@@ -27,6 +27,12 @@ function wp_get_revision_ui_diff( $post, $compare_from, $compare_to ) {
 		$compare_to = $temp;
 	}
 
+	// Add default title if title field is empty
+	if ( $compare_from && empty( $compare_from->post_title ) )
+		$compare_from->post_title = __( '(no title)' );
+	if ( empty( $compare_to->post_title ) )
+		$compare_to->post_title = __( '(no title)' );
+
 	$return = array();
 
 	foreach ( _wp_post_revision_fields() as $field => $name ) {
@@ -38,7 +44,7 @@ function wp_get_revision_ui_diff( $post, $compare_from, $compare_to ) {
 		if ( ! $diff && 'post_title' === $field ) {
 			// It's a better user experience to still show the Title, even if it didn't change.
 			// No, you didn't see this.
-			$diff = "<table class='diff'><col class='ltype' /><col class='content' /><col class='ltype' /><col class='content' /><tbody><tr>";
+			$diff = '<table class="diff"><colgroup><col class="content diffsplit left"><col class="content diffsplit middle"><col class="content diffsplit right"></colgroup><tbody><tr>';
 			$diff .= '<td>' . esc_html( $compare_from->post_title ) . '</td><td></td><td>' . esc_html( $compare_to->post_title ) . '</td>';
 			$diff .= '</tr></tbody>';
 			$diff .= '</table>';
@@ -84,7 +90,8 @@ function wp_prepare_revisions_for_js( $post, $selected_revision_id ) {
 			),
 			'date'         => date_i18n( __( 'M j, Y @ G:i' ), $modified_gmt ),
 			'dateShort'    => date_i18n( _x( 'j M @ G:i', 'revision date short format' ), $modified_gmt ),
-			'timeAgo'      => human_time_diff( $modified_gmt, $current ),
+			'dateUnix'     => $modified_gmt,
+			'timeAgo'      => sprintf( __( '%s ago' ), human_time_diff( $modified_gmt, $current ) ),
 			'autosave'     => wp_is_post_autosave( $revision ),
 			'current'      => $revision->post_modified_gmt === $post->post_modified_gmt,
 			'restoreUrl'   => urldecode( $restore_link ),

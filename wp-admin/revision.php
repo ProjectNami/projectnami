@@ -11,9 +11,6 @@ require_once('./admin.php');
 
 require ABSPATH . 'wp-admin/includes/revision.php';
 
-// wp_get_revision_ui_diff( $post, $compare_from, $compare_to )
-// wp_prepare_revisions_for_js( $post )
-
 wp_reset_vars( array( 'revision', 'action' ) );
 
 $revision_id = absint( $revision );
@@ -58,7 +55,7 @@ default :
 		break;
 	}
 
-	$post_title = '<a href="' . get_edit_post_link() . '">' . get_the_title() . '</a>';
+	$post_title = '<a href="' . get_edit_post_link() . '">' . _draft_or_post_title() . '</a>';
 	$h2 = sprintf( __( 'Compare Revisions of &#8220;%1$s&#8221;' ), $post_title );
 	$title = __( 'Revisions' );
 
@@ -115,20 +112,11 @@ require_once( './admin-header.php' );
 </div>
 
 <script id="tmpl-revisions-frame" type="text/html">
-	<span class="spinner"></span>
 	<div class="revisions-control-frame"></div>
 	<div class="revisions-diff-frame"></div>
 </script>
 
-<script id="tmpl-revisions-controls" type="text/html">
-
-	<div class="revision-toggle-compare-mode">
-		<label>
-			<input type="checkbox" class="compare-two-revisions" />
-			<?php esc_attr_e( 'Compare two revisions' ); ?>
-		</label>
-	</div>
-
+<script id="tmpl-revisions-buttons" type="text/html">
 	<div class="revisions-previous">
 		<input class="button" type="button" id="previous" value="<?php echo esc_attr_x( 'Previous', 'Button label for a previous revision' ); ?>" />
 	</div>
@@ -138,19 +126,42 @@ require_once( './admin-header.php' );
 	</div>
 </script>
 
+<script id="tmpl-revisions-tooltip" type="text/html">
+	<div class="revisions-tooltip-content">
+	<# if ( 'undefined' !== typeof data && 'undefined' !== typeof data.author ) { #>
+			{{{ data.author.avatar }}} {{{ data.author.name }}},
+			{{{ data.timeAgo }}}
+			({{{ data.dateShort }}})
+	<# } #>
+	</div>
+	<div class="revisions-tooltip-arrow"></div>
+</script>
+
+<script id="tmpl-revisions-checkbox" type="text/html">
+	<div class="revision-toggle-compare-mode">
+		<label>
+			<input type="checkbox" class="compare-two-revisions"
+			<#
+			if ( 'undefined' !== typeof data && data.model.attributes.compareTwoMode ) {
+			 	#> checked="checked"<#
+			}
+			#>
+			/>
+			<?php esc_attr_e( 'Compare two revisions' ); ?>
+		</label>
+	</div>
+</script>
 
 <script id="tmpl-revisions-meta" type="text/html">
 	<div id="diff-header">
 		<div id="diff-header-from" class="diff-header">
 			<div id="diff-title-from" class="diff-title">
-				<strong>
-				<?php _ex( 'From:', 'Followed by post revision info' ); ?></strong>
-					<# if ( 'undefined' !== typeof data.from ) { #>
-						{{{ data.from.attributes.author.avatar }}} {{{ data.from.attributes.author.name }}},
-						{{{ data.from.attributes.timeAgo }}} <?php _e( 'ago' ); ?>
-						({{{ data.from.attributes.dateShort }}})
-					<# } #>
-
+				<strong><?php _ex( 'From:', 'Followed by post revision info' ); ?></strong>
+				<# if ( 'undefined' !== typeof data.from ) { #>
+					{{{ data.from.attributes.author.avatar }}} {{{ data.from.attributes.author.name }}},
+					{{{ data.from.attributes.timeAgo }}}
+					({{{ data.from.attributes.dateShort }}})
+				<# } #>
 			</div>
 			<div class="clear"></div>
 		</div>
@@ -158,14 +169,14 @@ require_once( './admin-header.php' );
 		<div id="diff-header-to" class="diff-header">
 			<div id="diff-title-to" class="diff-title">
 				<strong><?php _ex( 'To:', 'Followed by post revision info' ); ?></strong>
-					<# if ( 'undefined' !== typeof data.to ) { #>
-						{{{ data.to.attributes.author.avatar }}} {{{ data.to.attributes.author.name }}},
-						{{{ data.to.attributes.timeAgo }}} <?php _e( 'ago' ); ?>
-						({{{ data.to.attributes.dateShort }}})
-					<# } #>
-		</div>
+				<# if ( 'undefined' !== typeof data.to ) { #>
+					{{{ data.to.attributes.author.avatar }}} {{{ data.to.attributes.author.name }}},
+					{{{ data.to.attributes.timeAgo }}}
+					({{{ data.to.attributes.dateShort }}})
+				<# } #>
+			</div>
 
-			<input type="button" id="restore-revision" class="button button-primary" data-restore-link="{{{ data.restoreLink }}}" value="<?php esc_attr_e( 'Restore This Revision' )?>" />
+			<input type="button" class="restore-revision button button-primary" data-restore-link="{{{ data.restoreLink }}}" value="<?php esc_attr_e( 'Restore This Revision' )?>" />
 		</div>
 	</div>
 </script>
@@ -177,50 +188,6 @@ require_once( './admin-header.php' );
 	<# }); #>
 </script>
 
-<script id="tmpl-revisions-diff-old" type="text/html">
-	<div id="toggle-revision-compare-mode">
-		<label>
-			<input type="checkbox" id="compare-two-revisions" />
-			<?php esc_attr_e( 'Compare two revisions' ); ?>
-		</label>
-	</div>
 
-	<div id="diff-header">
-		<div id="diff-header-from" class="diff-header">
-			<div id="diff-title-from" class="diff-title">
-				<strong><?php _ex( 'From:', 'Followed by post revision info' ); ?></strong> {{{ data.titleFrom }}}
-			</div>
-			<div class="clear"></div>
-		</div>
-
-		<div id="diff-header-to" class="diff-header">
-			<div id="diff-title-to" class="diff-title">
-				<strong><?php _ex( 'To:', 'Followed by post revision info' ); ?></strong> {{{ data.titleTo }}}
-			</div>
-
-			<input type="button" id="restore-revision" class="button button-primary" data-restore-link="{{{ data.restoreLink }}}" value="<?php esc_attr_e( 'Restore This Revision' )?>" />
-			<div class="clear"></div>
-		</div>
-	</div>
-
-	<div id="diff-table">{{{ data.diff }}}</div>
-</script>
-
-<script id="tmpl-revision-interact-old" type="text/html">
-	<div id="diff-previous-revision">
-		<input class="button" type="button" id="previous" value="<?php echo esc_attr_x( 'Previous', 'Button label for a previous revision' ); ?>" />
-	</div>
-
-	<div id="diff-next-revision">
-		<input class="button" type="button" id="next" value="<?php echo esc_attr_x( 'Next', 'Button label for a next revision' ); ?>" />
-	</div>
-
-</script>
-
-<script id="tmpl-revision-ticks" type="text/html">
-	<div class="revision-tick completed-{{{ data.completed }}} scope-of-changes-{{{ data.scopeOfChanges }}}">
-		<span class="ui-slider-tooltip ui-widget-content ui-corner-all hidden"></span>
-	</div>
-</script>
 <?php
 require_once( './admin-footer.php' );

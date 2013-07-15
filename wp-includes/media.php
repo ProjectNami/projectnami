@@ -778,7 +778,13 @@ function gallery_shortcode($attr) {
 
 	$i = 0;
 	foreach ( $attachments as $id => $attachment ) {
-		$link = isset($attr['link']) && 'file' == $attr['link'] ? wp_get_attachment_link($id, $size, false, false) : wp_get_attachment_link($id, $size, true, false);
+		if ( ! empty( $attr['link'] ) && 'file' === $attr['link'] )
+			$image_output = wp_get_attachment_link( $id, $size, false, false );
+		elseif ( ! empty( $attr['link'] ) && 'none' === $attr['link'] )
+			$image_output = wp_get_attachment_image( $id, $size, false );
+		else
+			$image_output = wp_get_attachment_link( $id, $size, true, false );
+
 		$image_meta  = wp_get_attachment_metadata( $id );
 
 		$orientation = '';
@@ -788,7 +794,7 @@ function gallery_shortcode($attr) {
 		$output .= "<{$itemtag} class='gallery-item'>";
 		$output .= "
 			<{$icontag} class='gallery-icon {$orientation}'>
-				$link
+				$image_output
 			</{$icontag}>";
 		if ( $captiontag && trim($attachment->post_excerpt) ) {
 			$output .= "
@@ -875,7 +881,7 @@ function wp_audio_shortcode( $attr ) {
 	}
 
 	if ( ! $primary ) {
-		$audios = get_attached_audio( $post_id );
+		$audios = get_attached_media( 'audio', $post_id );
 		if ( empty( $audios ) )
 			return;
 
@@ -993,7 +999,7 @@ function wp_video_shortcode( $attr ) {
 	}
 
 	if ( ! $primary ) {
-		$videos = get_attached_video( $post_id );
+		$videos = get_attached_media( 'video', $post_id );
 		if ( empty( $videos ) )
 			return;
 
@@ -1385,15 +1391,6 @@ function wp_embed_handler_video( $matches, $attr, $url, $rawattr ) {
 	if ( ! empty( $rawattr['width'] ) && ! empty( $rawattr['height'] ) ) {
 		$dimensions .= sprintf( 'width="%d" ', (int) $rawattr['width'] );
 		$dimensions .= sprintf( 'height="%d" ', (int) $rawattr['height'] );
-	} elseif ( strstr( $url, home_url() ) ) {
-		$id = attachment_url_to_postid( $url );
-		if ( ! empty( $id ) ) {
-			$meta = wp_get_attachment_metadata( $id );
-			if ( ! empty( $meta['width'] ) )
-				$dimensions .= sprintf( 'width="%d" ', (int) $meta['width'] );
-			if ( ! empty( $meta['height'] ) )
-				$dimensions .= sprintf( 'height="%d" ', (int) $meta['height'] );
-		}
 	}
 
 	$video = sprintf( '[video %s src="%s" /]', $dimensions, esc_url( $url ) );
@@ -1610,7 +1607,7 @@ function wp_prepare_attachment_for_js( $attachment ) {
 	$response = array(
 		'id'          => $attachment->ID,
 		'title'       => $attachment->post_title,
-		'filename'    => basename( $attachment->guid ),
+		'filename'    => wp_basename( $attachment->guid ),
 		'url'         => $attachment_url,
 		'link'        => get_attachment_link( $attachment->ID ),
 		'alt'         => get_post_meta( $attachment->ID, '_wp_attachment_image_alt', true ),
@@ -1870,30 +1867,6 @@ function get_attached_media( $type, $post_id = 0 ) {
 }
 
 /**
- * Retrieve audio attached to the passed post
- *
- * @since 3.6.0
- *
- * @param int $post_id  Post ID
- * @return array Found audio attachments
- */
-function get_attached_audio( $post_id = 0 ) {
-	return get_attached_media( 'audio', $post_id );
-}
-
-/**
- * Retrieve video attached to the passed post
- *
- * @since 3.6.0
- *
- * @param int $post_id  Post ID
- * @return array Found video attachments
- */
-function get_attached_video( $post_id = 0 ) {
-	return get_attached_media( 'video', $post_id );
-}
-
-/**
  * Extract and parse {media type} shortcodes or srcs from the passed content
  *
  * @since 3.6.0
@@ -2027,105 +2000,6 @@ function get_embedded_video( $content ) {
 }
 
 /**
- * Return suitable HTML code for output based on the content related to the global $post
- *
- * @since 3.6.0
- *
- * @param string $type Required. 'audio' or 'video'
- * @param WP_Post $post Optional. Used instead of global $post when passed.
- * @param int $limit Optional. The number of medias to extract if content is scanned.
- * @return string HTML for the media. Blank string if no media is found.
- */
-function get_the_post_format_media( $type, &$post = null, $limit = 0 ) {
-	global $wp_embed;
-
-	if ( empty( $post ) )
-		$post = get_post();
-
-	if ( empty( $post ) )
-		return '';
-
-	$cache_key = "media:{$type}";
-
-	if ( isset( $post->format_content[ $cache_key ] ) )
-		return $post->format_content[ $cache_key ];
-
-	if ( ! isset( $post->format_content ) )
-		$post->format_content = array();
-
-	$count = 1;
-
-	// these functions expect a reference, so we should make a copy of post content to avoid changing it
-	$content = $post->post_content;
-
-	$htmls = get_content_media( $type, $content, true, $limit );
-	if ( ! empty( $htmls ) ) {
-		$html = reset( $htmls );
-		$post->format_content[ $cache_key ] = $html;
-		return $post->format_content[ $cache_key ];
-	}
-
-	$embeds = get_embedded_media( $type, $content, 1 );
-	if ( ! empty( $embeds ) ) {
-		$embed = reset( $embeds );
-		if ( 0 === strpos( $embed, 'http' ) ) {
-			if ( strstr( $embed, home_url() ) ) {
-				$post->format_content[ $cache_key ] = do_shortcode( sprintf( '[%s src="%s"]', $type, $embed ) );
-			} else {
-				$post->format_content[ $cache_key ] = $wp_embed->autoembed( $embed );
-			}
-		} else {
-			$post->format_content[ $cache_key ] = $embed;
-		}
-		return $post->format_content[ $cache_key ];
-	}
-
-	$medias = call_user_func( 'get_attached_' . $type, $post->ID );
-	if ( ! empty( $medias ) ) {
-		$media = reset( $medias );
-		$url = wp_get_attachment_url( $media->ID );
-		$shortcode = sprintf( '[%s src="%s"]', $type, $url );
-		$post->format_content[ $cache_key ] = do_shortcode( $shortcode );
-		return $post->format_content[ $cache_key ];
-	}
-
-	return '';
-}
-
-/**
- * Output the first video in the current (@global) post's content
- *
- * @since 3.6.0
- *
- */
-function the_post_format_video() {
-	$null = null;
-	echo get_the_post_format_media( 'video', $null, 1 );
-}
-/**
- * Output the first audio  in the current (@global) post's content
- *
- * @since 3.6.0
- *
- */
-function the_post_format_audio() {
-	$null = null;
-	echo get_the_post_format_media( 'audio', $null, 1 );
-}
-
-/**
- * Retrieve images attached to the passed post
- *
- * @since 3.6.0
- *
- * @param int $post_id Optional. Post ID.
- * @return array Found image attachments
- */
-function get_attached_images( $post_id = 0 ) {
-	return get_attached_media( 'image', $post_id );
-}
-
-/**
  * Retrieve images attached to the passed post
  *
  * @since 3.6.0
@@ -2134,7 +2008,7 @@ function get_attached_images( $post_id = 0 ) {
  * @return array Found image attachments
  */
 function get_attached_image_srcs( $post_id = 0 ) {
-	$children = get_attached_images( $post_id );
+	$children = get_attached_media( 'image', $post_id );
 	if ( empty( $children ) )
 		return array();
 
@@ -2151,7 +2025,7 @@ function get_attached_image_srcs( $post_id = 0 ) {
  * @since 3.6.0
  *
  * @param string $content A string which might contain image data.
- * @param boolean $html Whether to return HTML or URLs
+ * @param boolean $html Whether to return HTML or URLs in the array
  * @param int $limit Optional. The number of image srcs to return
  * @return array The found images or srcs
  */
@@ -2164,7 +2038,7 @@ function get_content_images( $content, $html = true, $limit = 0 ) {
 			if ( 'caption' === $shortcode[2] ) {
 				$captions[] = $shortcode[0];
 				if ( $html )
-					$tags[] = do_shortcode( $shortcode[0] );
+					$tags[] = do_shortcode_tag( $shortcode );
 			}
 
 			if ( $limit > 0 && count( $tags ) >= $limit )
@@ -2236,7 +2110,7 @@ function get_content_image( $content, $html = true ) {
  * @since 3.6.0
  *
  * @param string $content A string which might contain image data.
- * @param boolean $html Whether to return HTML or data
+ * @param boolean $html Whether to return HTML or data in the array
  * @param int $limit Optional. The number of galleries to return
  * @return array A list of galleries, which in turn are a list of their srcs in order
  */
@@ -2279,7 +2153,7 @@ function get_content_galleries( $content, $html = true, $limit = 0 ) {
  * @since 3.6.0
  *
  * @param int $post_id Optional. Post ID.
- * @param boolean $html Whether to return HTML or data
+ * @param boolean $html Whether to return HTML or data in the array
  * @return array A list of arrays, each containing gallery data and srcs parsed
  *		from the expanded shortcode
  */
@@ -2320,26 +2194,17 @@ function get_post_galleries_images( $post_id = 0 ) {
  *
  * @param int $post_id Optional. Post ID.
  * @param boolean $html Whether to return HTML or data
- * @return array Gallery data and srcs parsed from the expanded shortcode
+ * @return string |array Gallery data and srcs parsed from the expanded shortcode
  */
 function get_post_gallery( $post_id = 0, $html = true ) {
 	if ( ! $post = get_post( $post_id ) )
-		return array();
+		return $html ? '' : array();
 
 	if ( ! has_shortcode( $post->post_content, 'gallery' ) )
-		return array();
+		return $html ? '' : array();
 
 	$data = get_content_galleries( $post->post_content, $html, false, 1 );
 	return reset( $data );
-}
-
-/**
- * Output the first gallery in the current (@global) $post
- *
- * @since 3.6.0
- */
-function the_post_format_gallery() {
-	echo get_post_gallery();
 }
 
 /**
@@ -2358,138 +2223,6 @@ function get_post_gallery_images( $post_id = 0 ) {
 	return $gallery['src'];
 }
 
-/**
- * Return the first image in the current (@global) post's content
- *
- * @since 3.6.0
- *
- * @param string $attached_size If an attached image is found, the size to display it.
- * @param WP_Post $post Optional. Used instead of global $post when passed.
- * @return string HTML for the image. Blank string if no image is found.
- */
-function get_the_post_format_image( $attached_size = 'full', &$post = null ) {
-	if ( empty( $post ) )
-		$post = get_post();
-
-	if ( empty( $post ) )
-		return '';
-
-	$cache_key = "image:{$attached_size}";
-
-	if ( isset( $post->format_content[ $cache_key ] ) )
-		return $post->format_content[ $cache_key ];
-
-	if ( ! isset( $post->format_content ) )
-		$post->format_content = array();
-
-	$matched = false;
-	$link_fmt = '%s';
-
-	$medias = get_attached_images( $post->ID );
-	if ( ! empty( $medias ) ) {
-		$media = reset( $medias );
-		$sizes = get_intermediate_image_sizes();
-		$sizes[] = 'full'; // Add original image source.
-
-		$urls = array();
-		foreach ( $sizes as $size ) {
-			$image = wp_get_attachment_image_src( $media->ID, $size );
-			if ( $image )
-				$urls[] = reset( $image );
-		}
-
-		// Add media permalink. 
-		$urls[] = get_attachment_link( $media->ID );
-
-		$count = 1;
-		$content = $post->post_content;
-
-		if ( preg_match_all( '/' . get_shortcode_regex() . '/s', $content, $matches, PREG_SET_ORDER ) && ! empty( $matches ) ) {
-			foreach ( $matches as $shortcode ) {
-				if ( 'caption' === $shortcode[2] ) {
-					foreach ( $urls as $url ) {
-						if ( strstr( $shortcode[0], $url ) ) {
-							if ( ! $matched )
-								$matched = do_shortcode( $shortcode[0] );
-							// $content = str_replace( $shortcode[0], '', $content, $count );
-						}
-					}
-				}
-			}
-		}
-
-		foreach ( array( 'a', 'img' ) as $tag ) {
-			if ( preg_match_all( '#' . get_tag_regex( $tag ) . '#', $content, $matches, PREG_SET_ORDER ) && ! empty( $matches ) ) {
-				foreach ( $matches as $match ) {
-					foreach ( $urls as $url ) {
-						if ( strstr( $match[0], $url ) ) {
-							if ( ! $matched )
-								$matched = $match[0];
-							// $content = str_replace( $match[0], '', $content, $count );
-						}
-					}
-				}
-			}
-		}
-
-		if ( ! $matched ) {
-			$image = wp_get_attachment_image( $media->ID, $attached_size );
-			$post->format_content[ $cache_key ] = sprintf( $link_fmt, $image );
-		} else {
-			$post->format_content[ $cache_key ] = $matched;
-			if ( ! empty( $meta['url'] ) && false === stripos( $matched, '<a ' ) )
-				$post->format_content[ $cache_key ] = sprintf( $link_fmt, $matched );
-		}
-		return $post->format_content[ $cache_key ];
-	}
-
-	$content = $post->post_content;
-	$htmls = get_content_images( $content, true, 1 );
-	if ( ! empty( $htmls ) ) {
-		$html = reset( $htmls );
-
-		$attachment_id = img_html_to_post_id( $html, $matched_html );
-		if ( $attachment_id && $matched_html )
-			$html = str_replace( $matched_html, wp_get_attachment_image( $attachment_id, $attached_size ), $html );
-
-		$post->format_content[ $cache_key ] = sprintf( $link_fmt, $html );
-		return $post->format_content[ $cache_key ];
-	}
-
-	return '';
-}
-
-/**
- * Output the first image in the current (@global) post's content
- *
- * @since 3.6.0
- *
- * @param string $attached_size If an attached image is found, the size to display it.
- */
-function the_post_format_image( $attached_size = 'full' ) {
-	echo get_the_post_format_image( $attached_size );
-}
-
-/**
- * Retrieve the post id for an attachment file URL
- *
- * @since 3.6.0
- *
- * @param string $url Permalink to check.
- * @return int Post ID, or 0 on failure.
- */
-function attachment_url_to_postid( $url ) {
-	global $wpdb;
-	if ( preg_match( '#\.[a-zA-Z0-9]+$#', $url ) ) {
-		$id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM $wpdb->posts WHERE post_type = 'attachment' " .
-			"AND guid = %s", $url ) );
-
-		if ( ! empty( $id ) )
-			return (int) $id;
-	}
-
-	return 0;
-}
 /**
  * Retrieve the attachment post id from HTML containing an image.
  *
