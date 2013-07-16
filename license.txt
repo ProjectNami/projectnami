@@ -1,4 +1,4 @@
-WordPress - Web publishing software
+Project Nami - Web publishing software for the Windows Azure platform
 
 Copyright 2013 by the contributors
 
@@ -30,10 +30,21 @@ permission notices:
 and
 
   WordPress - Web publishing software
+  http://wordpress.org
 
-  Copyright 2003-2010 by the contributors
+  Copyright 2003-2013 by the contributors
 
   WordPress is released under the GPL
+
+and
+
+  Project Nami - Web publishing software for the Windows Azure platform 
+  http://projectnami.org
+  
+  Copyright 2013 by the contributors
+
+  Project Nami is released under the GPL
+
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
@@ -380,6 +391,6 @@ Public License instead of this License.
 WRITTEN OFFER
 
 The source code for any program binaries or compressed scripts that are
-included with WordPress can be freely obtained at the following URL:
+included with Project Nami can be freely obtained at the following URL:
 
-	http://wordpress.org/download/source/
+	https://github.com/ProjectNami/projectnami
