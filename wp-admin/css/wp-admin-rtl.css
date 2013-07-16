@@ -954,38 +954,33 @@ th.sorted a span {
 /*------------------------------------------------------------------------------
   11.2 - Post Revisions
 ------------------------------------------------------------------------------*/
-
-#diff-slider .ui-slider-tooltip,
-#diff-slider-ticks .ui-slider-tooltip {
-	margin-left: 0;
-	margin-right: -78px;
-}
-
 .wp-slider .ui-slider-handle.left-handle:before,
 .wp-slider .ui-slider-handle.right-handle:before {
 	height: 8px;
 	width: 7px;
 }
+
 .wp-slider .ui-slider-handle.left-handle:before {
 	background-position: -5px -10px;
 	left: 6px;
 }
+
 .wp-slider .ui-slider-handle.right-handle:before {
 	background-position: -4px -29px;
 	left: 6px;
 }
 
-#toggle-revision-compare-mode {
+.revision-toggle-compare-mode {
 	right: auto;
 	left: 0;
 	padding: 9px 0 0 9px;
 }
 
-#diff-next-revision {
+.revisions-next {
 	float: left;
 }
 
-#diff-previous-revision {
+.revisions-previous {
 	float: right;
 }
 
@@ -1009,7 +1004,7 @@ th.sorted a span {
 	margin-right: 5px;
 }
 
-#restore-revision {
+.diff-header > input.restore-revision {
 	margin-left: 0;
 	margin-right: 10px;
 }
@@ -1024,16 +1019,30 @@ th.sorted a span {
 	float: left;
 }
 
-.ui-tooltip-content img {
+.revisions img {
 	float: right;
-	margin-right: 0;
-	margin-left: 5px;
+	margin: 5px 0 0 5px;
 }
 
-#diff-slider .ui-slider-tooltip,
-#diff-slider-ticks .ui-slider-tooltip {
+.revisions-tooltip {
+	margin-right: -73px;
 	margin-left: 0;
-	margin-right: -78px;
+	-webkit-transition: right 15ms;
+	-moz-transition:    right 15ms;
+	-ms-transition:     right 15ms;
+	-o-transition:      right 15ms;
+	transition:         right 15ms;
+}
+
+.revisions-tooltip-arrow {
+	right: 0;
+	margin-left: 0;
+	margin-right: 35px;
+}
+
+.revisions-tooltip-image {
+	float: right;
+	margin: 2px 0 0 5px;
 }
 
 /*------------------------------------------------------------------------------
@@ -2498,39 +2507,22 @@ div.star-holder .star-rating {
 	float: right;
 }
 
+#plugin-information .wrap {
+	margin: 4px 15px 0 0;
+}
+
 #plugin-information ul#sidemenu {
 	left: auto;
 	right: 0;
 }
 
-#plugin-information h2 {
-	margin-right: 0;
-	margin-left: 200px;
-}
-
 #plugin-information .fyi {
-	margin-left: 5px;
-	margin-right: 20px;
-}
-
-#plugin-information .fyi h2 {
-	margin-left: 0;
-}
-
-#plugin-information .fyi ul {
-	padding: 10px 7px 10px 5px;
+	float: right;
 }
 
 #plugin-information #section-screenshots li p {
 	padding-left: 0;
 	padding-right: 20px;
-}
-
-#plugin-information #section-screenshots ol,
-#plugin-information .updated,
-#plugin-information pre {
-	margin-right: 0;
-	margin-left: 215px;
 }
 
 #plugin-information .updated,
@@ -2619,6 +2611,14 @@ h3.tb {
 #TB_ajaxContent #options {
 	right: auto;
 	left: 25px;
+}
+
+#TB_closeAjaxWindow {
+	float: left;
+}
+
+#TB_ajaxWindowTitle {
+	float: right;
 }
 
 #post_status {
@@ -2720,7 +2720,7 @@ div.sidebar-name h3 {
 	font-family: Tahoma, Arial, sans-serif;
 }
 
-.accordion-section-title:after {
+.js .accordion-section-title:after {
 	right: auto;
 	left: 20px;
 }
@@ -2734,16 +2734,10 @@ div.sidebar-name h3 {
 
 .menu-settings dd {
 	float: right;
-	padding-right: 170px;
 }
 
 .manage-menus span {
 	float: right;
-}
-
-.menu-settings dt {
-	left: auto;
-	right: 0;
 }
 
 .manage-menus select {

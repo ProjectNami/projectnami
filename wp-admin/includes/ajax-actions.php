@@ -1075,8 +1075,6 @@ function wp_ajax_autosave() {
 				$id = $post->ID;
 		}
 
-		// When is_wp_error($id), $id overwrites $data in WP_Ajax_Response
-		// todo: Needs review. The errors generated in WP_Ajax_Response and parsed with wpAjax.parseAjaxResponse() haven't been used for years.
 		if ( ! is_wp_error($id) ) {
 			/* translators: draft saved date format, see http://php.net/date */
 			$draft_saved_date_format = __('g:i:s a');
@@ -1090,6 +1088,7 @@ function wp_ajax_autosave() {
 			$id = $post->ID;
 	}
 
+	// @todo Consider exposing any errors, rather than having 'Saving draft...'
 	$x = new WP_Ajax_Response( array(
 		'what' => 'autosave',
 		'id' => $id,
@@ -2054,8 +2053,16 @@ function wp_ajax_send_link_to_editor() {
 }
 
 function wp_ajax_heartbeat() {
-	check_ajax_referer( 'heartbeat-nonce', '_nonce' );
+	if ( empty( $_POST['_nonce'] ) )
+		wp_send_json_error();
+
 	$response = array();
+
+	if ( false === wp_verify_nonce( $_POST['_nonce'], 'heartbeat-nonce' ) ) {
+		// User is logged in but nonces have expired.
+		$response['nonces_expired'] = true;
+		wp_send_json($response);
+	}
 
 	// screen_id is the same as $current_screen->id and the JS global 'pagenow'
 	if ( ! empty($_POST['screen_id']) )
@@ -2076,7 +2083,7 @@ function wp_ajax_heartbeat() {
 	// Allow the transport to be replaced with long-polling easily
 	do_action( 'heartbeat_tick', $response, $screen_id );
 
-	// send the current time acording to the server
+	// Send the current time according to the server
 	$response['server_time'] = time();
 
 	wp_send_json($response);
@@ -2084,8 +2091,6 @@ function wp_ajax_heartbeat() {
 
 function wp_ajax_get_revision_diffs() {
 	require ABSPATH . 'wp-admin/includes/revision.php';
-
-	// check_ajax_referer( 'revisions-ajax-nonce', 'nonce' );
 
 	if ( ! $post = get_post( (int) $_REQUEST['post_id'] ) )
 		wp_send_json_error();

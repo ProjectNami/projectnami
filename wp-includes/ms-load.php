@@ -181,13 +181,13 @@ function wpmu_current_site() {
 	if ( $domain == $cookie_domain )
 		$current_site = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->site WHERE domain = %s AND path = %s", $domain, $path ) );
 	else
-		$current_site = $wpdb->get_row( $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->site WHERE domain IN ( %s, %s ) AND path = %s ORDER BY CHAR_LENGTH( domain ) DESC", $domain, $cookie_domain, $path ) );
+		$current_site = $wpdb->get_row( $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->site WHERE domain IN ( %s, %s ) AND path = %s ORDER BY LENGTH( domain ) DESC", $domain, $cookie_domain, $path ) );
 
 	if ( ! $current_site ) {
 		if ( $domain == $cookie_domain )
 			$current_site = $wpdb->get_row( $wpdb->prepare("SELECT * FROM $wpdb->site WHERE domain = %s AND path='/'", $domain ) );
 		else
-			$current_site = $wpdb->get_row( $wpdb->prepare("SELECT TOP 1 * FROM $wpdb->site WHERE domain IN ( %s, %s ) AND path = '/' ORDER BY CHAR_LENGTH( domain ) DESC", $domain, $cookie_domain, $path ) );
+			$current_site = $wpdb->get_row( $wpdb->prepare("SELECT TOP 1 * FROM $wpdb->site WHERE domain IN ( %s, %s ) AND path = '/' ORDER BY LENGTH( domain ) DESC", $domain, $cookie_domain, $path ) );
 	}
 
 	if ( $current_site ) {

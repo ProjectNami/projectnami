@@ -2813,11 +2813,10 @@ function wp_insert_post($postarr, $wp_error = false) {
 		if ( !empty($import_id) ) {
 			$import_id = (int) $import_id;
 			if ( ! $wpdb->get_var( $wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE ID = %d", $import_id) ) ) {
+				$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts ON";
+				sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
 				$data['ID'] = $import_id;
 			}
-
-			$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts ON";
-			sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
 		}
 	
 		if ( false === $wpdb->insert( $wpdb->posts, $data ) ) {
@@ -2826,7 +2825,7 @@ function wp_insert_post($postarr, $wp_error = false) {
 			else
 				return 0;
 		}
-		if( !empty($import_id)) {
+		if( !empty($data[ 'ID' ])) {
 			$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts OFF";
 			sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
 		}
@@ -3983,19 +3982,17 @@ function wp_insert_attachment($object, $file = false, $parent = 0) {
 		$wpdb->update( $wpdb->posts, $data, array( 'ID' => $post_ID ) );
 	} else {
 		// If there is a suggested ID, use it if not already present
-		if ( !empty($import_id) ) {
-			$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts ON";
-			sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
-		
+		if ( !empty($import_id) ) {	
 			$import_id = (int) $import_id;
 			if ( ! $wpdb->get_var( $wpdb->prepare("SELECT ID FROM $wpdb->posts WHERE ID = %d", $import_id) ) ) {
+				$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts ON";
+				sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
 				$data['ID'] = $import_id;
 			}
 		}
 
 		$wpdb->insert( $wpdb->posts, $data );
 
-		if( ! empty( $import_id ) ) {
 			$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts OFF";
 			sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
 		}		
@@ -4988,29 +4985,4 @@ function _prime_post_caches( $ids, $update_term_cache = true, $update_meta_cache
 
 		update_post_caches( $fresh_posts, 'any', $update_term_cache, $update_meta_cache );
 	}
-}
-
-/**
- * Parse post content for pagination
- *
- * @since 3.6.0
- *
- * @uses paginate_content()
- *
- * @param object $post The post object.
- * @return array An array of values used for paginating the parsed content.
- */
-function wp_parse_post_content( $post ) {
-	$numpages = 1;
-
-	if ( strpos( $post->post_content, '<!--nextpage-->' ) ) {
-		$multipage = 1;
-		$pages = paginate_content( $post->post_content );
-		$numpages = count( $pages );
-	} else {
-		$pages = array( $post->post_content );
-		$multipage = 0;
-	}
-
-	return compact( 'multipage', 'pages', 'numpages' );
 }

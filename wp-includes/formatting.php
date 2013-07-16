@@ -2136,27 +2136,42 @@ function sanitize_email( $email ) {
 function human_time_diff( $from, $to = '' ) {
 	if ( empty( $to ) )
 		$to = time();
+
 	$diff = (int) abs( $to - $from );
-	if ( $diff <= HOUR_IN_SECONDS ) {
+
+	if ( $diff < HOUR_IN_SECONDS ) {
 		$mins = round( $diff / MINUTE_IN_SECONDS );
-		if ( $mins <= 1 ) {
+		if ( $mins <= 1 )
 			$mins = 1;
-		}
 		/* translators: min=minute */
 		$since = sprintf( _n( '%s min', '%s mins', $mins ), $mins );
-	} elseif ( ( $diff <= DAY_IN_SECONDS ) && ( $diff > HOUR_IN_SECONDS ) ) {
+	} elseif ( $diff < DAY_IN_SECONDS && $diff >= HOUR_IN_SECONDS ) {
 		$hours = round( $diff / HOUR_IN_SECONDS );
-		if ( $hours <= 1 ) {
+		if ( $hours <= 1 )
 			$hours = 1;
-		}
 		$since = sprintf( _n( '%s hour', '%s hours', $hours ), $hours );
-	} elseif ( $diff >= DAY_IN_SECONDS ) {
+	} elseif ( $diff < WEEK_IN_SECONDS && $diff >= DAY_IN_SECONDS ) {
 		$days = round( $diff / DAY_IN_SECONDS );
-		if ( $days <= 1 ) {
+		if ( $days <= 1 )
 			$days = 1;
-		}
 		$since = sprintf( _n( '%s day', '%s days', $days ), $days );
+	} elseif ( $diff < 30 * DAY_IN_SECONDS && $diff >= WEEK_IN_SECONDS ) {
+		$weeks = round( $diff / WEEK_IN_SECONDS );
+		if ( $weeks <= 1 )
+			$weeks = 1;
+		$since = sprintf( _n( '%s week', '%s weeks', $weeks ), $weeks );
+	} elseif ( $diff < YEAR_IN_SECONDS && $diff >= 30 * DAY_IN_SECONDS ) {
+		$months = round( $diff / ( 30 * DAY_IN_SECONDS ) );
+		if ( $months <= 1 )
+			$months = 1;
+		$since = sprintf( _n( '%s month', '%s months', $months ), $months );
+	} elseif ( $diff >= YEAR_IN_SECONDS ) {
+		$years = round( $diff / YEAR_IN_SECONDS );
+		if ( $years <= 1 )
+			$years = 1;
+		$since = sprintf( _n( '%s year', '%s years', $years ), $years );
 	}
+
 	return $since;
 }
 
@@ -2633,11 +2648,15 @@ function esc_url( $url, $protocols = null, $_context = 'display' ) {
 		$url = str_replace( "'", '&#039;', $url );
 	}
 
-	if ( ! is_array( $protocols ) )
-		$protocols = wp_allowed_protocols();
-	$good_protocol_url = wp_kses_bad_protocol( $url, $protocols );
-	if ( strtolower( $good_protocol_url ) != strtolower( $url ) )
-		return '';
+	if ( '/' === $url[0] ) {
+		$good_protocol_url = $url;
+	} else {
+		if ( ! is_array( $protocols ) )
+			$protocols = wp_allowed_protocols();
+		$good_protocol_url = wp_kses_bad_protocol( $url, $protocols );
+		if ( strtolower( $good_protocol_url ) != strtolower( $url ) )
+			return '';
+	}
 
 	return apply_filters('clean_url', $good_protocol_url, $original_url, $_context);
 }
@@ -3393,4 +3412,21 @@ function wp_slash( $value ) {
  */
 function wp_unslash( $value ) {
 	return stripslashes_deep( $value );
+}
+/**
+ * Extract and return the first URL from passed content.
+ *
+ * @since 3.6.0
+ *
+ * @param string $content A string which might contain a URL.
+ * @return string The found URL.
+ */
+function get_url_in_content( $content ) {
+	if ( empty( $content ) )
+		return '';
+
+	if ( preg_match( '/<a\s[^>]*?href=([\'"])(.+?)\1/is', $content, $matches ) )
+		return esc_url_raw( $matches[2] );
+
+	return false;
 }

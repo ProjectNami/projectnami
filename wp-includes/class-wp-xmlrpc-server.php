@@ -1017,7 +1017,7 @@ class wp_xmlrpc_server extends IXR_Server {
 		if ( $update ) {
 			if ( ! get_post( $post_data['ID'] ) )
 				return new IXR_Error( 401, __( 'Invalid post ID.' ) );
-			if ( ! current_user_can( $post_type->cap->edit_post, $post_data['ID'] ) )
+			if ( ! current_user_can( 'edit_post', $post_data['ID'] ) )
 				return new IXR_Error( 401, __( 'Sorry, you are not allowed to edit this post.' ) );
 			if ( $post_data['post_type'] != get_post_type( $post_data['ID'] ) )
 				return new IXR_Error( 401, __( 'The post type may not be changed.' ) );
@@ -1327,8 +1327,7 @@ class wp_xmlrpc_server extends IXR_Server {
 		if ( empty( $post['ID'] ) )
 			return new IXR_Error( 404, __( 'Invalid post ID.' ) );
 
-		$post_type = get_post_type_object( $post['post_type'] );
-		if ( ! current_user_can( $post_type->cap->delete_post, $post_id ) )
+		if ( ! current_user_can( 'delete_post', $post_id ) )
 			return new IXR_Error( 401, __( 'Sorry, you are not allowed to delete this post.' ) );
 
 		$result = wp_delete_post( $post_id );
@@ -1409,8 +1408,7 @@ class wp_xmlrpc_server extends IXR_Server {
 		if ( empty( $post['ID'] ) )
 			return new IXR_Error( 404, __( 'Invalid post ID.' ) );
 
-		$post_type = get_post_type_object( $post['post_type'] );
-		if ( ! current_user_can( $post_type->cap->edit_post, $post_id ) )
+		if ( ! current_user_can( 'edit_post', $post_id ) )
 			return new IXR_Error( 401, __( 'Sorry, you cannot edit this post.' ) );
 
 		return $this->_prepare_post( $post, $fields );
@@ -1505,8 +1503,7 @@ class wp_xmlrpc_server extends IXR_Server {
 		$struct = array();
 
 		foreach ( $posts_list as $post ) {
-			$post_type = get_post_type_object( $post['post_type'] );
-			if ( ! current_user_can( $post_type->cap->edit_post, $post['ID'] ) )
+			if ( ! current_user_can( 'edit_post', $post['ID'] ) )
 				continue;
 
 			$struct[] = $this->_prepare_post( $post, $fields );
@@ -3202,6 +3199,7 @@ class wp_xmlrpc_server extends IXR_Server {
 	 */
 	function _getOptions($options) {
 		$data = array();
+		$can_manage = current_user_can( 'manage_options' );
 		foreach ( $options as $option ) {
 			if ( array_key_exists( $option, $this->blog_options ) ) {
 				$data[$option] = $this->blog_options[$option];
@@ -3210,6 +3208,9 @@ class wp_xmlrpc_server extends IXR_Server {
 					$data[$option]['value'] = get_option( $data[$option]['option'] );
 					unset($data[$option]['option']);
 				}
+
+				if ( ! $can_manage )
+					$data[$option]['readonly'] = true;
 			}
 		}
 
@@ -4313,22 +4314,20 @@ class wp_xmlrpc_server extends IXR_Server {
 		return strval($post_ID);
 	}
 
-	function add_enclosure_if_new($post_ID, $enclosure) {
+	function add_enclosure_if_new( $post_ID, $enclosure ) {
 		if ( is_array( $enclosure ) && isset( $enclosure['url'] ) && isset( $enclosure['length'] ) && isset( $enclosure['type'] ) ) {
-
-			$encstring = $enclosure['url'] . "\n" . $enclosure['length'] . "\n" . $enclosure['type'];
+			$encstring = $enclosure['url'] . "\n" . $enclosure['length'] . "\n" . $enclosure['type'] . "\n";
 			$found = false;
-			foreach ( (array) get_post_custom($post_ID) as $key => $val) {
-				if ($key == 'enclosure') {
-					foreach ( (array) $val as $enc ) {
-						if ($enc == $encstring) {
-							$found = true;
-							break 2;
-						}
+			if ( $enclosures = get_post_meta( $post_ID, 'enclosure' ) ) {
+				foreach ( $enclosures as $enc ) {
+					// This method used to omit the trailing new line. #23219
+					if ( rtrim( $enc, "\n" ) == rtrim( $encstring, "\n" ) ) {
+						$found = true;
+						break;
 					}
 				}
 			}
-			if (!$found)
+			if ( ! $found )
 				add_post_meta( $post_ID, 'enclosure', $encstring );
 		}
 	}
@@ -4348,7 +4347,7 @@ class wp_xmlrpc_server extends IXR_Server {
 		$attachments = $wpdb->get_results( "SELECT ID, guid FROM {$wpdb->posts} WHERE post_parent = '0' AND post_type = 'attachment'" );
 		if ( is_array( $attachments ) ) {
 			foreach ( $attachments as $file ) {
-				if ( strpos( $post_content, $file->guid ) !== false )
+				if ( ! empty( $file->guid ) && strpos( $post_content, $file->guid ) !== false )
 					$wpdb->update($wpdb->posts, array('post_parent' => $post_ID), array('ID' => $file->ID) );
 			}
 		}

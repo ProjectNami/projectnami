@@ -3053,7 +3053,7 @@ function apache_mod_loaded($mod, $default = false) {
 }
 
 /**
- * Check if IIS 7 supports pretty permalinks.
+ * Check if IIS 7+ supports pretty permalinks.
  *
  * @since 2.8.0
  *
@@ -3064,11 +3064,10 @@ function iis7_supports_permalinks() {
 
 	$supports_permalinks = false;
 	if ( $is_iis7 ) {
-		/* First we check if the DOMDocument class exists. If it does not exist,
-		 * which is the case for PHP 4.X, then we cannot easily update the xml configuration file,
-		 * hence we just bail out and tell user that pretty permalinks cannot be used.
-		 * This is not a big issue because PHP 4.X is going to be deprecated and for IIS it
-		 * is recommended to use PHP 5.X NTS.
+		/* First we check if the DOMDocument class exists. If it does not exist, then we cannot
+		 * easily update the xml configuration file, hence we just bail out and tell user that
+		 * pretty permalinks cannot be used.
+		 *
 		 * Next we check if the URL Rewrite Module 1.1 is loaded and enabled for the web site. When
 		 * URL Rewrite 1.1 is loaded it always sets a server variable called 'IIS_UrlRewriteModule'.
 		 * Lastly we make sure that PHP is running via FastCGI. This is important because if it runs
@@ -3961,6 +3960,7 @@ function wp_auth_check_html() {
 	<div id="wp-auth-check-wrap" class="<?php echo $wrap_class; ?>">
 	<div id="wp-auth-check-bg"></div>
 	<div id="wp-auth-check">
+	<div class="wp-auth-check-close" tabindex="0" title="<?php esc_attr_e('Close'); ?>"></div>
 	<?php
 
 	if ( $same_domain ) {
@@ -3975,7 +3975,6 @@ function wp_auth_check_html() {
 		<p><a href="<?php echo esc_url( $login_url ); ?>" target="_blank"><?php _e('Please log in again.'); ?></a>
 		<?php _e('The login page will open in a new window. After logging in you can close it and return to this page.'); ?></p>
 	</div>
-	<p class="wp-auth-check-close"><a href="#" class="button button-primary"><?php _e('Close'); ?></a></p>
 	</div>
 	</div>
 	<?php
@@ -3992,9 +3991,9 @@ function wp_auth_check( $response, $data ) {
 
 	// If the user is logged in and we are outside the login grace period, bail.
 	if ( is_user_logged_in() && empty( $GLOBALS['login_grace_period'] ) )
-		return $response;
+		return array_merge( $response, array( 'wp-auth-check' => '1' ) );
 
-	return array_merge( $response, array( 'wp-auth-check' => '1' ) );
+	return array_merge( $response, array( 'wp-auth-check' => 'show' ) );
 }
 
 /**

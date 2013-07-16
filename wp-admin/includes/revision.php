@@ -27,6 +27,12 @@ function wp_get_revision_ui_diff( $post, $compare_from, $compare_to ) {
 		$compare_to = $temp;
 	}
 
+	// Add default title if title field is empty
+	if ( $compare_from && empty( $compare_from->post_title ) )
+		$compare_from->post_title = __( '(no title)' );
+	if ( empty( $compare_to->post_title ) )
+		$compare_to->post_title = __( '(no title)' );
+
 	$return = array();
 
 	foreach ( _wp_post_revision_fields() as $field => $name ) {
@@ -38,7 +44,7 @@ function wp_get_revision_ui_diff( $post, $compare_from, $compare_to ) {
 		if ( ! $diff && 'post_title' === $field ) {
 			// It's a better user experience to still show the Title, even if it didn't change.
 			// No, you didn't see this.
-			$diff = "<table class='diff'><col class='ltype' /><col class='content' /><col class='ltype' /><col class='content' /><tbody><tr>";
+			$diff = '<table class="diff"><colgroup><col class="content diffsplit left"><col class="content diffsplit middle"><col class="content diffsplit right"></colgroup><tbody><tr>';
 			$diff .= '<td>' . esc_html( $compare_from->post_title ) . '</td><td></td><td>' . esc_html( $compare_to->post_title ) . '</td>';
 			$diff .= '</tr></tbody>';
 			$diff .= '</table>';
@@ -55,16 +61,17 @@ function wp_get_revision_ui_diff( $post, $compare_from, $compare_to ) {
 	return $return;
 }
 
-function wp_prepare_revisions_for_js( $post, $selected_revision_id ) {
+function wp_prepare_revisions_for_js( $post, $selected_revision_id, $from = null ) {
 	$post = get_post( $post );
 	$revisions = array();
-	$current = current_time( 'timestamp' );
+	$now_gmt = time();
 
-	$revisions = wp_get_post_revisions( $post->ID );
+	$revisions = wp_get_post_revisions( $post->ID, array( 'order' => 'ASC' ) );
 
 	cache_users( wp_list_pluck( $revisions, 'post_author' ) );
 
 	foreach ( $revisions as $revision ) {
+		$modified = strtotime( $revision->post_modified );
 		$modified_gmt = strtotime( $revision->post_modified_gmt );
 		$restore_link = wp_nonce_url(
 			add_query_arg(
@@ -82,19 +89,38 @@ function wp_prepare_revisions_for_js( $post, $selected_revision_id ) {
 				'avatar' => get_avatar( $revision->post_author, 24 ),
 				'name'   => get_the_author_meta( 'display_name', $revision->post_author ),
 			),
-			'date'         => date_i18n( __( 'M j, Y @ G:i' ), $modified_gmt ),
-			'dateShort'    => date_i18n( _x( 'j M @ G:i', 'revision date short format' ), $modified_gmt ),
-			'timeAgo'      => human_time_diff( $modified_gmt, $current ),
+			'date'         => date_i18n( __( 'M j, Y @ G:i' ), $modified ),
+			'dateShort'    => date_i18n( _x( 'j M @ G:i', 'revision date short format' ), $modified ),
+			'timeAgo'      => sprintf( __( '%s ago' ), human_time_diff( $modified_gmt, $now_gmt ) ),
 			'autosave'     => wp_is_post_autosave( $revision ),
 			'current'      => $revision->post_modified_gmt === $post->post_modified_gmt,
 			'restoreUrl'   => urldecode( $restore_link ),
 		);
 	}
 
+	// Now, grab the initial diff
+	$compare_two_mode = is_numeric( $from );
+	if ( ! $compare_two_mode ) {
+		$from = array_keys( array_slice( $revisions, array_search( $selected_revision_id, array_keys( $revisions ) ) - 1, 1, true ) );
+		$from = $from[0];
+	}
+
+	$from = absint( $from );
+
+	$diffs = array( array(
+		'id' => $from . ':' . $selected_revision_id,
+		'fields' => wp_get_revision_ui_diff( $post->ID, $from, $selected_revision_id ),
+	));
+
 	return array(
 		'postId'           => $post->ID,
 		'nonce'            => wp_create_nonce( 'revisions-ajax-nonce' ),
 		'revisionData'     => array_values( $revisions ),
-		'selectedRevision' => $selected_revision_id,
+		'to'               => $selected_revision_id,
+		'from'             => $from,
+		'diffData'         => $diffs,
+		'baseUrl'          => parse_url( admin_url( 'revision.php' ), PHP_URL_PATH ),
+		'compareTwoMode'   => absint( $compare_two_mode ), // Apparently booleans are not allowed
+		'revisionIds'      => array_keys( $revisions ),
 	);
 }

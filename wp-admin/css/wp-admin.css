@@ -281,6 +281,7 @@ body {
 
 body.iframe {
 	min-width: 0;
+	padding-top: 1px;
 }
 
 body.login {
@@ -2534,7 +2535,7 @@ table.fixed {
 tr.wp-locked .locked-indicator {
 	background: url('../images/lock.png') no-repeat;
 	margin: -2px 0 0 6px;
-	height: 16px;
+	height: 20px;
 	width: 16px;
 }
 
@@ -2543,6 +2544,24 @@ tr.wp-locked .check-column input[type="checkbox"],
 tr.wp-locked .row-actions .inline,
 tr.wp-locked .row-actions .trash {
 	display: none;
+}
+
+tr .locked-info {
+	height: 0;
+	opacity: 0;
+}
+
+tr.wp-locked .locked-info {
+	height: 22px;
+	opacity: 1;
+}
+
+tr.locked-info, tr.wp-locked .locked-info {
+	-webkit-transition: height 1s, opacity 500ms;
+	-moz-transition:    height 1s, opacity 500ms;
+	-ms-transition:     height 1s, opacity 500ms;
+	-o-transition:      height 1s, opacity 500ms;
+	transition:         height 1s, opacity 500ms;
 }
 
 .fixed .column-comments .sorting-indicator {
@@ -3481,13 +3500,8 @@ td.plugin-title p {
 /*------------------------------------------------------------------------------
   11.2 - Post Revisions
 ------------------------------------------------------------------------------*/
-.revisions .spinner {
-	float: none;
-	margin: 100px auto;
-}
-
-.revisions.loading .spinner {
-	display: block;
+body.revision-php {
+	overflow-y: scroll; /* Force a scrollbar, so centering doesn't jump */
 }
 
 .revisions-control-frame,
@@ -3496,19 +3510,96 @@ td.plugin-title p {
 }
 
 .revisions-controls {
-	height: 60px;
-	padding: 40px 0 20px;
-	border-bottom: 1px solid #dfdfdf;
-	margin-bottom: 10px;
+	padding-top: 40px;
+	height: 100px;
+}
+
+.revisions-controls input[type="checkbox"] {
+	position: relative;
+	top: -1px;
+	vertical-align: text-bottom;
+}
+
+.revisions-tickmarks {
+	position: relative;
+	margin: 0 auto 0;
+	height: 0.8em;
+	z-index: 2;
+	top: 7px;
+	width: 70%;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-ms-box-sizing: border-box; /* ie8 only */
+	box-sizing: border-box;
+}
+
+.revisions-tickmarks > div {
+	position: relative;
+	height: 100%;
+	float: left;
+	z-index: 10002;
+	border-style: solid;
+	border-width: 0 0 0 1px;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-ms-box-sizing: border-box; /* ie8 only */
+	box-sizing: border-box;
+}
+
+.revisions-tickmarks > div:first-of-type {
+	border-left-width: 0;
+}
+
+.comparing-two-revisions .revisions-controls {
+	height: 140px;
+}
+
+.revisions .loading-indicator {
+	position: absolute;
+	text-align: center;
+	vertical-align: middle;
+	opacity: 0;
+	margin: 0 auto;
+	width: 100%;
+	height: 32px;
+	top: 3em;
+	background: #fff url(../images/wpspin_light-2x.gif) no-repeat center top;
+	-webkit-transition: opacity 0.5s;
+	-moz-transition:    opacity 0.5s;
+	-ms-transition:     opacity 0.5s;
+	-o-transition:      opacity 0.5s;
+	transition:         opacity 0.5s;
+}
+
+.revisions.loading .loading-indicator {
+	opacity: 1;
+}
+
+.revisions .diff {
+	-webkit-transition: opacity 0.5s;
+	-moz-transition:    opacity 0.5s;
+	-ms-transition:     opacity 0.5s;
+	-o-transition:      opacity 0.5s;
+	transition:         opacity 0.5s;
+}
+
+.revisions.loading .diff {
+	opacity: 0.5;
 }
 
 .revisions-meta {
 	margin-top: 15px;
 }
+
 .revision-toggle-compare-mode {
 	position: absolute;
 	top: 0;
 	right: 0;
+}
+
+.comparing-two-revisions .revisions-previous,
+.comparing-two-revisions .revisions-next {
+	display: none;
 }
 
 .revisions-previous {
@@ -3521,7 +3612,8 @@ td.plugin-title p {
 
 .wp-slider {
 	width: 70%;
-	margin: 6px auto 0;
+	margin: 0 auto 0;
+	top: -3px;
 }
 
 /* Revision meta box */
@@ -3532,6 +3624,7 @@ td.plugin-title p {
 
 table.diff {
 	width: 100%;
+	white-space: pre-wrap;
 }
 
 table.diff col.content {
@@ -3565,63 +3658,14 @@ table.diff .diff-addedline ins {
 	text-decoration: none;
 }
 
-#revisions-diff {
-	position: relative;
-}
-
-#loading-status {
-	display: none;
-	position: absolute;
-	top: 8px;
-	z-index: 1000;
-}
-
-#loading-status .spinner {
-	display: inline-block;
-	float: none;
-	margin: -4px 0;
-}
-
-#revision-interact {
-	padding: 20px 0;
-}
-
-.comparetwo #diff-slider {
-	width: 95%;
-}
-
-#diff-slider .ui-slider-tooltip,
-#diff-slider-ticks .ui-slider-tooltip {
-	display: none;
-	position: absolute;
-	bottom: 21px;
-	margin-left: -74px;
-}
-
-#diff-slider .ui-state-active .ui-slider-tooltip,
-#diff-slider .ui-state-focus .ui-slider-tooltip,
-#diff-slider .ui-state-hover .ui-slider-tooltip {
-	display: block;
-}
-
 #diff-title-to strong {
 	display: inline;
-}
-
-.comparing-two-revisions #diff-title-to strong {
-	display: inline;
-}
-
-.diff-label {
-	margin: 20px 0 5px;
-	padding-left: 3px;
-	font-size: 13px;
 }
 
 #diff-header {
 	-webkit-border-radius: 3px;
 	border-radius: 3px;
-	padding: 5px 200px 5px 5px;
+	padding: 5px;
 	clear: both;
 }
 
@@ -3647,158 +3691,66 @@ table.diff .diff-addedline ins {
 	margin-left: 5px;
 }
 
-#restore-revision {
+.diff-header > input.restore-revision {
 	margin-left: 10px;
 }
 
-#diff-table {
-	margin-top: 20px;
-}
-
-.comparing-two-revisions #diff-previous-revision,
-.comparing-two-revisions #diff-next-revision,
 #diff-header-from {
 	display: none;
 }
 
 .comparing-two-revisions #diff-title-from,
-.left-model-loading #loading-status,
-.right-model-loading #loading-status,
 .comparing-two-revisions #diff-header-from {
 	display: block;
 }
 
-.diff-slider-ticks-wrapper {
-	margin: 0 auto;
-	text-align: left;
-}
-
-#diff-slider-ticks {
+.revisions-tooltip {
 	position: absolute;
-	z-index: 2;
-	margin-top: 20px;
-}
-
-.revision-tick {
-	width: 1px;
-	float: left;
-	margin: 1px 0 0 0;
-	height: .8em;
-	padding: 0;
-	margin-left: 0px;
-	cursor: pointer;
-}
-
-#diff-slider-ticks .revision-tick:first-child {
-	border-bottom-left-radius: 3px;
-	border-top-left-radius: 3px;
-}
-
-#diff-slider-ticks .revision-tick:last-child {
-	border-bottom-right-radius: 3px;
-	border-top-right-radius: 3px;
-}
-
-.revision-tick.scope-of-changes-none {
-	width: 1px;
-}
-
-.revision-tick.scope-of-changes-vsmall {
-	width: 2px;
-}
-
-.revision-tick.scope-of-changes-small {
-	width: 3px;
-}
-
-.revision-tick.scope-of-changes-med {
-	width: 4px;
-}
-
-.revision-tick.scope-of-changes-large {
-	width: 5px;
-}
-
-.revision-tick.scope-of-changes-vlarge {
-	width: 6px;
-}
-
-.diff-loading {
-	margin-top: 50px;
-	width: 100%;
-	height: 200px;
-}
-
-.diff-loading .spinner {
-	clear: both;
-	margin: 0 auto;
-	display: block;
-	float: none;
-}
-
-.ui-tooltip-content img,
-.ui-slider-tooltip img {
-	float: left;
-	margin-right: 5px;
-	margin-top: 5px;
-}
-
-
-/*  jQuery UI Tooltip 1.10.1 */
-
-.ui-tooltip,
-.ui-slider-tooltip {
-	padding: 8px;
-	position: absolute;
+	bottom: 105px;
+	margin-left: -69px;
+	line-height: 28px;
 	z-index: 9999;
-	max-width: 300px;
+	max-width: 350px;
 	min-width: 130px;
+	padding: 4px;
+	display: none;
+	opacity: 0;
+	-webkit-transition: left 15ms;
+	-moz-transition:    left 15ms;
+	-ms-transition:     left 15ms;
+	-o-transition:      left 15ms;
+	transition:         left 15ms;
 }
 
-body .ui-tooltip,
-body .ui-slider-tooltip {
-	border-width: 1px;
+.comparing-two-revisions .revisions-tooltip {
+	bottom: 145px;
 }
 
-.ui-tooltip,
-.ui-slider-tooltip,
-.arrow:after {
-	border: 1px solid #d7d7d7;
+.revisions-tooltip img {
+	float: left;
+	margin: 2px 5px 0 0;
+	padding: 0;
+	vertical-align: middle;
 }
 
-.ui-tooltip,
-.ui-slider-tooltip {
-	padding: 5px 10px;
-}
-
-.arrow {
+.revisions-tooltip-arrow {
 	width: 70px;
-	height: 16px;
+	height: 15px;
 	overflow: hidden;
 	position: absolute;
-	left: 50%;
-	margin-left: -35px;
-	bottom: -16px;
-	z-index: 99999;
+	left: 0;
+	margin-left: 35px;
+	bottom: -15px;
+	z-index: 10000;
 }
 
-.arrow.top {
-	top: -16px;
-	bottom: auto;
-}
-
-.arrow.left {
-	left: 20%;
-}
-
-.arrow:after {
+.revisions-tooltip-arrow:after {
 	content: "";
 	position: absolute;
 	left: 20px;
 	top: -20px;
 	width: 25px;
 	height: 25px;
-	background-color: #FFF;
 	-webkit-transform: rotate(45deg);
 	-moz-transform: rotate(45deg);
 	-ms-transform: rotate(45deg);
@@ -3806,13 +3758,17 @@ body .ui-slider-tooltip {
 	tranform: rotate(45deg);
 }
 
-.arrow.top:after {
-	bottom: -20px;
-	top: auto;
+.revisions-tooltip,
+.revisions-tooltip-arrow:after {
+	border-width: 1px;
+	border-style: solid;
+}
+
+div.revisions-controls > .wp-slider > .ui-slider-handle {
+	margin-left: -10px;
 }
 
  /* jQuery UI Slider */
-
 .wp-slider.ui-slider {
 	position: relative;
 	border-width: 1px;
@@ -3837,9 +3793,9 @@ body .ui-slider-tooltip {
 	content: "";
 	position: absolute;
 	top: 6px;
-	left: 4px;
+	left: 3px;
 	height: 8px;
-	width: 12px;
+	width: 13px;
 	background: url(../images/arrows-pr.png) no-repeat -2px -47px;
 }
 
@@ -3871,10 +3827,11 @@ body .ui-slider-tooltip {
 
 .wp-slider.ui-slider-horizontal {
 	height: .8em;
+	z-index: 10001;
 }
 
 .wp-slider.ui-slider-horizontal .ui-slider-handle {
-	top: -.3em;
+	top: -.25em;
 	margin-left: -.6em;
 }
 
@@ -3889,30 +3846,6 @@ body .ui-slider-tooltip {
 
 .wp-slider.ui-slider-horizontal .ui-slider-range-max {
 	right: 0;
-}
-
-.wp-slider.ui-slider-vertical {
-	width: .8em;
-	height: 100px;
-}
-
-.wp-slider.ui-slider-vertical .ui-slider-handle {
-	left: -.3em;
-	margin-left: 0;
-	margin-bottom: -.6em;
-}
-
-.wp-slider.ui-slider-vertical .ui-slider-range {
-	left: 0;
-	width: 100%;
-}
-
-.wp-slider.ui-slider-vertical .ui-slider-range-min {
-	bottom: 0;
-}
-
-.wp-slider.ui-slider-vertical .ui-slider-range-max {
-	top: 0;
 }
 
 
@@ -4133,6 +4066,10 @@ span.description,
 .form-wrap .form-field {
 	margin: 0 0 10px;
 	padding: 8px 0;
+}
+
+.form-wrap .form-field #parent {
+	max-width: 100%;
 }
 
 .col-wrap h3 {
@@ -7161,8 +7098,8 @@ a.rsswidget {
 }
 
 .login h1 a {
-	background-image: url('../images/wordpress-logo.png?ver=20120216');
-	background-size: 274px 63px;
+	background-image: url('../images/pn-logo.png');
+	background-size: 300px 58px;
 	background-position: top center;
 	background-repeat: no-repeat;
 	width: 326px;
@@ -7250,7 +7187,7 @@ body.interim-login {
 
 .interim-login #login {
 	padding: 0;
-	margin: 25px auto 20px;
+	margin: 5px auto 20px;
 }
 
 .interim-login.login h1 a {
@@ -7431,14 +7368,6 @@ body.interim-login {
 	float: left;
 	margin: 0;
 	width: 60%;
-	padding-left: 170px;
-}
-
-.menu-settings dt {
-	clear: both;
-	left: 0;
-	padding: 3px 0 0;
-	position: absolute;
 }
 
 .menu-edit .checkbox-input {
@@ -7581,14 +7510,24 @@ body.interim-login {
 	margin: 0;
 }
 
-.accordion-container .accordion-section:first-child {
+#nav-menu-meta .accordion-container .top {
+	border-top: 1px solid #dfdfdf;
+}
+
+#nav-menu-meta .accordion-container .accordion-section:first-child,
+#nav-menu-meta .accordion-container .accordion-section:first-child h3,
+#nav-menu-meta .accordion-container .top,
+#nav-menu-meta .accordion-container .top h3 {
 	-webkit-border-top-right-radius: 3px;
 	-webkit-border-top-left-radius: 3px;
 	border-top-right-radius: 3px;
 	border-top-left-radius: 3px;
 }
 
-.accordion-container .accordion-section:last-child {
+#nav-menu-meta .accordion-container .accordion-section:last-child,
+#nav-menu-meta .accordion-container .accordion-section:last-child .accordion-section-content,
+#nav-menu-meta .accordion-container .bottom,
+#nav-menu-meta .accordion-container .bottom:not(.open) h3 {
 	-webkit-border-bottom-right-radius: 3px;
 	-webkit-border-bottom-left-radius: 3px;
 	border-bottom-right-radius: 3px;
@@ -9027,9 +8966,6 @@ a.widget-control-edit {
 .accordion-section.open .accordion-section-content,
 .no-js .accordion-section .accordion-section-content {
 	display: block;
-	background: #fdfdfd;
-	border-left: 1px solid #dfdfdf;
-	border-right: 1px solid #dfdfdf;
 }
 
 .accordion-section.open:hover {
@@ -9040,6 +8976,9 @@ a.widget-control-edit {
 	display: none;
 	padding: 10px 20px 15px;
 	overflow: hidden;
+	background: #fdfdfd;
+	border-left: 1px solid #dfdfdf;
+	border-right: 1px solid #dfdfdf;
 }
 
 .accordion-section-title {
@@ -9049,14 +8988,16 @@ a.widget-control-edit {
 	border-left: 1px solid #dfdfdf;
 	border-right: 1px solid #dfdfdf;
 
-	cursor: pointer;
-
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	user-select: none;
 }
 
-.accordion-section-title:after {
+.js .accordion-section-title {
+	cursor: pointer;
+}
+
+.js .accordion-section-title:after {
 	content: '';
 	width: 0;
 	height: 0;
@@ -9109,10 +9050,10 @@ a.widget-control-edit {
 	border-color: #eee transparent;
 }
 
-.control-section:hover .accordion-section-title,
-.control-section .accordion-section-title:hover,
-.control-section.open .accordion-section-title,
-.control-section .accordion-section-title:focus {
+.js .control-section:hover .accordion-section-title,
+.js .control-section .accordion-section-title:hover,
+.js .control-section.open .accordion-section-title,
+.js .control-section .accordion-section-title:focus {
 	color: #fff;
 	text-shadow: 0 -1px 0 #333;
 	background: #808080;
@@ -9125,7 +9066,7 @@ a.widget-control-edit {
 	border-right: 1px solid #808080;
 }
 
-.control-section.accordion-section:hover,
+.js .control-section.accordion-section:hover,
 .control-section.accordion-section.open {
 	border-top-color: #808080;
 }

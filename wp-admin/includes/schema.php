@@ -64,11 +64,11 @@ CREATE TABLE $wpdb->term_taxonomy (
  description nvarchar(max) NOT NULL,
  parent bigint NOT NULL default 0,
  count bigint NOT NULL default 0,
- constraint $wpdb->term_taxonomy" . "_PK PRIMARY KEY (term_taxonomy_id)
+ constraint $wpdb->term_taxonomy" . "_PK PRIMARY KEY NONCLUSTERED (term_taxonomy_id)
 )
 
 GO
-CREATE UNIQUE INDEX $wpdb->term_taxonomy" . "_UK1 on $wpdb->term_taxonomy (term_id,taxonomy)
+CREATE UNIQUE CLUSTERED INDEX $wpdb->term_taxonomy" . "_CLU1 on $wpdb->term_taxonomy (term_id,taxonomy)
 GO
 CREATE INDEX $wpdb->term_taxonomy" . "_IDX2 on $wpdb->term_taxonomy (taxonomy)
 GO
@@ -77,10 +77,10 @@ CREATE TABLE $wpdb->term_relationships (
  object_id bigint NOT NULL default 0,
  term_taxonomy_id bigint NOT NULL default 0,
  term_order int NOT NULL default 0,
- CONSTRAINT $wpdb->term_relationships" . "_PK PRIMARY KEY (object_id,term_taxonomy_id)
+ CONSTRAINT $wpdb->term_relationships" . "_PK PRIMARY KEY NONCLUSTERED (object_id,term_taxonomy_id)
 )
 GO
-CREATE INDEX $wpdb->term_relationships" . "_IDX1 on $wpdb->term_relationships (term_taxonomy_id)
+CREATE CLUSTERED INDEX $wpdb->term_relationships" . "_CLU1 on $wpdb->term_relationships (term_taxonomy_id)
 GO
 
 CREATE TABLE $wpdb->commentmeta (
@@ -88,10 +88,10 @@ CREATE TABLE $wpdb->commentmeta (
   comment_id bigint NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
-  CONSTRAINT $wpdb->commentmeta" . "_PK PRIMARY KEY  (meta_id)
+  CONSTRAINT $wpdb->commentmeta" . "_PK PRIMARY KEY NONCLUSTERED  (meta_id)
 )
 GO
-CREATE INDEX $wpdb->commentmeta" . "_IDX1 on $wpdb->commentmeta (comment_id)
+CREATE CLUSTERED INDEX $wpdb->commentmeta" . "_CLU1 on $wpdb->commentmeta (comment_id)
 GO
 CREATE INDEX $wpdb->commentmeta" . "_IDX2 on $wpdb->commentmeta (meta_key)
 GO
@@ -160,10 +160,10 @@ CREATE TABLE $wpdb->postmeta (
   post_id bigint NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
-  constraint $wpdb->postmeta" . "_PK PRIMARY KEY  (meta_id)
+  constraint $wpdb->postmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id)
 )
 GO
-CREATE INDEX $wpdb->postmeta" . "_IDX1 on $wpdb->postmeta (post_id)
+CREATE CLUSTERED INDEX $wpdb->postmeta" . "_CLU1 on $wpdb->postmeta (post_id)
 GO
 CREATE INDEX $wpdb->postmeta" . "_IDX2 on $wpdb->postmeta (meta_key)
 GO
@@ -232,10 +232,10 @@ GO\n";
   user_id bigint NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
-  constraint $wpdb->usermeta" . "_PK PRIMARY KEY  (umeta_id)
+  constraint $wpdb->usermeta" . "_PK PRIMARY KEY NONCLUSTERED (umeta_id)
 )
 GO
-CREATE INDEX $wpdb->usermeta" . "_IDX1 on $wpdb->usermeta (user_id)
+CREATE CLUSTERED INDEX $wpdb->usermeta" . "_CLU1 on $wpdb->usermeta (user_id)
 GO
 CREATE INDEX $wpdb->usermeta" . "_IDX2 on $wpdb->usermeta (meta_key)
 GO\n";
@@ -302,12 +302,12 @@ CREATE TABLE $wpdb->sitemeta (
   site_id bigint NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
-  constraint $wpdb->sitemeta" . "_PK PRIMARY KEY  (meta_id)
+  constraint $wpdb->sitemeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id)
 )
 GO
 CREATE INDEX $wpdb->sitemeta" . "_IDX1 on $wpdb->sitemeta (meta_key)
 GO
-CREATE INDEX $wpdb->sitemeta" . "_IDX2 on $wpdb->sitemeta (site_id)
+CREATE CLUSTERED INDEX $wpdb->sitemeta" . "_CLU2 on $wpdb->sitemeta (site_id)
 GO
 
 CREATE TABLE $wpdb->signups (
@@ -320,8 +320,10 @@ CREATE TABLE $wpdb->signups (
   activated datetime2 NOT NULL default '0001-01-01 00:00:00',
   active tinyint NOT NULL default 0,
   activation_key nvarchar(50) NOT NULL default '',
-  meta nvarchar(max)
 )
+
+GO
+CREATE CLUSTERED INDEX $wpdb->signups" . "_IDX2 on $wpdb->signups (domain)
 
 GO
 CREATE CLUSTERED INDEX $wpdb->signups" . "_IDX2 on $wpdb->signups (domain)
@@ -538,7 +540,8 @@ function populate_options() {
 	// Set autoload to no for these options
 	$fat_options = array( 'moderation_keys', 'recently_edited', 'blacklist_keys', 'uninstall_plugins' );
 
-	$existing_options = $wpdb->get_col("SELECT option_name FROM $wpdb->options");
+	$keys = "'" . implode( "', '", array_keys( $options ) ) . "'";
+	$existing_options = $wpdb->get_col( "SELECT option_name FROM $wpdb->options WHERE option_name in ( $keys )" );
 
 	$insert = '';
 	foreach ( $options as $option => $value ) {
