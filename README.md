@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-###Version: `trunk`###
+###Version: `0.9.7`###
 
 ###Description:###
 
