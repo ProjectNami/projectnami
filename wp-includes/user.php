@@ -888,7 +888,7 @@ function count_users($strategy = 'time') {
 		// Build a CPU-intensive query that will return concise information.
 		$select_count = array();
 		foreach ( $avail_roles as $this_role => $name ) {
-			$select_count[] = "(SELECT COUNT(*) FROM $wpdb->usermeta WHERE [meta_key] = 'wp_capabilities' AND [meta_value] LIKE '%" . like_escape( $this_role ) . "%') as $this_role";
+			$select_count[] = "(SELECT COUNT(*) FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] LIKE '%" . like_escape( $this_role ) . "%') as $this_role";
 		}
 		$select_count = implode(', ', $select_count);
 
