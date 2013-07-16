@@ -3993,10 +3993,10 @@ function wp_insert_attachment($object, $file = false, $parent = 0) {
 
 		$wpdb->insert( $wpdb->posts, $data );
 
-		if( ! empty( $date[ 'ID' ] ) ) {
+		if( ! empty( $data[ 'ID' ] ) ) {
 			$enable_identity_insert = "SET IDENTITY_INSERT $wpdb->posts OFF";
 			sqlsrv_query( $wpdb->dbh, $enable_identity_insert );
-		}		
+		}
 
 		$post_ID = (int) $wpdb->insert_id;
 	}
