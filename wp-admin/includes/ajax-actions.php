@@ -739,9 +739,9 @@ function wp_ajax_replyto_comment( $action ) {
 	$user = wp_get_current_user();
 	if ( $user->exists() ) {
 		$user_ID = $user->ID;
-		$comment_author       = $wpdb->escape($user->display_name);
-		$comment_author_email = $wpdb->escape($user->user_email);
-		$comment_author_url   = $wpdb->escape($user->user_url);
+		$comment_author       = wp_slash( $user->display_name );
+		$comment_author_email = wp_slash( $user->user_email );
+		$comment_author_url   = wp_slash( $user->user_url );
 		$comment_content      = trim($_POST['content']);
 		if ( current_user_can( 'unfiltered_html' ) ) {
 			if ( wp_create_nonce( 'unfiltered-html-comment' ) != $_POST['_wp_unfiltered_html_comment'] ) {
@@ -2103,7 +2103,7 @@ function wp_ajax_get_revision_diffs() {
 		wp_send_json_error();
 
 	$return = array();
-	@set_time_limit( count( $_REQUEST['compare'] ) );
+	@set_time_limit( 0 );
 
 	foreach ( $_REQUEST['compare'] as $compare_key ) {
 		list( $compare_from, $compare_to ) = explode( ':', $compare_key ); // from:to
