@@ -31,6 +31,10 @@ function mysql2date( $format, $date, $translate = true ) {
 	if ( empty( $date ) )
 		return false;
 
+	if( is_object( $date ) && get_class( $date ) == 'DateTime' )
+		$date = $date->gettimestamp();
+		//$date = $date->date;
+
 	if ( 'G' == $format )
 		return strtotime( $date . ' +0000' );
 
