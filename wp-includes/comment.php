@@ -272,10 +272,6 @@ class WP_Comment_Query {
 
 		$order = ( 'ASC' == strtoupper($order) ) ? 'ASC' : 'DESC';
 
-		if( $count ) {
-			$order = '';
-		}
-
 		if ( ! empty( $orderby ) ) {
 			$ordersby = is_array($orderby) ? $orderby : preg_split('/[,\s]/', $orderby);
 			$allowed_keys = array(
@@ -327,7 +323,9 @@ class WP_Comment_Query {
 
 		if ( $count ) {
 			$fields = 'COUNT(*)';
-			$orderby = ''; // ORDER BY break in MSSQL here since comment_date_gmt won't be in the query statement.
+			$orderby = ''; // ORDER BY breaks in MSSQL here since comment_date_gmt won't be in the query statement.
+			$order = '';
+			$limits = '';
 		}
 		else {
 			$fields = '*';
