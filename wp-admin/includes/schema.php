@@ -103,8 +103,8 @@ CREATE TABLE $wpdb->comments (
   comment_author_email nvarchar(100) NOT NULL default '',
   comment_author_url nvarchar(200) NOT NULL default '',
   comment_author_IP nvarchar(100) NOT NULL default '',
-  comment_date datetime2 NOT NULL default '0001-01-01 00:00:00',
-  comment_date_gmt datetime2 NOT NULL default '0001-01-01 00:00:00',
+  comment_date datetime2(0) NOT NULL default '0001-01-01 00:00:00',
+  comment_date_gmt datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   comment_content nvarchar(max) NOT NULL,
   comment_karma int NOT NULL default 0,
   comment_approved nvarchar(20) NOT NULL default '1',
@@ -134,7 +134,7 @@ CREATE TABLE $wpdb->links (
   link_visible nvarchar(20) NOT NULL default 'Y',
   link_owner bigint NOT NULL default 1,
   link_rating int NOT NULL default 0,
-  link_updated datetime2 NOT NULL default '0001-01-01 00:00:00',
+  link_updated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   link_rel nvarchar(255) NOT NULL default '',
   link_notes nvarchar(max) NOT NULL,
   link_rss nvarchar(255) NOT NULL default '',
@@ -171,8 +171,8 @@ GO
 CREATE TABLE $wpdb->posts (
   ID bigint NOT NULL identity(1,1),
   post_author bigint NOT NULL default 0,
-  post_date datetime2 NOT NULL default '0001-01-01 00:00:00',
-  post_date_gmt datetime2 NOT NULL default '0001-01-01 00:00:00',
+  post_date datetime2(0) NOT NULL default '0001-01-01 00:00:00',
+  post_date_gmt datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   post_content nvarchar(max) NOT NULL,
   post_title nvarchar(max) NOT NULL,
   post_excerpt nvarchar(max) NOT NULL,
@@ -183,8 +183,8 @@ CREATE TABLE $wpdb->posts (
   post_name nvarchar(200) NOT NULL default '',
   to_ping nvarchar(max) NOT NULL,
   pinged nvarchar(max) NOT NULL,
-  post_modified datetime2 NOT NULL default '0001-01-01 00:00:00',
-  post_modified_gmt datetime2 NOT NULL default '0001-01-01 00:00:00',
+  post_modified datetime2(0) NOT NULL default '0001-01-01 00:00:00',
+  post_modified_gmt datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   post_content_filtered nvarchar(max) NOT NULL,
   post_parent bigint NOT NULL default 0,
   guid nvarchar(255) NOT NULL default '',
@@ -212,7 +212,7 @@ GO\n";
   user_nicename nvarchar(50) NOT NULL default '',
   user_email nvarchar(100) NOT NULL default '',
   user_url nvarchar(100) NOT NULL default '',
-  user_registered datetime2 NOT NULL default '0001-01-01 00:00:00',
+  user_registered datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   user_activation_key nvarchar(60) NOT NULL default '',
   user_status int NOT NULL default 0,
   display_name nvarchar(250) NOT NULL default '',
@@ -249,8 +249,8 @@ GO\n";
   site_id bigint NOT NULL default 0,
   domain nvarchar(200) NOT NULL default '',
   path nvarchar(100) NOT NULL default '',
-  registered datetime2 NOT NULL default '0001-01-01 00:00:00',
-  last_updated datetime2 NOT NULL default '0001-01-01 00:00:00',
+  registered datetime2(0) NOT NULL default '0001-01-01 00:00:00',
+  last_updated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   [public] tinyint NOT NULL default 1,
   archived tinyint NOT NULL default 0,
   mature tinyint NOT NULL default 0,
@@ -268,7 +268,7 @@ GO
 CREATE TABLE $wpdb->blog_versions (
   blog_id bigint NOT NULL default 0,
   db_version nvarchar(20) NOT NULL default '',
-  last_updated datetime2 NOT NULL default '0001-01-01 00:00:00',
+  last_updated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   constraint $wpdb->blog_versions" . "_PK PRIMARY KEY  (blog_id)
 )
 GO
@@ -280,7 +280,7 @@ CREATE TABLE $wpdb->registration_log (
   email nvarchar(255) NOT NULL default '',
   IP nvarchar(30) NOT NULL default '',
   blog_id bigint NOT NULL default 0,
-  date_registered datetime2 NOT NULL default '0001-01-01 00:00:00',
+  date_registered datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   constraint $wpdb->registration_log" . "_PK PRIMARY KEY  (ID)
 )
 GO
@@ -316,8 +316,8 @@ CREATE TABLE $wpdb->signups (
   title nvarchar(max) NOT NULL,
   user_login nvarchar(60) NOT NULL default '',
   user_email nvarchar(100) NOT NULL default '',
-  registered datetime2 NOT NULL default '0001-01-01 00:00:00',
-  activated datetime2 NOT NULL default '0001-01-01 00:00:00',
+  registered datetime2(0) NOT NULL default '0001-01-01 00:00:00',
+  activated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   active tinyint NOT NULL default 0,
   activation_key nvarchar(50) NOT NULL default '',
 )
