@@ -46,10 +46,10 @@ function wp_get_db_schema( $scope = 'all', $blog_id = null ) {
 
 	// Blog specific tables.
 	$blog_tables = "CREATE TABLE $wpdb->terms (
- term_id bigint NOT NULL identity(1,1),
+ term_id int NOT NULL identity(1,1),
  name nvarchar(200) NOT NULL default '',
  slug nvarchar(200) NOT NULL default '',
- term_group bigint NOT NULL default 0,
+ term_group int NOT NULL default 0,
  constraint $wpdb->terms" . "_PK PRIMARY KEY (term_id)
 )
 GO
@@ -58,12 +58,12 @@ GO
 CREATE INDEX $wpdb->terms" . "_IDX2 on $wpdb->terms (name)
 GO
 CREATE TABLE $wpdb->term_taxonomy (
- term_taxonomy_id bigint NOT NULL identity(1,1),
- term_id bigint NOT NULL default 0,
+ term_taxonomy_id int NOT NULL identity(1,1),
+ term_id int NOT NULL default 0,
  taxonomy nvarchar(32) NOT NULL default '',
  description nvarchar(max) NOT NULL,
- parent bigint NOT NULL default 0,
- count bigint NOT NULL default 0,
+ parent int NOT NULL default 0,
+ count int NOT NULL default 0,
  constraint $wpdb->term_taxonomy" . "_PK PRIMARY KEY NONCLUSTERED (term_taxonomy_id)
 )
 
@@ -74,8 +74,8 @@ CREATE INDEX $wpdb->term_taxonomy" . "_IDX2 on $wpdb->term_taxonomy (taxonomy)
 GO
 
 CREATE TABLE $wpdb->term_relationships (
- object_id bigint NOT NULL default 0,
- term_taxonomy_id bigint NOT NULL default 0,
+ object_id int NOT NULL default 0,
+ term_taxonomy_id int NOT NULL default 0,
  term_order int NOT NULL default 0,
  CONSTRAINT $wpdb->term_relationships" . "_PK PRIMARY KEY NONCLUSTERED (object_id,term_taxonomy_id)
 )
@@ -84,8 +84,8 @@ CREATE CLUSTERED INDEX $wpdb->term_relationships" . "_CLU1 on $wpdb->term_relati
 GO
 
 CREATE TABLE $wpdb->commentmeta (
-  meta_id bigint NOT NULL identity(1,1),
-  comment_id bigint NOT NULL default 0,
+  meta_id int NOT NULL identity(1,1),
+  comment_id int NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
   CONSTRAINT $wpdb->commentmeta" . "_PK PRIMARY KEY NONCLUSTERED  (meta_id)
@@ -97,8 +97,8 @@ CREATE INDEX $wpdb->commentmeta" . "_IDX2 on $wpdb->commentmeta (meta_key)
 GO
 
 CREATE TABLE $wpdb->comments (
-  comment_ID bigint NOT NULL identity(1,1),
-  comment_post_ID bigint NOT NULL default '0',
+  comment_ID int NOT NULL identity(1,1),
+  comment_post_ID int NOT NULL default '0',
   comment_author nvarchar(255) NOT NULL,
   comment_author_email nvarchar(100) NOT NULL default '',
   comment_author_url nvarchar(200) NOT NULL default '',
@@ -110,8 +110,8 @@ CREATE TABLE $wpdb->comments (
   comment_approved nvarchar(20) NOT NULL default '1',
   comment_agent nvarchar(255) NOT NULL default '',
   comment_type nvarchar(20) NOT NULL default '',
-  comment_parent bigint NOT NULL default '0',
-  user_id bigint NOT NULL default '0',
+  comment_parent int NOT NULL default '0',
+  user_id int NOT NULL default '0',
   constraint $wpdb->comments" . "_PK PRIMARY KEY NONCLUSTERED (comment_ID)
  )
 GO
@@ -125,14 +125,14 @@ CREATE INDEX $wpdb->comments" . "_IDX4 on $wpdb->comments (comment_parent)
 GO
 
 CREATE TABLE $wpdb->links (
-  link_id bigint NOT NULL identity(1,1),
+  link_id int NOT NULL identity(1,1),
   link_url nvarchar(255) NOT NULL default '',
   link_name nvarchar(255) NOT NULL default '',
   link_image nvarchar(255) NOT NULL default '',
   link_target nvarchar(25) NOT NULL default '',
   link_description nvarchar(255) NOT NULL default '',
   link_visible nvarchar(20) NOT NULL default 'Y',
-  link_owner bigint NOT NULL default 1,
+  link_owner int NOT NULL default 1,
   link_rating int NOT NULL default 0,
   link_updated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   link_rel nvarchar(255) NOT NULL default '',
@@ -145,7 +145,7 @@ CREATE INDEX $wpdb->links" . "_IDX1 on $wpdb->links (link_visible)
 GO
 
 CREATE TABLE $wpdb->options (
-  option_id bigint NOT NULL identity(1,1),
+  option_id int NOT NULL identity(1,1),
   option_name nvarchar(64) NOT NULL default '',
   option_value nvarchar(max) NOT NULL,
   autoload nvarchar(20) NOT NULL default 'yes',
@@ -156,8 +156,8 @@ CREATE UNIQUE INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)
 GO
 
 CREATE TABLE $wpdb->postmeta (
-  meta_id bigint NOT NULL identity(1,1),
-  post_id bigint NOT NULL default 0,
+  meta_id int NOT NULL identity(1,1),
+  post_id int NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
   constraint $wpdb->postmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id)
@@ -169,8 +169,8 @@ CREATE INDEX $wpdb->postmeta" . "_IDX2 on $wpdb->postmeta (meta_key)
 GO
 
 CREATE TABLE $wpdb->posts (
-  ID bigint NOT NULL identity(1,1),
-  post_author bigint NOT NULL default 0,
+  ID int NOT NULL identity(1,1),
+  post_author int NOT NULL default 0,
   post_date datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   post_date_gmt datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   post_content nvarchar(max) NOT NULL,
@@ -186,12 +186,12 @@ CREATE TABLE $wpdb->posts (
   post_modified datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   post_modified_gmt datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   post_content_filtered nvarchar(max) NOT NULL,
-  post_parent bigint NOT NULL default 0,
+  post_parent int NOT NULL default 0,
   guid nvarchar(255) NOT NULL default '',
   menu_order int NOT NULL default 0,
   post_type nvarchar(20) NOT NULL default 'post',
   post_mime_type nvarchar(100) NOT NULL default '',
-  comment_count bigint NOT NULL default 0,
+  comment_count int NOT NULL default 0,
   constraint $wpdb->posts" . "_PK PRIMARY KEY  (ID)
 )
 GO
@@ -206,7 +206,7 @@ GO\n";
 
 	// Users table
 	$users_table = "CREATE TABLE $wpdb->users (
-  ID bigint NOT NULL identity(1,1),
+  ID int NOT NULL identity(1,1),
   user_login nvarchar(60) NOT NULL default '',
   user_pass nvarchar(64) NOT NULL default '',
   user_nicename nvarchar(50) NOT NULL default '',
@@ -228,8 +228,8 @@ GO\n";
 
 	// usermeta
 	$usermeta_table = "CREATE TABLE $wpdb->usermeta (
-  umeta_id bigint NOT NULL identity(1,1),
-  user_id bigint NOT NULL default 0,
+  umeta_id int NOT NULL identity(1,1),
+  user_id int NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
   constraint $wpdb->usermeta" . "_PK PRIMARY KEY NONCLUSTERED (umeta_id)
@@ -245,8 +245,8 @@ GO\n";
 
 	// Multisite global tables.
 	$ms_global_tables = "CREATE TABLE $wpdb->blogs (
-  blog_id bigint NOT NULL identity(1,1),
-  site_id bigint NOT NULL default 0,
+  blog_id int NOT NULL identity(1,1),
+  site_id int NOT NULL default 0,
   domain nvarchar(200) NOT NULL default '',
   path nvarchar(100) NOT NULL default '',
   registered datetime2(0) NOT NULL default '0001-01-01 00:00:00',
@@ -266,7 +266,7 @@ CREATE INDEX $wpdb->blogs" . "_IDX2 on $wpdb->blogs (lang_id)
 GO
 
 CREATE TABLE $wpdb->blog_versions (
-  blog_id bigint NOT NULL default 0,
+  blog_id int NOT NULL default 0,
   db_version nvarchar(20) NOT NULL default '',
   last_updated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   constraint $wpdb->blog_versions" . "_PK PRIMARY KEY  (blog_id)
@@ -276,10 +276,10 @@ CREATE INDEX $wpdb->blog_versions" . "_IDX1 on $wpdb->blog_versions (db_version)
 GO
 
 CREATE TABLE $wpdb->registration_log (
-  ID bigint NOT NULL identity(1,1),
+  ID int NOT NULL identity(1,1),
   email nvarchar(255) NOT NULL default '',
   IP nvarchar(30) NOT NULL default '',
-  blog_id bigint NOT NULL default 0,
+  blog_id int NOT NULL default 0,
   date_registered datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   constraint $wpdb->registration_log" . "_PK PRIMARY KEY  (ID)
 )
@@ -288,7 +288,7 @@ CREATE INDEX $wpdb->registration_log" . "_IDX1 on $wpdb->registration_log (IP)
 GO
 
 CREATE TABLE $wpdb->site (
-  id bigint NOT NULL identity(1,1),
+  id int NOT NULL identity(1,1),
   domain nvarchar(200) NOT NULL default '',
   path nvarchar(100) NOT NULL default '',
   constraint $wpdb->site" . "_PK PRIMARY KEY  (id)
@@ -298,8 +298,8 @@ CREATE INDEX $wpdb->site" . "_IDX1 on $wpdb->site (domain,path)
 GO
 
 CREATE TABLE $wpdb->sitemeta (
-  meta_id bigint NOT NULL identity(1,1),
-  site_id bigint NOT NULL default 0,
+  meta_id int NOT NULL identity(1,1),
+  site_id int NOT NULL default 0,
   meta_key nvarchar(255) default NULL,
   meta_value nvarchar(max),
   constraint $wpdb->sitemeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id)
