@@ -1810,6 +1810,7 @@ class wpdb {
 	 * @return false|string false on failure, version number on success
 	 */
 	function db_version() {
-		return "5.1.4";//return preg_replace( '/[^0-9.].*/', '', mysql_get_server_info( $this->dbh ) );
+		//return "5.1.4";//return preg_replace( '/[^0-9.].*/', '', mysql_get_server_info( $this->dbh ) );
+        return $wpdb->get_var( "SELECT SERVERPROPERTY('productversion')" );
 	}
 }
