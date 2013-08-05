@@ -1811,6 +1811,6 @@ class wpdb {
 	 */
 	function db_version() {
 		//return "5.1.4";//return preg_replace( '/[^0-9.].*/', '', mysql_get_server_info( $this->dbh ) );
-        return $wpdb->get_var( "SELECT SERVERPROPERTY('productversion')" );
+		return $this->get_var( "SELECT SERVERPROPERTY('productversion')" );
 	}
 }
