@@ -1269,9 +1269,6 @@ class wpdb {
 			$return_val     = $num_rows;
 		}
 
-		if( isset( $this->last_result[sizeof($this->last_result) - 1]->total_rows ) )
-			$this->last_query_total_rows = $this->last_result[0]->total_rows;
-		
 		if( isset( $this->last_result[0] ) && is_object( $this->last_result[0] ) && isset( $this->last_result[0]->found_rows ) )
 			$this->last_query_total_rows = $this->last_result[0]->found_rows;
 
