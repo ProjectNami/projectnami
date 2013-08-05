@@ -2642,8 +2642,11 @@ class WP_Query {
 			$found_rows = ', COUNT(*) over() as [found_rows]';
 			//echo "<span style='color: green;'>found_rows = $found_rows</span>";
 		}
+	
+		if( ! empty( $found_rows ) )
+			$wpdb->query( "SELECT COUNT( $distinct ID ) as [found_rows] FROM $wpdb->posts $join WHERE 1=1 $where $groupby" );
 
-		$this->request = $old_request = "SELECT $distinct $fields $found_rows FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
+		$this->request = $old_request = "SELECT $distinct $fields FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
 	
 		if ( !$q['suppress_filters'] ) {
 			$this->request = apply_filters_ref_array( 'posts_request', array( $this->request, &$this ) );
@@ -2675,7 +2678,10 @@ class WP_Query {
 		if ( $split_the_query ) {
 			// First get the IDs and then fill in the objects
 
-			$this->request = "SELECT $distinct $wpdb->posts.* $found_rows FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
+			if( ! empty( $found_rows ) )
+				$wpdb->query( "SELECT COUNT( $distinct ID ) as [found_rows] FROM $wpdb->posts $join WHERE 1=1 $where $groupby" );
+
+			$this->request = "SELECT $distinct $wpdb->posts.* FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
 
 			$this->request = apply_filters( 'posts_request_ids', $this->request, $this );
 
