@@ -2831,8 +2831,8 @@ class WP_Query {
 			return;
 
 		if( ! empty( $limits ) ) {
-			if( is_array( $wpdb->last_result ) && isset( $wpdb->last_result[0]->found_rows ) )
-				$this->found_posts = (int) $wpdb->last_result[0]->found_rows ;
+			if( isset( $wpdb->last_query_total_rows ) )
+				$this->found_posts = (int) $wpdb->last_query_total_rows;
 		}
 		else {
 			$this->found_posts = count( $this->posts );
