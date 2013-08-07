@@ -4570,13 +4570,13 @@ function _get_last_post_time( $timezone, $field ) {
 
 		switch ( $timezone ) {
 			case 'gmt':
-				$date = $wpdb->get_var("SELECT TOP 1 post_{$field}_gmt FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types}) ORDER BY post_{$field}_gmt DESC");
+				$date = $wpdb->get_var("SELECT MAX(post_{$field}_gmt) as [post_{$field}_gmt] FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types})");
 				break;
 			case 'blog':
-				$date = $wpdb->get_var("SELECT TOP 1 post_{$field} FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types}) ORDER BY post_{$field}_gmt DESC");
+				$date = $wpdb->get_var("SELECT MAX(post_{$field}) as [post_{$field}] FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types})");
 				break;
 			case 'server':
-				$date = $wpdb->get_var("SELECT TOP 1 DATEADD(SECOND, $add_seconds_server, post_{$field}_gmt) FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types}) ORDER BY post_{$field}_gmt DESC");
+				$date = $wpdb->get_var("SELECT MAX(DATEADD(SECOND, $add_seconds_server, post_{$field}_gmt)) as [post_{$field}_gmt] FROM $wpdb->posts WHERE post_status = 'publish' AND post_type IN ({$post_types})");
 				break;
 		}
 
