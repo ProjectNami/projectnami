@@ -887,11 +887,14 @@ class wpdb {
 	 * @return string escaped
 	 */
 	function _real_escape( $string ) {
-		if ( $this->dbh && $this->real_escape )
-			return mysql_real_escape_string( $string, $this->dbh );
-		else
+		if( $this->dbh )
 			return mssql_escape( $string );
-			//return addslashes( $string );
+
+		$class = get_class( $this );
+		
+		_doing_it_wrong( $class, "$class must set a database connection for use with escaping.", E_USER_NOTICE );
+		
+		return addslashes( $string );
 	}
 
 	/**
@@ -1237,6 +1240,11 @@ class wpdb {
 		
 		if( ! empty( $errors ) && is_array( $errors ) ) {
 			$this->last_error = $errors[ 0 ][ 'message' ];
+
+			// Clear insert_id on a subsequent failed insert. 
+			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) ) 
+				$this->insert_id = 0; 
+
 			$this->print_error();
 			
 			return false;
