@@ -103,7 +103,7 @@ function wp_default_scripts( &$scripts ) {
 		'dismiss' => __('Dismiss'),
 	) );
 
-	$scripts->add( 'autosave', "/wp-includes/js/autosave$suffix.js", array('schedule', 'wp-ajax-response', 'editor'), false, 1 );
+	$scripts->add( 'autosave', "/wp-includes/js/autosave$suffix.js", array('schedule', 'wp-ajax-response'), false, 1 );
 
 	$scripts->add( 'heartbeat', "/wp-includes/js/heartbeat$suffix.js", array('jquery'), false, 1 );
 	did_action( 'init' ) && $scripts->localize( 'heartbeat', 'heartbeatSettings',
@@ -135,7 +135,7 @@ function wp_default_scripts( &$scripts ) {
 	// jQuery
 	$scripts->add( 'jquery', false, array( 'jquery-core', 'jquery-migrate' ), '1.10.2' );
 	$scripts->add( 'jquery-core', '/wp-includes/js/jquery/jquery.js', array(), '1.10.2' );
-	$scripts->add( 'jquery-migrate', '/wp-includes/js/jquery/jquery-migrate.js', array(), '1.2.1' );
+	$scripts->add( 'jquery-migrate', "/wp-includes/js/jquery/jquery-migrate$suffix.js", array(), '1.2.1' );
 
 	// full jQuery UI
 	$scripts->add( 'jquery-ui-core', '/wp-includes/js/jquery/ui/jquery.ui.core.min.js', array('jquery'), '1.10.3', 1 );
@@ -281,7 +281,26 @@ function wp_default_scripts( &$scripts ) {
 
 	$scripts->add( 'imgareaselect', "/wp-includes/js/imgareaselect/jquery.imgareaselect$suffix.js", array('jquery'), '0.9.8', 1 );
 
-	$scripts->add( 'mediaelement', "/wp-includes/js/mediaelement/mediaelement-and-player.js", array('jquery'), '2.12.0', 1 );
+	$scripts->add( 'mediaelement', "/wp-includes/js/mediaelement/mediaelement-and-player.min.js", array('jquery'), '2.12.1-20130724', 1 );
+	did_action( 'init' ) && $scripts->localize( 'mediaelement', 'mejsL10n', array(
+		'language' => get_bloginfo( 'language' ),
+		'strings'  => array(
+			'Close'               => __( 'Close' ),
+			'Fullscreen'          => __( 'Fullscreen' ),
+			'Download File'       => __( 'Download File' ),
+			'Download Video'      => __( 'Download Video' ),
+			'Play/Pause'          => __( 'Play/Pause' ),
+			'Mute Toggle'         => __( 'Mute Toggle' ),
+			'None'                => __( 'None' ),
+			'Turn off Fullscreen' => __( 'Turn off Fullscreen' ),
+			'Go Fullscreen'       => __( 'Go Fullscreen' ),
+			'Unmute'              => __( 'Unmute' ),
+			'Mute'                => __( 'Mute' ),
+			'Captions/Subtitles'  => __( 'Captions/Subtitles' )
+		),
+	) );
+
+
 	$scripts->add( 'wp-mediaelement', "/wp-includes/js/mediaelement/wp-mediaelement.js", array('mediaelement'), false, 1 );
 
 	$scripts->add( 'password-strength-meter', "/wp-admin/js/password-strength-meter$suffix.js", array('jquery'), false, 1 );
@@ -549,7 +568,7 @@ function wp_default_styles( &$styles ) {
 	$styles->add( 'buttons', "/wp-includes/css/buttons$suffix.css" );
 	$styles->add( 'wp-auth-check', "/wp-includes/css/wp-auth-check$suffix.css" );
 
-	$styles->add( 'mediaelement', "/wp-includes/js/mediaelement/mediaelementplayer.css", array(), '2.12.0' );
+	$styles->add( 'mediaelement', "/wp-includes/js/mediaelement/mediaelementplayer.min.css", array(), '2.12.1-20130724' );
 	$styles->add( 'wp-mediaelement', "/wp-includes/js/mediaelement/wp-mediaelement.css", array( 'mediaelement' ) );
 
 	foreach ( $rtl_styles as $rtl_style ) {

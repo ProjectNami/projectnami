@@ -16,6 +16,23 @@ window.wp = window.wp || {};
 			console.log.apply( console, arguments );
 	};
 
+	// Handy functions to help with positioning
+	$.fn.allOffsets = function() {
+		var offset = this.offset() || {top: 0, left: 0}, win = $(window);
+		return _.extend( offset, {
+			right:  win.width()  - offset.left - this.outerWidth(),
+			bottom: win.height() - offset.top  - this.outerHeight()
+		});
+	};
+
+	$.fn.allPositions = function() {
+		var position = this.position() || {top: 0, left: 0}, parent = this.parent();
+		return _.extend( position, {
+			right:  parent.outerWidth()  - position.left - this.outerWidth(),
+			bottom: parent.outerHeight() - position.top  - this.outerHeight()
+		});
+	};
+
 	// wp_localize_script transforms top-level numbers into strings. Undo that.
 	if ( revisions.settings.to )
 		revisions.settings.to = parseInt( revisions.settings.to, 10 );
@@ -125,18 +142,23 @@ window.wp = window.wp || {};
 	revisions.model.Tooltip = Backbone.Model.extend({
 		defaults: {
 			revision: null,
+			offset: {},
 			hovering: false, // Whether the mouse is hovering
 			scrubbing: false // Whether the mouse is scrubbing
 		},
 
 		initialize: function( options ) {
+			this.frame = options.frame;
 			this.revisions = options.revisions;
 			this.slider = options.slider;
 
 			this.listenTo( this.slider, 'hovered:revision', this.updateRevision );
 			this.listenTo( this.slider, 'change:hovering', this.setHovering );
 			this.listenTo( this.slider, 'change:scrubbing', this.setScrubbing );
+
+			this.set({ revision: this.frame.diff() });
 		},
+
 
 		updateRevision: function( revision ) {
 			this.set({ revision: revision });
@@ -452,6 +474,7 @@ window.wp = window.wp || {};
 		render: function() {
 			wp.Backbone.View.prototype.render.apply( this, arguments );
 
+			$('html').css( 'overflow-y', 'scroll' );
 			$('#wpbody-content .wrap').append( this.el );
 			this.updateCompareTwoMode();
 			this.renderDiff( this.model.diff() );
@@ -481,6 +504,8 @@ window.wp = window.wp || {};
 		className: 'revisions-controls',
 
 		initialize: function() {
+			_.bindAll( this, 'setWidth' );
+
 			// Add the button view
 			this.views.add( new revisions.view.Buttons({
 				model: this.model
@@ -497,17 +522,21 @@ window.wp = window.wp || {};
 				revisions: this.model.revisions
 			});
 
+			// Prep the tooltip model
+			var tooltip = new revisions.model.Tooltip({
+				frame: this.model,
+				revisions: this.model.revisions,
+				slider: slider
+			});
+
 			// Add the tooltip view
 			this.views.add( new revisions.view.Tooltip({
-				model: new revisions.model.Tooltip({
-					revisions: this.model.revisions,
-					slider: slider
-				})
+				model: tooltip
 			}) );
 
 			// Add the tickmarks view
 			this.views.add( new revisions.view.Tickmarks({
-				model: this.model
+				model: tooltip
 			}) );
 
 			// Add the slider view
@@ -519,21 +548,87 @@ window.wp = window.wp || {};
 			this.views.add( new revisions.view.Meta({
 				model: this.model
 			}) );
+		},
 
+		ready: function() {
+			this.top = this.$el.offset().top;
+			this.window = $(window);
+			this.window.on( 'scroll.wp.revisions', {controls: this}, function(e) {
+				var controls = e.data.controls;
+				var container = controls.$el.parent();
+				var scrolled = controls.window.scrollTop();
+				var frame = controls.views.parent;
+
+				if ( scrolled >= controls.top ) {
+					if ( ! frame.$el.hasClass('pinned') ) {
+						controls.setWidth();
+						container.css('height', container.height() + 'px' );
+						controls.window.on('resize.wp.revisions.pinning click.wp.revisions.pinning', {controls: controls}, function(e) {
+							e.data.controls.setWidth();
+						});
+					}
+					frame.$el.addClass('pinned');
+				} else if ( frame.$el.hasClass('pinned') ) {
+					controls.window.off('.wp.revisions.pinning');
+					controls.$el.css('width', 'auto');
+					frame.$el.removeClass('pinned');
+					container.css('height', 'auto');
+					controls.top = controls.$el.offset().top;
+				} else {
+					controls.top = controls.$el.offset().top;
+				}
+			});
+		},
+
+		setWidth: function() {
+			this.$el.css('width', this.$el.parent().width() + 'px');
 		}
 	});
 
 	// The tickmarks view
 	revisions.view.Tickmarks = wp.Backbone.View.extend({
 		className: 'revisions-tickmarks',
+		direction: isRtl ? 'right' : 'left',
+
+		initialize: function() {
+			this.listenTo( this.model, 'change:revision', this.reportTickPosition );
+		},
+
+		reportTickPosition: function( model, revision ) {
+			var offset, thisOffset, parentOffset, tick, index = this.model.revisions.indexOf( revision );
+			thisOffset = this.$el.allOffsets();
+			parentOffset = this.$el.parent().allOffsets();
+			if ( index === this.model.revisions.length - 1 ) {
+				// Last one
+				offset = {
+					rightPlusWidth: thisOffset.left - parentOffset.left + 1,
+					leftPlusWidth: thisOffset.right - parentOffset.right + 1
+				};
+			} else {
+				// Normal tick
+				tick = this.$('div:nth-of-type(' + (index + 1) + ')');
+				offset = tick.allPositions();
+				_.extend( offset, {
+					left: offset.left + thisOffset.left - parentOffset.left,
+					right: offset.right + thisOffset.right - parentOffset.right
+				});
+				_.extend( offset, {
+					leftPlusWidth: offset.left + tick.outerWidth(),
+					rightPlusWidth: offset.right + tick.outerWidth()
+				});
+			}
+			this.model.set({ offset: offset });
+		},
 
 		ready: function() {
 			var tickCount, tickWidth;
 			tickCount = this.model.revisions.length - 1;
 			tickWidth = 1 / tickCount;
+			this.$el.css('width', ( this.model.revisions.length * 50 ) + 'px');
 
-			_(tickCount).times( function(){ this.$el.append( '<div></div>' ); }, this );
-			this.$('div').css( 'width', ( 100 * tickWidth ) + '%' );
+			_(tickCount).times( function( index ){
+				this.$el.append( '<div style="' + this.direction + ': ' + ( 100 * tickWidth * index ) + '%"></div>' );
+			}, this );
 		}
 	});
 
@@ -547,20 +642,15 @@ window.wp = window.wp || {};
 		},
 
 		initialize: function() {
-			this.listenTo( this.model, 'update:revisions', this.ready );
+			this.listenTo( this.model, 'update:revisions', this.render );
 		},
 
 		prepare: function() {
 			return this.model.toJSON();
 		},
 
-		ready: function() {
-			this.$('.restore-revision').prop( 'disabled', this.model.get('to').get('current') );
-		},
-
 		restoreRevision: function() {
-			var restoreUrl = this.model.get('to').attributes.restoreUrl.replace(/&amp;/g, '&');
-			document.location = restoreUrl;
+			document.location = this.model.get('to').attributes.restoreUrl;
 		}
 	});
 
@@ -600,9 +690,30 @@ window.wp = window.wp || {};
 		template: wp.template('revisions-tooltip'),
 
 		initialize: function( options ) {
-			this.listenTo( this.model, 'change:revision', this.render );
+			this.listenTo( this.model, 'change:offset', this.render );
 			this.listenTo( this.model, 'change:hovering', this.toggleVisibility );
 			this.listenTo( this.model, 'change:scrubbing', this.toggleVisibility );
+		},
+
+		prepare: function() {
+			return this.model.get('revision').toJSON();
+		},
+
+		render: function() {
+			var direction, directionVal, flipped, css = {}, position = this.model.revisions.indexOf( this.model.get('revision') ) + 1;
+			flipped = ( position / this.model.revisions.length ) > 0.5;
+			if ( isRtl ) {
+				direction = flipped ? 'left' : 'right';
+				directionVal = flipped ? 'leftPlusWidth' : direction;
+			} else {
+				direction = flipped ? 'right' : 'left';
+				directionVal = flipped ? 'rightPlusWidth' : direction;
+			}
+			otherDirection = 'right' === direction ? 'left': 'right';
+			wp.Backbone.View.prototype.render.apply( this, arguments );
+			css[direction] = this.model.get('offset')[directionVal] + 'px';
+			css[otherDirection] = '';
+			this.$el.toggleClass( 'flipped', flipped ).css( css );
 		},
 
 		visible: function() {
@@ -615,23 +726,6 @@ window.wp = window.wp || {};
 			else
 				this.$el.stop().fadeTo( this.el.style.opacity * 300, 0, function(){ $(this).hide(); } );
 			return;
-		},
-
-		render: function() {
-			var offset;
-			// Check if a revision exists.
-			if ( _.isNull( this.model.get('revision') ) )
-				return;
-
-			this.$el.html( this.template( this.model.get('revision').toJSON() ) );
-
-			// Set the position.
-			offset = this.model.revisions.indexOf( this.model.get('revision') ) / ( this.model.revisions.length - 1 );
-			// 15% to get us to the start of the slider
-			// 0.7 to convert the slider-relative percentage to a page-relative percentage
-			// 100 to convert to a percentage
-			offset = 15 + (0.7 * offset * 100 ); // Now in a percentage
-			this.$el.css( isRtl ? 'right' : 'left', offset + '%' );
 		}
 	});
 
@@ -642,8 +736,8 @@ window.wp = window.wp || {};
 		template: wp.template('revisions-buttons'),
 
 		events: {
-			'click #next': 'nextRevision',
-			'click #previous': 'previousRevision'
+			'click .revisions-next .button': 'nextRevision',
+			'click .revisions-previous .button': 'previousRevision'
 		},
 
 		initialize: function() {
@@ -654,31 +748,29 @@ window.wp = window.wp || {};
 			this.disabledButtonCheck();
 		},
 
-		// Go to a specific modelindex, taking into account RTL mode.
+		// Go to a specific model index
 		gotoModel: function( toIndex ) {
 			var attributes = {
-				to: this.model.revisions.at( isRtl ? this.model.revisions.length - toIndex - 1 : toIndex ) // Reverse directions for RTL.
+				to: this.model.revisions.at( toIndex )
 			};
 			// If we're at the first revision, unset 'from'.
-			if ( isRtl ? this.model.revisions.length - toIndex - 1 : toIndex ) // Reverse directions for RTL
-				attributes.from = this.model.revisions.at( isRtl ? this.model.revisions.length - toIndex - 2 : toIndex - 1 );
+			if ( toIndex )
+				attributes.from = this.model.revisions.at( toIndex - 1 );
 			else
 				this.model.unset('from', { silent: true });
 
 			this.model.set( attributes );
 		},
 
-		// Go to the 'next' revision, direction takes into account RTL mode.
+		// Go to the 'next' revision
 		nextRevision: function() {
-			var toIndex = isRtl ? this.model.revisions.length - this.model.revisions.indexOf( this.model.get('to') ) - 1 : this.model.revisions.indexOf( this.model.get('to') );
-			toIndex     = isRtl ? toIndex - 1 : toIndex + 1;
+			var toIndex = this.model.revisions.indexOf( this.model.get('to') ) + 1;
 			this.gotoModel( toIndex );
 		},
 
-		// Go to the 'previous' revision, direction takes into account RTL mode.
+		// Go to the 'previous' revision
 		previousRevision: function() {
-			var toIndex = isRtl ? this.model.revisions.length - this.model.revisions.indexOf( this.model.get('to') ) - 1 : this.model.revisions.indexOf( this.model.get('to') );
-			toIndex     = isRtl ? toIndex + 1 : toIndex - 1;
+			var toIndex = this.model.revisions.indexOf( this.model.get('to') ) - 1;
 			this.gotoModel( toIndex );
 		},
 
@@ -702,6 +794,7 @@ window.wp = window.wp || {};
 	// The slider view.
 	revisions.view.Slider = wp.Backbone.View.extend({
 		className: 'wp-slider',
+		direction: isRtl ? 'right' : 'left',
 
 		events: {
 			'mousemove' : 'mouseMove'
@@ -713,6 +806,7 @@ window.wp = window.wp || {};
 		},
 
 		ready: function() {
+			this.$el.css('width', ( this.model.revisions.length * 50 ) + 'px');
 			this.$el.slider( _.extend( this.model.toJSON(), {
 				start: this.start,
 				slide: this.slide,
@@ -730,15 +824,12 @@ window.wp = window.wp || {};
 
 		mouseMove: function( e ) {
 			var zoneCount = this.model.revisions.length - 1, // One fewer zone than models
-				sliderLeft = this.$el.offset().left, // Left edge of slider
+				sliderFrom = this.$el.allOffsets()[this.direction], // "From" edge of slider
 				sliderWidth = this.$el.width(), // Width of slider
 				tickWidth = sliderWidth / zoneCount, // Calculated width of zone
-				actualX = e.clientX - sliderLeft, // Offset of mouse position in slider
-				currentModelIndex = Math.floor( ( actualX + ( tickWidth / 2 )  ) / tickWidth ); // Calculate the model index
-
-			// Reverse direction in RTL mode.
-			if ( isRtl )
-				currentModelIndex = this.model.revisions.length - currentModelIndex - 1;
+				actualX = isRtl? $(window).width() - e.pageX : e.pageX; // Flipped for RTL - sliderFrom;
+			actualX = actualX - sliderFrom; // Offset of mouse position in slider
+			var currentModelIndex = Math.floor( ( actualX + ( tickWidth / 2 )  ) / tickWidth ); // Calculate the model index
 
 			// Ensure sane value for currentModelIndex.
 			if ( currentModelIndex < 0 )
@@ -746,7 +837,7 @@ window.wp = window.wp || {};
 			else if ( currentModelIndex >= this.model.revisions.length )
 				currentModelIndex = this.model.revisions.length - 1;
 
-			// Update the tooltip model
+			// Update the tooltip mode
 			this.model.set({ hoveredRevision: this.model.revisions.at( currentModelIndex ) });
 		},
 
@@ -765,18 +856,14 @@ window.wp = window.wp || {};
 			if ( this.model.get('compareTwoMode') ) {
 				// in RTL mode the 'left handle' is the second in the slider, 'right' is first
 				handles.first()
-					.toggleClass( 'right-handle', !! isRtl )
-					.toggleClass( 'left-handle', ! isRtl );
+					.toggleClass( 'to-handle', !! isRtl )
+					.toggleClass( 'from-handle', ! isRtl );
 				handles.last()
-					.toggleClass( 'left-handle', !! isRtl )
-					.toggleClass( 'right-handle', ! isRtl );
+					.toggleClass( 'from-handle', !! isRtl )
+					.toggleClass( 'to-handle', ! isRtl );
 			} else {
-				handles.removeClass('left-handle right-handle');
+				handles.removeClass('from-handle to-handle');
 			}
-		},
-
-		getSliderPosition: function( ui ){
-			return isRtl ? this.model.revisions.length - ui.value - 1 : ui.value;
 		},
 
 		start: function( event, ui ) {
@@ -785,83 +872,68 @@ window.wp = window.wp || {};
 			// Track the mouse position to enable smooth dragging,
 			// overrides default jQuery UI step behavior.
 			$( window ).on( 'mousemove.wp.revisions', { view: this }, function( e ) {
-				var view            = e.data.view,
-					leftDragBoundary  = view.$el.offset().left, // Initial left boundary
-					sliderOffset      = leftDragBoundary,
-					sliderRightEdge   = leftDragBoundary + view.$el.width(),
-					rightDragBoundary = sliderRightEdge, // Initial right boundary
-					leftDragReset     = 0, // Initial left drag reset
-					rightDragReset    = sliderRightEdge - sliderOffset; // Initial right drag reset
+				var view              = e.data.view,
+				    leftDragBoundary  = view.$el.offset().left,
+				    sliderOffset      = leftDragBoundary,
+				    sliderRightEdge   = leftDragBoundary + view.$el.width(),
+				    rightDragBoundary = sliderRightEdge,
+				    leftDragReset     = '0',
+				    rightDragReset    = '100%',
+				    handle            = $( ui.handle );
 
 				// In two handle mode, ensure handles can't be dragged past each other.
 				// Adjust left/right boundaries and reset points.
 				if ( view.model.get('compareTwoMode') ) {
-					var rightHandle = $( ui.handle ).parent().find('.right-handle'),
-						leftHandle  = $( ui.handle ).parent().find('.left-handle');
-
-					if ( $( ui.handle ).hasClass('left-handle') ) {
-						// Dragging the left handle, boundary is right handle.
-						// RTL mode calculations reverse directions.
-						if ( isRtl ) {
-							leftDragBoundary = rightHandle.offset().left + rightHandle.width();
-							leftDragReset    = leftDragBoundary - sliderOffset;
-						} else {
-							rightDragBoundary = rightHandle.offset().left;
-							rightDragReset    = rightDragBoundary - sliderOffset;
-						}
-					} else {
-						// Dragging the right handle, boundary is the left handle.
-						// RTL mode calculations reverse directions.
-						if ( isRtl ) {
-							rightDragBoundary = leftHandle.offset().left;
-							rightDragReset    = rightDragBoundary - sliderOffset;
-						} else {
-							leftDragBoundary = leftHandle.offset().left + leftHandle.width() ;
-							leftDragReset    = leftDragBoundary - sliderOffset;
-						}
+					var handles = handle.parent().find('.ui-slider-handle');
+					if ( handle.is( handles.first() ) ) { // We're the left handle
+						rightDragBoundary = handles.last().offset().left;
+						rightDragReset    = rightDragBoundary - sliderOffset;
+					} else { // We're the right handle
+						leftDragBoundary = handles.first().offset().left + handles.first().width();
+						leftDragReset    = leftDragBoundary - sliderOffset;
 					}
 				}
 
 				// Follow mouse movements, as long as handle remains inside slider.
-				if ( e.clientX < leftDragBoundary ) {
-					$( ui.handle ).css( 'left', leftDragReset ); // Mouse to left of slider.
-				} else if ( e.clientX > rightDragBoundary ) {
-					$( ui.handle ).css( 'left', rightDragReset ); // Mouse to right of slider.
+				if ( e.pageX < leftDragBoundary ) {
+					handle.css( 'left', leftDragReset ); // Mouse to left of slider.
+				} else if ( e.pageX > rightDragBoundary ) {
+					handle.css( 'left', rightDragReset ); // Mouse to right of slider.
 				} else {
-					$( ui.handle ).css( 'left', e.clientX - sliderOffset ); // Mouse in slider.
+					handle.css( 'left', e.pageX - sliderOffset ); // Mouse in slider.
 				}
 			} );
 		},
 
+		getPosition: function( position ) {
+			return isRtl ? this.model.revisions.length - position - 1: position;
+		},
+
 		// Responds to slide events
 		slide: function( event, ui ) {
-			var attributes, movedRevision, sliderPosition;
+			var attributes, movedRevision;
 			// Compare two revisions mode
 			if ( this.model.get('compareTwoMode') ) {
 				// Prevent sliders from occupying same spot
 				if ( ui.values[1] === ui.values[0] )
 					return false;
-
-				attributes = {
-					to: this.model.revisions.at( isRtl ? this.model.revisions.length - ui.values[0] - 1 : ui.values[1] ),
-					from: this.model.revisions.at( isRtl ? this.model.revisions.length - ui.values[1] - 1 : ui.values[0] )
-				};
 				if ( isRtl )
-					movedRevision = ui.value === ui.values[1] ? attributes.from : attributes.to;
-				else
-					movedRevision = ui.value === ui.values[0] ? attributes.from : attributes.to;
-			} else {
-				sliderPosition = this.getSliderPosition( ui );
+					ui.values.reverse();
 				attributes = {
-					to: this.model.revisions.at( sliderPosition )
+					from: this.model.revisions.at( this.getPosition( ui.values[0] ) ),
+					to: this.model.revisions.at( this.getPosition( ui.values[1] ) )
 				};
-				movedRevision = attributes.to;
+			} else {
+				attributes = {
+					to: this.model.revisions.at( this.getPosition( ui.value ) )
+				};
 				// If we're at the first revision, unset 'from'.
-				if ( sliderPosition ) // Reverse directions for RTL.
-					attributes.from = this.model.revisions.at( sliderPosition - 1  );
+				if ( this.getPosition( ui.value ) > 0 )
+					attributes.from = this.model.revisions.at( this.getPosition( ui.value ) - 1 );
 				else
 					attributes.from = undefined;
 			}
+			movedRevision = this.model.revisions.at( this.getPosition( ui.value ) );
 
 			// If we are scrubbing, a scrub to a revision is considered a hover
 			if ( this.model.get('scrubbing') )

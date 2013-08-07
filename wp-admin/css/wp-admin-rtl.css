@@ -954,18 +954,18 @@ th.sorted a span {
 /*------------------------------------------------------------------------------
   11.2 - Post Revisions
 ------------------------------------------------------------------------------*/
-.wp-slider .ui-slider-handle.left-handle:before,
-.wp-slider .ui-slider-handle.right-handle:before {
+.wp-slider .ui-slider-handle.from-handle:before,
+.wp-slider .ui-slider-handle.to-handle:before {
 	height: 8px;
 	width: 7px;
 }
 
-.wp-slider .ui-slider-handle.left-handle:before {
+.wp-slider .ui-slider-handle.from-handle:before {
 	background-position: -5px -10px;
 	left: 6px;
 }
 
-.wp-slider .ui-slider-handle.right-handle:before {
+.wp-slider .ui-slider-handle.to-handle:before {
 	background-position: -4px -29px;
 	left: 6px;
 }
@@ -973,7 +973,14 @@ th.sorted a span {
 .revision-toggle-compare-mode {
 	right: auto;
 	left: 0;
-	padding: 9px 0 0 9px;
+}
+
+.revisions .loading-indicator {
+	margin-right: -90px;
+}
+
+body.folded .revisions .loading-indicator {
+	margin-right: -32px;
 }
 
 .revisions-next {
@@ -984,14 +991,6 @@ th.sorted a span {
 	float: right;
 }
 
-#diff-header {
-	padding: 5px 5px 5px 200px;
-}
-
-.diff-title {
-	float: right;
-}
-
 .diff-title strong {
 	text-align: left;
 	float: right;
@@ -999,14 +998,13 @@ th.sorted a span {
 	margin-left: 5px;
 }
 
-.diff-title img {
-	margin-left: 0;
-	margin-right: 5px;
+.revisions-controls .author-card .avatar,
+.revisions-controls .author-card .author-info {
+	float: right;
 }
 
-.diff-header > input.restore-revision {
-	margin-left: 0;
-	margin-right: 10px;
+.diff-meta input.restore-revision {
+	float: left;
 }
 
 .diff-col-title-added,
@@ -1015,23 +1013,22 @@ th.sorted a span {
 	float: right;
 }
 
-.diff-col-title-added {
-	float: left;
-}
-
-.revisions img {
-	float: right;
-	margin: 5px 0 0 5px;
-}
-
 .revisions-tooltip {
-	margin-right: -73px;
 	margin-left: 0;
-	-webkit-transition: right 15ms;
-	-moz-transition:    right 15ms;
-	-ms-transition:     right 15ms;
-	-o-transition:      right 15ms;
-	transition:         right 15ms;
+	margin-right: -69px;
+}
+
+.revisions-tooltip.flipped {
+	margin-right: 0;
+	margin-left: -70px;
+}
+
+.ie8 .revisions-tooltip {
+	margin-right: -75px;
+}
+
+.ie8 .revisions-tooltip.flipped {
+	margin-left: -63px;
 }
 
 .revisions-tooltip-arrow {
@@ -1040,9 +1037,30 @@ th.sorted a span {
 	margin-right: 35px;
 }
 
-.revisions-tooltip-image {
+.revisions-tooltip.flipped .revisions-tooltip-arrow {
+	margin-right: 0;
+	margin-left: 35px;
+	right: auto;
+	left: 0;
+}
+
+.revisions-tooltip-arrow > span {
+	left: auto;
+	right: 20px;
+}
+
+.revisions-tooltip.flipped .revisions-tooltip-arrow > span {
+	right: auto;
+	left: 20px;
+}
+
+.ie8 .revisions-tooltip-arrow > span {
+	right: 21px;
+}
+
+.revisions-tickmarks > div {
 	float: right;
-	margin: 2px 0 0 5px;
+	border-width: 0 0 0 1px;
 }
 
 /*------------------------------------------------------------------------------

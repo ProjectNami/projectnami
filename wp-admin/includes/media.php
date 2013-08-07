@@ -236,15 +236,15 @@ function media_handle_upload($file_id, $post_id, $post_data = array(), $override
 
 			if ( ! empty( $meta['album'] ) && ! empty( $meta['artist'] ) ) {
 				/* translators: 1: audio track title, 2: album title, 3: artist name */
-				$content .= sprintf( __( '&#8220;%1$s&#8221; from %2$s by %3$s.' ), $title, $meta['album'], $meta['artist'] );
+				$content .= sprintf( __( '"%1$s" from %2$s by %3$s.' ), $title, $meta['album'], $meta['artist'] );
 			} else if ( ! empty( $meta['album'] ) ) {
 				/* translators: 1: audio track title, 2: album title */
-				$content .= sprintf( __( '&#8220;%1$s&#8221; from %2$s.' ), $title, $meta['album'] );
+				$content .= sprintf( __( '"%1$s" from %2$s.' ), $title, $meta['album'] );
 			} else if ( ! empty( $meta['artist'] ) ) {
 				/* translators: 1: audio track title, 2: artist name */
-				$content .= sprintf( __( '&#8220;%1$s&#8221; by %2$s.' ), $title, $meta['artist'] );
+				$content .= sprintf( __( '"%1$s" by %2$s.' ), $title, $meta['artist'] );
 			} else {
-				$content .= sprintf( __( '&#8220;%s&#8221;.' ), $title );
+				$content .= sprintf( __( '"%s".' ), $title );
 			}
 
 		} else if ( ! empty( $meta['album'] ) ) {
@@ -2470,7 +2470,7 @@ function attachment_submitbox_metadata() {
 		if ( ! empty( $meta['bitrate'] ) ) : ?>
 		<div class="misc-pub-section">
 			<?php _e( 'Bitrate:' ); ?> <strong><?php
-				echo $meta['bitrate'] / 1000, 'kb/s';
+				echo round( $meta['bitrate'] / 1000 ), 'kb/s';
 
 				if ( ! empty( $meta['bitrate_mode'] ) )
 					echo ' ', strtoupper( $meta['bitrate_mode'] );

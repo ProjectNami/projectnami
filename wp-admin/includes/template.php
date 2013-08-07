@@ -999,6 +999,7 @@ function do_accordion_sections( $screen, $context, $object ) {
 		<ul class="outer-border">
 	<?php
 	$i = 0;
+	$first_open = false;
 	do {
 		if ( ! isset( $wp_meta_boxes ) || ! isset( $wp_meta_boxes[$page] ) || ! isset( $wp_meta_boxes[$page][$context] ) )
 			break;
@@ -1010,8 +1011,14 @@ function do_accordion_sections( $screen, $context, $object ) {
 						continue;
 					$i++;
 					$hidden_class = in_array( $box['id'], $hidden ) ? 'hide-if-js' : '';
+
+					$open_class = '';
+					if ( ! $first_open && empty( $hidden_class ) ) {
+						$first_open = true;
+						$open_class = 'open';
+					}
 					?>
-					<li class="control-section accordion-section <?php echo $hidden_class; ?> <?php echo esc_attr( $box['id'] ); ?>" id="<?php echo esc_attr( $box['id'] ); ?>">
+					<li class="control-section accordion-section <?php echo $hidden_class; ?> <?php echo $open_class; ?> <?php echo esc_attr( $box['id'] ); ?>" id="<?php echo esc_attr( $box['id'] ); ?>">
 						<h3 class="accordion-section-title hndle" tabindex="0" title="<?php echo esc_attr( $box['title'] ); ?>"><?php echo esc_html( $box['title'] ); ?></h3>
 						<div class="accordion-section-content <?php postbox_classes( $box['id'], $page ); ?>">
 							<div class="inside">
@@ -1920,4 +1927,25 @@ function convert_to_screen( $hook_name ) {
 	}
 
 	return WP_Screen::get( $hook_name );
+}
+
+/**
+ * Output the HTML for restoring the post data from DOM storage
+ *
+ * @since 3.6
+ * @access private
+ */
+function _local_storage_notice() {
+	?>
+	<div id="local-storage-notice" class="hidden">
+	<p class="local-restore">
+		<?php _e('The backup of this post in your browser is different from the version below.'); ?>
+		<a class="restore-backup" href="#"><?php _e('Restore the backup.'); ?></a>
+	</p>
+	<p class="undo-restore hidden">
+		<?php _e('Post restored successfully.'); ?>
+		<a class="undo-restore-backup" href="#"><?php _e('Undo.'); ?></a>
+	</p>
+	</div>
+	<?php
 }
