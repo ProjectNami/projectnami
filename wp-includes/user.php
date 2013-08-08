@@ -540,7 +540,7 @@ class WP_User_Query {
 
 		$qv =& $this->query_vars;
 
-		$wpdb->query( "SELECT COUNT(*) as [found_rows] FROM $this->query_from $this->query_where" );
+		$wpdb->query( "SELECT COUNT(*) as [found_rows] $this->query_from $this->query_where" );
 
 		if ( is_array( $qv['fields'] ) || 'all' == $qv['fields'] ) {
 			$this->results = $wpdb->get_results("SELECT $this->query_fields $this->query_from $this->query_where $this->query_orderby $this->query_limit");
