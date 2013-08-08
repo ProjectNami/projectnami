@@ -7172,17 +7172,17 @@ a.rsswidget {
 }
 
 .login h1 a {
-	background-image: url('../images/wordpress-logo.png?ver=20120216');
-	background-size: 274px 63px;
-	background-position: top center;
-	background-repeat: no-repeat;
-	width: 326px;
-	height: 67px;
-	text-indent: -9999px;
-	outline: none;
-	overflow: hidden;
-	padding-bottom: 15px;
-	display: block;
+        background-image: url('../images/pn-logo.png');
+        background-size: 300px 58px;
+        background-position: top center;
+        background-repeat: no-repeat;
+        width: 326px;
+        height: 67px;
+        text-indent: -9999px;
+        outline: none;
+        overflow: hidden;
+        padding-bottom: 15px;
+        display: block;
 }
 
 #login {
