@@ -712,7 +712,7 @@ class WP_Tax_Query {
 				$where[] = "$primary_table.$primary_id_column NOT IN (
 					SELECT object_id
 					FROM $wpdb->term_relationships
-					WHERE term_taxonomy_id IN ($terms).
+					WHERE term_taxonomy_id IN ($terms)
 				)";
 			} elseif ( 'AND' == $operator ) {
 
