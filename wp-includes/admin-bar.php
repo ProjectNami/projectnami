@@ -79,26 +79,26 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 		'title' => '<span class="ab-icon"></span>',
 		'href'  => self_admin_url( 'about.php' ),
 		'meta'  => array(
-			'title' => __('About WordPress'),
+			'title' => __('About Project Nami'),
 		),
 	) );
 
 	if ( is_user_logged_in() ) {
-		// Add "About WordPress" link
+		// Add "About Project Nami" link
 		$wp_admin_bar->add_menu( array(
 			'parent' => 'wp-logo',
 			'id'     => 'about',
-			'title'  => __('About WordPress'),
+			'title'  => __('About Project Nami'),
 			'href'  => self_admin_url( 'about.php' ),
 		) );
 	}
 
-	// Add WordPress.org link
+	// Add ProjectNami.org link
 	$wp_admin_bar->add_menu( array(
 		'parent'    => 'wp-logo-external',
 		'id'        => 'wporg',
-		'title'     => __('WordPress.org'),
-		'href'      => __('http://wordpress.org/'),
+		'title'     => __('ProjectNami.org'),
+		'href'      => __('http://projectnami.org/'),
 	) );
 
 	// Add codex link
