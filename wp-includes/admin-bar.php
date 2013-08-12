@@ -77,7 +77,7 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 	$wp_admin_bar->add_menu( array(
 		'id'    => 'wp-logo',
 		'title' => '<span class="ab-icon"></span>',
-		'href'  => self_admin_url( 'about.php' ),
+		'href'  => __('http://projectnami.org/about'),
 		'meta'  => array(
 			'title' => __('About Project Nami'),
 		),
@@ -89,7 +89,7 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 			'parent' => 'wp-logo',
 			'id'     => 'about',
 			'title'  => __('About Project Nami'),
-			'href'  => self_admin_url( 'about.php' ),
+			'href'  => __('http://projectnami.org/about'),
 		) );
 	}
 
@@ -101,20 +101,12 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 		'href'      => __('http://projectnami.org/'),
 	) );
 
-	// Add codex link
-	$wp_admin_bar->add_menu( array(
-		'parent'    => 'wp-logo-external',
-		'id'        => 'documentation',
-		'title'     => __('Documentation'),
-		'href'      => __('http://codex.wordpress.org/'),
-	) );
-
 	// Add forums link
 	$wp_admin_bar->add_menu( array(
 		'parent'    => 'wp-logo-external',
 		'id'        => 'support-forums',
-		'title'     => __('Support Forums'),
-		'href'      => __('http://wordpress.org/support/'),
+		'title'     => __('Support Forum'),
+		'href'      => __('http://support.projectnami.org'),
 	) );
 
 	// Add feedback link
@@ -122,7 +114,15 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 		'parent'    => 'wp-logo-external',
 		'id'        => 'feedback',
 		'title'     => __('Feedback'),
-		'href'      => __('http://wordpress.org/support/forum/requests-and-feedback'),
+		'href'      => __('http://support.projectnami.org/viewforum.php?f=5'),
+	) );
+
+	// Add codex link
+	$wp_admin_bar->add_menu( array(
+		'parent'    => 'wp-logo-external',
+		'id'        => 'documentation',
+		'title'     => __('WordPress Docs'),
+		'href'      => __('http://codex.wordpress.org/'),
 	) );
 }
 
