@@ -77,44 +77,36 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 	$wp_admin_bar->add_menu( array(
 		'id'    => 'wp-logo',
 		'title' => '<span class="ab-icon"></span>',
-		'href'  => self_admin_url( 'about.php' ),
+		'href'  => __('http://projectnami.org/about'),
 		'meta'  => array(
-			'title' => __('About WordPress'),
+			'title' => __('About Project Nami'),
 		),
 	) );
 
 	if ( is_user_logged_in() ) {
-		// Add "About WordPress" link
+		// Add "About Project Nami" link
 		$wp_admin_bar->add_menu( array(
 			'parent' => 'wp-logo',
 			'id'     => 'about',
-			'title'  => __('About WordPress'),
-			'href'  => self_admin_url( 'about.php' ),
+			'title'  => __('About Project Nami'),
+			'href'  => __('http://projectnami.org/about'),
 		) );
 	}
 
-	// Add WordPress.org link
+	// Add ProjectNami.org link
 	$wp_admin_bar->add_menu( array(
 		'parent'    => 'wp-logo-external',
 		'id'        => 'wporg',
-		'title'     => __('WordPress.org'),
-		'href'      => __('http://wordpress.org/'),
-	) );
-
-	// Add codex link
-	$wp_admin_bar->add_menu( array(
-		'parent'    => 'wp-logo-external',
-		'id'        => 'documentation',
-		'title'     => __('Documentation'),
-		'href'      => __('http://codex.wordpress.org/'),
+		'title'     => __('ProjectNami.org'),
+		'href'      => __('http://projectnami.org/'),
 	) );
 
 	// Add forums link
 	$wp_admin_bar->add_menu( array(
 		'parent'    => 'wp-logo-external',
 		'id'        => 'support-forums',
-		'title'     => __('Support Forums'),
-		'href'      => __('http://wordpress.org/support/'),
+		'title'     => __('Support Forum'),
+		'href'      => __('http://support.projectnami.org'),
 	) );
 
 	// Add feedback link
@@ -122,7 +114,15 @@ function wp_admin_bar_wp_menu( $wp_admin_bar ) {
 		'parent'    => 'wp-logo-external',
 		'id'        => 'feedback',
 		'title'     => __('Feedback'),
-		'href'      => __('http://wordpress.org/support/forum/requests-and-feedback'),
+		'href'      => __('http://support.projectnami.org/viewforum.php?f=5'),
+	) );
+
+	// Add codex link
+	$wp_admin_bar->add_menu( array(
+		'parent'    => 'wp-logo-external',
+		'id'        => 'documentation',
+		'title'     => __('WordPress Docs'),
+		'href'      => __('http://codex.wordpress.org/'),
 	) );
 }
 
