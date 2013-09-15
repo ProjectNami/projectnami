@@ -100,7 +100,13 @@ function wp_fix_server_vars() {
  * @since 3.0.0
  */
 function wp_check_php_mysql_versions() {
-	global $required_php_version, $wp_version;
+	global $required_php_version, $wp_version, $is_IIS;
+
+    if ( ! $is_IIS ) {
+		wp_load_translations_early();
+		die( __( 'Project Nami requires IIS for proper operation.' ) );
+    }
+
 	$php_version = phpversion();
 	if ( version_compare( $required_php_version, $php_version, '>' ) ) {
 		wp_load_translations_early();
