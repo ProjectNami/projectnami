@@ -511,7 +511,7 @@ function meta_form() {
 		SELECT TOP $limit meta_key
 		FROM $wpdb->postmeta
 		GROUP BY meta_key
-		HAVING meta_key NOT LIKE '\_%'
+		HAVING meta_key NOT LIKE '[_]%'
 		ORDER BY meta_key" );
 	if ( $keys )
 		natcasesort($keys);
