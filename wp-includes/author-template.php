@@ -271,7 +271,7 @@ function wp_list_authors($args = '') {
 		'optioncount' => false, 'exclude_admin' => true,
 		'show_fullname' => false, 'hide_empty' => true,
 		'feed' => '', 'feed_image' => '', 'feed_type' => '', 'echo' => true,
-		'style' => 'list', 'html' => true
+		'style' => 'list', 'html' => true, 'exclude' => '', 'include' => ''
 	);
 
 	$args = wp_parse_args( $args, $defaults );
