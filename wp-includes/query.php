@@ -2393,6 +2393,7 @@ class WP_Query {
 						break;
 					case 'meta_value_num':
 						$orderby = "$wpdb->postmeta.meta_value+0";
+						$orderbyfields = ", $wpdb->postmeta.meta_value+0 as meta_value";
 						break;
 					case 'comment_count':
 						$orderby = "$wpdb->posts.comment_count";
