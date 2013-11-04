@@ -1951,6 +1951,7 @@ class WP_Query {
 		$search = '';
 		$groupby = '';
 		$fields = '';
+        $orderbyfields = '';
 		$post_status_join = false;
 		$page = 1;
 
@@ -2388,6 +2389,7 @@ class WP_Query {
 					case $q['meta_key']:
 					case 'meta_value':
 						$orderby = "$wpdb->postmeta.meta_value";
+						$orderbyfields = ", $wpdb->postmeta.meta_value";
 						break;
 					case 'meta_value_num':
 						$orderby = "$wpdb->postmeta.meta_value+0";
@@ -2646,7 +2648,7 @@ class WP_Query {
 		if( ! empty( $found_rows ) )
 			$wpdb->query( "SELECT COUNT( $distinct ID ) as [found_rows] FROM $wpdb->posts $join WHERE 1=1 $where $groupby" );
 
-		$this->request = $old_request = "SELECT $distinct $fields FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
+		$this->request = $old_request = "SELECT $distinct $fields $orderbyfields FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
 	
 		if ( !$q['suppress_filters'] ) {
 			$this->request = apply_filters_ref_array( 'posts_request', array( $this->request, &$this ) );
@@ -2681,7 +2683,7 @@ class WP_Query {
 			if( ! empty( $found_rows ) )
 				$wpdb->query( "SELECT COUNT( $distinct ID ) as [found_rows] FROM $wpdb->posts $join WHERE 1=1 $where $groupby" );
 
-			$this->request = "SELECT $distinct $wpdb->posts.* FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
+			$this->request = "SELECT $distinct $wpdb->posts.* $orderbyfields FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
 
 			$this->request = apply_filters( 'posts_request_ids', $this->request, $this );
 
