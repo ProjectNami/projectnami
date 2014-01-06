@@ -960,16 +960,9 @@ function pre_schema_upgrade() {
 
 		// Upgrade verions prior to 3.7
 		if ( $wp_current_db_version < 25179 ) {
-			// New primary key for signups.
-			$wpdb->query( "ALTER TABLE $wpdb->signups ADD signup_id BIGINT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY FIRST" );
-			$wpdb->query( "ALTER TABLE $wpdb->signups DROP INDEX domain" );
+			$wpdb->query( "ALTER TABLE $wpdb->signups ADD signup_id INT NOT NULL IDENTITY(1,1)" );
 		}
 
-		if ( $wp_current_db_version < 25448 ) {
-			// Convert archived from enum to tinyint.
-			$wpdb->query( "ALTER TABLE $wpdb->blogs CHANGE COLUMN archived archived varchar(1) NOT NULL default '0'" );
-			$wpdb->query( "ALTER TABLE $wpdb->blogs CHANGE COLUMN archived archived tinyint(2) NOT NULL default 0" );
-		}
 	}
 }
 
