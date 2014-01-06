@@ -619,8 +619,8 @@ function populate_options() {
 			a.option_name NOT LIKE '_site_transient_timeout_%' AND
 			b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
 			AND b.option_value < $time");
-    */
     }
+    */
 }
 
 /**
