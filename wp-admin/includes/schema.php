@@ -604,6 +604,8 @@ function populate_options() {
 	// Deletes all expired transients.
 	// The multi-table delete syntax is used to delete the transient record from table a,
 	// and the corresponding transient_timeout record from table b.
+
+    /* PN -- Disable multi-table delete until we can work through the SQL
 	$time = time();
 	$wpdb->query("DELETE a, b FROM $wpdb->options a, $wpdb->options b WHERE
 	        a.option_name LIKE '_transient_%' AND
@@ -617,6 +619,7 @@ function populate_options() {
 			a.option_name NOT LIKE '_site_transient_timeout_%' AND
 			b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
 			AND b.option_value < $time");
+    */
     }
 }
 
