@@ -11,7 +11,7 @@ define('WP_ADMIN', true);
 if ( defined('ABSPATH') )
 	require_once(ABSPATH . 'wp-load.php');
 else
-	require_once('../wp-load.php');
+	require_once( dirname( dirname( __FILE__ ) ) . '/wp-load.php' );
 
 if ( ! ( isset( $_REQUEST['action'] ) && 'upload-attachment' == $_REQUEST['action'] ) ) {
 	// Flash often fails to send cookies with the POST or upload, so we need to pass it in GET or POST instead
@@ -24,7 +24,7 @@ if ( ! ( isset( $_REQUEST['action'] ) && 'upload-attachment' == $_REQUEST['actio
 	unset($current_user);
 }
 
-require_once('./admin.php');
+require_once( ABSPATH . 'wp-admin/admin.php' );
 
 if ( !current_user_can('upload_files') )
 	wp_die(__('You do not have permission to upload files.'));
@@ -94,5 +94,16 @@ if ( $_REQUEST['short'] ) {
 } else {
 	// long form response - big chunk o html
 	$type = $_REQUEST['type'];
-	echo apply_filters("async_upload_{$type}", $id);
+
+	/**
+	 * Filter the returned ID of an uploaded attachment.
+	 *
+	 * The dynamic portion of the hook name, $type, refers to the attachment type,
+	 * such as 'iamge', 'audio', 'video', 'file', etc.
+	 *
+	 * @since 2.5.0
+	 *
+	 * @param int $id Uploaded attachment ID.
+	 */
+	echo apply_filters( "async_upload_{$type}", $id );
 }

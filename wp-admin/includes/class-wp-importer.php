@@ -27,10 +27,6 @@ class WP_Importer {
 		// Grab all posts in chunks
 		do {
 			$meta_key = $importer_name . '_' . $bid . '_permalink';
-			
-			// Modified for mssql-wordpress.
-			//$sql = $wpdb->prepare( "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '%s' LIMIT %d,%d", $meta_key, $offset, $limit );
-
 			$sql = $wpdb->prepare( "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '%s' ORDER BY post_id OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $meta_key, $offset, $limit );
 			$results = $wpdb->get_results( $sql );
 
@@ -183,7 +179,7 @@ class WP_Importer {
 	 */
 	function get_page( $url, $username = '', $password = '', $head = false ) {
 		// Increase the timeout
-		add_filter( 'http_request_timeout', array( &$this, 'bump_request_timeout' ) );
+		add_filter( 'http_request_timeout', array( $this, 'bump_request_timeout' ) );
 
 		$headers = array();
 		$args = array();

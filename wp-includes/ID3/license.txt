@@ -5,8 +5,8 @@
 /////////////////////////////////////////////////////////////////
 
 *****************************************************************
+*****************************************************************
 
-*****************************************************************	
    getID3() is released under multiple licenses. You may choose
    from the following licenses, and use getID3 according to the
    terms of the license most suitable to your project.

@@ -55,6 +55,9 @@ wp_load_translations_early();
 // Turn register_globals off.
 wp_unregister_GLOBALS();
 
+// Standardize $_SERVER variables across setups.
+wp_fix_server_vars();
+
 require_once(ABSPATH . WPINC . '/compat.php');
 require_once(ABSPATH . WPINC . '/class-wp-error.php');
 require_once(ABSPATH . WPINC . '/formatting.php');
@@ -62,10 +65,13 @@ require_once(ABSPATH . WPINC . '/formatting.php');
 // Add magic quotes and set up $_REQUEST ( $_GET + $_POST )
 wp_magic_quotes();
 
-if ( ! file_exists( ABSPATH . 'wp-config-sample.php' ) )
+// Support wp-config-sample.php one level up, for the develop repo.
+if ( file_exists( ABSPATH . 'wp-config-sample.php' ) )
+	$config_file = file( ABSPATH . 'wp-config-sample.php' );
+elseif ( file_exists( dirname( ABSPATH ) . '/wp-config-sample.php' ) )
+	$config_file = file( dirname( ABSPATH ) . '/wp-config-sample.php' );
+else
 	wp_die( __( 'Sorry, I need a wp-config-sample.php file to work from. Please re-upload this file from your WordPress installation.' ) );
-
-$config_file = file(ABSPATH . 'wp-config-sample.php');
 
 // Check if wp-config.php has been created
 if ( file_exists( ABSPATH . 'wp-config.php' ) )
@@ -93,6 +99,7 @@ function setup_config_display_header() {
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"<?php if ( is_rtl() ) echo ' dir="rtl"'; ?>>
 <head>
+<meta name="viewport" content="width=device-width" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title><?php _e( 'WordPress &rsaquo; Setup Configuration File' ); ?></title>
 <link rel="stylesheet" href="css/install.css?ver=<?php echo preg_replace( '/[^0-9a-z\.-]/i', '', $wp_version ); ?>" type="text/css" />
@@ -195,12 +202,11 @@ switch($step) {
 	if ( ! $no_api ) {
 		require_once( ABSPATH . WPINC . '/class-http.php' );
 		require_once( ABSPATH . WPINC . '/http.php' );
-		wp_fix_server_vars();
 		/**#@+
 		 * @ignore
 		 */
 		function get_bloginfo() {
-			return ( ( is_ssl() ? 'https://' : 'http://' ) . $_SERVER['HTTP_HOST'] . str_replace( $_SERVER['PHP_SELF'], '/wp-admin/setup-config.php', '' ) );
+			return wp_guess_url();
 		}
 		/**#@-*/
 		$secret_keys = wp_remote_get( 'https://api.wordpress.org/secret-key/1.1/salt/' );
@@ -275,12 +281,19 @@ el.select();
 </script>
 <?php
 	else :
-		$handle = fopen(ABSPATH . 'wp-config.php', 'w');
+		// If this file doesn't exist, then we are using the wp-config-sample.php
+		// file one level up, which is for the develop repo.
+		if ( file_exists( ABSPATH . 'wp-config-sample.php' ) )
+			$path_to_wp_config = ABSPATH . 'wp-config.php';
+		else
+			$path_to_wp_config = dirname( ABSPATH ) . '/wp-config.php';
+
+		$handle = fopen( $path_to_wp_config, 'w' );
 		foreach( $config_file as $line ) {
-			fwrite($handle, $line);
+			fwrite( $handle, $line );
 		}
-		fclose($handle);
-		chmod(ABSPATH . 'wp-config.php', 0666);
+		fclose( $handle );
+		chmod( $path_to_wp_config, 0666 );
 		setup_config_display_header();
 ?>
 <p><?php _e( "All right, sparky! You&#8217;ve made it through this part of the installation. WordPress can now communicate with your database. If you are ready, time now to&hellip;" ); ?></p>

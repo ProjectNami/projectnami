@@ -1,5 +1,4 @@
 <?php
-
 /**
  * WordPress DB Class
  *
@@ -645,14 +644,14 @@ class wpdb {
 	 * @param string   $charset The character set (optional)
 	 * @param string   $collate The collation (optional)
 	 */
-	function set_charset($dbh, $charset = null, $collate = null) {
-		if ( !isset($charset) )
+	function set_charset( $dbh, $charset = null, $collate = null ) {
+		if ( ! isset( $charset ) )
 			$charset = $this->charset;
-		if ( !isset($collate) )
+		if ( ! isset( $collate ) )
 			$collate = $this->collate;
 		if ( $this->has_cap( 'collation', $dbh ) && !empty( $charset ) && false ) {
 			if ( function_exists( 'mysql_set_charset' ) && $this->has_cap( 'set_charset', $dbh ) ) {
-				mysql_set_charset( $charset, $dbh );
+ 				mysql_set_charset( $charset, $dbh );
 				$this->real_escape = true;
 			} else {
 				$query = $this->prepare( 'SET NAMES %s', $charset );
@@ -861,25 +860,27 @@ class wpdb {
 	}
 
 	/**
-	 * Weak escape, using addslashes()
+	 * Do not use, deprecated.
 	 *
-	 * @see addslashes()
+	 * Use esc_sql() or wpdb::prepare() instead.
+	 *
 	 * @since 2.8.0
+	 * @deprecated 3.6.0
+	 * @see wpdb::prepare
+	 * @see esc_sql()
 	 * @access private
 	 *
 	 * @param string $string
 	 * @return string
 	 */
 	function _weak_escape( $string ) {
-		//return addslashes( $string );
 		return mssql_escape( $string );
 	}
 
 	/**
-	 * Real escape, using mysql_real_escape_string() or addslashes()
+	 * Real escape, using mysql_real_escape_string()
 	 *
 	 * @see mysql_real_escape_string()
-	 * @see addslashes()
 	 * @since 2.8.0
 	 * @access private
 	 *
@@ -887,20 +888,17 @@ class wpdb {
 	 * @return string escaped
 	 */
 	function _real_escape( $string ) {
-		if( $this->dbh )
+		if ( $this->dbh )
 			return mssql_escape( $string );
 
 		$class = get_class( $this );
-		
 		_doing_it_wrong( $class, "$class must set a database connection for use with escaping.", E_USER_NOTICE );
-		
 		return addslashes( $string );
 	}
 
 	/**
 	 * Escape data. Works on arrays.
 	 *
-	 * @uses wpdb::_escape()
 	 * @uses wpdb::_real_escape()
 	 * @since  2.8.0
 	 * @access private
@@ -924,13 +922,17 @@ class wpdb {
 	}
 
 	/**
-	 * Escapes content for insertion into the database using addslashes(), for security.
+	 * Do not use, deprecated.
 	 *
-	 * Works on arrays.
+	 * Use esc_sql() or wpdb::prepare() instead.
 	 *
 	 * @since 0.71
-	 * @param string|array $data to escape
-	 * @return string|array escaped as query safe string
+	 * @deprecated 3.6.0
+	 * @see wpdb::prepare()
+	 * @see esc_sql()
+	 *
+	 * @param mixed $data
+	 * @return mixed
 	 */
 	function escape( $data ) {
 		if ( is_array( $data ) ) {
@@ -1011,7 +1013,6 @@ class wpdb {
 		$query = preg_replace( '|(?<!%)%f|' , '%F', $query ); // Force floats to be locale unaware
 		$query = preg_replace( '|(?<!%)%s|', "'%s'", $query ); // quote the strings, avoiding escaped strings like %%s
 		array_walk( $args, array( $this, 'escape_by_ref' ) );
-		
 		return @vsprintf( $query, $args );
 	}
 
@@ -1168,11 +1169,19 @@ class wpdb {
 
 		/*
 		if ( WP_DEBUG ) {
+			$error_reporting = false;
+			if ( defined( 'E_DEPRECATED' ) ) {
+				$error_reporting = error_reporting();
+				error_reporting( $error_reporting ^ E_DEPRECATED );
+			}
 			$this->dbh = mysql_connect( $this->dbhost, $this->dbuser, $this->dbpassword, $new_link, $client_flags );
+			if ( false !== $error_reporting ) {
+				error_reporting( $error_reporting );
+			}
 		} else {
 			$this->dbh = @mysql_connect( $this->dbhost, $this->dbuser, $this->dbpassword, $new_link, $client_flags );
 		}
-		*/
++		*/
 
 		if ( !$this->dbh ) {
 			wp_load_translations_early();
@@ -1210,9 +1219,15 @@ class wpdb {
 	function query( $query ) {
 		if ( ! $this->ready )
 			return false;
-
-		// some queries are made before the plugins have been loaded, and thus cannot be filtered with this method
-		$query = apply_filters( 'query', $query );	
+		/**
+		 * Filter the database query.
+		 *
+		 * Some queries are made before the plugins have been loaded, and thus cannot be filtered with this method.
+		 *
+		 * @since 2.1.0
+		 * @param string $query Database query.
+		 */
+		$query = apply_filters( 'query', $query );
 
 		$return_val = 0;
 		$this->flush();
@@ -1227,7 +1242,7 @@ class wpdb {
 			$this->timer_start();
 		
 		$this->result = sqlsrv_query( $this->dbh, $query );
-
+ 
 		$this->query_statement_resource = $this->result;
 		
 		$this->num_queries++;
@@ -1246,9 +1261,8 @@ class wpdb {
 				$this->insert_id = 0; 
 
 			$this->print_error();
-			
 			return false;
-		}		
+		}
 
 		if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
 			$return_val = $this->result;
@@ -1353,7 +1367,6 @@ class wpdb {
 		$this->insert_id = 0;
 		$formats = $format = (array) $format;
 		$fields = array_keys( $data );
-
 		$formatted_fields = array();
 		foreach ( $fields as $field ) {
 			if ( !empty( $format ) ) {
@@ -1462,7 +1475,6 @@ class wpdb {
 		}
 
 		$sql = "DELETE FROM [$table] WHERE " . implode( ' AND ', $wheres );
-
 		return $this->query( $this->prepare( $sql, $where ) );
 	}
 
@@ -1499,7 +1511,7 @@ class wpdb {
 		
 		if ( $query )
 			$this->query( $query );
-	
+
 		// Extract var out of cached results based x,y vals
 		if ( !empty( $this->last_result[$y] ) ) {
 			
@@ -1568,9 +1580,8 @@ class wpdb {
 		$new_array = array();
 		// Extract the column values
 		for ( $i = 0, $j = count( $this->last_result ); $i < $j; $i++ ) {
-				$new_array[$i] = $this->get_var( null, $x, $i );
+			$new_array[$i] = $this->get_var( null, $x, $i );
 		}
-		
 		return $new_array;
 	}
 
@@ -1815,7 +1826,6 @@ class wpdb {
 	 * @return false|string false on failure, version number on success
 	 */
 	function db_version() {
-		//return "5.1.4";//return preg_replace( '/[^0-9.].*/', '', mysql_get_server_info( $this->dbh ) );
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('productversion')) as 'version'" );
 	}
 }

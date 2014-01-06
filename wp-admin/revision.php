@@ -1,13 +1,22 @@
 <?php
 /**
- * Revisions administration panel.
+ * Revisions administration panel
+ *
+ * Requires wp-admin/includes/revision.php.
  *
  * @package WordPress
  * @subpackage Administration
+ * @since 2.6.0
+ *
+ * @param int    revision Optional. The revision ID.
+ * @param string action   The action to take.
+ *                        Accepts 'restore', 'view' or 'edit'.
+ * @param int    from     The revision to compare from.
+ * @param int    to       Optional, required if revision missing. The revision to compare to.
  */
 
 /** WordPress Administration Bootstrap */
-require_once('./admin.php');
+require_once( dirname( __FILE__ ) . '/admin.php' );
 
 require ABSPATH . 'wp-admin/includes/revision.php';
 
@@ -110,12 +119,11 @@ $revisions_sidebar .= '<p>' . __( '<a href="http://wordpress.org/support/" targe
 
 get_current_screen()->set_help_sidebar( $revisions_sidebar );
 
-require_once( './admin-header.php' );
+require_once( ABSPATH . 'wp-admin/admin-header.php' );
 
 ?>
 
 <div class="wrap">
-	<?php screen_icon(); ?>
 	<h2 class="long-header"><?php echo $h2; ?></h2>
 </div>
 
@@ -206,4 +214,4 @@ require_once( './admin-header.php' );
 
 
 <?php
-require_once( './admin-footer.php' );
+require_once( ABSPATH . 'wp-admin/admin-footer.php' );

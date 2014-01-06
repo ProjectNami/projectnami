@@ -94,18 +94,22 @@ abstract class WP_Image_Editor {
 	abstract public function resize( $max_w, $max_h, $crop = false );
 
 	/**
-	 * Processes current image and saves to disk
-	 * multiple sizes from single source.
-	 *
-	 * 'width' and 'height' are required.
-	 * 'crop' defaults to false when not provided.
+	 * Resize multiple images from a single source.
 	 *
 	 * @since 3.5.0
 	 * @access public
 	 * @abstract
 	 *
-	 * @param array $sizes { {'width'=>int, 'height'=>int, ['crop'=>bool]}, ... }
-	 * @return array
+	 * @param array $sizes {
+	 *     An array of image size arrays. Default sizes are 'small', 'medium', 'large'.
+	 *
+	 *     @type array $size {
+	 *         @type int  $width  Image width.
+	 *         @type int  $height Image height.
+	 *         @type bool $crop   Optional. Whether to crop the image. Default false.
+	 *     }
+	 * }
+	 * @return array An array of resized images metadata by size.
 	 */
 	abstract public function multi_resize( $sizes );
 
@@ -201,12 +205,49 @@ abstract class WP_Image_Editor {
 	 * @access public
 	 *
 	 * @param int $quality Compression Quality. Range: [1,100]
-	 * @return boolean
+	 * @return boolean|WP_Error True if set successfully; WP_Error on failure.
 	 */
-	public function set_quality( $quality ) {
-		$this->quality = apply_filters( 'wp_editor_set_quality', $quality );
+	public function set_quality( $quality = null ) {
+		if ( $quality == null ) {
+			$quality = $this->quality;
+		}
 
-		return ( (bool) $this->quality );
+		/**
+		 * Filter the default image compression quality setting.
+		 *
+		 * @since 3.5.0
+		 *
+		 * @param int    $quality   Quality level between 1 (low) and 100 (high).
+		 * @param string $mime_type Image mime type.
+		 */
+		$quality = apply_filters( 'wp_editor_set_quality', $quality, $this->mime_type );
+
+		if ( 'image/jpeg' == $this->mime_type ) {
+			/**
+			 * Filter the JPEG compression quality for backward-compatibility.
+			 *
+			 * The filter is evaluated under two contexts: 'image_resize', and 'edit_image',
+			 * (when a JPEG image is saved to file).
+			 *
+			 * @since 2.5.0
+			 *
+			 * @param int    $quality Quality level between 0 (low) and 100 (high) of the JPEG.
+			 * @param string $context Context of the filter.
+			 */
+			$quality = apply_filters( 'jpeg_quality', $quality, 'image_resize' );
+
+			// Allow 0, but squash to 1 due to identical images in GD, and for backwards compatibility.
+			if ( $quality == 0 ) {
+				$quality = 1;
+			}
+		}
+
+		if ( ( $quality >= 1 ) && ( $quality <= 100 ) ){
+			$this->quality = $quality;
+			return true;
+		} else {
+			return new WP_Error( 'invalid_image_quality', __('Attempted to set image quality outside of the range [1,100].') );
+		}
 	}
 
 	/**
@@ -253,6 +294,15 @@ abstract class WP_Image_Editor {
 		// Double-check that the mime-type selected is supported by the editor.
 		// If not, choose a default instead.
 		if ( ! $this->supports_mime_type( $mime_type ) ) {
+			/**
+			 * Filter default mime type prior to getting the file extension.
+			 *
+			 * @see wp_get_mime_types()
+			 *
+			 * @since 3.5.0
+			 *
+			 * @param string $mime_type Mime type string.
+			 */
 			$mime_type = apply_filters( 'image_editor_default_mime_type', $this->default_mime_type );
 			$new_ext = $this->get_extension( $mime_type );
 		}
@@ -330,8 +380,8 @@ abstract class WP_Image_Editor {
 		if ( $stream = wp_is_stream( $filename ) ) {
 			ob_start();
 		} else {
-			// The directory containing the original file may no longer exist when using a replication plugin. 
-			wp_mkdir_p( dirname( $filename ) ); 
+			// The directory containing the original file may no longer exist when using a replication plugin.
+			wp_mkdir_p( dirname( $filename ) );
 		}
 
 		$result = call_user_func_array( $function, $arguments );

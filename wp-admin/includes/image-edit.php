@@ -259,6 +259,7 @@ function wp_save_image_file( $filename, $image, $mime_type, $post_id ) {
 
 		switch ( $mime_type ) {
 			case 'image/jpeg':
+				/** This filter is documented in wp-includes/class-wp-image-editor.php */
 				return imagejpeg( $image, $filename, apply_filters( 'jpeg_quality', 90, 'edit_image' ) );
 			case 'image/png':
 				return imagepng( $image, $filename );
@@ -467,8 +468,8 @@ function stream_preview_image( $post_id ) {
 	$h = $size['height'];
 
 	$ratio = _image_get_preview_ratio( $w, $h );
-	$w2 = $w * $ratio;
-	$h2 = $h * $ratio;
+	$w2 = max ( 1, $w * $ratio );
+	$h2 = max ( 1, $h * $ratio );
 
 	if ( is_wp_error( $img->resize( $w2, $h2 ) ) )
 		return false;
@@ -499,6 +500,7 @@ function wp_restore_image($post_id) {
 			if ( defined('IMAGE_EDIT_OVERWRITE') && IMAGE_EDIT_OVERWRITE ) {
 				// delete only if it's edited image
 				if ( preg_match('/-e[0-9]{13}\./', $parts['basename']) ) {
+					/** This filter is documented in wp-admin/custom-header.php */
 					$delpath = apply_filters('wp_delete_file', $file);
 					@unlink($delpath);
 				}
@@ -522,6 +524,7 @@ function wp_restore_image($post_id) {
 				if ( defined('IMAGE_EDIT_OVERWRITE') && IMAGE_EDIT_OVERWRITE ) {
 					// delete only if it's edited image
 					if ( preg_match('/-e[0-9]{13}-/', $meta['sizes'][$default_size]['file']) ) {
+						/** This filter is documented in wp-admin/custom-header.php */
 						$delpath = apply_filters( 'wp_delete_file', path_join($parts['dirname'], $meta['sizes'][$default_size]['file']) );
 						@unlink($delpath);
 					}
@@ -722,6 +725,7 @@ function wp_save_image( $post_id ) {
 	}
 
 	if ( $delete ) {
+		/** This filter is documented in wp-admin/custom-header.php */
 		$delpath = apply_filters('wp_delete_file', $new_path);
 		@unlink( $delpath );
 	}

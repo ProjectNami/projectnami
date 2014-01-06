@@ -311,6 +311,7 @@ CREATE CLUSTERED INDEX $wpdb->sitemeta" . "_CLU2 on $wpdb->sitemeta (site_id)
 GO
 
 CREATE TABLE $wpdb->signups (
+  signup_id int NOT NULL identity(1,1),
   domain nvarchar(200) NOT NULL default '',
   path nvarchar(100) NOT NULL default '',
   title nvarchar(max) NOT NULL,
@@ -320,16 +321,17 @@ CREATE TABLE $wpdb->signups (
   activated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   active tinyint NOT NULL default 0,
   activation_key nvarchar(50) NOT NULL default '',
+  constraint $wpdb->signups" . "_PK PRIMARY KEY  (signup_id)
 )
 
 GO
-CREATE CLUSTERED INDEX $wpdb->signups" . "_IDX2 on $wpdb->signups (domain)
-
-GO
-CREATE CLUSTERED INDEX $wpdb->signups" . "_IDX2 on $wpdb->signups (domain)
-
-GO
 CREATE INDEX $wpdb->signups" . "_IDX1 on $wpdb->signups (activation_key)
+GO
+CREATE INDEX $wpdb->signups" . "_IDX2 on $wpdb->signups (domain,path)
+GO
+CREATE INDEX $wpdb->signups" . "_IDX3 on $wpdb->signups (user_email)
+GO
+CREATE INDEX $wpdb->signups" . "_IDX4 on $wpdb->signups (user_login,user_email)
 GO";
 
 	switch ( $scope ) {
@@ -369,11 +371,16 @@ $wp_queries = wp_get_db_schema( 'all' );
  * @uses $wp_db_version
  */
 function populate_options() {
-	global $wpdb, $wp_db_version, $current_site, $wp_current_db_version;
+	global $wpdb, $wp_db_version, $wp_current_db_version;
 
 	$guessurl = wp_guess_url();
 
-	do_action('populate_options');
+	/**
+	 * Fires before creating WordPress options and populating their default values.
+	 *
+	 * @since 2.6.0
+	 */
+	do_action( 'populate_options' );
 
 	if ( ini_get('safe_mode') ) {
 		// Safe mode can break mkdir() so use a flat structure by default.
@@ -533,7 +540,7 @@ function populate_options() {
 	// 3.0 multisite
 	if ( is_multisite() ) {
 		/* translators: blog tagline */
-		$options[ 'blogdescription' ] = sprintf(__('Just another %s site'), $current_site->site_name );
+		$options[ 'blogdescription' ] = sprintf(__('Just another %s site'), get_current_site()->site_name );
 		$options[ 'permalink_structure' ] = '/%year%/%monthnum%/%day%/%postname%/';
 	}
 
@@ -593,6 +600,24 @@ function populate_options() {
 
 	// delete obsolete magpie stuff
 	// $wpdb->query("DELETE FROM $wpdb->options WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'");
+
+	// Deletes all expired transients.
+	// The multi-table delete syntax is used to delete the transient record from table a,
+	// and the corresponding transient_timeout record from table b.
+	$time = time();
+	$wpdb->query("DELETE a, b FROM $wpdb->options a, $wpdb->options b WHERE
+	        a.option_name LIKE '_transient_%' AND
+	        a.option_name NOT LIKE '_transient_timeout_%' AND
+	        b.option_name = CONCAT( '_transient_timeout_', SUBSTRING( a.option_name, 12 ) )
+	        AND b.option_value < $time");
+
+	if ( is_main_site() && is_main_network() ) {
+		$wpdb->query("DELETE a, b FROM $wpdb->options a, $wpdb->options b WHERE
+			a.option_name LIKE '_site_transient_%' AND
+			a.option_name NOT LIKE '_site_transient_timeout_%' AND
+			b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
+			AND b.option_value < $time");
+    }
 }
 
 /**
@@ -968,6 +993,16 @@ We hope you enjoy your new site. Thanks!
 	if ( ! $subdomain_install )
 		$sitemeta['illegal_names'][] = 'blog';
 
+	/**
+	 * Filter meta for a network on creation.
+	 *
+	 * @since 3.7.0
+	 *
+	 * @param array $sitemeta   Associative array of network meta keys and values to be inserted.
+	 * @param int   $network_id ID of network to populate.
+	 */
+	$sitemeta = apply_filters( 'populate_network_meta', $sitemeta, $network_id );
+
 	$insert = '';
 	foreach ( $sitemeta as $meta_key => $meta_value ) {
 		if ( is_array( $meta_value ) )
@@ -986,7 +1021,7 @@ We hope you enjoy your new site. Thanks!
 		$current_site->domain = $domain;
 		$current_site->path = $path;
 		$current_site->site_name = ucfirst( $domain );
-		$wpdb->insert( $wpdb->blogs, array( 'site_id' => $network_id, 'domain' => $domain, 'path' => $path, 'registered' => current_time( 'mysql' ) ) );
+		$wpdb->insert( $wpdb->blogs, array( 'site_id' => $network_id, 'blog_id' => 1, 'domain' => $domain, 'path' => $path, 'registered' => current_time( 'mysql' ) ) );
 		$current_site->blog_id = $blog_id = $wpdb->insert_id;
 		update_user_meta( $site_user->ID, 'source_domain', $domain );
 		update_user_meta( $site_user->ID, 'primary_blog', $blog_id );
@@ -1000,6 +1035,9 @@ We hope you enjoy your new site. Thanks!
 	}
 
 	if ( $subdomain_install ) {
+		if ( ! $subdomain_install )
+			return true;
+
 		$vhost_ok = false;
 		$errstr = '';
 		$hostname = substr( md5( time() ), 0, 6 ) . '.' . $domain; // Very random hostname!

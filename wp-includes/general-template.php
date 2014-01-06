@@ -23,7 +23,7 @@
  */
 function get_header( $name = null ) {
 	do_action( 'get_header', $name );
-	
+
 	$templates = array();
 	$name = (string) $name;
 	if ( '' !== $name )
@@ -477,7 +477,7 @@ function get_bloginfo( $show = '', $filter = 'raw' ) {
 			$output = get_feed_link('comments_rss2');
 			break;
 		case 'pingback_url':
-			$output = get_option('siteurl') .'/xmlrpc.php';
+			$output = site_url( 'xmlrpc.php' );
 			break;
 		case 'stylesheet_url':
 			$output = get_stylesheet_uri();
@@ -576,6 +576,16 @@ function wp_title($sep = '&raquo;', $display = true, $seplocation = '') {
 		$title = single_post_title( '', false );
 	}
 
+	// If there's a post type archive
+	if ( is_post_type_archive() ) {
+		$post_type = get_query_var( 'post_type' );
+		if ( is_array( $post_type ) )
+			$post_type = reset( $post_type );
+		$post_type_object = get_post_type_object( $post_type );
+		if ( ! $post_type_object->has_archive )
+			$title = post_type_archive_title( '', false );
+	}
+
 	// If there's a category or tag
 	if ( is_category() || is_tag() ) {
 		$title = single_term_title( '', false );
@@ -584,18 +594,21 @@ function wp_title($sep = '&raquo;', $display = true, $seplocation = '') {
 	// If there's a taxonomy
 	if ( is_tax() ) {
 		$term = get_queried_object();
-		$tax = get_taxonomy( $term->taxonomy );
-		$title = single_term_title( $tax->labels->name . $t_sep, false );
+		if ( $term ) {
+			$tax = get_taxonomy( $term->taxonomy );
+			$title = single_term_title( $tax->labels->name . $t_sep, false );
+		}
 	}
 
 	// If there's an author
 	if ( is_author() ) {
 		$author = get_queried_object();
-		$title = $author->display_name;
+		if ( $author )
+			$title = $author->display_name;
 	}
 
-	// If there's a post type archive
-	if ( is_post_type_archive() )
+	// Post type archives with has_archive should override terms.
+	if ( is_post_type_archive() && $post_type_object->has_archive )
 		$title = post_type_archive_title( '', false );
 
 	// If there's a month
@@ -676,7 +689,7 @@ function single_post_title($prefix = '', $display = true) {
 	if ( $display )
 		echo $prefix . $title;
 	else
-		return $title;
+		return $prefix . $title;
 }
 
 /**
@@ -695,13 +708,25 @@ function post_type_archive_title( $prefix = '', $display = true ) {
 	if ( ! is_post_type_archive() )
 		return;
 
-	$post_type_obj = get_queried_object();
-	$title = apply_filters('post_type_archive_title', $post_type_obj->labels->name );
+	$post_type = get_query_var( 'post_type' );
+	if ( is_array( $post_type ) )
+		$post_type = reset( $post_type );
+
+	$post_type_obj = get_post_type_object( $post_type );
+	/**
+	 * Filter the post type archive title.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param string $post_type_name Post type 'name' label.
+	 * @param string $post_type      Post type.
+	 */
+	$title = apply_filters( 'post_type_archive_title', $post_type_obj->labels->name, $post_type );
 
 	if ( $display )
 		echo $prefix . $title;
 	else
-		return $title;
+		return $prefix . $title;
 }
 
 /**
@@ -784,7 +809,7 @@ function single_term_title( $prefix = '', $display = true ) {
 	if ( $display )
 		echo $prefix . $term_name;
 	else
-		return $term_name;
+		return $prefix . $term_name;
 }
 
 /**
@@ -865,17 +890,16 @@ function single_month_title($prefix = '', $display = true ) {
  */
 function get_archives_link($url, $text, $format = 'html', $before = '', $after = '') {
 	$text = wptexturize($text);
-	$title_text = esc_attr($text);
 	$url = esc_url($url);
 
 	if ('link' == $format)
-		$link_html = "\t<link rel='archives' title='$title_text' href='$url' />\n";
+		$link_html = "\t<link rel='archives' title='" . esc_attr( $text ) . "' href='$url' />\n";
 	elseif ('option' == $format)
 		$link_html = "\t<option value='$url'>$before $text $after</option>\n";
 	elseif ('html' == $format)
-		$link_html = "\t<li>$before<a href='$url' title='$title_text'>$text</a>$after</li>\n";
+		$link_html = "\t<li>$before<a href='$url'>$text</a>$after</li>\n";
 	else // custom
-		$link_html = "\t$before<a href='$url' title='$title_text'>$text</a>$after\n";
+		$link_html = "\t$before<a href='$url'>$text</a>$after\n";
 
 	$link_html = apply_filters( 'get_archives_link', $link_html );
 
@@ -1061,10 +1085,12 @@ function wp_get_archives($args = '') {
 			foreach ( (array) $results as $result ) {
 				if ( $result->post_date != '0001-01-01 00:00:00' ) {
 					$url  = get_permalink( $result );
-					if ( $result->post_title )
+					if ( $result->post_title ) {
+						/** This filter is documented in wp-includes/post-template.php */
 						$text = strip_tags( apply_filters( 'the_title', $result->post_title, $result->ID ) );
-					else
+					} else {
 						$text = $result->ID;
+					}
 					$output .= get_archives_link($url, $text, $format, $before, $after);
 				}
 			}
@@ -1247,6 +1273,7 @@ function get_calendar($initial = true, $echo = true) {
 	if ( $ak_post_titles ) {
 		foreach ( (array) $ak_post_titles as $ak_post_title ) {
 
+				/** This filter is documented in wp-includes/post-template.php */
 				$post_title = esc_attr( apply_filters( 'the_title', $ak_post_title->post_title, $ak_post_title->ID ) );
 
 				if ( empty($ak_titles_for_day['day_'.$ak_post_title->dom]) )
@@ -1636,8 +1663,8 @@ function feed_links( $args = array() ) {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	echo '<link rel="alternate" type="' . feed_content_type() . '" title="' . esc_attr(sprintf( $args['feedtitle'], get_bloginfo('name'), $args['separator'] )) . '" href="' . get_feed_link() . "\" />\n";
-	echo '<link rel="alternate" type="' . feed_content_type() . '" title="' . esc_attr(sprintf( $args['comstitle'], get_bloginfo('name'), $args['separator'] )) . '" href="' . get_feed_link( 'comments_' . get_default_feed() ) . "\" />\n";
+	echo '<link rel="alternate" type="' . feed_content_type() . '" title="' . esc_attr( sprintf( $args['feedtitle'], get_bloginfo('name'), $args['separator'] ) ) . '" href="' . esc_url( get_feed_link() ) . "\" />\n";
+	echo '<link rel="alternate" type="' . feed_content_type() . '" title="' . esc_attr( sprintf( $args['comstitle'], get_bloginfo('name'), $args['separator'] ) ) . '" href="' . esc_url( get_feed_link( 'comments_' . get_default_feed() ) ) . "\" />\n";
 }
 
 /**
@@ -1667,7 +1694,7 @@ function feed_links_extra( $args = array() ) {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	if ( is_single() || is_page() ) {
+	if ( is_singular() ) {
 		$id = 0;
 		$post = get_post( $id );
 
@@ -1675,16 +1702,28 @@ function feed_links_extra( $args = array() ) {
 			$title = sprintf( $args['singletitle'], get_bloginfo('name'), $args['separator'], esc_html( get_the_title() ) );
 			$href = get_post_comments_feed_link( $post->ID );
 		}
+	} elseif ( is_post_type_archive() ) {
+		$post_type = get_query_var( 'post_type' );
+		if ( is_array( $post_type ) )
+			$post_type = reset( $post_type );
+
+		$post_type_obj = get_post_type_object( $post_type );
+		$title = sprintf( $args['posttypetitle'], get_bloginfo( 'name' ), $args['separator'], $post_type_obj->labels->name );
+		$href = get_post_type_archive_feed_link( $post_type_obj->name );
 	} elseif ( is_category() ) {
 		$term = get_queried_object();
 
-		$title = sprintf( $args['cattitle'], get_bloginfo('name'), $args['separator'], $term->name );
-		$href = get_category_feed_link( $term->term_id );
+		if ( $term ) {
+			$title = sprintf( $args['cattitle'], get_bloginfo('name'), $args['separator'], $term->name );
+			$href = get_category_feed_link( $term->term_id );
+		}
 	} elseif ( is_tag() ) {
 		$term = get_queried_object();
 
-		$title = sprintf( $args['tagtitle'], get_bloginfo('name'), $args['separator'], $term->name );
-		$href = get_tag_feed_link( $term->term_id );
+		if ( $term ) {
+			$title = sprintf( $args['tagtitle'], get_bloginfo('name'), $args['separator'], $term->name );
+			$href = get_tag_feed_link( $term->term_id );
+		}
 	} elseif ( is_author() ) {
 		$author_id = intval( get_query_var('author') );
 
@@ -1695,7 +1734,9 @@ function feed_links_extra( $args = array() ) {
 		$href = get_search_feed_link();
 	} elseif ( is_post_type_archive() ) {
 		$title = sprintf( $args['posttypetitle'], get_bloginfo('name'), $args['separator'], post_type_archive_title( '', false ) );
-		$href = get_post_type_archive_feed_link( get_queried_object()->name );
+		$post_type_obj = get_queried_object();
+		if ( $post_type_obj )
+			$href = get_post_type_archive_feed_link( $post_type_obj->name );
 	}
 
 	if ( isset($title) && isset($href) )
@@ -1749,7 +1790,7 @@ function noindex() {
  * @since 3.3.0
  */
 function wp_no_robots() {
-	echo "<meta name='robots' content='noindex,nofollow' />\n";
+	echo "<meta name='robots' content='noindex,follow' />\n";
 }
 
 /**
@@ -2049,14 +2090,20 @@ function paginate_links( $args = '' ) {
  * @param string $name The name of the theme.
  * @param string $url The url of the css file containing the colour scheme.
  * @param array $colors Optional An array of CSS color definitions which are used to give the user a feel for the theme.
+ * @param array $icons Optional An array of CSS color definitions used to color any SVG icons
  */
-function wp_admin_css_color($key, $name, $url, $colors = array()) {
+function wp_admin_css_color( $key, $name, $url, $colors = array(), $icons = array() ) {
 	global $_wp_admin_css_colors;
 
 	if ( !isset($_wp_admin_css_colors) )
 		$_wp_admin_css_colors = array();
 
-	$_wp_admin_css_colors[$key] = (object) array('name' => $name, 'url' => $url, 'colors' => $colors);
+	$_wp_admin_css_colors[$key] = (object) array(
+		'name' => $name,
+		'url' => $url,
+		'colors' => $colors,
+		'icon_colors' => $icons,
+	);
 }
 
 /**
@@ -2065,10 +2112,61 @@ function wp_admin_css_color($key, $name, $url, $colors = array()) {
  * @since 3.0.0
  */
 function register_admin_color_schemes() {
-	wp_admin_css_color( 'classic', _x( 'Blue', 'admin color scheme' ), admin_url( 'css/colors-classic.min.css' ),
-		array( '#5589aa', '#cfdfe9', '#d1e5ee', '#eff8ff' ) );
-	wp_admin_css_color( 'fresh', _x( 'Gray', 'admin color scheme' ), admin_url( 'css/colors-fresh.min.css' ),
-		array( '#555', '#a0a0a0', '#ccc', '#f1f1f1' ) );
+	$suffix = is_rtl() ? '-rtl' : '';
+	$suffix .= defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+
+	wp_admin_css_color( 'fresh', _x( 'Default', 'admin color scheme' ),
+		admin_url( "css/colors$suffix.css" ),
+		array( '#222', '#333', '#0074a2', '#2ea2cc' ),
+		array( 'base' => '#999', 'focus' => '#2ea2cc', 'current' => '#fff' )
+	);
+
+	// Other color schemes are not available when running out of src
+	if ( false !== strpos( $GLOBALS['wp_version'], '-src' ) )
+		return;
+
+	wp_admin_css_color( 'light', _x( 'Light', 'admin color scheme' ),
+		admin_url( "css/colors/light/colors$suffix.css" ),
+		array( '#e5e5e5', '#999', '#d64e07', '#04a4cc' ),
+		array( 'base' => '#999', 'focus' => '#ccc', 'current' => '#ccc' )
+	);
+
+	wp_admin_css_color( 'blue', _x( 'Blue', 'admin color scheme' ),
+		admin_url( "css/colors/blue/colors$suffix.css" ),
+		array( '#096484', '#4796b3', '#52accc', '#74B6CE' ),
+		array( 'base' => '#e5f8ff', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'midnight', _x( 'Midnight', 'admin color scheme' ),
+		admin_url( "css/colors/midnight/colors$suffix.css" ),
+		array( '#25282b', '#363b3f', '#69a8bb', '#e14d43' ),
+		array( 'base' => '#f1f2f3', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'sunrise', _x( 'Sunrise', 'admin color scheme' ),
+		admin_url( "css/colors/sunrise/colors$suffix.css" ),
+		array( '#b43c38', '#cf4944', '#dd823b', '#ccaf0b' ),
+		array( 'base' => '#f3f1f1', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'ectoplasm', _x( 'Ectoplasm', 'admin color scheme' ),
+		admin_url( "css/colors/ectoplasm/colors$suffix.css" ),
+		array( '#413256', '#523f6d', '#a3b745', '#d46f15' ),
+		array( 'base' => '#ece6f6', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'ocean', _x( 'Ocean', 'admin color scheme' ),
+		admin_url( "css/colors/ocean/colors$suffix.css" ),
+		array( '#627c83', '#738e96', '#9ebaa0', '#aa9d88' ),
+		array( 'base' => '#f2fcff', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
+	wp_admin_css_color( 'coffee', _x( 'Coffee', 'admin color scheme' ),
+		admin_url( "css/colors/coffee/colors$suffix.css" ),
+		array( '#46403c', '#59524c', '#c7a589', '#9ea476' ),
+		array( 'base' => '#f3f2f1', 'focus' => '#fff', 'current' => '#fff' )
+	);
+
 }
 
 /**
