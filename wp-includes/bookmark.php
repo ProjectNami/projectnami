@@ -238,7 +238,7 @@ function get_bookmarks($args = '') {
 	$length = '';
 	switch ( $orderby ) {
 		case 'length':
-			$length = ", CHAR_LENGTH(link_name) AS length";
+			$length = ", LEN(link_name) AS length";
 			break;
 		case 'rand':
 			$orderby = 'rand()';
