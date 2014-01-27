@@ -115,7 +115,7 @@ if ( !function_exists('get_userdata') ) :
  * @since 0.71
  *
  * @param int $user_id User ID
- * @return bool|object False on failure, WP_User object on success
+ * @return WP_User|bool WP_User object on success, false on failure.
  */
 function get_userdata( $user_id ) {
 	return get_user_by( 'id', $user_id );
@@ -130,7 +130,7 @@ if ( !function_exists('get_user_by') ) :
  *
  * @param string $field The field to retrieve the user with. id | slug | email | login
  * @param int|string $value A value for $field. A user ID, slug, email address, or login name.
- * @return bool|object False on failure, WP_User object on success
+ * @return WP_User|bool WP_User object on success, false on failure.
  */
 function get_user_by( $field, $value ) {
 	$userdata = WP_User::get_data_by( $field, $value );
@@ -306,11 +306,8 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 	}
 
 	// Empty out the values that may be set
-	$phpmailer->ClearAddresses();
 	$phpmailer->ClearAllRecipients();
 	$phpmailer->ClearAttachments();
-	$phpmailer->ClearBCCs();
-	$phpmailer->ClearCCs();
 	$phpmailer->ClearCustomHeaders();
 	$phpmailer->ClearReplyTos();
 
@@ -463,7 +460,7 @@ if ( !function_exists('wp_authenticate') ) :
  *
  * @param string $username User's username
  * @param string $password User's password
- * @return WP_Error|WP_User WP_User object if login successful, otherwise WP_Error object.
+ * @return WP_User|WP_Error WP_User object if login successful, otherwise WP_Error object.
  */
 function wp_authenticate($username, $password) {
 	$username = sanitize_user($username);
@@ -649,7 +646,10 @@ if ( !function_exists('wp_set_auth_cookie') ) :
  */
 function wp_set_auth_cookie($user_id, $remember = false, $secure = '') {
 	if ( $remember ) {
-		$expiration = $expire = time() + apply_filters('auth_cookie_expiration', 14 * DAY_IN_SECONDS, $user_id, $remember);
+		$expiration = time() + apply_filters('auth_cookie_expiration', 14 * DAY_IN_SECONDS, $user_id, $remember);
+		// Ensure the browser will continue to send the cookie after the expiration time is reached.
+		// Needed for the login grace period in wp_validate_auth_cookie().
+		$expire = $expiration + ( 12 * HOUR_IN_SECONDS );
 	} else {
 		$expiration = time() + apply_filters('auth_cookie_expiration', 2 * DAY_IN_SECONDS, $user_id, $remember);
 		$expire = 0;
@@ -827,10 +827,14 @@ if ( !function_exists('check_ajax_referer') ) :
  * @param string $query_arg where to look for nonce in $_REQUEST (since 2.5)
  */
 function check_ajax_referer( $action = -1, $query_arg = false, $die = true ) {
-	if ( $query_arg )
-		$nonce = $_REQUEST[$query_arg];
-	else
-		$nonce = isset($_REQUEST['_ajax_nonce']) ? $_REQUEST['_ajax_nonce'] : $_REQUEST['_wpnonce'];
+	$nonce = '';
+
+	if ( $query_arg && isset( $_REQUEST[ $query_arg ] ) )
+		$nonce = $_REQUEST[ $query_arg ];
+	elseif ( isset( $_REQUEST['_ajax_nonce'] ) )
+		$nonce = $_REQUEST['_ajax_nonce'];
+	elseif ( isset( $_REQUEST['_wpnonce'] ) )
+		$nonce = $_REQUEST['_wpnonce'];
 
 	$result = wp_verify_nonce( $nonce, $action );
 
@@ -854,17 +858,34 @@ if ( !function_exists('wp_redirect') ) :
  * @since 1.5.1
  * @uses apply_filters() Calls 'wp_redirect' hook on $location and $status.
  *
- * @param string $location The path to redirect to
- * @param int $status Status code to use
- * @return bool False if $location is not set
+ * @param string $location The path to redirect to.
+ * @param int $status Status code to use.
+ * @return bool False if $location is not provided, true otherwise.
  */
 function wp_redirect($location, $status = 302) {
 	global $is_IIS;
 
-	$location = apply_filters('wp_redirect', $location, $status);
-	$status = apply_filters('wp_redirect_status', $status, $location);
+	/**
+	 * Filter the redirect location.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string $location The path to redirect to.
+	 * @param int    $status   Status code to use.
+	 */
+	$location = apply_filters( 'wp_redirect', $location, $status );
 
-	if ( !$location ) // allows the wp_redirect filter to cancel a redirect
+	/**
+	 * Filter the redirect status code.
+	 *
+	 * @since 2.3.0
+	 *
+	 * @param int    $status   Status code to use.
+	 * @param string $location The path to redirect to.
+	 */
+	$status = apply_filters( 'wp_redirect_status', $status, $location );
+
+	if ( ! $location )
 		return false;
 
 	$location = wp_sanitize_redirect($location);
@@ -873,6 +894,8 @@ function wp_redirect($location, $status = 302) {
 		status_header($status); // This causes problems on IIS and some FastCGI setups
 
 	header("Location: $location", true, $status);
+
+	return true;
 }
 endif;
 
@@ -977,34 +1000,85 @@ endif;
 
 if ( ! function_exists('wp_notify_postauthor') ) :
 /**
- * Notify an author of a comment/trackback/pingback to one of their posts.
+ * Notify an author (and/or others) of a comment/trackback/pingback on a post.
  *
  * @since 1.0.0
  *
  * @param int $comment_id Comment ID
- * @param string $comment_type Optional. The comment type either 'comment' (default), 'trackback', or 'pingback'
- * @return bool False if user email does not exist. True on completion.
+ * @param string $deprecated Not used
+ * @return bool True on completion. False if no email addresses were specified.
  */
-function wp_notify_postauthor( $comment_id, $comment_type = '' ) {
+function wp_notify_postauthor( $comment_id, $deprecated = null ) {
+	if ( null !== $deprecated ) {
+		_deprecated_argument( __FUNCTION__, '3.8' );
+	}
+
 	$comment = get_comment( $comment_id );
+	if ( empty( $comment ) )
+		return false;
+
 	$post    = get_post( $comment->comment_post_ID );
 	$author  = get_userdata( $post->post_author );
 
-	// The comment was left by the author
-	if ( $comment->user_id == $post->post_author )
-		return false;
+	// Who to notify? By default, just the post author, but others can be added.
+	$emails = array( $author->user_email );
 
-	// The author moderated a comment on his own post
-	if ( $post->post_author == get_current_user_id() )
+	/**
+	 * Filter the list of emails to receive a comment notification.
+	 *
+	 * Normally just post authors are notified of emails.
+	 * This filter lets you add others.
+	 *
+	 * @since 3.7.0
+	 *
+	 * @param array $emails     Array of email addresses to receive a comment notification.
+	 * @param int   $comment_id The comment ID.
+	 */
+	$emails = apply_filters( 'comment_notification_recipients', $emails, $comment_id );
+	$emails = array_filter( $emails );
+
+	// If there are no addresses to send the comment to, bail.
+	if ( ! count( $emails ) ) {
 		return false;
+	}
+
+	// Facilitate unsetting below without knowing the keys.
+	$emails = array_flip( $emails );
+
+	/**
+	 * Filter whether to notify comment authors of their comments on their own posts.
+	 *
+	 * By default, comment authors don't get notified of their comments
+	 * on their own post. This lets you override that.
+	 *
+	 * @since 3.8.0
+	 *
+	 * @param bool $notify     Whether to notify the post author of their own comment. Default false.
+	 * @param int  $comment_id The comment ID.
+	 */
+	$notify_author = apply_filters( 'comment_notification_notify_author', false, $comment_id );
+
+	// The comment was left by the author
+	if ( ! $notify_author && $comment->user_id == $post->post_author ) {
+		unset( $emails[ $author->user_email ] );
+	}
+
+	// The author moderated a comment on their own post
+	if ( ! $notify_author && $post->post_author == get_current_user_id() ) {
+		unset( $emails[ $author->user_email ] );
+	}
 
 	// The post author is no longer a member of the blog
-	if ( ! user_can( $post->post_author, 'read_post', $post->ID ) )
-		return false;
+	if ( ! $notify_author && ! user_can( $post->post_author, 'read_post', $post->ID ) ) {
+		unset( $emails[ $author->user_email ] );
+	}
 
-	// If there's no email to send the comment to
-	if ( '' == $author->user_email )
+	// If there's no email to send the comment to, bail, otherwise flip array back around for use below
+	if ( ! count( $emails ) ) {
 		return false;
+	} else {
+		$emails = array_flip( $emails );
+	}
 
 	$comment_author_domain = @gethostbyaddr($comment->comment_author_IP);
 
@@ -1012,37 +1086,39 @@ function wp_notify_postauthor( $comment_id, $comment_type = '' ) {
 	// we want to reverse this for the plain text arena of emails.
 	$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
 
-	if ( empty( $comment_type ) ) $comment_type = 'comment';
-
-	if ('comment' == $comment_type) {
-		$notify_message  = sprintf( __( 'New comment on your post "%s"' ), $post->post_title ) . "\r\n";
-		/* translators: 1: comment author, 2: author IP, 3: author domain */
-		$notify_message .= sprintf( __('Author : %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
-		$notify_message .= sprintf( __('E-mail : %s'), $comment->comment_author_email ) . "\r\n";
-		$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
-		$notify_message .= sprintf( __('Whois  : http://whois.arin.net/rest/ip/%s'), $comment->comment_author_IP ) . "\r\n";
-		$notify_message .= __('Comment: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
-		$notify_message .= __('You can see all comments on this post here: ') . "\r\n";
-		/* translators: 1: blog name, 2: post title */
-		$subject = sprintf( __('[%1$s] Comment: "%2$s"'), $blogname, $post->post_title );
-	} elseif ('trackback' == $comment_type) {
-		$notify_message  = sprintf( __( 'New trackback on your post "%s"' ), $post->post_title ) . "\r\n";
-		/* translators: 1: website name, 2: author IP, 3: author domain */
-		$notify_message .= sprintf( __('Website: %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
-		$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
-		$notify_message .= __('Excerpt: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
-		$notify_message .= __('You can see all trackbacks on this post here: ') . "\r\n";
-		/* translators: 1: blog name, 2: post title */
-		$subject = sprintf( __('[%1$s] Trackback: "%2$s"'), $blogname, $post->post_title );
-	} elseif ('pingback' == $comment_type) {
-		$notify_message  = sprintf( __( 'New pingback on your post "%s"' ), $post->post_title ) . "\r\n";
-		/* translators: 1: comment author, 2: author IP, 3: author domain */
-		$notify_message .= sprintf( __('Website: %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
-		$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
-		$notify_message .= __('Excerpt: ') . "\r\n" . sprintf('[...] %s [...]', $comment->comment_content ) . "\r\n\r\n";
-		$notify_message .= __('You can see all pingbacks on this post here: ') . "\r\n";
-		/* translators: 1: blog name, 2: post title */
-		$subject = sprintf( __('[%1$s] Pingback: "%2$s"'), $blogname, $post->post_title );
+	switch ( $comment->comment_type ) {
+		case 'trackback':
+			$notify_message  = sprintf( __( 'New trackback on your post "%s"' ), $post->post_title ) . "\r\n";
+			/* translators: 1: website name, 2: author IP, 3: author domain */
+			$notify_message .= sprintf( __('Website: %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
+			$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
+			$notify_message .= __('Excerpt: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
+			$notify_message .= __('You can see all trackbacks on this post here: ') . "\r\n";
+			/* translators: 1: blog name, 2: post title */
+			$subject = sprintf( __('[%1$s] Trackback: "%2$s"'), $blogname, $post->post_title );
+			break;
+		case 'pingback':
+			$notify_message  = sprintf( __( 'New pingback on your post "%s"' ), $post->post_title ) . "\r\n";
+			/* translators: 1: comment author, 2: author IP, 3: author domain */
+			$notify_message .= sprintf( __('Website: %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
+			$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
+			$notify_message .= __('Excerpt: ') . "\r\n" . sprintf('[...] %s [...]', $comment->comment_content ) . "\r\n\r\n";
+			$notify_message .= __('You can see all pingbacks on this post here: ') . "\r\n";
+			/* translators: 1: blog name, 2: post title */
+			$subject = sprintf( __('[%1$s] Pingback: "%2$s"'), $blogname, $post->post_title );
+			break;
+		default: // Comments
+			$notify_message  = sprintf( __( 'New comment on your post "%s"' ), $post->post_title ) . "\r\n";
+			/* translators: 1: comment author, 2: author IP, 3: author domain */
+			$notify_message .= sprintf( __('Author : %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
+			$notify_message .= sprintf( __('E-mail : %s'), $comment->comment_author_email ) . "\r\n";
+			$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
+			$notify_message .= sprintf( __('Whois  : http://whois.arin.net/rest/ip/%s'), $comment->comment_author_IP ) . "\r\n";
+			$notify_message .= __('Comment: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
+			$notify_message .= __('You can see all comments on this post here: ') . "\r\n";
+			/* translators: 1: blog name, 2: post title */
+			$subject = sprintf( __('[%1$s] Comment: "%2$s"'), $blogname, $post->post_title );
+			break;
 	}
 	$notify_message .= get_permalink($comment->comment_post_ID) . "#comments\r\n\r\n";
 	$notify_message .= sprintf( __('Permalink: %s'), get_permalink( $comment->comment_post_ID ) . '#comment-' . $comment_id ) . "\r\n";
@@ -1073,11 +1149,13 @@ function wp_notify_postauthor( $comment_id, $comment_type = '' ) {
 	if ( isset($reply_to) )
 		$message_headers .= $reply_to . "\n";
 
-	$notify_message = apply_filters('comment_notification_text', $notify_message, $comment_id);
-	$subject = apply_filters('comment_notification_subject', $subject, $comment_id);
-	$message_headers = apply_filters('comment_notification_headers', $message_headers, $comment_id);
+	$notify_message  = apply_filters( 'comment_notification_text',       $notify_message,  $comment_id );
+	$subject         = apply_filters( 'comment_notification_subject',    $subject,         $comment_id );
+	$message_headers = apply_filters( 'comment_notification_headers',    $message_headers, $comment_id );
 
-	@wp_mail( $author->user_email, $subject, $notify_message, $message_headers );
+	foreach ( $emails as $email ) {
+		@wp_mail( $email, $subject, $notify_message, $message_headers );
+	}
 
 	return true;
 }
@@ -1103,9 +1181,11 @@ function wp_notify_moderator($comment_id) {
 	$post = get_post($comment->comment_post_ID);
 	$user = get_userdata( $post->post_author );
 	// Send to the administration and to the post author if the author can modify the comment.
-	$email_to = array( get_option('admin_email') );
-	if ( user_can($user->ID, 'edit_comment', $comment_id) && !empty($user->user_email) && ( get_option('admin_email') != $user->user_email) )
-		$email_to[] = $user->user_email;
+	$emails = array( get_option( 'admin_email' ) );
+	if ( user_can( $user->ID, 'edit_comment', $comment_id ) && ! empty( $user->user_email ) ) {
+		if ( 0 !== strcasecmp( $user->user_email, get_option( 'admin_email' ) ) )
+			$emails[] = $user->user_email;
+	}
 
 	$comment_author_domain = @gethostbyaddr($comment->comment_author_IP);
 	$comments_waiting = $wpdb->get_var("SELECT count(comment_ID) FROM $wpdb->comments WHERE comment_approved = '0'");
@@ -1114,8 +1194,7 @@ function wp_notify_moderator($comment_id) {
 	// we want to reverse this for the plain text arena of emails.
 	$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
 
-	switch ($comment->comment_type)
-	{
+	switch ( $comment->comment_type ) {
 		case 'trackback':
 			$notify_message  = sprintf( __('A new trackback on the post "%s" is waiting for your approval'), $post->post_title ) . "\r\n";
 			$notify_message .= get_permalink($comment->comment_post_ID) . "\r\n\r\n";
@@ -1130,7 +1209,7 @@ function wp_notify_moderator($comment_id) {
 			$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
 			$notify_message .= __('Pingback excerpt: ') . "\r\n" . $comment->comment_content . "\r\n\r\n";
 			break;
-		default: //Comments
+		default: // Comments
 			$notify_message  = sprintf( __('A new comment on the post "%s" is waiting for your approval'), $post->post_title ) . "\r\n";
 			$notify_message .= get_permalink($comment->comment_post_ID) . "\r\n\r\n";
 			$notify_message .= sprintf( __('Author : %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
@@ -1155,12 +1234,14 @@ function wp_notify_moderator($comment_id) {
 	$subject = sprintf( __('[%1$s] Please moderate: "%2$s"'), $blogname, $post->post_title );
 	$message_headers = '';
 
-	$notify_message = apply_filters('comment_moderation_text', $notify_message, $comment_id);
-	$subject = apply_filters('comment_moderation_subject', $subject, $comment_id);
-	$message_headers = apply_filters('comment_moderation_headers', $message_headers);
+	$emails          = apply_filters( 'comment_moderation_recipients', $emails,          $comment_id );
+	$notify_message  = apply_filters( 'comment_moderation_text',       $notify_message,  $comment_id );
+	$subject         = apply_filters( 'comment_moderation_subject',    $subject,         $comment_id );
+	$message_headers = apply_filters( 'comment_moderation_headers',    $message_headers, $comment_id );
 
-	foreach ( $email_to as $email )
-		@wp_mail($email, $subject, $notify_message, $message_headers);
+	foreach ( $emails as $email ) {
+		@wp_mail( $email, $subject, $notify_message, $message_headers );
+	}
 
 	return true;
 }
@@ -1177,7 +1258,7 @@ if ( !function_exists('wp_password_change_notification') ) :
 function wp_password_change_notification(&$user) {
 	// send a copy of password change notification to the admin
 	// but check to see if it's the admin whose password we're changing, and skip this
-	if ( $user->user_email != get_option('admin_email') ) {
+	if ( 0 !== strcasecmp( $user->user_email, get_option( 'admin_email' ) ) ) {
 		$message = sprintf(__('Password Lost and Changed for user: %s'), $user->user_login) . "\r\n";
 		// The blogname option is escaped with esc_html on the way into the database in sanitize_option
 		// we want to reverse this for the plain text arena of emails.
@@ -1420,7 +1501,7 @@ function wp_hash_password($password) {
 		$wp_hasher = new PasswordHash(8, true);
 	}
 
-	return $wp_hasher->HashPassword($password);
+	return $wp_hasher->HashPassword( trim( $password ) );
 }
 endif;
 
@@ -1567,7 +1648,7 @@ if ( !function_exists('wp_set_password') ) :
 function wp_set_password( $password, $user_id ) {
 	global $wpdb;
 
-	$hash = wp_hash_password( trim( $password ) );
+	$hash = wp_hash_password( $password );
 	$wpdb->update($wpdb->users, array('user_pass' => $hash, 'user_activation_key' => ''), array('ID' => $user_id) );
 
 	wp_cache_delete($user_id, 'users');
@@ -1609,14 +1690,15 @@ function get_avatar( $id_or_email, $size = '96', $default = '', $alt = false ) {
 		if ( ! empty( $id_or_email->comment_type ) && ! in_array( $id_or_email->comment_type, (array) $allowed_comment_types ) )
 			return false;
 
-		if ( !empty($id_or_email->user_id) ) {
+		if ( ! empty( $id_or_email->user_id ) ) {
 			$id = (int) $id_or_email->user_id;
 			$user = get_userdata($id);
-			if ( $user)
+			if ( $user )
 				$email = $user->user_email;
-		} elseif ( !empty($id_or_email->comment_author_email) ) {
-			$email = $id_or_email->comment_author_email;
 		}
+
+		if ( ! $email && ! empty( $id_or_email->comment_author_email ) )
+			$email = $id_or_email->comment_author_email;
 	} else {
 		$email = $id_or_email;
 	}
@@ -1664,6 +1746,7 @@ function get_avatar( $id_or_email, $size = '96', $default = '', $alt = false ) {
 		if ( !empty( $rating ) )
 			$out .= "&amp;r={$rating}";
 
+		$out = str_replace( '&#038;', '&amp;', esc_url( $out ) );
 		$avatar = "<img alt='{$safe_alt}' src='{$out}' class='avatar avatar-{$size} photo' height='{$size}' width='{$size}' />";
 	} else {
 		$avatar = "<img alt='{$safe_alt}' src='{$default}' class='avatar avatar-{$size} photo avatar-default' height='{$size}' width='{$size}' />";

@@ -7,7 +7,7 @@
  */
 
 /** WordPress Administration Bootstrap */
-require_once( './admin.php' );
+require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! current_user_can( 'list_users' ) )
 	wp_die( __( 'Cheatin&#8217; uh?' ) );
@@ -211,14 +211,13 @@ case 'delete':
 
 	add_action( 'admin_head', 'delete_users_add_js' );
 
-	include ('admin-header.php');
+	include( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
 <form action="" method="post" name="updateusers" id="updateusers">
 <?php wp_nonce_field('delete-users') ?>
 <?php echo $referer; ?>
 
 <div class="wrap">
-<?php screen_icon(); ?>
 <h2><?php _e('Delete Users'); ?></h2>
 <?php if ( isset( $_REQUEST['error'] ) ) : ?>
 <div class="error">
@@ -316,14 +315,13 @@ case 'remove':
 	else
 		$userids = $_REQUEST['users'];
 
-	include ('admin-header.php');
+	include( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
 <form action="" method="post" name="updateusers" id="updateusers">
 <?php wp_nonce_field('remove-users') ?>
 <?php echo $referer; ?>
 
 <div class="wrap">
-<?php screen_icon(); ?>
 <h2><?php _e('Remove Users from Site'); ?></h2>
 <p><?php _e('You have specified these users for removal:'); ?></p>
 <ul>
@@ -368,7 +366,7 @@ default:
 		exit;
 	}
 
-	include('./admin-header.php');
+	include( ABSPATH . 'wp-admin/admin-header.php' );
 
 	$messages = array();
 	if ( isset($_GET['update']) ) :
@@ -425,7 +423,6 @@ if ( ! empty($messages) ) {
 } ?>
 
 <div class="wrap">
-<?php screen_icon(); ?>
 <h2>
 <?php
 echo esc_html( $title );
@@ -455,4 +452,4 @@ break;
 
 } // end of the $doaction switch
 
-include('./admin-footer.php');
+include( ABSPATH . 'wp-admin/admin-footer.php' );

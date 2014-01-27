@@ -17,20 +17,19 @@ if ( empty($tag_ID) ) { ?>
 }
 
 // Back compat hooks
-if ( 'category' == $taxonomy )
-	do_action('edit_category_form_pre', $tag );
-elseif ( 'link_category' == $taxonomy )
-	do_action('edit_link_category_form_pre', $tag );
-else
-	do_action('edit_tag_form_pre', $tag);
-
-do_action($taxonomy . '_pre_edit_form', $tag, $taxonomy); ?>
+if ( 'category' == $taxonomy ) {
+	do_action( 'edit_category_form_pre', $tag );
+} elseif ( 'link_category' == $taxonomy ) {
+	do_action( 'edit_link_category_form_pre', $tag );
+} else {
+	do_action( 'edit_tag_form_pre', $tag );
+}
+do_action( "{$taxonomy}_pre_edit_form", $tag, $taxonomy ); ?>
 
 <div class="wrap">
-<?php screen_icon(); ?>
 <h2><?php echo $tax->labels->edit_item; ?></h2>
 <div id="ajax-response"></div>
-<form name="edittag" id="edittag" method="post" action="edit-tags.php" class="validate">
+<form name="edittag" id="edittag" method="post" action="edit-tags.php" class="validate"<?php do_action( $taxonomy . '_term_edit_form_tag' ); ?>>
 <input type="hidden" name="action" value="editedtag" />
 <input type="hidden" name="tag_ID" value="<?php echo esc_attr($tag->term_id) ?>" />
 <input type="hidden" name="taxonomy" value="<?php echo esc_attr($taxonomy) ?>" />

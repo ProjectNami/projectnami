@@ -13,7 +13,7 @@
 define( 'WP_INSTALLING_NETWORK', true );
 
 /** WordPress Administration Bootstrap */
-require_once( './admin.php' );
+require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! is_super_admin() )
 	wp_die( __( 'You do not have sufficient permissions to manage options for this site.' ) );
@@ -58,20 +58,26 @@ function allow_subdomain_install() {
 	return true;
 }
 /**
- * Allow subdirectory install
+ * Allow subdirectory install.
  *
  * @since 3.0.0
  * @return bool Whether subdirectory install is allowed
  */
 function allow_subdirectory_install() {
 	global $wpdb;
+        /**
+         * Filter whether to enable the subdirectory install feature in Multisite.
+         *
+         * @since 3.0.0
+         *
+         * @param bool true Whether to enable the subdirectory install feature in Multisite. Default is false.
+         */
 	if ( apply_filters( 'allow_subdirectory_install', false ) )
 		return true;
 
 	if ( defined( 'ALLOW_SUBDIRECTORY_INSTALL' ) && ALLOW_SUBDIRECTORY_INSTALL )
 		return true;
 
-	//$post = $wpdb->get_row( "SELECT ID FROM $wpdb->posts WHERE post_date < DATE_SUB(NOW(), INTERVAL 1 MONTH) AND post_status = 'publish'" );
 	$post = $wpdb->get_row( "SELECT ID FROM $wpdb->posts WHERE post_date < DATEADD(MONTH, -1, GETDATE()) AND post_status = 'publish'" );
 	if ( empty( $post ) )
 		return true;
@@ -130,7 +136,6 @@ get_current_screen()->set_help_sidebar(
 include( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
 <div class="wrap">
-<?php screen_icon('tools'); ?>
 <h2><?php echo esc_html( $title ); ?></h2>
 
 <?php
@@ -286,14 +291,18 @@ function network_step1( $errors = false ) {
 				<th scope='row'><?php esc_html_e( 'Network Title' ); ?></th>
 				<td>
 					<input name='sitename' type='text' size='45' value='<?php echo esc_attr( $site_name ); ?>' />
-					<br /><?php _e( 'What would you like to call your network?' ); ?>
+					<p class="description">
+						<?php _e( 'What would you like to call your network?' ); ?>
+					</p>
 				</td>
 			</tr>
 			<tr>
-				<th scope='row'><?php esc_html_e( 'Admin E-mail Address' ); ?></th>
+				<th scope='row'><?php esc_html_e( 'Network Admin Email' ); ?></th>
 				<td>
 					<input name='email' type='text' size='45' value='<?php echo esc_attr( $admin_email ); ?>' />
-					<br /><?php _e( 'Your email address.' ); ?>
+					<p class="description">
+						<?php _e( 'Your email address.' ); ?>
+					</p>
 				</td>
 			</tr>
 		</table>

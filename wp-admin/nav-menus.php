@@ -10,7 +10,7 @@
  */
 
 /** Load WordPress Administration Bootstrap */
-require_once( './admin.php' );
+require_once( dirname( __FILE__ ) . '/admin.php' );
 
 // Load all the nav menu interface functions
 require_once( ABSPATH . 'wp-admin/includes/nav-menu.php' );
@@ -472,11 +472,11 @@ wp_nav_menu_setup();
 wp_initial_nav_menu_meta_boxes();
 
 if ( ! current_theme_supports( 'menus' ) && ! $num_locations )
-	$messages[] = '<div id="message" class="updated"><p>' . sprintf( __( 'Your theme does not natively support menus, but you can use them in sidebars by adding a &#8220;Custom Menus&#8221; widget on the <a href="%s">Widgets</a> screen.' ), admin_url( 'widgets.php' ) ) . '</p></div>';
+	$messages[] = '<div id="message" class="updated"><p>' . sprintf( __( 'Your theme does not natively support menus, but you can use them in sidebars by adding a &#8220;Custom Menu&#8221; widget on the <a href="%s">Widgets</a> screen.' ), admin_url( 'widgets.php' ) ) . '</p></div>';
 
 if ( ! $locations_screen ) : // Main tab
 	$overview  = '<p>' . __( 'This screen is used for managing your custom navigation menus.' ) . '</p>';
-	$overview .= '<p>' . sprintf( __( 'Menus can be displayed in locations defined by your theme, even used in sidebars by adding a &#8220;Custom Menus&#8221; widget on the <a href="%1$s">Widgets</a> screen. If your theme does not support the custom menus feature (the default themes, %2$s and %3$s, do), you can learn about adding this support by following the Documentation link to the side.' ), admin_url( 'widgets.php' ), 'Twenty Thirteen', 'Twenty Twelve' ) . '</p>';
+	$overview .= '<p>' . sprintf( __( 'Menus can be displayed in locations defined by your theme, even used in sidebars by adding a &#8220;Custom Menu&#8221; widget on the <a href="%1$s">Widgets</a> screen. If your theme does not support the custom menus feature (the default themes, %2$s and %3$s, do), you can learn about adding this support by following the Documentation link to the side.' ), admin_url( 'widgets.php' ), 'Twenty Fourteen', 'Twenty Thirteen' ) . '</p>';
 	$overview .= '<p>' . __( 'From this screen you can:' ) . '</p>';
 	$overview .= '<ul><li>' . __( 'Create, edit, and delete menus' ) . '</li>';
 	$overview .= '<li>' . __( 'Add, organize, and modify individual menu items' ) . '</li></ul>';
@@ -499,7 +499,7 @@ if ( ! $locations_screen ) : // Main tab
 	) );
 
 	$editing_menus  = '<p>' . __( 'Each custom menu may contain a mix of links to pages, categories, custom URLs or other content types. Menu links are added by selecting items from the expanding boxes in the left-hand column below.' ) . '</p>';
-	$editing_menus .= '<p>' . __( '<strong>Clicking the title of any menu item</strong> in the editor will reveal a standard group of settings. Additional settings such as link target, CSS classes, link relationships, and link descriptions can be enabled and disabled via the Screen Options tab.' ) . '</p>';
+	$editing_menus .= '<p>' . __( '<strong>Clicking the arrow to the right of any menu item</strong> in the editor will reveal a standard group of settings. Additional settings such as link target, CSS classes, link relationships, and link descriptions can be enabled and disabled via the Screen Options tab.' ) . '</p>';
 	$editing_menus .= '<ul><li>' . __( 'Add one or several items at once by <strong>selecting the checkbox next to each item and clicking Add to Menu</strong>' ) . '</li>';
 	$editing_menus .= '<li>' . __( 'To add a custom link, <strong>expand the Links section, enter a URL and link text, and click Add to Menu</strong>' ) .'</li>';
 	$editing_menus .= '<li>' . __( 'To reorganize menu items, <strong>drag and drop items with your mouse or use your keyboard</strong>. Drag or move a menu item a little to the right to make it a submenu' ) . '</li>';
@@ -530,10 +530,9 @@ get_current_screen()->set_help_sidebar(
 );
 
 // Get the admin header
-require_once( './admin-header.php' );
+require_once( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
 <div class="wrap">
-	<?php screen_icon(); ?>
 	<h2 class="nav-tab-wrapper">
 		<a href="<?php echo admin_url( 'nav-menus.php' ); ?>" class="nav-tab<?php if ( ! isset( $_GET['action'] ) || isset( $_GET['action'] ) && 'locations' != $_GET['action'] ) echo ' nav-tab-active'; ?>"><?php esc_html_e( 'Edit Menus' ); ?></a>
 		<?php if ( $num_locations && $menu_count ) : ?>
@@ -547,7 +546,7 @@ require_once( './admin-header.php' );
 	?>
 	<?php
 	if ( $locations_screen ) :
-		echo '<p>' . sprintf( _n( 'Your theme supports %s menu. Select which menu you would like to use below.', 'Your theme supports %s menus. Select a menu to use for each theme location below.', $num_locations ), number_format_i18n( $num_locations ) ) . '</p>';
+		echo '<p>' . sprintf( _n( 'Your theme supports %s menu. Select which menu you would like to use.', 'Your theme supports %s menus. Select which menu appears in each location.', $num_locations ), number_format_i18n( $num_locations ) ) . '</p>';
 	?>
 	<div id="menu-locations-wrap">
 		<form method="post" action="<?php echo esc_url( add_query_arg( array( 'action' => 'locations' ), admin_url( 'nav-menus.php' ) ) ); ?>">
@@ -602,7 +601,13 @@ require_once( './admin-header.php' );
 			<input type="hidden" name="menu" id="nav-menu-meta-object-id" value="<?php echo esc_attr( $nav_menu_selected_id ); ?>" />
 		</form>
 	</div><!-- #menu-locations-wrap -->
-	<?php do_action( 'after_menu_locations_table' ); ?>
+	<?php
+	/**
+	 * Fires after the menu locations table is displayed.
+	 *
+	 * @since 3.6.0
+	 */
+	do_action( 'after_menu_locations_table' ); ?>
 	<?php else : ?>
 	<div class="manage-menus">
  		<?php if ( $menu_count < 2 ) : ?>
@@ -625,15 +630,27 @@ require_once( './admin-header.php' );
 						if ( ! empty( $menu_locations ) && in_array( $_nav_menu->term_id, $menu_locations ) ) {
 							$locations_assigned_to_this_menu = array();
 							foreach ( array_keys( $menu_locations, $_nav_menu->term_id ) as $menu_location_key ) {
-								 $locations_assigned_to_this_menu[] = $locations[ $menu_location_key ];
+								if ( isset( $locations[ $menu_location_key ] ) ) {
+									$locations_assigned_to_this_menu[] = $locations[ $menu_location_key ];
+								}
 							}
+
+							/**
+							 * Filter the number of locations listed per menu in the drop-down select.
+							 *
+							 * @since 3.6.0
+							 *
+							 * @param int $locations Number of menu locations to list. Default 3.
+							 */
 							$assigned_locations = array_slice( $locations_assigned_to_this_menu, 0, absint( apply_filters( 'wp_nav_locations_listed_per_menu', 3 ) ) );
 
 							// Adds ellipses following the number of locations defined in $assigned_locations
-							printf( ' (%1$s%2$s)',
-								implode( ', ', $assigned_locations ),
-								count( $locations_assigned_to_this_menu ) > count( $assigned_locations ) ? ' &hellip;' : ''
-							);
+							if ( ! empty( $assigned_locations ) ) {
+								printf( ' (%1$s%2$s)',
+									implode( ', ', $assigned_locations ),
+									count( $locations_assigned_to_this_menu ) > count( $assigned_locations ) ? ' &hellip;' : ''
+								);
+							}
 						}
 						?>
 					</option>
@@ -762,4 +779,4 @@ require_once( './admin-header.php' );
 	</div><!-- /#nav-menus-frame -->
 	<?php endif; ?>
 </div><!-- /.wrap-->
-<?php include( './admin-footer.php' ); ?>
+<?php include( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

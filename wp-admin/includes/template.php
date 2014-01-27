@@ -24,16 +24,51 @@ class Walker_Category_Checklist extends Walker {
 	var $tree_type = 'category';
 	var $db_fields = array ('parent' => 'parent', 'id' => 'term_id'); //TODO: decouple this
 
+	/**
+	 * Starts the list before the elements are added.
+	 *
+	 * @see Walker:start_lvl()
+	 *
+	 * @since 2.5.1
+	 *
+	 * @param string $output Passed by reference. Used to append additional content.
+	 * @param int    $depth  Depth of category. Used for tab indentation.
+	 * @param array  $args   An array of arguments. @see wp_terms_checklist()
+	 */
 	function start_lvl( &$output, $depth = 0, $args = array() ) {
 		$indent = str_repeat("\t", $depth);
 		$output .= "$indent<ul class='children'>\n";
 	}
 
+	/**
+	 * Ends the list of after the elements are added.
+	 *
+	 * @see Walker::end_lvl()
+	 *
+	 * @since 2.5.1
+	 *
+	 * @param string $output Passed by reference. Used to append additional content.
+	 * @param int    $depth  Depth of category. Used for tab indentation.
+	 * @param array  $args   An array of arguments. @see wp_terms_checklist()
+	 */
 	function end_lvl( &$output, $depth = 0, $args = array() ) {
 		$indent = str_repeat("\t", $depth);
 		$output .= "$indent</ul>\n";
 	}
 
+	/**
+	 * Start the element output.
+	 *
+	 * @see Walker::start_el()
+	 *
+	 * @since 2.5.1
+	 *
+	 * @param string $output   Passed by reference. Used to append additional content.
+	 * @param object $category The current term object.
+	 * @param int    $depth    Depth of the term in reference to parents. Default 0.
+	 * @param array  $args     An array of arguments. @see wp_terms_checklist()
+	 * @param int    $id       ID of the current term.
+	 */
 	function start_el( &$output, $category, $depth = 0, $args = array(), $id = 0 ) {
 		extract($args);
 		if ( empty($taxonomy) )
@@ -48,6 +83,18 @@ class Walker_Category_Checklist extends Walker {
 		$output .= "\n<li id='{$taxonomy}-{$category->term_id}'$class>" . '<label class="selectit"><input value="' . $category->term_id . '" type="checkbox" name="'.$name.'[]" id="in-'.$taxonomy.'-' . $category->term_id . '"' . checked( in_array( $category->term_id, $selected_cats ), true, false ) . disabled( empty( $args['disabled'] ), false, false ) . ' /> ' . esc_html( apply_filters('the_category', $category->name )) . '</label>';
 	}
 
+	/**
+	 * Ends the element output, if needed.
+	 *
+	 * @see Walker::end_el()
+	 *
+	 * @since 2.5.1
+	 *
+	 * @param string $output   Passed by reference. Used to append additional content.
+	 * @param object $category The current term object.
+	 * @param int    $depth    Depth of the term in reference to parents. Default 0.
+	 * @param array  $args     An array of arguments. @see wp_terms_checklist()
+	 */
 	function end_el( &$output, $category, $depth = 0, $args = array() ) {
 		$output .= "</li>\n";
 	}
@@ -500,18 +547,21 @@ function _list_meta_row( $entry, &$count ) {
 }
 
 /**
- * {@internal Missing Short Description}}
+ * Prints the form in the Custom Fields meta box.
  *
  * @since 1.2.0
+ *
+ * @param WP_Post $post Optional. The post being edited.
  */
-function meta_form() {
+function meta_form( $post = null ) {
 	global $wpdb;
+	$post = get_post( $post );
 	$limit = (int) apply_filters( 'postmeta_form_limit', 30 );
 	$keys = $wpdb->get_col( "
 		SELECT TOP $limit meta_key
 		FROM $wpdb->postmeta
 		GROUP BY meta_key
-		HAVING meta_key NOT LIKE '\_%'
+		HAVING meta_key NOT LIKE '_%'
 		ORDER BY meta_key" );
 	if ( $keys )
 		natcasesort($keys);
@@ -534,7 +584,7 @@ function meta_form() {
 <?php
 
 	foreach ( $keys as $key ) {
-		if ( is_protected_meta( $key, 'post' ) )
+		if ( is_protected_meta( $key, 'post' ) || ! current_user_can( 'add_post_meta', $post->ID, $key ) )
 			continue;
 		echo "\n<option value='" . esc_attr($key) . "'>" . esc_html($key) . "</option>";
 	}
@@ -635,7 +685,7 @@ function touch_time( $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
 
 <p>
 <a href="#edit_timestamp" class="save-timestamp hide-if-no-js button"><?php _e('OK'); ?></a>
-<a href="#edit_timestamp" class="cancel-timestamp hide-if-no-js"><?php _e('Cancel'); ?></a>
+<a href="#edit_timestamp" class="cancel-timestamp hide-if-no-js button-cancel"><?php _e('Cancel'); ?></a>
 </p>
 <?php
 }
@@ -695,57 +745,6 @@ function parent_dropdown( $default = 0, $parent = 0, $level = 0 ) {
 }
 
 /**
- * {@internal Missing Short Description}}
- *
- * @since 2.0.0
- *
- * @param unknown_type $id
- * @return unknown
- */
-function the_attachment_links( $id = false ) {
-	$id = (int) $id;
-	$post = get_post( $id );
-
-	if ( $post->post_type != 'attachment' )
-		return false;
-
-	$icon = wp_get_attachment_image( $post->ID, 'thumbnail', true );
-	$attachment_data = wp_get_attachment_metadata( $id );
-	$thumb = isset( $attachment_data['thumb'] );
-?>
-<form id="the-attachment-links">
-<table>
-	<col />
-	<col class="widefat" />
-	<tr>
-		<th scope="row"><?php _e( 'URL' ) ?></th>
-		<td><textarea rows="1" cols="40" type="text" class="attachmentlinks" readonly="readonly"><?php echo esc_textarea( wp_get_attachment_url() ); ?></textarea></td>
-	</tr>
-<?php if ( $icon ) : ?>
-	<tr>
-		<th scope="row"><?php $thumb ? _e( 'Thumbnail linked to file' ) : _e( 'Image linked to file' ); ?></th>
-		<td><textarea rows="1" cols="40" type="text" class="attachmentlinks" readonly="readonly"><a href="<?php echo wp_get_attachment_url(); ?>"><?php echo $icon ?></a></textarea></td>
-	</tr>
-	<tr>
-		<th scope="row"><?php $thumb ? _e( 'Thumbnail linked to page' ) : _e( 'Image linked to page' ); ?></th>
-		<td><textarea rows="1" cols="40" type="text" class="attachmentlinks" readonly="readonly"><a href="<?php echo get_attachment_link( $post->ID ) ?>" rel="attachment wp-att-<?php echo $post->ID; ?>"><?php echo $icon ?></a></textarea></td>
-	</tr>
-<?php else : ?>
-	<tr>
-		<th scope="row"><?php _e( 'Link to file' ) ?></th>
-		<td><textarea rows="1" cols="40" type="text" class="attachmentlinks" readonly="readonly"><a href="<?php echo wp_get_attachment_url(); ?>" class="attachmentlink"><?php echo basename( wp_get_attachment_url() ); ?></a></textarea></td>
-	</tr>
-	<tr>
-		<th scope="row"><?php _e( 'Link to page' ) ?></th>
-		<td><textarea rows="1" cols="40" type="text" class="attachmentlinks" readonly="readonly"><a href="<?php echo get_attachment_link( $post->ID ) ?>" rel="attachment wp-att-<?php echo $post->ID ?>"><?php the_title(); ?></a></textarea></td>
-	</tr>
-<?php endif; ?>
-</table>
-</form>
-<?php
-}
-
-/**
  * Print out <option> html elements for role selectors
  *
  * @since 2.1.0
@@ -756,7 +755,7 @@ function wp_dropdown_roles( $selected = false ) {
 	$p = '';
 	$r = '';
 
-	$editable_roles = get_editable_roles();
+	$editable_roles = array_reverse( get_editable_roles() );
 
 	foreach ( $editable_roles as $role => $details ) {
 		$name = translate_user_role($details['name'] );
@@ -1071,13 +1070,6 @@ function add_settings_section($id, $title, $callback, $page) {
 		$page = 'reading';
 	}
 
-	if ( !isset($wp_settings_sections) )
-		$wp_settings_sections = array();
-	if ( !isset($wp_settings_sections[$page]) )
-		$wp_settings_sections[$page] = array();
-	if ( !isset($wp_settings_sections[$page][$id]) )
-		$wp_settings_sections[$page][$id] = array();
-
 	$wp_settings_sections[$page][$id] = array('id' => $id, 'title' => $title, 'callback' => $callback);
 }
 
@@ -1116,13 +1108,6 @@ function add_settings_field($id, $title, $callback, $page, $section = 'default',
 		$page = 'reading';
 	}
 
-	if ( !isset($wp_settings_fields) )
-		$wp_settings_fields = array();
-	if ( !isset($wp_settings_fields[$page]) )
-		$wp_settings_fields[$page] = array();
-	if ( !isset($wp_settings_fields[$page][$section]) )
-		$wp_settings_fields[$page][$section] = array();
-
 	$wp_settings_fields[$page][$section][$id] = array('id' => $id, 'title' => $title, 'callback' => $callback, 'args' => $args);
 }
 
@@ -1142,7 +1127,7 @@ function add_settings_field($id, $title, $callback, $page, $section = 'default',
 function do_settings_sections( $page ) {
 	global $wp_settings_sections, $wp_settings_fields;
 
-	if ( ! isset( $wp_settings_sections ) || !isset( $wp_settings_sections[$page] ) )
+	if ( ! isset( $wp_settings_sections[$page] ) )
 		return;
 
 	foreach ( (array) $wp_settings_sections[$page] as $section ) {
@@ -1177,7 +1162,7 @@ function do_settings_sections( $page ) {
 function do_settings_fields($page, $section) {
 	global $wp_settings_fields;
 
-	if ( !isset($wp_settings_fields) || !isset($wp_settings_fields[$page]) || !isset($wp_settings_fields[$page][$section]) )
+	if ( ! isset( $wp_settings_fields[$page][$section] ) )
 		return;
 
 	foreach ( (array) $wp_settings_fields[$page][$section] as $field ) {
@@ -1218,9 +1203,6 @@ function do_settings_fields($page, $section) {
 function add_settings_error( $setting, $code, $message, $type = 'error' ) {
 	global $wp_settings_errors;
 
-	if ( !isset($wp_settings_errors) )
-		$wp_settings_errors = array();
-
 	$new_error = array(
 		'setting' => $setting,
 		'code' => $code,
@@ -1255,7 +1237,7 @@ function add_settings_error( $setting, $code, $message, $type = 'error' ) {
 function get_settings_errors( $setting = '', $sanitize = false ) {
 	global $wp_settings_errors;
 
-	// If $sanitize is true, manually re-run the sanitizisation for this option
+	// If $sanitize is true, manually re-run the sanitization for this option
 	// This allows the $sanitize_callback from register_setting() to run, adding
 	// any settings errors you want to show by default.
 	if ( $sanitize )
@@ -1452,6 +1434,10 @@ do_action("admin_head-$hook_suffix");
 do_action('admin_head');
 
 $admin_body_class .= ' locale-' . sanitize_html_class( strtolower( str_replace( '_', '-', get_locale() ) ) );
+
+if ( is_rtl() )
+	$admin_body_class .= ' rtl';
+
 ?>
 </head>
 <body<?php if ( isset($GLOBALS['body_id']) ) echo ' id="' . $GLOBALS['body_id'] . '"'; ?> class="wp-admin wp-core-ui no-js iframe <?php echo apply_filters( 'admin_body_class', '' ) . ' ' . $admin_body_class; ?>">
@@ -1698,7 +1684,13 @@ function get_submit_button( $text = null, $type = 'primary large', $name = 'subm
 }
 
 function _wp_admin_html_begin() {
+	global $is_IE;
+
 	$admin_html_class = ( is_admin_bar_showing() ) ? 'wp-toolbar' : '';
+
+	if ( $is_IE )
+		@header('X-UA-Compatible: IE=edge');
+
 ?>
 <!DOCTYPE html>
 <!--[if IE 8]>
@@ -1904,7 +1896,7 @@ final class WP_Internal_Pointers {
 		$content  = '<h3>' . __( 'Compare Revisions' ) . '</h3>';
 		$content .= '<p>' . __( 'View, compare, and restore other versions of this content on the improved revisions screen.' ) . '</p>';
 
-		self::print_js( 'wp360_revisions', '.misc-pub-section.num-revisions', array(
+		self::print_js( 'wp360_revisions', '.misc-pub-section.misc-pub-revisions', array(
 			'content' => $content,
 			'position' => array( 'edge' => is_rtl() ? 'left' : 'right', 'align' => 'center', 'my' => is_rtl() ? 'left' : 'right-14px' ),
 		) );
@@ -1972,4 +1964,60 @@ function _local_storage_notice() {
 	</p>
 	</div>
 	<?php
+}
+
+/**
+ * Output a HTML element with a star rating for a given rating.
+ *
+ * Outputs a HTML element with the star rating exposed on a 0..5 scale in
+ * half star increments (ie. 1, 1.5, 2 stars). Optionally, if specified, the
+ * number of ratings may also be displayed by passing the $number parameter.
+ *
+ * @since 3.8.0
+ * @param array $args {
+ *     Optional. Array of star ratings arguments.
+ *
+ *     @type int    $rating The rating to display, expressed in either a 0.5 rating increment,
+ *                          or percentage. Default 0.
+ *     @type string $type   Format that the $rating is in. Valid values are 'rating' (default),
+ *                          or, 'percent'. Default 'rating'.
+ *     @type int    $number The number of ratings that makes up this rating. Default 0.
+ * }
+ */
+function wp_star_rating( $args = array() ) {
+	$defaults = array(
+		'rating' => 0,
+		'type' => 'rating',
+		'number' => 0,
+	);
+	$r = wp_parse_args( $args, $defaults );
+	extract( $r, EXTR_SKIP );
+
+	// Non-english decimal places when the $rating is coming from a string
+	$rating = str_replace( ',', '.', $rating );
+
+	// Convert Percentage to star rating, 0..5 in .5 increments
+	if ( 'percent' == $type ) {
+		$rating = round( $rating / 10, 0 ) / 2;
+	}
+
+	// Calculate the number of each type of star needed
+	$full_stars = floor( $rating );
+	$half_stars = ceil( $rating - $full_stars );
+	$empty_stars = 5 - $full_stars - $half_stars;
+
+	if ( $number ) {
+		/* translators: 1: The rating, 2: The number of ratings */
+		$title = _n( '%1$s rating based on %2$s rating', '%1$s rating based on %2$s ratings', $number );
+		$title = sprintf( $title, number_format_i18n( $rating, 1 ), number_format_i18n( $number ) );
+	} else {
+		/* translators: 1: The rating */
+		$title = sprintf( __( '%s rating' ), number_format_i18n( $rating, 1 ) );
+	}
+
+	echo '<div class="star-rating" title="' . esc_attr( $title ) . '">';
+	echo str_repeat( '<div class="star star-full"></div>', $full_stars );
+	echo str_repeat( '<div class="star star-half"></div>', $half_stars );
+	echo str_repeat( '<div class="star star-empty"></div>', $empty_stars);
+	echo '</div>';
 }

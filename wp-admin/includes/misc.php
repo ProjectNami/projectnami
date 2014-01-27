@@ -7,15 +7,48 @@
  */
 
 /**
- * {@internal Missing Short Description}}
+ * Returns whether the server is running Apache with the mod_rewrite module loaded.
  *
  * @since 2.0.0
  *
- * @return unknown
+ * @return bool
  */
 function got_mod_rewrite() {
 	$got_rewrite = apache_mod_loaded('mod_rewrite', true);
+
+	/**
+	 * Filter whether Apache and mod_rewrite are present.
+	 *
+	 * This filter was previously used to force URL rewriting for other servers,
+	 * like nginx. Use the got_url_rewrite filter in got_url_rewrite() instead.
+	 *
+	 * @see got_url_rewrite()
+	 *
+	 * @since 2.5.0
+	 * @param bool $got_rewrite Whether Apache and mod_rewrite are present.
+	 */
 	return apply_filters('got_rewrite', $got_rewrite);
+}
+
+/**
+ * Returns whether the server supports URL rewriting.
+ *
+ * Detects Apache's mod_rewrite, IIS 7.0+ permalink support, and nginx.
+ *
+ * @since 3.7.0
+ *
+ * @return bool Whether the server supports URL rewriting.
+ */
+function got_url_rewrite() {
+	$got_url_rewrite = ( got_mod_rewrite() || $GLOBALS['is_nginx'] || iis7_supports_permalinks() );
+
+	/**
+	 * Filter whether URL rewriting is available.
+	 *
+	 * @since 3.7.0
+	 * @param bool $got_url_rewrite Whether URL rewriting is available.
+	 */
+	return apply_filters( 'got_url_rewrite', $got_url_rewrite );
 }
 
 /**
@@ -214,7 +247,7 @@ add_action( 'update_option_page_on_front', 'update_home_siteurl', 10, 2 );
 /**
  * Shorten an URL, to be used as link text
  *
- * @since 1.2.1
+ * @since 1.2.0
  *
  * @param string $url
  * @return string
@@ -263,7 +296,7 @@ function wp_reset_vars( $vars ) {
  */
 function show_message($message) {
 	if ( is_wp_error($message) ){
-		if ( $message->get_error_data() )
+		if ( $message->get_error_data() && is_string( $message->get_error_data() ) )
 			$message = $message->get_error_message() . ': ' . $message->get_error_data();
 		else
 			$message = $message->get_error_message();
@@ -529,28 +562,79 @@ function saveDomDocument($doc, $filename) {
  * @since 3.0.0
  */
 function admin_color_scheme_picker() {
-	global $_wp_admin_css_colors, $user_id; ?>
-<fieldset><legend class="screen-reader-text"><span><?php _e('Admin Color Scheme')?></span></legend>
-<?php
-$current_color = get_user_option('admin_color', $user_id);
-if ( empty($current_color) )
-	$current_color = 'fresh';
-foreach ( $_wp_admin_css_colors as $color => $color_info ): ?>
-<div class="color-option"><input name="admin_color" id="admin_color_<?php echo esc_attr( $color ); ?>" type="radio" value="<?php echo esc_attr( $color ); ?>" class="tog" <?php checked($color, $current_color); ?> />
-	<table class="color-palette">
-	<tr>
-	<?php foreach ( $color_info->colors as $html_color ): ?>
-	<td style="background-color: <?php echo esc_attr( $html_color ); ?>" title="<?php echo esc_attr( $color ); ?>">&nbsp;</td>
-	<?php endforeach; ?>
-	</tr>
-	</table>
+	global $_wp_admin_css_colors;
 
-	<label for="admin_color_<?php echo esc_attr( $color ); ?>"><?php echo esc_html( $color_info->name ); ?></label>
-</div>
-	<?php endforeach; ?>
-</fieldset>
-<?php
+	ksort( $_wp_admin_css_colors );
+
+	if ( isset( $_wp_admin_css_colors['fresh'] ) ) {
+		// Set Default ('fresh') and Light should go first.
+		$_wp_admin_css_colors = array_filter( array_merge( array( 'fresh' => '', 'light' => '' ), $_wp_admin_css_colors ) );
+	}
+
+	$current_color = get_user_option( 'admin_color' );
+
+	if ( empty( $current_color ) || ! isset( $_wp_admin_css_colors[ $current_color ] ) ) {
+		$current_color = 'fresh';
+	}
+
+	?>
+	<fieldset id="color-picker" class="scheme-list">
+		<legend class="screen-reader-text"><span><?php _e( 'Admin Color Scheme' ); ?></span></legend>
+		<?php
+		wp_nonce_field( 'save-color-scheme', 'color-nonce', false );
+		foreach ( $_wp_admin_css_colors as $color => $color_info ) :
+
+			?>
+			<div class="color-option <?php echo ( $color == $current_color ) ? 'selected' : ''; ?>">
+				<input name="admin_color" id="admin_color_<?php echo esc_attr( $color ); ?>" type="radio" value="<?php echo esc_attr( $color ); ?>" class="tog" <?php checked( $color, $current_color ); ?> />
+				<input type="hidden" class="css_url" value="<?php echo esc_url( $color_info->url ); ?>" />
+				<input type="hidden" class="icon_colors" value="<?php echo esc_attr( json_encode( array( 'icons' => $color_info->icon_colors ) ) ); ?>" />
+				<label for="admin_color_<?php echo esc_attr( $color ); ?>"><?php echo esc_html( $color_info->name ); ?></label>
+				<table class="color-palette">
+					<tr>
+					<?php
+
+					foreach ( $color_info->colors as $html_color ) {
+						?>
+						<td style="background-color: <?php echo esc_attr( $html_color ); ?>">&nbsp;</td>
+						<?php
+					}
+
+					?>
+					</tr>
+				</table>
+			</div>
+			<?php
+
+		endforeach;
+
+	?>
+	</fieldset>
+	<?php
 }
+
+function wp_color_scheme_settings() {
+	global $_wp_admin_css_colors;
+
+	$color_scheme = get_user_option( 'admin_color' );
+
+	// It's possible to have a color scheme set that is no longer registered.
+	if ( empty( $_wp_admin_css_colors[ $color_scheme ] ) ) {
+		$color_scheme = 'fresh';
+	}
+
+	if ( ! empty( $_wp_admin_css_colors[ $color_scheme ]->icon_colors ) ) {
+		$icon_colors = $_wp_admin_css_colors[ $color_scheme ]->icon_colors;
+	} elseif ( ! empty( $_wp_admin_css_colors['fresh']->icon_colors ) ) {
+		$icon_colors = $_wp_admin_css_colors['fresh']->icon_colors;
+	} else {
+		// Fall back to the default set of icon colors if the default scheme is missing.
+		$icon_colors = array( 'base' => '#999', 'focus' => '#2ea2cc', 'current' => '#fff' );
+	}
+
+	echo '<script type="text/javascript">var _wpColorScheme = ' . json_encode( array( 'icons' => $icon_colors ) ) . ";</script>\n";
+}
+add_action( 'admin_head', 'wp_color_scheme_settings' );
 
 function _ipad_meta() {
 	if ( wp_is_mobile() ) {
@@ -665,3 +749,22 @@ function wp_refresh_post_nonces( $response, $data, $screen_id ) {
 	return $response;
 }
 add_filter( 'heartbeat_received', 'wp_refresh_post_nonces', 10, 3 );
+
+/**
+ * Disable suspension of Heartbeat on the Add/Edit Post screens.
+ *
+ * @since 3.8.0
+ *
+ * @param array $settings An array of Heartbeat settings.
+ * @return array Filtered Heartbeat settings.
+ */
+function wp_heartbeat_set_suspension( $settings ) {
+	global $pagenow;
+
+	if ( 'post.php' === $pagenow || 'post-new.php' === $pagenow ) {
+		$settings['suspension'] = 'disable';
+	}
+
+	return $settings;
+}
+add_filter( 'heartbeat_settings', 'wp_heartbeat_set_suspension' );

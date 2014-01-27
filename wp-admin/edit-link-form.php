@@ -22,7 +22,7 @@ if ( ! empty($link_id) ) {
 	$nonce_action = 'add-bookmark';
 }
 
-require_once('./includes/meta-boxes.php');
+require_once( ABSPATH . 'wp-admin/includes/meta-boxes.php' );
 
 add_meta_box('linksubmitdiv', __('Save'), 'link_submit_meta_box', null, 'side', 'core');
 add_meta_box('linkcategorydiv', __('Categories'), 'link_categories_meta_box', null, 'normal', 'core');
@@ -30,12 +30,24 @@ add_meta_box('linktargetdiv', __('Target'), 'link_target_meta_box', null, 'norma
 add_meta_box('linkxfndiv', __('Link Relationship (XFN)'), 'link_xfn_meta_box', null, 'normal', 'core');
 add_meta_box('linkadvanceddiv', __('Advanced'), 'link_advanced_meta_box', null, 'normal', 'core');
 
-do_action('add_meta_boxes', 'link', $link);
-do_action('add_meta_boxes_link', $link);
+/** This action is documented in wp-admin/edit-form-advanced.php */
+do_action( 'add_meta_boxes', 'link', $link );
 
-do_action('do_meta_boxes', 'link', 'normal', $link);
-do_action('do_meta_boxes', 'link', 'advanced', $link);
-do_action('do_meta_boxes', 'link', 'side', $link);
+/**
+ * Fires when link-specific meta boxes are added.
+ *
+ * @since 3.0.0
+ *
+ * @param object $link Link object.
+ */
+do_action( 'add_meta_boxes_link', $link );
+
+/** This action is documented in wp-admin/edit-form-advanced.php */
+do_action( 'do_meta_boxes', 'link', 'normal', $link );
+/** This action is documented in wp-admin/edit-form-advanced.php */
+do_action( 'do_meta_boxes', 'link', 'advanced', $link );
+/** This action is documented in wp-admin/edit-form-advanced.php */
+do_action( 'do_meta_boxes', 'link', 'side', $link );
 
 add_screen_option('layout_columns', array('max' => 2, 'default' => 2) );
 
@@ -54,11 +66,10 @@ get_current_screen()->set_help_sidebar(
 	'<p>' . __( '<a href="http://wordpress.org/support/" target="_blank">Support Forums</a>' ) . '</p>'
 );
 
-require_once ('admin-header.php');
+require_once( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
 
 <div class="wrap">
-<?php screen_icon(); ?>
 <h2><?php echo esc_html( $title ); ?>  <a href="link-add.php" class="add-new-h2"><?php echo esc_html_x('Add New', 'link'); ?></a></h2>
 
 <?php if ( isset( $_GET['added'] ) ) : ?>
@@ -82,24 +93,24 @@ wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false ); ?>
 <div id="namediv" class="stuffbox">
 <h3><label for="link_name"><?php _ex('Name', 'link name') ?></label></h3>
 <div class="inside">
-	<input type="text" name="link_name" size="30" value="<?php echo esc_attr($link->link_name); ?>" id="link_name" />
-    <p><?php _e('Example: Nifty blogging software'); ?></p>
+	<input type="text" name="link_name" size="30" maxlength="255" value="<?php echo esc_attr($link->link_name); ?>" id="link_name" />
+	<p><?php _e('Example: Nifty blogging software'); ?></p>
 </div>
 </div>
 
 <div id="addressdiv" class="stuffbox">
 <h3><label for="link_url"><?php _e('Web Address') ?></label></h3>
 <div class="inside">
-	<input type="text" name="link_url" size="30" class="code" value="<?php echo esc_attr($link->link_url); ?>" id="link_url" />
-    <p><?php _e('Example: <code>http://wordpress.org/</code> &#8212; don&#8217;t forget the <code>http://</code>'); ?></p>
+	<input type="text" name="link_url" size="30" maxlength="255" class="code" value="<?php echo esc_attr($link->link_url); ?>" id="link_url" />
+	<p><?php _e('Example: <code>http://wordpress.org/</code> &#8212; don&#8217;t forget the <code>http://</code>'); ?></p>
 </div>
 </div>
 
 <div id="descriptiondiv" class="stuffbox">
 <h3><label for="link_description"><?php _e('Description') ?></label></h3>
 <div class="inside">
-	<input type="text" name="link_description" size="30" value="<?php echo isset($link->link_description) ? esc_attr($link->link_description) : ''; ?>" id="link_description" />
-    <p><?php _e('This will be shown when someone hovers over the link in the blogroll, or optionally below the link.'); ?></p>
+	<input type="text" name="link_description" size="30" maxlength="255" value="<?php echo isset($link->link_description) ? esc_attr($link->link_description) : ''; ?>" id="link_description" />
+	<p><?php _e('This will be shown when someone hovers over the link in the blogroll, or optionally below the link.'); ?></p>
 </div>
 </div>
 </div><!-- /post-body-content -->
@@ -107,7 +118,12 @@ wp_nonce_field( 'meta-box-order', 'meta-box-order-nonce', false ); ?>
 <div id="postbox-container-1" class="postbox-container">
 <?php
 
-do_action('submitlink_box');
+/**
+ * Fires before the Save meta box in the sidebar.
+ *
+ * @since 2.5.0
+ */
+do_action( 'submitlink_box' );
 $side_meta_boxes = do_meta_boxes( 'link', 'side', $link );
 
 ?>

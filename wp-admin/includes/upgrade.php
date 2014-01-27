@@ -8,7 +8,6 @@
  * @subpackage Administration
  */
 
-
 /** Include user install customize script. */
 if ( file_exists(WP_CONTENT_DIR . '/install.php') )
 	require (WP_CONTENT_DIR . '/install.php');
@@ -36,7 +35,6 @@ if ( !function_exists('wp_install') ) :
  * @return array Array keys 'url', 'user_id', 'password', 'password_message'.
  */
 function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '' ) {
-
 	if ( !empty( $deprecated ) )
 		_deprecated_argument( __FUNCTION__, '2.6' );
 
@@ -102,8 +100,8 @@ if ( !function_exists('wp_install_defaults') ) :
  *
  * @param int $user_id User ID.
  */
-function wp_install_defaults($user_id) {
-	global $wpdb, $wp_rewrite, $current_site, $table_prefix;
+function wp_install_defaults( $user_id ) {
+	global $wpdb, $wp_rewrite, $table_prefix;
 
 	// Default category
 	$cat_name = __('Uncategorized');
@@ -138,7 +136,7 @@ function wp_install_defaults($user_id) {
 			$first_post = __( 'Welcome to <a href="SITE_URL">SITE_NAME</a>. This is your first post. Edit or delete it, then start blogging!' );
 
 		$first_post = str_replace( "SITE_URL", esc_url( network_home_url() ), $first_post );
-		$first_post = str_replace( "SITE_NAME", $current_site->site_name, $first_post );
+		$first_post = str_replace( "SITE_NAME", get_current_site()->site_name, $first_post );
 	} else {
 		$first_post = __('Welcome to WordPress. This is your first post. Edit or delete it, then start blogging!');
 	}
@@ -221,7 +219,7 @@ As a new WordPress user, you should go to <a href=\"%s\">your dashboard</a> to d
 	update_option( 'widget_archives', array ( 2 => array ( 'title' => '', 'count' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
 	update_option( 'widget_categories', array ( 2 => array ( 'title' => '', 'count' => 0, 'hierarchical' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
 	update_option( 'widget_meta', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
-	update_option( 'sidebars_widgets', array ( 'wp_inactive_widgets' => array (), 'sidebar-1' => array ( 0 => 'search-2', 1 => 'recent-posts-2', 2 => 'recent-comments-2', 3 => 'archives-2', 4 => 'categories-2', 5 => 'meta-2', ), 'sidebar-2' => array (),'array_version' => 3 ) );
+	update_option( 'sidebars_widgets', array ( 'wp_inactive_widgets' => array (), 'sidebar-1' => array ( 0 => 'search-2', 1 => 'recent-posts-2', 2 => 'recent-comments-2', 3 => 'archives-2', 4 => 'categories-2', 5 => 'meta-2', ), 'sidebar-2' => array (), 'sidebar-3' => array (), 'array_version' => 3 ) );
 
 	if ( ! is_multisite() )
 		update_user_meta( $user_id, 'show_welcome_panel', 1 );
@@ -307,7 +305,6 @@ function wp_upgrade() {
 
 	wp_cache_flush();
 	upgrade_all();
-
 	if ( is_multisite() && is_main_site() )
 		upgrade_network();
 	wp_cache_flush();
@@ -336,7 +333,7 @@ function upgrade_all() {
 	if ( $wp_db_version == $wp_current_db_version )
 		return;
 
-	if ( empty($wp_current_db_version) ) 
+	if ( empty($wp_current_db_version) )
 		$wp_current_db_version = 0;
 
 	populate_options();
@@ -349,13 +346,137 @@ function upgrade_all() {
 	update_option( 'db_upgraded', true );
 }
 
+
+/**
+ * Execute changes made in WordPress 3.7.
+ *
+ * @since 3.7.0
+ */
+function upgrade_370() {
+	global $wp_current_db_version;
+	if ( $wp_current_db_version < 25824 )
+		wp_clear_scheduled_hook( 'wp_auto_updates_maybe_update' );
+}
+
+/**
+ * Execute changes made in WordPress 3.7.2.
+ *
+ * @since 3.7.2
+ * @since 3.8.0
+ */
+function upgrade_372() {
+	global $wp_current_db_version;
+	if ( $wp_current_db_version < 26148 )
+		wp_clear_scheduled_hook( 'wp_maybe_auto_update' );
+}
+
+/**
+ * Execute changes made in WordPress 3.8.0.
+ *
+ * @since 3.8.0
+ */
+function upgrade_380() {
+	global $wp_current_db_version;
+	if ( $wp_current_db_version < 26691 ) {
+		deactivate_plugins( array( 'mp6/mp6.php' ), true );
+	}
+}
 /**
  * Execute network level changes
  *
  * @since 3.0.0
  */
 function upgrade_network() {
-	
+	global $wp_current_db_version, $wpdb;
+
+	// Always
+	if ( is_main_network() ) {
+		// Deletes all expired transients.
+		// The multi-table delete syntax is used to delete the transient record from table a,
+		// and the corresponding transient_timeout record from table b.
+
+		/* PN - Disable multi-table delete until we can work through the SQL
+        $time = time();
+		$wpdb->query("DELETE a, b FROM $wpdb->sitemeta a, $wpdb->sitemeta b WHERE
+			a.meta_key LIKE '\_site\_transient\_%' AND
+			a.meta_key NOT LIKE '\_site\_transient\_timeout\_%' AND
+			b.meta_key = CONCAT( '_site_transient_timeout_', SUBSTRING( a.meta_key, 17 ) )
+			AND b.meta_value < $time");
+        */
+	}
+
+	// 2.8
+	if ( $wp_current_db_version < 11549 ) {
+		$wpmu_sitewide_plugins = get_site_option( 'wpmu_sitewide_plugins' );
+		$active_sitewide_plugins = get_site_option( 'active_sitewide_plugins' );
+		if ( $wpmu_sitewide_plugins ) {
+			if ( !$active_sitewide_plugins )
+				$sitewide_plugins = (array) $wpmu_sitewide_plugins;
+			else
+				$sitewide_plugins = array_merge( (array) $active_sitewide_plugins, (array) $wpmu_sitewide_plugins );
+
+			update_site_option( 'active_sitewide_plugins', $sitewide_plugins );
+		}
+		delete_site_option( 'wpmu_sitewide_plugins' );
+		delete_site_option( 'deactivated_sitewide_plugins' );
+
+		$start = 0;
+		while( $rows = $wpdb->get_results( "SELECT meta_key, meta_value FROM {$wpdb->sitemeta} ORDER BY meta_id LIMIT $start, 20" ) ) {
+			foreach( $rows as $row ) {
+				$value = $row->meta_value;
+				if ( !@unserialize( $value ) )
+					$value = stripslashes( $value );
+				if ( $value !== $row->meta_value ) {
+					update_site_option( $row->meta_key, $value );
+				}
+			}
+			$start += 20;
+		}
+	}
+
+	// 3.0
+	if ( $wp_current_db_version < 13576 )
+		update_site_option( 'global_terms_enabled', '1' );
+
+	// 3.3
+	if ( $wp_current_db_version < 19390 )
+		update_site_option( 'initial_db_version', $wp_current_db_version );
+
+	if ( $wp_current_db_version < 19470 ) {
+		if ( false === get_site_option( 'active_sitewide_plugins' ) )
+			update_site_option( 'active_sitewide_plugins', array() );
+	}
+
+	// 3.4
+	if ( $wp_current_db_version < 20148 ) {
+		// 'allowedthemes' keys things by stylesheet. 'allowed_themes' keyed things by name.
+		$allowedthemes  = get_site_option( 'allowedthemes'  );
+		$allowed_themes = get_site_option( 'allowed_themes' );
+		if ( false === $allowedthemes && is_array( $allowed_themes ) && $allowed_themes ) {
+			$converted = array();
+			$themes = wp_get_themes();
+			foreach ( $themes as $stylesheet => $theme_data ) {
+				if ( isset( $allowed_themes[ $theme_data->get('Name') ] ) )
+					$converted[ $stylesheet ] = true;
+			}
+			update_site_option( 'allowedthemes', $converted );
+			delete_site_option( 'allowed_themes' );
+		}
+	}
+
+	// 3.5
+	if ( $wp_current_db_version < 21823 )
+		update_site_option( 'ms_files_rewriting', '1' );
+
+	// 3.5.2
+	if ( $wp_current_db_version < 24448 ) {
+		$illegal_names = get_site_option( 'illegal_names' );
+		if ( is_array( $illegal_names ) && count( $illegal_names ) === 1 ) {
+			$illegal_name = reset( $illegal_names );
+			$illegal_names = explode( ' ', $illegal_name );
+			update_site_option( 'illegal_names', $illegal_names );
+		}
+	}
 }
 
 // The functions we use to actually do stuff
@@ -523,8 +644,6 @@ function dbDelta( $queries = '', $execute = true ) {
 	if ( in_array( $queries, array( '', 'all', 'blog', 'global', 'ms_global' ), true ) )
 	    $queries = wp_get_db_schema( $queries );
 
-
-
 	// Separate individual queries into an array
 	if ( !is_array($queries) ) {
 		$queries = explode( 'GO', $queries );
@@ -533,8 +652,8 @@ function dbDelta( $queries = '', $execute = true ) {
 
 	foreach( $queries as $query ) {
 		$wpdb->query($query);
-	}
-
+ 	}
+ 
 	return array();
 }
 
@@ -838,6 +957,16 @@ function maybe_disable_link_manager() {
 function pre_schema_upgrade() {
 	// Unused in Project Nami.
 	// To be removed.
+
+	// Multisite schema upgrades.
+	if ( $wp_current_db_version < 25448 && is_multisite() && ! defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) && is_main_network() ) {
+
+		// Upgrade verions prior to 3.7
+		if ( $wp_current_db_version < 25179 ) {
+			$wpdb->query( "ALTER TABLE $wpdb->signups ADD signup_id INT NOT NULL IDENTITY(1,1)" );
+		}
+
+	}
 }
 
 /**

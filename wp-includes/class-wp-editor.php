@@ -127,7 +127,6 @@ final class _WP_Editors {
 
 		if ( !empty($buttons) || $set['media_buttons'] ) {
 			echo '<div id="wp-' . $editor_id . '-editor-tools" class="wp-editor-tools hide-if-no-js">';
-			echo $buttons;
 
 			if ( $set['media_buttons'] ) {
 				self::$has_medialib = true;
@@ -139,6 +138,8 @@ final class _WP_Editors {
 				do_action('media_buttons', $editor_id);
 				echo "</div>\n";
 			}
+
+			echo '<div class="wp-editor-tabs">' . $buttons . "</div>\n";
 			echo "</div>\n";
 		}
 
@@ -786,8 +787,6 @@ final class _WP_Editors {
 			'update_post_term_cache' => false,
 			'update_post_meta_cache' => false,
 			'post_status' => 'publish',
-			'order' => 'DESC',
-			'orderby' => 'post_date',
 			'posts_per_page' => 20,
 		);
 
@@ -797,6 +796,19 @@ final class _WP_Editors {
 			$query['s'] = $args['s'];
 
 		$query['offset'] = $args['pagenum'] > 1 ? $query['posts_per_page'] * ( $args['pagenum'] - 1 ) : 0;
+
+		/**
+		 * Filter the link query arguments.
+		 *
+		 * Allows modification of the link query arguments before querying.
+		 *
+		 * @see WP_Query for a full list of arguments
+		 *
+		 * @since 3.7.0
+		 *
+		 * @param array $query An array of WP_Query arguments.
+		 */
+		$query = apply_filters( 'wp_link_query_args', $query );
 
 		// Do main query.
 		$get_posts = new WP_Query;
@@ -821,7 +833,26 @@ final class _WP_Editors {
 			);
 		}
 
-		return $results;
+		/**
+		 * Filter the link query results.
+		 *
+		 * Allows modification of the returned link query results.
+		 *
+		 * @since 3.7.0
+		 *
+		 * @param array $results {
+		 *     An associative array of query results.
+		 *
+		 *     @type array {
+		 *         @type int    'ID'        The post ID.
+		 *         @type string 'title'     The trimmed, escaped post title.
+		 *         @type string 'permalink' The post permalink.
+		 *         @type string 'info'      A 'Y/m/d'-formatted date for 'post' post type, the 'singular_name' post type label otherwise.
+		 *     }
+		 * }
+		 * @param array $query   An array of WP_Query arguments. @see 'wp_link_query_args' filter
+		 */
+		return apply_filters( 'wp_link_query', $results, $query );
 	}
 
 	/**

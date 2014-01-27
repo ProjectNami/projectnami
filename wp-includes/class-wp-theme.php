@@ -43,6 +43,15 @@ final class WP_Theme implements ArrayAccess {
 		'twentyeleven'   => 'Twenty Eleven',
 		'twentytwelve'   => 'Twenty Twelve',
 		'twentythirteen' => 'Twenty Thirteen',
+		'twentyfourteen' => 'Twenty Fourteen',
+	);
+
+	/**
+	 * Renamed theme tags.
+	 */
+	private static $tag_map = array(
+		'fixed-width'    => 'fixed-layout',
+		'flexible-width' => 'fluid-layout',
 	);
 
 	/**
@@ -206,7 +215,7 @@ final class WP_Theme implements ArrayAccess {
 		} elseif ( ! file_exists( $this->theme_root . '/' . $theme_file ) ) {
 			$this->headers['Name'] = $this->stylesheet;
 			if ( ! file_exists( $this->theme_root . '/' . $this->stylesheet ) )
-				$this->errors = new WP_Error( 'theme_not_found', __( 'The theme directory does not exist.' ) );
+				$this->errors = new WP_Error( 'theme_not_found', sprintf( __( 'The theme directory "%s" does not exist.' ), $this->stylesheet ) );
 			else
 				$this->errors = new WP_Error( 'theme_no_stylesheet', __( 'Stylesheet is missing.' ) );
 			$this->template = $this->stylesheet;
@@ -705,8 +714,11 @@ final class WP_Theme implements ArrayAccess {
 				}
 
 				foreach ( $value as &$tag ) {
-					if ( isset( $tags_list[ $tag ] ) )
+					if ( isset( $tags_list[ $tag ] ) ) {
 						$tag = $tags_list[ $tag ];
+					} elseif ( isset( self::$tag_map[ $tag ] ) ) {
+						$tag = $tags_list[ self::$tag_map[ $tag ] ];
+					}
 				}
 
 				return $value;

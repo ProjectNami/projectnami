@@ -13,7 +13,6 @@ if ( !defined('ABSPATH') )
 <form name="post" action="comment.php" method="post" id="post">
 <?php wp_nonce_field('update-comment_' . $comment->comment_ID) ?>
 <div class="wrap">
-<?php screen_icon(); ?>
 <h2><?php _e('Edit Comment'); ?></h2>
 
 <div id="poststuff">
@@ -49,7 +48,8 @@ if ( !defined('ABSPATH') )
 	<?php
 		if ( ! empty( $comment->comment_author_url ) && 'http://' != $comment->comment_author_url ) {
 			$link = '<a href="' . $comment->comment_author_url . '" rel="external nofollow" target="_blank">' . __('visit site') . '</a>';
-			printf( __( 'URL (%s):' ), apply_filters('get_comment_author_link', $link ) );
+			/** This filter is documented in wp-includes/comment-template.php */
+			printf( __( 'URL (%s):' ), apply_filters( 'get_comment_author_link', $link ) );
 		} else {
 			_e( 'URL:' );
 		} ?></td>
@@ -85,13 +85,19 @@ if ( !defined('ABSPATH') )
 
 <div id="misc-publishing-actions">
 
-<div class="misc-pub-section" id="comment-status-radio">
+<div class="misc-pub-section misc-pub-comment-status" id="comment-status-radio">
 <label class="approved"><input type="radio"<?php checked( $comment->comment_approved, '1' ); ?> name="comment_status" value="1" /><?php /* translators: comment type radio button */ _ex('Approved', 'adjective') ?></label><br />
 <label class="waiting"><input type="radio"<?php checked( $comment->comment_approved, '0' ); ?> name="comment_status" value="0" /><?php /* translators: comment type radio button */ _ex('Pending', 'adjective') ?></label><br />
 <label class="spam"><input type="radio"<?php checked( $comment->comment_approved, 'spam' ); ?> name="comment_status" value="spam" /><?php /* translators: comment type radio button */ _ex('Spam', 'adjective'); ?></label>
 </div>
 
-<div class="misc-pub-section curtime">
+<?php if ( $ip = get_comment_author_IP() ) : ?>
+<div class="misc-pub-section misc-pub-comment-author-ip">
+	<?php _e( 'IP address:' ); ?> <strong><a href="<?php echo esc_url( sprintf( 'http://whois.arin.net/rest/ip/%s', $ip ) ); ?>"><?php echo esc_html( $ip ); ?></a></strong>
+</div>
+<?php endif; ?>
+
+<div class="misc-pub-section curtime misc-pub-curtime">
 <?php
 // translators: Publish box date format, see http://php.net/date
 $datef = __( 'M j, Y @ G:i' );
@@ -121,9 +127,17 @@ $date = date_i18n( $datef, strtotime( $comment->comment_date ) );
 
 <div id="postbox-container-2" class="postbox-container">
 <?php
+/** This action is documented in wp-admin/edit-form-advanced.php */
+do_action( 'add_meta_boxes', 'comment', $comment );
 
-do_action('add_meta_boxes', 'comment', $comment);
-do_action('add_meta_boxes_comment', $comment);
+/**
+ * Fires when comment-specific meta boxes are added.
+ *
+ * @since 3.0.0
+ *
+ * @param object $comment Comment object.
+ */
+do_action( 'add_meta_boxes_comment', $comment );
 
 do_meta_boxes(null, 'normal', $comment);
 

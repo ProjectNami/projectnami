@@ -14,7 +14,7 @@
 class WP_Widget_Pages extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_pages', 'description' => __( 'Your site&#8217;s WordPress Pages') );
+		$widget_ops = array('classname' => 'widget_pages', 'description' => __( 'A list of your site&#8217;s Pages.') );
 		parent::__construct('pages', __('Pages'), $widget_ops);
 	}
 
@@ -190,7 +190,7 @@ class WP_Widget_Links extends WP_Widget {
 class WP_Widget_Search extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_search', 'description' => __( "A search form for your site") );
+		$widget_ops = array('classname' => 'widget_search', 'description' => __( "A search form for your site.") );
 		parent::__construct('search', __('Search'), $widget_ops);
 	}
 
@@ -233,7 +233,7 @@ class WP_Widget_Search extends WP_Widget {
 class WP_Widget_Archives extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_archive', 'description' => __( 'A monthly archive of your site&#8217;s posts') );
+		$widget_ops = array('classname' => 'widget_archive', 'description' => __( 'A monthly archive of your site&#8217;s Posts.') );
 		parent::__construct('archives', __('Archives'), $widget_ops);
 	}
 
@@ -298,7 +298,7 @@ class WP_Widget_Archives extends WP_Widget {
 class WP_Widget_Meta extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_meta', 'description' => __( "Log in/out, admin, feed and WordPress links") );
+		$widget_ops = array('classname' => 'widget_meta', 'description' => __( "Login, RSS, &amp; WordPress.org links.") );
 		parent::__construct('meta', __('Meta'), $widget_ops);
 	}
 
@@ -350,7 +350,7 @@ class WP_Widget_Meta extends WP_Widget {
 class WP_Widget_Calendar extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_calendar', 'description' => __( 'A calendar of your site&#8217;s posts') );
+		$widget_ops = array('classname' => 'widget_calendar', 'description' => __( 'A calendar of your site&#8217;s Posts.') );
 		parent::__construct('calendar', __('Calendar'), $widget_ops);
 	}
 
@@ -391,7 +391,7 @@ class WP_Widget_Calendar extends WP_Widget {
 class WP_Widget_Text extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_text', 'description' => __('Arbitrary text or HTML'));
+		$widget_ops = array('classname' => 'widget_text', 'description' => __('Arbitrary text or HTML.'));
 		$control_ops = array('width' => 400, 'height' => 350);
 		parent::__construct('text', __('Text'), $widget_ops, $control_ops);
 	}
@@ -441,7 +441,7 @@ class WP_Widget_Text extends WP_Widget {
 class WP_Widget_Categories extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array( 'classname' => 'widget_categories', 'description' => __( "A list or dropdown of categories" ) );
+		$widget_ops = array( 'classname' => 'widget_categories', 'description' => __( "A list or dropdown of categories." ) );
 		parent::__construct('categories', __('Categories'), $widget_ops);
 	}
 
@@ -533,7 +533,7 @@ class WP_Widget_Categories extends WP_Widget {
 class WP_Widget_Recent_Posts extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_recent_entries', 'description' => __( "The most recent posts on your site") );
+		$widget_ops = array('classname' => 'widget_recent_entries', 'description' => __( "Your site&#8217;s most recent Posts.") );
 		parent::__construct('recent-posts', __('Recent Posts'), $widget_ops);
 		$this->alt_option_name = 'widget_recent_entries';
 
@@ -574,7 +574,7 @@ class WP_Widget_Recent_Posts extends WP_Widget {
 		<ul>
 		<?php while ( $r->have_posts() ) : $r->the_post(); ?>
 			<li>
-				<a href="<?php the_permalink() ?>" title="<?php echo esc_attr( get_the_title() ? get_the_title() : get_the_ID() ); ?>"><?php if ( get_the_title() ) the_title(); else the_ID(); ?></a>
+				<a href="<?php the_permalink(); ?>"><?php get_the_title() ? the_title() : the_ID(); ?></a>
 			<?php if ( $show_date ) : ?>
 				<span class="post-date"><?php echo get_the_date(); ?></span>
 			<?php endif; ?>
@@ -635,7 +635,7 @@ class WP_Widget_Recent_Posts extends WP_Widget {
 class WP_Widget_Recent_Comments extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array('classname' => 'widget_recent_comments', 'description' => __( 'The most recent comments' ) );
+		$widget_ops = array('classname' => 'widget_recent_comments', 'description' => __( 'Your site&#8217;s most recent comments.' ) );
 		parent::__construct('recent-comments', __('Recent Comments'), $widget_ops);
 		$this->alt_option_name = 'widget_recent_comments';
 
@@ -643,6 +643,7 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 			add_action( 'wp_head', array($this, 'recent_comments_style') );
 
 		add_action( 'comment_post', array($this, 'flush_widget_cache') );
+		add_action( 'edit_comment', array($this, 'flush_widget_cache') );
 		add_action( 'transition_comment_status', array($this, 'flush_widget_cache') );
 	}
 
@@ -741,7 +742,7 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 class WP_Widget_RSS extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array( 'description' => __('Entries from any RSS or Atom feed') );
+		$widget_ops = array( 'description' => __('Entries from any RSS or Atom feed.') );
 		$control_ops = array( 'width' => 400, 'height' => 200 );
 		parent::__construct( 'rss', __('RSS'), $widget_ops, $control_ops );
 	}
@@ -928,7 +929,7 @@ function wp_widget_rss_form( $args, $inputs = null ) {
 	$default_inputs = array( 'url' => true, 'title' => true, 'items' => true, 'show_summary' => true, 'show_author' => true, 'show_date' => true );
 	$inputs = wp_parse_args( $inputs, $default_inputs );
 	extract( $args );
-	extract( $inputs, EXTR_SKIP);
+	extract( $inputs, EXTR_SKIP );
 
 	$number = esc_attr( $number );
 	$title  = esc_attr( $title );
@@ -999,11 +1000,11 @@ function wp_widget_rss_process( $widget_rss, $check_feed = true ) {
 	$items = (int) $widget_rss['items'];
 	if ( $items < 1 || 20 < $items )
 		$items = 10;
-	$url           = esc_url_raw(strip_tags( $widget_rss['url'] ));
-	$title         = trim(strip_tags( $widget_rss['title'] ));
-	$show_summary  = isset($widget_rss['show_summary']) ? (int) $widget_rss['show_summary'] : 0;
-	$show_author   = isset($widget_rss['show_author']) ? (int) $widget_rss['show_author'] :0;
-	$show_date     = isset($widget_rss['show_date']) ? (int) $widget_rss['show_date'] : 0;
+	$url           = esc_url_raw( strip_tags( $widget_rss['url'] ) );
+	$title         = isset( $widget_rss['title'] ) ? trim( strip_tags( $widget_rss['title'] ) ) : '';
+	$show_summary  = isset( $widget_rss['show_summary'] ) ? (int) $widget_rss['show_summary'] : 0;
+	$show_author   = isset( $widget_rss['show_author'] ) ? (int) $widget_rss['show_author'] :0;
+	$show_date     = isset( $widget_rss['show_date'] ) ? (int) $widget_rss['show_date'] : 0;
 
 	if ( $check_feed ) {
 		$rss = fetch_feed($url);
@@ -1032,7 +1033,7 @@ function wp_widget_rss_process( $widget_rss, $check_feed = true ) {
 class WP_Widget_Tag_Cloud extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array( 'description' => __( "Your most used tags in cloud format") );
+		$widget_ops = array( 'description' => __( "A cloud of your most used tags.") );
 		parent::__construct('tag_cloud', __('Tag Cloud'), $widget_ops);
 	}
 
@@ -1099,7 +1100,7 @@ class WP_Widget_Tag_Cloud extends WP_Widget {
  class WP_Nav_Menu_Widget extends WP_Widget {
 
 	function __construct() {
-		$widget_ops = array( 'description' => __('Use this widget to add one of your custom menus as a widget.') );
+		$widget_ops = array( 'description' => __('Add a custom menu to your sidebar.') );
 		parent::__construct( 'nav_menu', __('Custom Menu'), $widget_ops );
 	}
 
@@ -1133,7 +1134,7 @@ class WP_Widget_Tag_Cloud extends WP_Widget {
 		$nav_menu = isset( $instance['nav_menu'] ) ? $instance['nav_menu'] : '';
 
 		// Get menus
-		$menus = get_terms( 'nav_menu', array( 'hide_empty' => false ) );
+		$menus = wp_get_nav_menus( array( 'orderby' => 'name' ) );
 
 		// If no menus exists, direct the user to go and create some.
 		if ( !$menus ) {

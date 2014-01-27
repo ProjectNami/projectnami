@@ -8,7 +8,7 @@
  */
 
 /** Load WordPress Administration Bootstrap */
-require_once( './admin.php' );
+require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! is_multisite() )
 	wp_die( __( 'Multisite support is not enabled.' ) );
@@ -49,7 +49,8 @@ get_current_screen()->set_help_sidebar(
 $id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : 0;
 
 if ( isset( $_GET['action'] ) ) {
-	do_action( 'wpmuadminedit' , '' );
+	/** This action is documented in wp-admin/network/edit.php */
+	do_action( 'wpmuadminedit' );
 
 	if ( 'confirm' === $_GET['action'] ) {
 		check_admin_referer( 'confirm' );
@@ -64,6 +65,7 @@ if ( isset( $_GET['action'] ) ) {
 		<!DOCTYPE html>
 		<html xmlns="http://www.w3.org/1999/xhtml" <?php language_attributes(); ?>>
 			<head>
+				<meta name="viewport" content="width=device-width" />
 				<title><?php _e( 'WordPress &rsaquo; Confirm your action' ); ?></title>
 
 				<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -225,11 +227,10 @@ if ( isset( $_GET['updated'] ) ) {
 
 $wp_list_table->prepare_items();
 
-require_once( '../admin-header.php' );
+require_once( ABSPATH . 'wp-admin/admin-header.php' );
 ?>
 
 <div class="wrap">
-<?php screen_icon( 'ms-admin' ); ?>
 <h2><?php _e( 'Sites' ) ?>
 
 <?php if ( current_user_can( 'create_sites') ) : ?>
@@ -254,4 +255,4 @@ require_once( '../admin-header.php' );
 </div>
 <?php
 
-require_once( '../admin-footer.php' ); ?>
+require_once( ABSPATH . 'wp-admin/admin-footer.php' ); ?>

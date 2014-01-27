@@ -87,7 +87,7 @@ class WP_List_Table {
 
 		$this->screen = convert_to_screen( $args['screen'] );
 
-		add_filter( "manage_{$this->screen->id}_columns", array( &$this, 'get_columns' ), 0 );
+		add_filter( "manage_{$this->screen->id}_columns", array( $this, 'get_columns' ), 0 );
 
 		if ( !$args['plural'] )
 			$args['plural'] = $this->screen->base;
@@ -99,7 +99,7 @@ class WP_List_Table {
 
 		if ( $args['ajax'] ) {
 			// wp_enqueue_script( 'list-table' );
-			add_action( 'admin_footer', array( &$this, '_js_vars' ) );
+			add_action( 'admin_footer', array( $this, '_js_vars' ) );
 		}
 	}
 
@@ -244,7 +244,17 @@ class WP_List_Table {
 	 */
 	function views() {
 		$views = $this->get_views();
-		$views = apply_filters( 'views_' . $this->screen->id, $views );
+		/**
+		 * Filter the list of available list table views.
+		 *
+		 * The dynamic portion of the hook name, $this->screen->id, refers
+		 * to the ID of the current screen, usually a string.
+		 *
+		 * @since 3.5.0
+		 *
+		 * @param array $views An array of available list table views.
+		 */
+		$views = apply_filters( "views_{$this->screen->id}", $views );
 
 		if ( empty( $views ) )
 			return;
@@ -279,8 +289,19 @@ class WP_List_Table {
 	function bulk_actions() {
 		if ( is_null( $this->_actions ) ) {
 			$no_new_actions = $this->_actions = $this->get_bulk_actions();
-			// This filter can currently only be used to remove actions.
-			$this->_actions = apply_filters( 'bulk_actions-' . $this->screen->id, $this->_actions );
+			/**
+			 * Filter the list table Bulk Actions drop-down.
+			 *
+			 * The dynamic portion of the hook name, $this->screen->id, refers
+			 * to the ID of the current screen, usually a string.
+			 *
+			 * This filter can currently only be used to remove bulk actions.
+			 *
+			 * @since 3.5.0
+			 *
+			 * @param array $actions An array of the available bulk actions.
+			 */
+			$this->_actions = apply_filters( "bulk_actions-{$this->screen->id}", $this->_actions );
 			$this->_actions = array_intersect_assoc( $this->_actions, $no_new_actions );
 			$two = '';
 		} else {
@@ -340,7 +361,7 @@ class WP_List_Table {
 		if ( !$action_count )
 			return '';
 
-		$out = '<div class="' . ( $always_visible ? 'row-actions-visible' : 'row-actions' ) . '">';
+		$out = '<div class="' . ( $always_visible ? 'row-actions visible' : 'row-actions' ) . '">';
 		foreach ( $actions as $action => $link ) {
 			++$i;
 			( $i == $action_count ) ? $sep = '' : $sep = ' | ';
@@ -364,8 +385,18 @@ class WP_List_Table {
 			SELECT DISTINCT YEAR( post_date ) AS year, MONTH( post_date ) AS month
 			FROM $wpdb->posts
 			WHERE post_type = %s
-			ORDER BY year DESC
+			ORDER BY YEAR( post_date ) DESC, MONTH( post_date ) DESC
 		", $post_type ) );
+
+		/**
+		 * Filter the 'Months' drop-down results.
+		 *
+		 * @since 3.7.0
+		 *
+		 * @param object $months    The months drop-down query results.
+		 * @param string $post_type The post type.
+		 */
+		$months = apply_filters( 'months_dropdown_results', $months, $post_type );
 
 		$month_count = count( $months );
 
@@ -472,6 +503,18 @@ class WP_List_Table {
 		if ( empty( $per_page ) || $per_page < 1 )
 			$per_page = $default;
 
+		/**
+		 * Filter the number of items to be displayed on each page of the list table.
+		 *
+		 * The dynamic hook name, $option, refers to the per page option depending
+		 * on the type of list table in use. Possible values may include:
+		 * 'edit_comments_per_page', 'sites_network_per_page', 'site_themes_network_per_page',
+		 * 'themes_netework_per_page', 'users_network_per_page', 'edit_{$post_type}', etc.
+		 *
+		 * @since 2.9.0
+		 *
+		 * @param int $per_page Number of items to be displayed. Default 20.
+		 */
 		return (int) apply_filters( $option, $per_page );
 	}
 
@@ -604,7 +647,18 @@ class WP_List_Table {
 		$columns = get_column_headers( $this->screen );
 		$hidden = get_hidden_columns( $this->screen );
 
-		$_sortable = apply_filters( "manage_{$this->screen->id}_sortable_columns", $this->get_sortable_columns() );
+		$sortable_columns = $this->get_sortable_columns();
+		/**
+		 * Filter the list table sortable columns for a specific screen.
+		 *
+		 * The dynamic portion of the hook name, $this->screen->id, refers
+		 * to the ID of the current screen, usually a string.
+		 *
+		 * @since 3.5.0
+		 *
+		 * @param array $sortable_columns An array of sortable columns.
+		 */
+		$_sortable = apply_filters( "manage_{$this->screen->id}_sortable_columns", $sortable_columns );
 
 		$sortable = array();
 		foreach ( $_sortable as $id => $data ) {
@@ -764,7 +818,7 @@ class WP_List_Table {
 ?>
 	<div class="tablenav <?php echo esc_attr( $which ); ?>">
 
-		<div class="alignleft actions">
+		<div class="alignleft actions bulkactions">
 			<?php $this->bulk_actions(); ?>
 		</div>
 <?php
@@ -857,7 +911,7 @@ class WP_List_Table {
 			}
 			elseif ( method_exists( $this, 'column_' . $column_name ) ) {
 				echo "<td $attributes>";
-				echo call_user_func( array( &$this, 'column_' . $column_name ), $item );
+				echo call_user_func( array( $this, 'column_' . $column_name ), $item );
 				echo "</td>";
 			}
 			else {

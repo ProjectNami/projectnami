@@ -48,16 +48,22 @@ require( ABSPATH . WPINC . '/functions.wp-styles.php' );
  * @param object $scripts WP_Scripts object.
  */
 function wp_default_scripts( &$scripts ) {
+	include ABSPATH . WPINC . '/version.php'; // include an unmodified $wp_version
 
-	if ( !$guessurl = site_url() )
+	if ( ! defined( 'SCRIPT_DEBUG' ) )
+		define( 'SCRIPT_DEBUG', false !== strpos( $wp_version, '-src' ) );
+
+	if ( ! $guessurl = site_url() ) {
+		$guessed_url = true;
 		$guessurl = wp_guess_url();
+	}
 
 	$scripts->base_url = $guessurl;
 	$scripts->content_url = defined('WP_CONTENT_URL')? WP_CONTENT_URL : '';
 	$scripts->default_version = get_bloginfo( 'version' );
 	$scripts->default_dirs = array('/wp-admin/js/', '/wp-includes/js/');
 
-	$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+	$suffix = SCRIPT_DEBUG ? '' : '.min';
 
 	$scripts->add( 'utils', "/wp-includes/js/utils$suffix.js" );
 	did_action( 'init' ) && $scripts->localize( 'utils', 'userSettings', array(
@@ -176,7 +182,7 @@ function wp_default_scripts( &$scripts ) {
 	$scripts->add( 'jquery-ui-widget', '/wp-includes/js/jquery/ui/jquery.ui.widget.min.js', array('jquery'), '1.10.3', 1 );
 
 	// deprecated, not used in core, most functionality is included in jQuery 1.3
-	$scripts->add( 'jquery-form', "/wp-includes/js/jquery/jquery.form$suffix.js", array('jquery'), '2.73', 1 );
+	$scripts->add( 'jquery-form', "/wp-includes/js/jquery/jquery.form$suffix.js", array('jquery'), '3.37.0', 1 );
 
 	// jQuery plugins
 	$scripts->add( 'jquery-color', "/wp-includes/js/jquery/jquery.color.min.js", array('jquery'), '2.1.1', 1 );
@@ -198,10 +204,9 @@ function wp_default_scripts( &$scripts ) {
 			'close' => __('Close'),
 			'noiframes' => __('This feature requires inline frames. You have iframes disabled or your browser does not support them.'),
 			'loadingAnimation' => includes_url('js/thickbox/loadingAnimation.gif'),
-			'closeImage' => includes_url('js/thickbox/tb-close.png')
 	) );
 
-	$scripts->add( 'jcrop', "/wp-includes/js/jcrop/jquery.Jcrop.min.js", array('jquery'), '0.9.10');
+	$scripts->add( 'jcrop', "/wp-includes/js/jcrop/jquery.Jcrop.min.js", array('jquery'), '0.9.12');
 
 	$scripts->add( 'swfobject', "/wp-includes/js/swfobject.js", array(), '2.2-20120417');
 
@@ -279,7 +284,7 @@ function wp_default_scripts( &$scripts ) {
 
 	$scripts->add( 'revisions', "/wp-admin/js/revisions$suffix.js", array( 'wp-backbone', 'jquery-ui-slider', 'hoverIntent' ), false, 1 );
 
-	$scripts->add( 'imgareaselect', "/wp-includes/js/imgareaselect/jquery.imgareaselect$suffix.js", array('jquery'), '0.9.8', 1 );
+	$scripts->add( 'imgareaselect', "/wp-includes/js/imgareaselect/jquery.imgareaselect$suffix.js", array('jquery'), '0.9.10', 1 );
 
 	$scripts->add( 'mediaelement', "/wp-includes/js/mediaelement/mediaelement-and-player.min.js", array('jquery'), '2.13.0', 1 );
 	did_action( 'init' ) && $scripts->localize( 'mediaelement', 'mejsL10n', array(
@@ -306,7 +311,12 @@ function wp_default_scripts( &$scripts ) {
 		'pluginPath' => includes_url( 'js/mediaelement/', 'relative' ),
 	) );
 
-	$scripts->add( 'password-strength-meter', "/wp-admin/js/password-strength-meter$suffix.js", array('jquery'), false, 1 );
+	$scripts->add( 'zxcvbn-async', "/wp-includes/js/zxcvbn-async$suffix.js", array(), '1.0' );
+	did_action( 'init' ) && $scripts->localize( 'zxcvbn-async', '_zxcvbnSettings', array(
+		'src' => empty( $guessed_url ) ? includes_url( '/js/zxcvbn.min.js' ) : $scripts->base_url . '/wp-includes/js/zxcvbn.min.js',
+	) );
+
+	$scripts->add( 'password-strength-meter', "/wp-admin/js/password-strength-meter$suffix.js", array( 'jquery', 'zxcvbn-async' ), false, 1 );
 	did_action( 'init' ) && $scripts->localize( 'password-strength-meter', 'pwsL10n', array(
 		'empty' => __('Strength indicator'),
 		'short' => __('Very weak'),
@@ -381,13 +391,6 @@ function wp_default_scripts( &$scripts ) {
 	$scripts->add( 'mce-view', "/wp-includes/js/mce-view$suffix.js", array( 'shortcode', 'media-models' ), false, 1 );
 
 	if ( is_admin() ) {
-		$scripts->add( 'ajaxcat', "/wp-admin/js/cat$suffix.js", array( 'wp-lists' ) );
-		$scripts->add_data( 'ajaxcat', 'group', 1 );
-		did_action( 'init' ) && $scripts->localize( 'ajaxcat', 'catL10n', array(
-			'add' => esc_attr(__('Add')),
-			'how' => __('Separate multiple categories with commas.')
-		) );
-
 		$scripts->add( 'admin-tags', "/wp-admin/js/tags$suffix.js", array('jquery', 'wp-ajax-response'), false, 1 );
 		did_action( 'init' ) && $scripts->localize( 'admin-tags', 'tagsl10n', array(
 			'noPerm' => __('You do not have permission to do that.'),
@@ -443,7 +446,8 @@ function wp_default_scripts( &$scripts ) {
 
 		$scripts->add( 'admin-widgets', "/wp-admin/js/widgets$suffix.js", array( 'jquery-ui-sortable', 'jquery-ui-draggable', 'jquery-ui-droppable' ), false, 1 );
 
-		$scripts->add( 'theme', "/wp-admin/js/theme$suffix.js", array( 'jquery' ), false, 1 );
+		$scripts->add( 'theme', "/wp-admin/js/theme$suffix.js", array( 'wp-backbone' ), false, 1 );
+		$scripts->add( 'theme-install', "/wp-admin/js/theme-install$suffix.js", array( 'jquery' ), false, 1 );
 
 		// @todo: Core no longer uses theme-preview.js. Remove?
 		$scripts->add( 'theme-preview', "/wp-admin/js/theme-preview$suffix.js", array( 'thickbox', 'jquery' ), false, 1 );
@@ -508,6 +512,8 @@ function wp_default_scripts( &$scripts ) {
 		$scripts->add( 'custom-header', "/wp-admin/js/custom-header.js", array( 'jquery-masonry' ), false, 1 );
 		$scripts->add( 'custom-background', "/wp-admin/js/custom-background$suffix.js", array( 'wp-color-picker', 'media-views' ), false, 1 );
 		$scripts->add( 'media-gallery', "/wp-admin/js/media-gallery$suffix.js", array('jquery'), false, 1 );
+
+		$scripts->add( 'svg-painter', '/wp-admin/js/svg-painter.js', array( 'jquery' ), false, 1 );
 	}
 }
 
@@ -527,6 +533,10 @@ function wp_default_scripts( &$scripts ) {
  * @param object $styles
  */
 function wp_default_styles( &$styles ) {
+	include ABSPATH . WPINC . '/version.php'; // include an unmodified $wp_version
+
+	if ( ! defined( 'SCRIPT_DEBUG' ) )
+		define( 'SCRIPT_DEBUG', false !== strpos( $wp_version, '-src' ) );
 
 	if ( ! $guessurl = site_url() )
 		$guessurl = wp_guess_url();
@@ -537,47 +547,75 @@ function wp_default_styles( &$styles ) {
 	$styles->text_direction = function_exists( 'is_rtl' ) && is_rtl() ? 'rtl' : 'ltr';
 	$styles->default_dirs = array('/wp-admin/', '/wp-includes/css/');
 
-	$suffix = defined('SCRIPT_DEBUG') && SCRIPT_DEBUG ? '' : '.min';
+	$suffix = SCRIPT_DEBUG ? '' : '.min';
 
-	$rtl_styles = array( 'wp-admin', 'ie', 'media', 'admin-bar', 'customize-controls', 'media-views', 'wp-color-picker' );
-	// Any rtl stylesheets that don't have a .min version
-	$no_suffix = array( 'farbtastic' );
+	$rtl_styles = array( 'wp-admin', 'ie', 'media', 'admin-bar', 'customize-controls', 'media-views', 'wp-color-picker', 'wp-pointer', 'editor-buttons', 'farbtastic', 'wp-auth-check', 'wp-jquery-ui-dialog', 'media-views', 'buttons', 'install', 'colors-fresh' );
 
-	$styles->add( 'wp-admin', "/wp-admin/css/wp-admin$suffix.css" );
+	$styles->add( 'wp-admin', "/wp-admin/css/wp-admin$suffix.css", array( 'open-sans', 'dashicons' ) );
 
 	$styles->add( 'ie', "/wp-admin/css/ie$suffix.css" );
 	$styles->add_data( 'ie', 'conditional', 'lte IE 7' );
 
-	// Register "meta" stylesheet for admin colors. All colors-* style sheets should have the same version string.
-	$styles->add( 'colors', true, array('wp-admin', 'buttons') );
+	$open_sans_font_url = '';
 
-	// do not refer to these directly, the right one is queued by the above "meta" colors handle
-	$styles->add( 'colors-fresh', "/wp-admin/css/colors-fresh$suffix.css", array('wp-admin', 'buttons') );
-	$styles->add( 'colors-classic', "/wp-admin/css/colors-classic$suffix.css", array('wp-admin', 'buttons') );
+	/* translators: If there are characters in your language that are not supported
+	 * by Open Sans, translate this to 'off'. Do not translate into your own language.
+	 */
+	if ( 'off' !== _x( 'on', 'Open Sans font: on or off' ) ) {
+		$subsets = 'latin,latin-ext';
+
+		/* translators: To add an additional Open Sans character subset specific to your language,
+		 * translate this to 'greek', 'cyrillic' or 'vietnamese'. Do not translate into your own language.
+		 */
+		$subset = _x( 'no-subset', 'Open Sans font: add new subset (greek, cyrillic, vietnamese)' );
+
+		if ( 'cyrillic' == $subset ) {
+			$subsets .= ',cyrillic,cyrillic-ext';
+		} elseif ( 'greek' == $subset ) {
+			$subsets .= ',greek,greek-ext';
+		} elseif ( 'vietnamese' == $subset ) {
+			$subsets .= ',vietnamese';
+		}
+
+		// Hotlink Open Sans, for now
+		$open_sans_font_url = "//fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,300,400,600&subset=$subsets";
+	}
+
+	$styles->add( 'open-sans', $open_sans_font_url );
+
+	// Dashicons
+	$styles->add( 'dashicons', "/wp-includes/css/dashicons$suffix.css" );
+
+	// Register "meta" stylesheet for admin colors. All colors-* style sheets should have the same version string.
+	$styles->add( 'colors', true, array( 'wp-admin', 'buttons', 'open-sans', 'dashicons' ) );
+
+	// do not refer to this directly, the right one is queued by the above "meta" colors handle
+	$styles->add( 'colors-fresh', "/wp-admin/css/colors$suffix.css", array( 'wp-admin', 'buttons' ) );
 
 	$styles->add( 'media', "/wp-admin/css/media$suffix.css" );
-	$styles->add( 'install', "/wp-admin/css/install$suffix.css", array('buttons') );
-	$styles->add( 'thickbox', '/wp-includes/js/thickbox/thickbox.css', array(), '20121105' );
+	$styles->add( 'install', "/wp-admin/css/install$suffix.css", array( 'buttons', 'open-sans' ) );
+	$styles->add( 'thickbox', '/wp-includes/js/thickbox/thickbox.css', array( 'dashicons' ), '20131201' );
 	$styles->add( 'farbtastic', '/wp-admin/css/farbtastic.css', array(), '1.3u1' );
 	$styles->add( 'wp-color-picker', "/wp-admin/css/color-picker$suffix.css" );
-	$styles->add( 'jcrop', "/wp-includes/js/jcrop/jquery.Jcrop.min.css", array(), '0.9.10' );
+	$styles->add( 'jcrop', "/wp-includes/js/jcrop/jquery.Jcrop.min.css", array(), '0.9.12' );
 	$styles->add( 'imgareaselect', '/wp-includes/js/imgareaselect/imgareaselect.css', array(), '0.9.8' );
-	$styles->add( 'admin-bar', "/wp-includes/css/admin-bar$suffix.css" );
-	$styles->add( 'wp-jquery-ui-dialog', "/wp-includes/css/jquery-ui-dialog$suffix.css" );
-	$styles->add( 'editor-buttons', "/wp-includes/css/editor$suffix.css" );
-	$styles->add( 'wp-pointer', "/wp-includes/css/wp-pointer$suffix.css" );
+	$styles->add( 'admin-bar', "/wp-includes/css/admin-bar$suffix.css", array( 'open-sans', 'dashicons' ) );
+	$styles->add( 'wp-jquery-ui-dialog', "/wp-includes/css/jquery-ui-dialog$suffix.css", array( 'dashicons' ) );
+	$styles->add( 'editor-buttons', "/wp-includes/css/editor$suffix.css", array( 'dashicons' ) );
+	$styles->add( 'wp-pointer', "/wp-includes/css/wp-pointer$suffix.css", array( 'dashicons' ) );
 	$styles->add( 'customize-controls', "/wp-admin/css/customize-controls$suffix.css", array( 'wp-admin', 'colors', 'ie' ) );
-	$styles->add( 'media-views', "/wp-includes/css/media-views$suffix.css", array( 'buttons' ) );
+	$styles->add( 'media-views', "/wp-includes/css/media-views$suffix.css", array( 'buttons', 'dashicons' ) );
 	$styles->add( 'buttons', "/wp-includes/css/buttons$suffix.css" );
-	$styles->add( 'wp-auth-check', "/wp-includes/css/wp-auth-check$suffix.css" );
+	$styles->add( 'wp-auth-check', "/wp-includes/css/wp-auth-check$suffix.css", array( 'dashicons' ) );
 
 	$styles->add( 'mediaelement', "/wp-includes/js/mediaelement/mediaelementplayer.min.css", array(), '2.13.0' );
 	$styles->add( 'wp-mediaelement', "/wp-includes/js/mediaelement/wp-mediaelement.css", array( 'mediaelement' ) );
 
 	foreach ( $rtl_styles as $rtl_style ) {
-		$styles->add_data( $rtl_style, 'rtl', true );
-		if ( $suffix && ! in_array( $rtl_style, $no_suffix ) )
+		$styles->add_data( $rtl_style, 'rtl', 'replace' );
+		if ( $suffix ) {
 			$styles->add_data( $rtl_style, 'suffix', $suffix );
+		}
 	}
 }
 
@@ -659,9 +697,6 @@ function wp_style_loader_src( $src, $handle ) {
 		$parsed = parse_url( $src );
 		$url = $color->url;
 
-		if ( defined('SCRIPT_DEBUG') && SCRIPT_DEBUG )
-			$url = preg_replace( '/.min.css$|.min.css(?=\?)/', '.css', $url );
-
 		if ( isset($parsed['query']) && $parsed['query'] ) {
 			wp_parse_str( $parsed['query'], $qv );
 			$url = add_query_arg( $qv, $url );
@@ -680,13 +715,16 @@ function wp_style_loader_src( $src, $handle ) {
  * print_footer_scripts() is called in the footer to print these scripts.
  *
  * @since 2.8
+ *
  * @see wp_print_scripts()
  */
 function print_head_scripts() {
 	global $wp_scripts, $concatenate_scripts;
 
-	if ( ! did_action('wp_print_scripts') )
-		do_action('wp_print_scripts');
+	if ( ! did_action('wp_print_scripts') ) {
+		/** This action is documented in wp-includes/functions.wp-scripts.php */
+		do_action( 'wp_print_scripts' );
+	}
 
 	if ( !is_a($wp_scripts, 'WP_Scripts') )
 		$wp_scripts = new WP_Scripts();
@@ -764,8 +802,10 @@ function _print_scripts() {
  * @since 2.8
  */
 function wp_print_head_scripts() {
-	if ( ! did_action('wp_print_scripts') )
-		do_action('wp_print_scripts');
+	if ( ! did_action('wp_print_scripts') ) {
+		/** This action is documented in wp-includes/functions.wp-scripts.php */
+		do_action( 'wp_print_scripts' );
+	}
 
 	global $wp_scripts;
 

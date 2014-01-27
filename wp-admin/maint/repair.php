@@ -7,13 +7,14 @@
  */
 define('WP_REPAIRING', true);
 
-require_once('../../wp-load.php');
+require_once( dirname( dirname( dirname( __FILE__ ) ) ) . '/wp-load.php' );
 
 header( 'Content-Type: text/html; charset=utf-8' );
 ?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" <?php language_attributes(); ?>>
 <head>
+	<meta name="viewport" content="width=device-width" />
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title><?php _e( 'WordPress &rsaquo; Database Repair' ); ?></title>
 	<?php
@@ -26,7 +27,7 @@ header( 'Content-Type: text/html; charset=utf-8' );
 <?php
 
 if ( ! defined( 'WP_ALLOW_REPAIR' ) ) {
-	echo '<p>' . __( 'To allow use of this page to automatically repair database problems, please add the following line to your <code>wp-config.php</code> file. Once this line is added to your config, reload this page.' ) . "</p><code>define('WP_ALLOW_REPAIR', true);</code>";
+	echo '<p>' . __( 'To allow use of this page to automatically repair database problems, please add the following line to your <code>wp-config.php</code> file. Once this line is added to your config, reload this page.' ) . "</p><p><code>define('WP_ALLOW_REPAIR', true);</code></p>";
 } elseif ( isset( $_GET['repair'] ) ) {
 	$optimize = 2 == $_GET['repair'];
 	$okay = true;
@@ -38,7 +39,14 @@ if ( ! defined( 'WP_ALLOW_REPAIR' ) ) {
 	if ( is_multisite() && ! $wpdb->get_var( "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->sitecategories'" ) )
 		unset( $tables['sitecategories'] );
 
-	$tables = array_merge( $tables, (array) apply_filters( 'tables_to_repair', array() ) ); // Return tables with table prefixes.
+	/**
+	 * Filter additional database tables to repair.
+	 *
+	 * @since 3.0.0
+	 *
+	 * @param array $tables Array of prefixed table names to be repaired.
+	 */
+	$tables = array_merge( $tables, (array) apply_filters( 'tables_to_repair', array() ) );
 
 	// Loop over the tables, checking and repairing as needed.
 	foreach ( $tables as $table ) {
@@ -96,7 +104,7 @@ if ( ! defined( 'WP_ALLOW_REPAIR' ) ) {
 			$problem_output .= "$table: $problem\n";
 		echo '<p><textarea name="errors" id="errors" rows="20" cols="60">' . esc_textarea( $problem_output ) . '</textarea></p>';
 	} else {
-		echo '<p>' . __( 'Repairs complete. Please remove the following line from wp-config.php to prevent this page from being used by unauthorized users.' ) . "</p><code>define('WP_ALLOW_REPAIR', true);</code>";
+		echo '<p>' . __( 'Repairs complete. Please remove the following line from wp-config.php to prevent this page from being used by unauthorized users.' ) . "</p><p><code>define('WP_ALLOW_REPAIR', true);</code></p>";
 	}
 } else {
 	if ( isset( $_GET['referrer'] ) && 'is_blog_installed' == $_GET['referrer'] )

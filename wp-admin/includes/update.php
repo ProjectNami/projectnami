@@ -6,8 +6,6 @@
  * @subpackage Administration
  */
 
-// The admin side of our 1.1 update system
-
 /**
  * Selects the first update version from the update_core option
  *
@@ -15,10 +13,10 @@
  */
 function get_preferred_from_update_core() {
 	$updates = get_core_updates();
-	if ( !is_array( $updates ) )
+	if ( ! is_array( $updates ) )
 		return false;
 	if ( empty( $updates ) )
-		return (object)array('response' => 'latest');
+		return (object) array( 'response' => 'latest' );
 	return $updates[0];
 }
 
@@ -30,51 +28,133 @@ function get_preferred_from_update_core() {
  * @return array Array of the update objects
  */
 function get_core_updates( $options = array() ) {
-	$options = array_merge( array('available' => true, 'dismissed' => false ), $options );
+	$options = array_merge( array( 'available' => true, 'dismissed' => false ), $options );
 	$dismissed = get_site_option( 'dismissed_update_core' );
-	if ( !is_array( $dismissed ) ) $dismissed = array();
+
+	if ( ! is_array( $dismissed ) )
+		$dismissed = array();
+
 	$from_api = get_site_transient( 'update_core' );
-	if ( empty($from_api) )
+
+	if ( ! isset( $from_api->updates ) || ! is_array( $from_api->updates ) )
 		return false;
-	if ( !isset( $from_api->updates ) || !is_array( $from_api->updates ) ) return false;
+
 	$updates = $from_api->updates;
-	if ( !is_array( $updates ) ) return false;
 	$result = array();
-	foreach($updates as $update) {
-		if ( array_key_exists( $update->current.'|'.$update->locale, $dismissed ) ) {
+	foreach ( $updates as $update ) {
+		if ( $update->response == 'autoupdate' )
+			continue;
+
+		if ( array_key_exists( $update->current . '|' . $update->locale, $dismissed ) ) {
 			if ( $options['dismissed'] ) {
 				$update->dismissed = true;
-				$result[]= $update;
+				$result[] = $update;
 			}
 		} else {
 			if ( $options['available'] ) {
 				$update->dismissed = false;
-				$result[]= $update;
+				$result[] = $update;
 			}
 		}
 	}
 	return $result;
 }
 
+/**
+ * Gets the best available (and enabled) Auto-Update for WordPress Core.
+ *
+ * If there's 1.2.3 and 1.3 on offer, it'll choose 1.3 if the install allows it, else, 1.2.3
+ *
+ * @since 3.7.0
+ *
+ * @return bool|array False on failure, otherwise the core update offering.
+ */
+function find_core_auto_update() {
+	$updates = get_site_transient( 'update_core' );
+	if ( ! $updates || empty( $updates->updates ) )
+		return false;
+
+	include_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+
+	$auto_update = false;
+	$upgrader = new WP_Automatic_Updater;
+	foreach ( $updates->updates as $update ) {
+		if ( 'autoupdate' != $update->response )
+			continue;
+
+		if ( ! $upgrader->should_update( 'core', $update, ABSPATH ) )
+			continue;
+
+		if ( ! $auto_update || version_compare( $update->current, $auto_update->current, '>' ) )
+			$auto_update = $update;
+	}
+	return $auto_update;
+}
+
+/**
+ * Gets and caches the checksums for the given version of WordPress.
+ *
+ * @since 3.7.0
+ *
+ * @param string $version Version string to query.
+ * @param string $locale  Locale to query.
+ * @return bool|array False on failure. An array of checksums on success.
+ */
+function get_core_checksums( $version, $locale ) {
+	$return = array();
+
+	$url = $http_url = 'http://api.wordpress.org/core/checksums/1.0/?' . http_build_query( compact( 'version', 'locale' ), null, '&' );
+
+	if ( $ssl = wp_http_supports( array( 'ssl' ) ) )
+		$url = set_url_scheme( $url, 'https' );
+
+	$options = array(
+		'timeout' => ( ( defined('DOING_CRON') && DOING_CRON ) ? 30 : 3 ),
+	);
+
+	$response = wp_remote_get( $url, $options );
+	if ( $ssl && is_wp_error( $response ) ) {
+		trigger_error( __( 'An unexpected error occurred. Something may be wrong with WordPress.org or this server&#8217;s configuration. If you continue to have problems, please try the <a href="http://wordpress.org/support/">support forums</a>.' ) . ' ' . '(WordPress could not establish a secure connection to WordPress.org. Please contact your server administrator.)', headers_sent() || WP_DEBUG ? E_USER_WARNING : E_USER_NOTICE );
+		$response = wp_remote_get( $http_url, $options );
+	}
+
+	if ( is_wp_error( $response ) || 200 != wp_remote_retrieve_response_code( $response ) )
+		return false;
+
+	$body = trim( wp_remote_retrieve_body( $response ) );
+	$body = json_decode( $body, true );
+
+	if ( ! is_array( $body ) || ! isset( $body['checksums'] ) || ! is_array( $body['checksums'] ) )
+		return false;
+
+	return $body['checksums'];
+}
+
 function dismiss_core_update( $update ) {
 	$dismissed = get_site_option( 'dismissed_update_core' );
-	$dismissed[ $update->current.'|'.$update->locale ] = true;
+	$dismissed[ $update->current . '|' . $update->locale ] = true;
 	return update_site_option( 'dismissed_update_core', $dismissed );
 }
 
 function undismiss_core_update( $version, $locale ) {
 	$dismissed = get_site_option( 'dismissed_update_core' );
-	$key = $version.'|'.$locale;
-	if ( !isset( $dismissed[$key] ) ) return false;
+	$key = $version . '|' . $locale;
+
+	if ( ! isset( $dismissed[$key] ) )
+		return false;
+
 	unset( $dismissed[$key] );
 	return update_site_option( 'dismissed_update_core', $dismissed );
 }
 
 function find_core_update( $version, $locale ) {
 	$from_api = get_site_transient( 'update_core' );
-	if ( !is_array( $from_api->updates ) ) return false;
+
+	if ( ! isset( $from_api->updates ) || ! is_array( $from_api->updates ) )
+		return false;
+
 	$updates = $from_api->updates;
-	foreach($updates as $update) {
+	foreach ( $updates as $update ) {
 		if ( $update->current == $version && $update->locale == $locale )
 			return $update;
 	}
@@ -205,19 +285,45 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 		else
 			printf( __('There is a new version of %1$s available. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s">update now</a>.'), $plugin_name, esc_url($details_url), esc_attr($plugin_name), $r->new_version, wp_nonce_url( self_admin_url('update.php?action=upgrade-plugin&plugin=') . $file, 'upgrade-plugin_' . $file) );
 
-		do_action( "in_plugin_update_message-$file", $plugin_data, $r );
+		/**
+		 * Fires at the end of the update message container in each
+		 * row of the plugins list table.
+		 *
+		 * The dynamic portion of the hook name, $file, refers to the path
+		 * of the plugin's primary file relative to the plugins directory.
+		 *
+		 * @since 2.8.0
+		 *
+		 * @param array $plugin_data {
+		 *     An array of plugin metadata.
+		 *
+		 *     @type string $name         The human-readable name of the plugin.
+		 *     @type string $plugin_uri   Plugin URI.
+		 *     @type string $version      Plugin version.
+		 *     @type string $description  Plugin description.
+		 *     @type string $author       Plugin author.
+		 *     @type string $author_uri   Plugin author URI.
+		 *     @type string $text_domain  Plugin text domain.
+		 *     @type string $domain_path  Relative path to the plugin's .mo file(s).
+		 *     @type bool   $network      Whether the plugin can only be activated network wide.
+		 *     @type string $title        The human-readable title of the plugin.
+		 *     @type string $author_name  Plugin author's name.
+		 *     @type bool   $update       Whether there's an available update. Default null.
+	 	 * }
+	 	 * @param array $r {
+	 	 *     An array of metadata about the available plugin update.
+	 	 *
+	 	 *     @type int    $id           Plugin ID.
+	 	 *     @type string $slug         Plugin slug.
+	 	 *     @type string $new_version  New plugin version.
+	 	 *     @type string $url          Plugin URL.
+	 	 *     @type string $package      Plugin update package URL.
+	 	 * }
+		 */
+		do_action( "in_plugin_update_message-{$file}", $plugin_data, $r );
 
 		echo '</div></td></tr>';
 	}
-}
-
-function wp_update_plugin($plugin, $feedback = '') {
-	if ( !empty($feedback) )
-		add_filter('update_feedback', $feedback);
-
-	include ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-	$upgrader = new Plugin_Upgrader();
-	return $upgrader->upgrade($plugin);
 }
 
 function get_theme_updates() {
@@ -234,15 +340,6 @@ function get_theme_updates() {
 	}
 
 	return $update_themes;
-}
-
-function wp_update_theme($theme, $feedback = '') {
-	if ( !empty($feedback) )
-		add_filter('update_feedback', $feedback);
-
-	include ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-	$upgrader = new Theme_Upgrader();
-	return $upgrader->upgrade($theme);
 }
 
 function wp_theme_update_rows() {
@@ -280,24 +377,51 @@ function wp_theme_update_row( $theme_key, $theme ) {
 	else
 		printf( __('There is a new version of %1$s available. <a href="%2$s" class="thickbox" title="%3$s">View version %4$s details</a> or <a href="%5$s">update now</a>.'), $theme['Name'], esc_url($details_url), esc_attr($theme['Name']), $r['new_version'], wp_nonce_url( self_admin_url('update.php?action=upgrade-theme&theme=') . $theme_key, 'upgrade-theme_' . $theme_key) );
 
-	do_action( "in_theme_update_message-$theme_key", $theme, $r );
+	/**
+	 * Fires at the end of the update message container in each
+	 * row of the themes list table.
+	 *
+	 * The dynamic portion of the hook name, $theme_key, refers to
+	 * the theme slug as found in the WordPress.org themes repository.
+	 *
+	 * @since 3.1.0
+	 *
+	 * @param WP_Theme $theme The WP_Theme object.
+	 * @param array    $r {
+	 *     An array of metadata about the available theme update.
+	 *
+	 *     @type string $new_version New theme version.
+	 *     @type string $url         Theme URL.
+	 *     @type string $package     Theme update package URL.
+	 * }
+	 */
+	do_action( "in_theme_update_message-{$theme_key}", $theme, $r );
 
 	echo '</div></td></tr>';
 }
 
-function wp_update_core($current, $feedback = '') {
-	if ( !empty($feedback) )
-		add_filter('update_feedback', $feedback);
-
-	include ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-	$upgrader = new Core_Upgrader();
-	return $upgrader->upgrade($current);
-
-}
-
 function maintenance_nag() {
+	include ABSPATH . WPINC . '/version.php'; // include an unmodified $wp_version
 	global $upgrading;
-	if ( ! isset( $upgrading ) )
+	$nag = isset( $upgrading );
+	if ( ! $nag ) {
+		$failed = get_site_option( 'auto_core_update_failed' );
+		/*
+		 * If an update failed critically, we may have copied over version.php but not other files.
+		 * In that case, if the install claims we're running the version we attempted, nag.
+		 * This is serious enough to err on the side of nagging.
+		 *
+		 * If we simply failed to update before we tried to copy any files, then assume things are
+		 * OK if they are now running the latest.
+		 *
+		 * This flag is cleared whenever a successful update occurs using Core_Upgrader.
+		 */
+		$comparison = ! empty( $failed['critical'] ) ? '>=' : '>';
+		if ( version_compare( $failed['attempted'], $wp_version, $comparison ) )
+			$nag = true;
+	}
+
+	if ( ! $nag )
 		return false;
 
 	if ( current_user_can('update_core') )
@@ -308,3 +432,4 @@ function maintenance_nag() {
 	echo "<div class='update-nag'>$msg</div>";
 }
 add_action( 'admin_notices', 'maintenance_nag' );
+add_action( 'network_admin_notices', 'maintenance_nag' );
