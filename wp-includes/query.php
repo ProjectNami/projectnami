@@ -2074,21 +2074,17 @@ class WP_Query {
 			$search_orderby .= "WHEN PATINDEX('%{$search_orderby_s}%', $wpdb->posts.post_title) > 0 THEN 1 ";
 
             $title_weight = " WHEN ";
-            $content_weight = " WHEN ";
 
 		    foreach ( $q['search_terms'] as $term ) {
 			    $term = like_escape( esc_sql( $term ) );
                 $title_weight .= "PATINDEX('%$term%', $wpdb->posts.post_title) + ";
-                $content_weight .= "PATINDEX('%$term%', $wpdb->posts.post_content) + ";
 		    }
             $title_weight .= "0 > 0 THEN 2";
-            $content_weight .= "0 > 0 THEN 4";
 
             $search_orderby .= $title_weight;
 			// sentence match in 'post_content'
 			$search_orderby .= " WHEN PATINDEX('%{$search_orderby_s}%', $wpdb->posts.post_content) > 0 THEN 3 ";
-            $search_orderby .= $content_weight;
-			$search_orderby .= ' ELSE 5 END)';
+			$search_orderby .= ' ELSE 4 END)';
 		} else {
 			// single word or sentence search
 			$search_orderby = reset( $q['search_orderby_title'] ) . ' DESC';
