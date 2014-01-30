@@ -1963,7 +1963,8 @@ class WP_Query {
 		foreach ( $q['search_terms'] as $term ) {
 			$term = like_escape( esc_sql( $term ) );
 			if ( $n )
-				$q['search_orderby_title'][] = "$wpdb->posts.post_title LIKE '%$term%'";
+				// $q['search_orderby_title'][] = "$wpdb->posts.post_title LIKE '%$term%'";
+				$q['search_orderby_title'][] = "$wpdb->posts.post_title";
 
 			$search .= "{$searchand}(($wpdb->posts.post_title LIKE '{$n}{$term}{$n}') OR ($wpdb->posts.post_content LIKE '{$n}{$term}{$n}'))";
 			$searchand = ' AND ';
