@@ -2071,21 +2071,24 @@ class WP_Query {
 
 			$search_orderby = '(CASE ';
 			// sentence match in 'post_title'
-			$search_orderby .= "WHEN $wpdb->posts.post_title LIKE '%{$search_orderby_s}%' THEN 1 ";
+			$search_orderby .= "WHEN PATINDEX('%{$search_orderby_s}%', $wpdb->posts.post_title) > 0 THEN 1 ";
 
-			// sanity limit, sort as sentence when more than 6 terms
-			// (few searches are longer than 6 terms and most titles are not)
-			if ( $num_terms < 7 ) {
-				// all words in title
-				$search_orderby .= 'WHEN ' . implode( ' AND ', $q['search_orderby_title'] ) . ' THEN 2 ';
-				// any word in title, not needed when $num_terms == 1
-				if ( $num_terms > 1 )
-					$search_orderby .= 'WHEN ' . implode( ' OR ', $q['search_orderby_title'] ) . ' THEN 3 ';
-			}
+            $title_weight = " WHEN ";
+            $content_weight = " WHEN ";
 
+		    foreach ( $q['search_terms'] as $term ) {
+			    $term = like_escape( esc_sql( $term ) );
+                $title_weight .= "PATINDEX('%$term%', $wpdb->posts.post_title) + ";
+                $content_weight .= "PATINDEX('%$term%', $wpdb->posts.post_content) + ";
+		    }
+            $title_weight .= "0 > 0 THEN 2";
+            $content_weight .= "0 > 0 THEN 4";
+
+            $search_orderby .= $title_weight;
 			// sentence match in 'post_content'
-			$search_orderby .= "WHEN $wpdb->posts.post_content LIKE '%{$search_orderby_s}%' THEN 4 ";
-			$search_orderby .= 'ELSE 5 END)';
+			$search_orderby .= " WHEN PATINDEX('%{$search_orderby_s}%', $wpdb->posts.post_content) > 0 THEN 3 ";
+            $search_orderby .= $content_weight;
+			$search_orderby .= ' ELSE 5 END)';
 		} else {
 			// single word or sentence search
 			$search_orderby = reset( $q['search_orderby_title'] ) . ' DESC';
@@ -2649,24 +2652,24 @@ class WP_Query {
 				$orderby .= " {$q['order']}";
 		}
 
+        /*
 		// Order search results by relevance only when another "orderby" is not specified in the query.
 		if ( ! empty( $q['s'] ) ) {
 			$search_orderby = '';
 			if ( ! empty( $q['search_orderby_title'] ) && ( empty( $q['orderby'] ) && ! $this->is_feed ) || ( isset( $q['orderby'] ) && 'relevance' === $q['orderby'] ) )
 				$search_orderby = $this->parse_search_order( $q );
 
-			/**
 			 * Filter the ORDER BY used when ordering search results.
 			 *
 			 * @since 3.7.0
 			 *
 			 * @param string   $search_orderby The ORDER BY clause.
 			 * @param WP_Query $this           The current WP_Query instance.
-			 */
 			$search_orderby = apply_filters( 'posts_search_orderby', $search_orderby, $this );
 			if ( $search_orderby )
 				$orderby = $orderby ? $search_orderby . ', ' . $orderby : $search_orderby;
 		}
+        */
 
 		if ( is_array( $post_type ) && count( $post_type ) > 1 ) {
 			$post_type_cap = 'multiple_post_type';
