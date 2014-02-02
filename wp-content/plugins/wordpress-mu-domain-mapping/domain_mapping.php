@@ -459,7 +459,7 @@ function dm_manage_page() {
 			if ( $details[ 'active' ] == 1 )
 				echo "checked='1' ";
 			echo "/>";
-			$url = "{$protocol}{$details[ 'domain' ]}{$details[ 'path' ]}";
+			$url = "{$protocol}{$details[ 'domain' ]}" . (isset($details['path']) ? $details['path'] : '');
 			echo "</td><td><a href='$url'>$url</a></td><td style='text-align: center'>";
 			if ( $details[ 'domain' ] != $orig_url[ 'host' ] && $details[ 'active' ] != 1 ) {
 				echo "<a href='" . wp_nonce_url( add_query_arg( array( 'domain' => $details[ 'domain' ] ), $del_url ), "delete" . $details[ 'domain' ] ) . "'>Del</a>";
