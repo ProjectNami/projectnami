@@ -1640,7 +1640,7 @@ class WP_Automatic_Updater {
 	 */
 	public function is_disabled() {
 		// Background updates are disabled if you don't want file changes.
-		if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS )
+		// if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS )
 			return true;
 
 		if ( defined( 'WP_INSTALLING' ) )
@@ -1941,7 +1941,7 @@ class WP_Automatic_Updater {
 		$lock_name = 'auto_updater.lock';
 
 		// Try to lock
-		$lock_result = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO `$wpdb->options` ( `option_name`, `option_value`, `autoload` ) VALUES (%s, %s, 'no') /* LOCK */", $lock_name, time() ) );
+		$lock_result = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO '$wpdb->options' ( 'option_name', 'option_value', 'autoload' ) VALUES (%s, %s, 'no') /* LOCK */", $lock_name, time() ) );
 
 		if ( ! $lock_result ) {
 			$lock_result = get_option( $lock_name );

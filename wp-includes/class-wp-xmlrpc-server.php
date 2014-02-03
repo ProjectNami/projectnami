@@ -605,7 +605,7 @@ class wp_xmlrpc_server extends IXR_Server {
 	 * @return IXR_Date
 	 */
 	protected function _convert_date_gmt( $date_gmt, $date ) {
-+		if ( $date !== '0001-01-01 00:00:00' && $date_gmt === '0001-01-01 00:00:00' ) {
+		if ( $date !== '0001-01-01 00:00:00' && $date_gmt === '0001-01-01 00:00:00' ) {
 			return new IXR_Date( get_gmt_from_date( mysql2date( 'Y-m-d H:i:s', $date, false ), 'Ymd\TH:i:s' ) );
 		}
 		return $this->_convert_date( $date_gmt );
