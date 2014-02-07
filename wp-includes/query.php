@@ -2621,15 +2621,16 @@ class WP_Query {
 					case 'meta_value':
 						if ( isset( $q['meta_type'] ) ) {
 							$meta_type = $this->meta_query->get_cast_for_type( $q['meta_type'] );
-							$orderby = "CAST($wpdb->postmeta.meta_value AS {$meta_type})";
-                            $orderbyfields = ", $wpdb->postmeta.meta_value";
+                            $orderby = "meta_value";
+							$orderbyfields = ", CAST($wpdb->postmeta.meta_value AS {$meta_type}) as meta_value";
 						} else {
 							$orderby = "$wpdb->postmeta.meta_value";
-                            $orderbyfields = ", $wpdb->postmeta.meta_value+0 as meta_value";
+                            $orderbyfields = ", $wpdb->postmeta.meta_value";
 						}
 						break;
 					case 'meta_value_num':
-						$orderby = "$wpdb->postmeta.meta_value+0";
+						$orderby = "meta_value";
+                        $orderbyfields = ", $wpdb->postmeta.meta_value+0 as meta_value";
 						break;
 					case 'comment_count':
 						$orderby = "$wpdb->posts.comment_count";
