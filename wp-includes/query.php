@@ -2587,9 +2587,17 @@ class WP_Query {
 		} elseif ( 'none' == $q['orderby'] ) {
 			$orderby = '';
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
-			$orderby = "FIELD( {$wpdb->posts}.ID, $post__in )";
+			$orderby = "CASE( {$wpdb->posts}.ID )";
+            foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
+                $orderby .= " WHEN $order_post_id THEN $order_post_key";
+            }
+            $orderby .= " END";
 		} elseif ( $q['orderby'] == 'post_parent__in' && ! empty( $post_parent__in ) ) {
-			$orderby = "FIELD( {$wpdb->posts}.post_parent, $post_parent__in )";
+			$orderby = "CASE( {$wpdb->posts}.post_parent )";
+            foreach ( $q['post_parent__in'] as $order_post_key=>$order_post_id ) {
+                $orderby .= " WHEN $order_post_id THEN $order_post_key";
+            }
+            $orderby .= " END";
 		} else {
 			// Used to filter values
 			$allowed_keys = array('name', 'author', 'date', 'title', 'modified', 'menu_order', 'parent', 'ID', 'rand', 'comment_count');
