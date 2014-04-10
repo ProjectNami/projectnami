@@ -226,8 +226,8 @@ function get_bookmarks($args = '') {
 		$join = " INNER JOIN $wpdb->term_relationships AS tr ON ($wpdb->links.link_id = tr.object_id) INNER JOIN $wpdb->term_taxonomy as tt ON tt.term_taxonomy_id = tr.term_taxonomy_id";
 	}
 
-	if ( $show_updated && get_option('links_recently_updated_time') ) {
-		$recently_updated_test = ", IF (DATEADD(MINUTE, " . get_option('links_recently_updated_time') . ", link_updated) >= GETDATE(), 1,0) as recently_updated ";
+	if ( $show_updated ) {
+		$recently_updated_test = ", IF (DATEADD(MINUTE, 120, link_updated) >= GETDATE(), 1,0) as recently_updated ";
 	} else {
 		$recently_updated_test = '';
 	}

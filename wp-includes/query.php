@@ -2587,9 +2587,17 @@ class WP_Query {
 		} elseif ( 'none' == $q['orderby'] ) {
 			$orderby = '';
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
-			$orderby = "FIELD( {$wpdb->posts}.ID, $post__in )";
+			$orderby = "CASE( {$wpdb->posts}.ID )";
+            foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
+                $orderby .= " WHEN $order_post_id THEN $order_post_key";
+            }
+            $orderby .= " END";
 		} elseif ( $q['orderby'] == 'post_parent__in' && ! empty( $post_parent__in ) ) {
-			$orderby = "FIELD( {$wpdb->posts}.post_parent, $post_parent__in )";
+			$orderby = "CASE( {$wpdb->posts}.post_parent )";
+            foreach ( $q['post_parent__in'] as $order_post_key=>$order_post_id ) {
+                $orderby .= " WHEN $order_post_id THEN $order_post_key";
+            }
+            $orderby .= " END";
 		} else {
 			// Used to filter values
 			$allowed_keys = array('name', 'author', 'date', 'title', 'modified', 'menu_order', 'parent', 'ID', 'rand', 'comment_count');
@@ -2621,15 +2629,16 @@ class WP_Query {
 					case 'meta_value':
 						if ( isset( $q['meta_type'] ) ) {
 							$meta_type = $this->meta_query->get_cast_for_type( $q['meta_type'] );
-							$orderby = "CAST($wpdb->postmeta.meta_value AS {$meta_type})";
-                            $orderbyfields = ", $wpdb->postmeta.meta_value";
+                            $orderby = "meta_value";
+							$orderbyfields = ", CAST($wpdb->postmeta.meta_value AS {$meta_type}) as meta_value";
 						} else {
 							$orderby = "$wpdb->postmeta.meta_value";
-                            $orderbyfields = ", $wpdb->postmeta.meta_value+0 as meta_value";
+                            $orderbyfields = ", $wpdb->postmeta.meta_value";
 						}
 						break;
 					case 'meta_value_num':
-						$orderby = "$wpdb->postmeta.meta_value+0";
+						$orderby = "meta_value";
+                        $orderbyfields = ", $wpdb->postmeta.meta_value+0 as meta_value";
 						break;
 					case 'comment_count':
 						$orderby = "$wpdb->posts.comment_count";
@@ -3288,7 +3297,11 @@ class WP_Query {
 					$term = get_term_by( 'slug', $this->get( 'category_name' ), 'category' );
 				}
 			} elseif ( $this->is_tag ) {
-				$term = get_term( $this->get( 'tag_id' ), 'post_tag' );
+				if ( $this->get( 'tag_id' ) ) {
+					$term = get_term( $this->get( 'tag_id' ), 'post_tag' );
+				} elseif ( $this->get( 'tag' ) ) {
+					$term = get_term_by( 'slug', $this->get( 'tag' ), 'post_tag' );
+				}
 			} else {
 				$tax_query_in_and = wp_list_filter( $this->tax_query->queries, array( 'operator' => 'NOT IN' ), 'NOT' );
 				$query = reset( $tax_query_in_and );
