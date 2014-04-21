@@ -135,7 +135,6 @@ function get_approved_comments($post_id) {
  */
 function get_comment(&$comment, $output = OBJECT) {
 	global $wpdb;
-	$null = null;
 
 	if ( empty($comment) ) {
 		if ( isset($GLOBALS['comment']) )
@@ -151,7 +150,7 @@ function get_comment(&$comment, $output = OBJECT) {
 		} elseif ( ! $_comment = wp_cache_get($comment, 'comment') ) {
 			$_comment = $wpdb->get_row($wpdb->prepare("SELECT TOP 1 * FROM $wpdb->comments WHERE comment_ID = %d", $comment));
 			if ( ! $_comment )
-				return $null;
+				return null;
 			wp_cache_add($_comment->comment_ID, $_comment, 'comment');
 		}
 	}
@@ -379,8 +378,13 @@ class WP_Comment_Query {
 		}
 		if ( '' !== $parent )
 			$where .= $wpdb->prepare( ' AND comment_parent = %d', $parent );
-		if ( '' !== $user_id )
+
+		if ( is_array( $user_id ) ) {
+			$where .= ' AND user_id IN (' . implode( ',', array_map( 'absint', $user_id ) ) . ')';
+		} elseif ( '' !== $user_id ) {
 			$where .= $wpdb->prepare( ' AND user_id = %d', $user_id );
+		}
+
 		if ( '' !== $search )
 			$where .= $this->get_search_sql( $search, array( 'comment_author', 'comment_author_email', 'comment_author_url', 'comment_author_IP', 'comment_content' ) );
 
@@ -470,8 +474,6 @@ class WP_Comment_Query {
  * Comments have a limited set of valid status values, this provides the comment
  * status values and descriptions.
  *
- * @package WordPress
- * @subpackage Post
  * @since 2.7.0
  *
  * @return array List of comment statuses.
@@ -657,7 +659,7 @@ function get_comment_meta($comment_id, $key = '', $single = false) {
  * @param string $meta_key Metadata key.
  * @param mixed $meta_value Metadata value.
  * @param mixed $prev_value Optional. Previous value to check before removing.
- * @return bool True on success, false on failure.
+ * @return int|bool Meta ID if the key didn't exist, true on successful update, false on failure.
  */
 function update_comment_meta($comment_id, $meta_key, $meta_value, $prev_value = '') {
 	return update_metadata('comment', $comment_id, $meta_key, $meta_value, $prev_value);
@@ -754,9 +756,6 @@ function sanitize_comment_cookies() {
  *
  * @since 2.0.0
  * @uses $wpdb
- * @uses apply_filters() Calls 'pre_comment_approved' hook on the type of comment
- * @uses apply_filters() Calls 'comment_duplicate_trigger' hook on commentdata.
- * @uses do_action() Calls 'check_comment_flood' hook on $comment_author_IP, $comment_author_email, and $comment_date_gmt
  *
  * @param array $commentdata Contains information on the comment
  * @return mixed Signifies the approval status (0|1|'spam')
@@ -837,10 +836,6 @@ function wp_allow_comment($commentdata) {
  *
  * @since 2.3.0
  * @uses $wpdb
- * @uses apply_filters() Calls 'comment_flood_filter' filter with first
- *		parameter false, last comment timestamp, new comment timestamp.
- * @uses do_action() Calls 'comment_flood_trigger' action with parameters with
- *		last comment timestamp and new comment timestamp.
  *
  * @param string $ip Comment IP.
  * @param string $email Comment author email address.
@@ -910,8 +905,7 @@ function separate_comments(&$comments) {
  * Calculate the total number of comment pages.
  *
  * @since 2.7.0
- * @uses get_query_var() Used to fill in the default for $per_page parameter.
- * @uses get_option() Used to fill in defaults for parameters.
+ *
  * @uses Walker_Comment
  *
  * @param array $comments Optional array of comment objects. Defaults to $wp_query->comments
@@ -925,7 +919,7 @@ function get_comment_pages_count( $comments = null, $per_page = null, $threaded 
 	if ( null === $comments && null === $per_page && null === $threaded && !empty($wp_query->max_num_comment_pages) )
 		return $wp_query->max_num_comment_pages;
 
-	if ( !$comments || !is_array($comments) )
+	if ( ( ! $comments || ! is_array( $comments ) ) && ! empty( $wp_query->comments )  )
 		$comments = $wp_query->comments;
 
 	if ( empty($comments) )
@@ -1018,7 +1012,6 @@ function get_page_of_comment( $comment_ID, $args = array() ) {
  * Does comment contain blacklisted characters or words.
  *
  * @since 1.5.0
- * @uses do_action() Calls 'wp_blacklist_check' hook for all parameters.
  *
  * @param string $author The author of the comment
  * @param string $email The email of the comment
@@ -1149,9 +1142,6 @@ function wp_count_comments( $post_id = 0 ) {
  *
  * @since 2.0.0
  * @uses $wpdb
- * @uses do_action() Calls 'delete_comment' hook on comment ID
- * @uses do_action() Calls 'deleted_comment' hook on comment ID after deletion, on success
- * @uses do_action() Calls 'wp_set_comment_status' hook on comment ID with 'delete' set for the second parameter
  * @uses wp_transition_comment_status() Passes new and old comment status along with $comment object
  *
  * @param int $comment_id Comment ID
@@ -1224,8 +1214,7 @@ function wp_delete_comment($comment_id, $force_delete = false) {
  * If trash is disabled, comment is permanently deleted.
  *
  * @since 2.9.0
- * @uses do_action() on 'trash_comment' before trashing
- * @uses do_action() on 'trashed_comment' after trashing
+ *
  * @uses wp_delete_comment() if trash is disabled
  *
  * @param int $comment_id Comment ID.
@@ -1269,8 +1258,6 @@ function wp_trash_comment($comment_id) {
  * Removes a comment from the Trash
  *
  * @since 2.9.0
- * @uses do_action() on 'untrash_comment' before untrashing
- * @uses do_action() on 'untrashed_comment' after untrashing
  *
  * @param int $comment_id Comment ID.
  * @return bool True on success, false on failure.
@@ -1313,8 +1300,6 @@ function wp_untrash_comment($comment_id) {
  * Marks a comment as Spam
  *
  * @since 2.9.0
- * @uses do_action() on 'spam_comment' before spamming
- * @uses do_action() on 'spammed_comment' after spamming
  *
  * @param int $comment_id Comment ID.
  * @return bool True on success, false on failure.
@@ -1352,8 +1337,6 @@ function wp_spam_comment($comment_id) {
  * Removes a comment from the Spam
  *
  * @since 2.9.0
- * @uses do_action() on 'unspam_comment' before unspamming
- * @uses do_action() on 'unspammed_comment' after unspamming
  *
  * @param int $comment_id Comment ID.
  * @return bool True on success, false on failure.
@@ -1962,8 +1945,6 @@ function wp_update_comment_count($post_id, $do_deferred=false) {
  *
  * @since 2.5.0
  * @uses $wpdb
- * @uses do_action() Calls 'wp_update_comment_count' hook on $post_id, $new, and $old
- * @uses do_action() Calls 'edit_posts' hook on $post_id and $post
  *
  * @param int $post_id Post ID
  * @return bool True on success, false on '0' $post_id or if post with ID does not exist.
@@ -2381,8 +2362,6 @@ function xmlrpc_pingback_error( $ixr_error ) {
  * Removes comment ID from the comment cache.
  *
  * @since 2.3.0
- * @package WordPress
- * @subpackage Cache
  *
  * @param int|array $ids Comment ID or array of comment IDs to remove from cache
  */
@@ -2401,8 +2380,6 @@ function clean_comment_cache($ids) {
  * cache using the comment group with the key using the ID of the comments.
  *
  * @since 2.3.0
- * @package WordPress
- * @subpackage Cache
  *
  * @param array $comments Array of comment row objects
  */
