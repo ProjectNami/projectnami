@@ -1457,6 +1457,7 @@ class wpdb {
 		$this->_do_query( $query );
 
 		// MySQL server has gone away, try to reconnect
+        /*
 		$mysql_errno = 0;
 		if ( ! empty( $this->dbh ) ) {
 			if ( $this->use_mysqli ) {
@@ -1474,18 +1475,17 @@ class wpdb {
 				return false;
 			}
 		}
+        */
 
 		// If there is an error then take note of it..
-		if ( $this->use_mysqli ) {
-			$this->last_error = mysqli_error( $this->dbh );
-		} else {
-			$this->last_error = mysql_error( $this->dbh );
-		}
+		$errors = sqlsrv_errors();
+		
+		if( ! empty( $errors ) && is_array( $errors ) ) {
+			$this->last_error = $errors[ 0 ][ 'message' ];
 
-		if ( $this->last_error ) {
-			// Clear insert_id on a subsequent failed insert.
-			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) )
-				$this->insert_id = 0;
+			// Clear insert_id on a subsequent failed insert. 
+			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) ) 
+				$this->insert_id = 0; 
 
 			$this->print_error();
 			return false;
