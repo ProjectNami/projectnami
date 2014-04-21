@@ -729,6 +729,7 @@ class wpdb {
 	 * @param array $modes Optional. A list of SQL modes to set.
 	 */
 	function set_sql_mode( $modes = array() ) {
+        return;
 		if ( empty( $modes ) ) {
 			if ( $this->use_mysqli ) {
 				$res = mysqli_query( $this->dbh, 'SELECT @@SESSION.sql_mode' );
