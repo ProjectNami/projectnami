@@ -553,6 +553,6 @@ function ms_allowed_http_request_hosts( $is_external, $host ) {
 		return true;
 	if ( isset( $queried[ $host ] ) )
 		return $queried[ $host ];
-	$queried[ $host ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM $wpdb->blogs WHERE domain = %s LIMIT 1", $host ) );
+	$queried[ $host ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT TOP 1 domain FROM $wpdb->blogs WHERE domain = %s", $host ) );
 	return $queried[ $host ];
 }

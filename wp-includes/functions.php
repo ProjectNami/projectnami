@@ -3569,7 +3569,7 @@ function is_main_network( $network_id = null ) {
 	if ( $primary_network_id )
 		return $network_id === $primary_network_id;
 
-	$primary_network_id = (int) $wpdb->get_var( "SELECT id FROM $wpdb->site ORDER BY id LIMIT 1" );
+	$primary_network_id = (int) $wpdb->get_var( "SELECT TOP 1 id FROM $wpdb->site ORDER BY id" );
 	wp_cache_add( 'primary_network_id', $primary_network_id, 'site-options' );
 
 	return $network_id === $primary_network_id;
