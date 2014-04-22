@@ -216,7 +216,7 @@ function get_network_by_path( $domain, $path, $segments = null ) {
 
 	if ( ! $using_paths ) {
 		$network = $wpdb->get_row( "SELECT TOP 1 id, domain, path FROM $wpdb->site
-			WHERE domain IN ($search_domains) ORDER BY LENGTH(domain) DESC" );
+			WHERE domain IN ($search_domains) ORDER BY LEN(domain) DESC" );
 		if ( $network ) {
 			return wp_get_network( $network );
 		}
@@ -226,7 +226,7 @@ function get_network_by_path( $domain, $path, $segments = null ) {
 		$search_paths = "'" . implode( "', '", $wpdb->_escape( $paths ) ) . "'";
 		$networks = $wpdb->get_results( "SELECT id, domain, path FROM $wpdb->site
 			WHERE domain IN ($search_domains) AND path IN ($search_paths)
-			ORDER BY LENGTH(domain) DESC, LENGTH(path) DESC" );
+			ORDER BY LEN(domain) DESC, LEN(path) DESC" );
 	}
 
 	/*
@@ -351,7 +351,7 @@ function get_site_by_path( $domain, $path, $segments = null ) {
 	if ( count( $paths ) > 1 ) {
 		$paths = "'" . implode( "', '", $wpdb->_escape( $paths ) ) . "'";
 		$sql = $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->blogs WHERE domain = %s", $domain );
-		$sql .= " AND path IN ($paths) ORDER BY LENGTH(path) DESC";
+		$sql .= " AND path IN ($paths) ORDER BY LEN(path) DESC";
 		$site = $wpdb->get_row( $sql );
 	} else {
 		$site = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->blogs WHERE domain = %s and path = %s", $domain, $paths[0] ) );
