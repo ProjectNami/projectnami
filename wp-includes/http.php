@@ -510,7 +510,7 @@ function wp_http_validate_url( $url ) {
 	if ( 80 === $port || 443 === $port || 8080 === $port )
 		return $url;
 
-	if ( $parsed_home && $same_host && $parsed_home['port'] === $port )
+	if ( $parsed_home && $same_host && isset( $parsed_home['port'] ) && $parsed_home['port'] === $port )
 		return $url;
 
 	return false;
@@ -553,6 +553,6 @@ function ms_allowed_http_request_hosts( $is_external, $host ) {
 		return true;
 	if ( isset( $queried[ $host ] ) )
 		return $queried[ $host ];
-	$queried[ $host ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT domain FROM $wpdb->blogs WHERE domain = %s LIMIT 1", $host ) );
+	$queried[ $host ] = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT TOP 1 domain FROM $wpdb->blogs WHERE domain = %s", $host ) );
 	return $queried[ $host ];
 }
