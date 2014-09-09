@@ -1063,8 +1063,8 @@ function maybe_disable_link_manager() {
  * @since 2.9.0
  */
 function pre_schema_upgrade() {
-+	// Unused in Project Nami.
-+	// To be removed.
+	// Unused in Project Nami.
+	// To be removed.
 
 	// Multisite schema upgrades.
 	if ( $wp_current_db_version < 25448 && is_multisite() && ! defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) && is_main_network() ) {
