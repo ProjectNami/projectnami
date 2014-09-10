@@ -127,7 +127,7 @@ function export_date_options( $post_type = 'post' ) {
 		FROM $wpdb->posts
 		WHERE post_type = %s AND post_status != 'auto-draft'
 		ORDER BY YEAR( post_date ) DESC, MONTH( post_date ) DESC
-	", $post_type ) );
+		", $post_type ) );
 
 	$month_count = count( $months );
 	if ( !$month_count || ( 1 == $month_count && 0 == $months[0]->month ) )

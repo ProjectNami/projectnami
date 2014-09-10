@@ -123,6 +123,8 @@ CREATE INDEX $wpdb->comments" . "_IDX3 on $wpdb->comments (comment_date_gmt)
 GO
 CREATE INDEX $wpdb->comments" . "_IDX4 on $wpdb->comments (comment_parent)
 GO
+CREATE INDEX $wpdb->comments" . "_IDX5 on $wpdb->comments (comment_author_email)
+GO
 
 CREATE TABLE $wpdb->links (
   link_id int NOT NULL identity(1,1),
@@ -226,7 +228,7 @@ GO
 CREATE INDEX $wpdb->users" . "_IDX2 on $wpdb->users (user_nicename)
 GO\n";
 
-	// usermeta
+	// Usermeta.
 	$usermeta_table = "CREATE TABLE $wpdb->usermeta (
   umeta_id int NOT NULL identity(1,1),
   user_id int NOT NULL default 0,
@@ -346,8 +348,8 @@ GO";
 		case 'ms_global' :
 			$queries = $ms_global_tables;
 			break;
-		default:
 		case 'all' :
+		default:
 			$queries = $global_tables . $blog_tables;
 			if ( $is_multisite )
 				$queries .= $ms_global_tables;
@@ -408,6 +410,7 @@ function populate_options() {
 
 	$options = array(
 	'siteurl' => $guessurl,
+	'home' => $guessurl,
 	'blogname' => __('My Site'),
 	/* translators: blog tagline */
 	'blogdescription' => __('Just another WordPress site'),
@@ -444,7 +447,6 @@ function populate_options() {
 	'blog_charset' => 'UTF-8',
 	'moderation_keys' => '',
 	'active_plugins' => array(),
-	'home' => $guessurl,
 	'category_base' => '',
 	'ping_sites' => 'http://rpc.pingomatic.com/',
 	'advanced_edit' => 0,
@@ -565,10 +567,10 @@ function populate_options() {
 	if ( !empty($insert) )
 		$wpdb->query("INSERT INTO $wpdb->options (option_name, option_value, autoload) VALUES " . $insert);
 
-	// in case it is set, but blank, update "home"
+	// In case it is set, but blank, update "home".
 	if ( !__get_option('home') ) update_option('home', $guessurl);
 
-	// Delete unused options
+	// Delete unused options.
 	$unusedoptions = array(
 		'blodotgsping_url', 'bodyterminator', 'emailtestonly', 'phoneemail_separator', 'smilies_directory',
 		'subjectprefix', 'use_bbcode', 'use_blodotgsping', 'use_phoneemail', 'use_quicktags', 'use_weblogsping',
@@ -595,29 +597,33 @@ function populate_options() {
 	 * Will remove line after confirmation it's useless.
 	 */
 
-	// delete obsolete magpie stuff
+	// Delete obsolete magpie stuff.
 	// $wpdb->query("DELETE FROM $wpdb->options WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'");
 
-	// Deletes all expired transients.
-	// The multi-table delete syntax is used to delete the transient record from table a,
-	// and the corresponding transient_timeout record from table b.
+	/*
+	 * Deletes all expired transients. The multi-table delete syntax is used
+	 * to delete the transient record from table a, and the corresponding
+	 * transient_timeout record from table b.
+	 */
 
     /* PN -- Disable multi-table delete until we can work through the SQL
 	$time = time();
-	$wpdb->query("DELETE a, b FROM $wpdb->options a, $wpdb->options b WHERE
-	        a.option_name LIKE '_transient_%' AND
-	        a.option_name NOT LIKE '_transient_timeout_%' AND
-	        b.option_name = CONCAT( '_transient_timeout_', SUBSTRING( a.option_name, 12 ) )
-	        AND b.option_value < $time");
+	$sql = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
+		WHERE a.option_name LIKE %s
+		AND a.option_name NOT LIKE %s
+		AND b.option_name = CONCAT( '_transient_timeout_', SUBSTRING( a.option_name, 12 ) )
+		AND b.option_value < %d";
+	$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_transient_' ) . '%', $wpdb->esc_like( '_transient_timeout_' ) . '%', $time ) );
 
 	if ( is_main_site() && is_main_network() ) {
-		$wpdb->query("DELETE a, b FROM $wpdb->options a, $wpdb->options b WHERE
-			a.option_name LIKE '_site_transient_%' AND
-			a.option_name NOT LIKE '_site_transient_timeout_%' AND
-			b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
-			AND b.option_value < $time");
-    }
-    */
+		$sql = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
+			WHERE a.option_name LIKE %s
+			AND a.option_name NOT LIKE %s
+			AND b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
+			AND b.option_value < %d";
+		$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like( '_site_transient_timeout_' ) . '%', $time ) );
+	}
+	*/
 }
 
 /**
@@ -868,8 +874,10 @@ function populate_roles_300() {
 		$role->add_cap( 'list_users' );
 		$role->add_cap( 'remove_users' );
 
-		// Never used, will be removed. create_users or
-		// promote_users is the capability you're looking for.
+		/*
+		 * Never used, will be removed. create_users or promote_users
+		 * is the capability you're looking for.
+		 */
 		$role->add_cap( 'add_users' );
 
 		$role->add_cap( 'promote_users' );
@@ -912,7 +920,7 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 	if ( '' == $site_name )
 		$errors->add( 'empty_sitename', __( 'You must provide a name for your network of sites.' ) );
 
-	// check for network collision
+	// Check for network collision.
 	if ( $network_id == $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $wpdb->site WHERE id = %d", $network_id ) ) )
 		$errors->add( 'siteid_exists', __( 'The network already exists.' ) );
 
@@ -923,7 +931,7 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 	if ( $errors->get_error_code() )
 		return $errors;
 
-	// set up site tables
+	// Set up site tables.
 	$template = get_option( 'template' );
 	$stylesheet = get_option( 'stylesheet' );
 	$allowed_themes = array( $stylesheet => true );
@@ -968,12 +976,26 @@ We hope you enjoy your new site. Thanks!
 
 --The Team @ SITE_NAME' );
 
+	$misc_exts = array(
+		// Images.
+		'jpg', 'jpeg', 'png', 'gif',
+		// Video.
+		'mov', 'avi', 'mpg', '3gp', '3g2',
+		// "audio".
+		'midi', 'mid',
+		// Miscellaneous.
+		'pdf', 'doc', 'ppt', 'odt', 'pptx', 'docx', 'pps', 'ppsx', 'xls', 'xlsx', 'key',
+	);
+	$audio_exts = wp_get_audio_extensions();
+	$video_exts = wp_get_video_extensions();
+	$upload_filetypes = array_unique( array_merge( $misc_exts, $audio_exts, $video_exts ) );
+
 	$sitemeta = array(
 		'site_name' => $site_name,
 		'admin_email' => $site_user->user_email,
 		'admin_user_id' => $site_user->ID,
 		'registration' => 'none',
-		'upload_filetypes' => 'jpg jpeg png gif mp3 mov avi wmv midi mid pdf',
+		'upload_filetypes' => implode( ' ', $upload_filetypes ),
 		'blog_upload_space' => 100,
 		'fileupload_maxk' => 1500,
 		'site_admins' => $site_admins,
@@ -1016,9 +1038,13 @@ We hope you enjoy your new site. Thanks!
 	}
 	$wpdb->query( "INSERT INTO $wpdb->sitemeta ( site_id, meta_key, meta_value ) VALUES " . $insert );
 
-	// When upgrading from single to multisite, assume the current site will become the main site of the network.
-	// When using populate_network() to create another network in an existing multisite environment,
-	// skip these steps since the main site of the new network has not yet been created.
+	/*
+	 * When upgrading from single to multisite, assume the current site will
+	 * become the main site of the network. When using populate_network()
+	 * to create another network in an existing multisite environment, skip
+	 * these steps since the main site of the new network has not yet been
+	 * created.
+	 */
 	if ( ! is_multisite() ) {
 		$current_site = new stdClass;
 		$current_site->domain = $domain;

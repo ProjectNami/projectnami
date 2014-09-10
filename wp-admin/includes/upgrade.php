@@ -32,9 +32,10 @@ if ( !function_exists('wp_install') ) :
  * @param bool $public Whether blog is public.
  * @param null $deprecated Optional. Not used.
  * @param string $user_password Optional. User's chosen password. Will default to a random password.
+ * @param string $language Optional. Language chosen.
  * @return array Array keys 'url', 'user_id', 'password', 'password_message'.
  */
-function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '' ) {
+function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '', $language = '' ) {
 	if ( !empty( $deprecated ) )
 		_deprecated_argument( __FUNCTION__, '2.6' );
 
@@ -48,6 +49,10 @@ function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated 
 	update_option('admin_email', $user_email);
 	update_option('blog_public', $public);
 
+	if ( $language ) {
+		update_option( 'WPLANG', $language );
+	}
+
 	$guessurl = wp_guess_url();
 
 	update_option('siteurl', $guessurl);
@@ -56,8 +61,10 @@ function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated 
 	if ( ! $public )
 		update_option('default_pingback_flag', 0);
 
-	// Create default user. If the user already exists, the user tables are
-	// being shared among blogs. Just set the role in that case.
+	/*
+	 * Create default user. If the user already exists, the user tables are
+	 * being shared among blogs. Just set the role in that case.
+	 */
 	$user_id = username_exists($user_name);
 	$user_password = trim($user_password);
 	$email_password = false;
@@ -369,6 +376,9 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 26692 )
 		upgrade_383();
 
+	if ( $wp_current_db_version < 29630 )
+		upgrade_400();
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -412,6 +422,7 @@ function upgrade_380() {
 		deactivate_plugins( array( 'mp6/mp6.php' ), true );
 	}
 }
+
 /**
  * Execute changes made in WordPress 3.8.3.
  *
@@ -441,6 +452,24 @@ function upgrade_383() {
 	}
 }
 /**
+ * Execute changes made in WordPress 4.0.0.
+ *
+ * @since 4.0.0
+ */
+function upgrade_400() {
+	global $wp_current_db_version;
+	if ( $wp_current_db_version < 29630 ) {
+		if ( ! is_multisite() && false === get_option( 'WPLANG' ) ) {
+			if ( defined( 'WPLANG' ) && ( '' !== WPLANG ) && in_array( WPLANG, get_available_languages() ) ) {
+				update_option( 'WPLANG', WPLANG );
+			} else {
+				update_option( 'WPLANG', '' );
+			}
+		}
+	}
+}
+
+/**
  * Execute network level changes
  *
  * @since 3.0.0
@@ -448,23 +477,26 @@ function upgrade_383() {
 function upgrade_network() {
 	global $wp_current_db_version, $wpdb;
 
-	// Always
+	// Always.
 	if ( is_main_network() ) {
-		// Deletes all expired transients.
-		// The multi-table delete syntax is used to delete the transient record from table a,
-		// and the corresponding transient_timeout record from table b.
+		/*
+		 * Deletes all expired transients. The multi-table delete syntax is used
+		 * to delete the transient record from table a, and the corresponding
+		 * transient_timeout record from table b.
+		 */
 
 		/* PN - Disable multi-table delete until we can work through the SQL
         $time = time();
-		$wpdb->query("DELETE a, b FROM $wpdb->sitemeta a, $wpdb->sitemeta b WHERE
-			a.meta_key LIKE '\_site\_transient\_%' AND
-			a.meta_key NOT LIKE '\_site\_transient\_timeout\_%' AND
-			b.meta_key = CONCAT( '_site_transient_timeout_', SUBSTRING( a.meta_key, 17 ) )
-			AND b.meta_value < $time");
+		$sql = "DELETE a, b FROM $wpdb->sitemeta a, $wpdb->sitemeta b
+			WHERE a.meta_key LIKE %s
+			AND a.meta_key NOT LIKE %s
+			AND b.meta_key = CONCAT( '_site_transient_timeout_', SUBSTRING( a.meta_key, 17 ) )
+			AND b.meta_value < %d";
+		$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like ( '_site_transient_timeout_' ) . '%', $time ) );
         */
 	}
 
-	// 2.8
+	// 2.8.
 	if ( $wp_current_db_version < 11549 ) {
 		$wpmu_sitewide_plugins = get_site_option( 'wpmu_sitewide_plugins' );
 		$active_sitewide_plugins = get_site_option( 'active_sitewide_plugins' );
@@ -555,13 +587,20 @@ function upgrade_network() {
  */
 function maybe_create_table($table_name, $create_ddl) {
 	global $wpdb;
-	if ( $wpdb->get_var("SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'") == $table_name )
+
+	$query = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'" );
+
+	if ( $wpdb->get_var( $query ) == $table_name ) {
 		return true;
-	//didn't find it try to create it.
-	$q = $wpdb->query($create_ddl);
-	// we cannot directly tell that whether this succeeded!
-	if ( $wpdb->get_var("SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'") == $table_name )
+	}
+
+	// Didn't find it try to create it..
+	$wpdb->query($create_ddl);
+
+	// We cannot directly tell that whether this succeeded!
+	if ( $wpdb->get_var( $query ) == $table_name ) {
 		return true;
+	}
 	return false;
 }
 
@@ -619,9 +658,11 @@ function maybe_add_column($table_name, $column_name, $create_ddl) {
 			return true;
 		}
 	}
-	//didn't find it try to create it.
-	$q = $wpdb->query($create_ddl);
-	// we cannot directly tell that whether this succeeded!
+
+	// Didn't find it try to create it.
+	$wpdb->query($create_ddl);
+
+	// We cannot directly tell that whether this succeeded!
 	foreach ($wpdb->get_col("DESC $table_name", 0) as $column ) {
 		if ($column == $column_name) {
 			return true;
@@ -672,12 +713,16 @@ function __get_option($setting) {
 function deslash($content) {
 	// Note: \\\ inside a regex denotes a single backslash.
 
-	// Replace one or more backslashes followed by a single quote with
-	// a single quote.
+	/*
+	 * Replace one or more backslashes followed by a single quote with
+	 * a single quote.
+	 */
 	$content = preg_replace("/\\\+'/", "'", $content);
 
-	// Replace one or more backslashes followed by a double quote with
-	// a double quote.
+	/*
+	 * Replace one or more backslashes followed by a double quote with
+	 * a double quote.
+	 */
 	$content = preg_replace('/\\\+"/', '"', $content);
 
 	// Replace one or more backslashes with one backslash.
@@ -708,7 +753,7 @@ function dbDelta( $queries = '', $execute = true ) {
 		$queries = explode( 'GO', $queries );
 		$queries = array_filter( $queries );
 	}
-	
+
 	foreach( $queries as $query ) {
 		$wpdb->query($query);
  	}
@@ -738,7 +783,7 @@ function make_db_current( $tables = 'all' ) {
  * @since 1.5.0
  */
 function make_db_current_silent( $tables = 'all' ) {
-	$alterations = dbDelta( $tables );
+	dbDelta( $tables );
 }
 
 /**
@@ -759,9 +804,10 @@ function make_site_theme_from_oldschool($theme_name, $template) {
 	if (! file_exists("$home_path/index.php"))
 		return false;
 
-	// Copy files from the old locations to the site theme.
-	// TODO: This does not copy arbitrary include dependencies. Only the
-	// standard WP files are copied.
+	/*
+	 * Copy files from the old locations to the site theme.
+	 * TODO: This does not copy arbitrary include dependencies. Only the standard WP files are copied.
+	 */
 	$files = array('index.php' => 'index.php', 'wp-layout.css' => 'style.css', 'wp-comments.php' => 'comments.php', 'wp-comments-popup.php' => 'comments-popup.php');
 
 	foreach ($files as $oldfile => $newfile) {
@@ -770,12 +816,15 @@ function make_site_theme_from_oldschool($theme_name, $template) {
 		else
 			$oldpath = ABSPATH;
 
-		if ($oldfile == 'index.php') { // Check to make sure it's not a new index
+		// Check to make sure it's not a new index.
+		if ($oldfile == 'index.php') {
 			$index = implode('', file("$oldpath/$oldfile"));
 			if (strpos($index, 'WP_USE_THEMES') !== false) {
 				if (! @copy(WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME . '/index.php', "$site_dir/$newfile"))
 					return false;
-				continue; // Don't copy anything
+
+				// Don't copy anything.
+				continue;
 				}
 		}
 
@@ -1022,6 +1071,7 @@ function pre_schema_upgrade() {
 
 		// Upgrade verions prior to 3.7
 		if ( $wp_current_db_version < 25179 ) {
+			// New primary key for signups.
 			$wpdb->query( "ALTER TABLE $wpdb->signups ADD signup_id INT NOT NULL IDENTITY(1,1)" );
 		}
 
