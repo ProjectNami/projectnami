@@ -388,7 +388,7 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = 'yes' )
 	do_action( 'add_option', $option, $value );
 
 	$result = $wpdb->query( $wpdb->prepare( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] WHERE [option_name] = '%s') INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES ('%s', '%s', '%s') else UPDATE [$wpdb->options] set [option_value] = '%s', [autoload] = '%s' where [option_name] = '%s'", array( $option, $option, $serialized_value, $autoload, $serialized_value, $autoload, $option ) ) );
-	if ( ! $result )
+	if ( $result === false )
 		return false;
 
 	if ( ! defined( 'WP_INSTALLING' ) ) {
