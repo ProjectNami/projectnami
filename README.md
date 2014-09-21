@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-###Version: `0.9.18`###
+###Version: `0.10.0`###
 
 ###Description:###
 
@@ -26,12 +26,14 @@ The short answer here is, **WordPress doesn't work with MSSQL**. It's a sad stor
 
 While I would agree with all of this, writing ( or using ) a custom `wp-db.php` drop-in is not enough to get WordPress running on MSSQL. In reality, WP Core is littered with MySQL queries, which means a custom db class won't cover all your bases. WP will remain broken and unsuable.
 
-So, what about using a translation plugin? This can work, but it's hardly optimal. Every query that comes in needs to be parsed and converted to MSSQL style syntax before it's executed. **Yikes!**
+So, what about using only a translation plugin? This can work, but it's hardly optimal. Every query that comes in needs to be parsed and converted to MSSQL style syntax before it's executed. **Yikes!**
 
 We needed a version of WordPress powered by MSSQL in the cloud on Windows Azure. So, we rewrote WP Core to do this very thing. Forking WordPress may seem extreme, but the software simply isn't to the point where true database abstraction is feasible. Maybe someday it will be. In the meantime, Project Nami is an alternative. :)
 
 ###A few things to note:###
 * Project Nami will work with any WordPress plugins/themes that utilize WordPress specific APIs. However, custom SQL queries will most likely fail if they use MySQL based syntax. In most cases, these issues can be easily resolved by using a WordPress API. If you absolutely have to use custom SQL, make sure it's MSSQL Server 2012 compliant. **We highly recommend using WordPress APIs everywhere you can.** Among other things, it makes your code portable across Project Nami and WordPress.
+
+* As of version 0.10.0, a fallback translation layer has been added to help with MySQL-specific syntax used by plugins.
 
 * Project Nami requires ***MSSQL Server 2012*** in order to function properly. Until this version was released, there wasn't really an MSSQL native method of handling the MySQL `LIMIT` when using an offset. However, `OFFSET FETCH` can now be used in conjunction with an MSSQL `ORDER BY` to achieve the equivalent of a MySQL `LIMIT` with an offset.
 
