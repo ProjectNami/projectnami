@@ -1,4 +1,5 @@
 <?php
+require_once(dirname(__FILE__) . '/translations.php');
 /**
  * WordPress DB Class
  *
@@ -1206,7 +1207,7 @@ class wpdb {
 			$errors = sqlsrv_errors();
 
 			if( ! empty( $errors ) && is_array( $errors ) )
-				$str = $errors[ 0 ][ 'message' ];
+				$str = $errors[ 0 ][ 'message' ] . ' Code - ' . $errors[ 0 ][ 'code' ];
 				
 		}
 		$EZSQL_ERROR[] = array( 'query' => $this->last_query, 'error_str' => $str );
@@ -1515,8 +1516,35 @@ class wpdb {
 		}
 		*/
 		
-		// If there is an error then take note of it..
-		$errors = sqlsrv_errors();
+        // If there is an error, first attempt to translate
+        $errors = sqlsrv_errors();
+		if( ! empty( $errors ) && is_array( $errors ) ) {
+            switch ( $errors[ 0 ][ 'code' ] ){
+                case 102:
+                case 156:
+                case 195:
+                case 261:
+                case 321:
+                case 8127:
+                    if ( getenv( 'ProjectNamiLogTranslate' ) ){
+			            $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
+			            error_log( $begintransmsg, 3, 'D:\home\LogFiles\translate.log' );
+                    }
+			        $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+
+                    $query = $sqltranslate->translate( $query );
+                    if ( getenv( 'ProjectNamiLogTranslate' ) ){
+			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result: $query \n";
+			            error_log( $endtransmsg, 3, 'D:\home\LogFiles\translate.log' );
+                    }
+    		        $this->last_query = $query;
+
+	    	        $this->_do_query( $query );
+
+		            // If there is an error then take note of it..
+		            $errors = sqlsrv_errors();
+            }
+		}
 		
 		if( ! empty( $errors ) && is_array( $errors ) ) {
 			$this->last_error = $errors[ 0 ][ 'message' ];
