@@ -1526,17 +1526,17 @@ class wpdb {
                 case 261:
                 case 321:
                 case 8127:
-                    /*
-			        $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
-			        error_log( $begintransmsg, 3, 'D:\home\LogFiles\translate.log' );
-                    */
+                    if ( getenv( 'ProjectNamiLogTranslate' ) ){
+			            $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
+			            error_log( $begintransmsg, 3, 'D:\home\LogFiles\translate.log' );
+                    }
 			        $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 
                     $query = $sqltranslate->translate( $query );
-                    /*
-			        $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result: $query \n";
-			        error_log( $endtransmsg, 3, 'D:\home\LogFiles\translate.log' );
-                    */
+                    if ( getenv( 'ProjectNamiLogTranslate' ) ){
+			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result: $query \n";
+			            error_log( $endtransmsg, 3, 'D:\home\LogFiles\translate.log' );
+                    }
     		        $this->last_query = $query;
 
 	    	        $this->_do_query( $query );
