@@ -86,7 +86,7 @@ function display_header( $body_classes = '' ) {
 function display_setup_form( $error = null ) {
 	global $wpdb;
 
-	$sql = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->users'" );
+	$sql = "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->users'";
 	$user_table = ( $wpdb->get_var( $sql ) != null );
 
 	// Ensure that Blogs appear in search engines by default.
