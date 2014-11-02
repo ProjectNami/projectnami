@@ -155,22 +155,22 @@ switch($step) {
 	<table class="form-table">
 		<tr>
 			<th scope="row"><label for="dbname"><?php _e( 'Database Name' ); ?></label></th>
-			<td><input name="dbname" id="dbname" type="text" size="25" value="wordpress" /></td>
+			<td><input name="dbname" id="dbname" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBName") ? getenv("ProjectNami.DBName") : "wordpress" ); ?>" /></td>
 			<td><?php _e( 'The name of the database you want to run WP in.' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="uname"><?php _e( 'User Name' ); ?></label></th>
-			<td><input name="uname" id="uname" type="text" size="25" value="<?php echo htmlspecialchars( _x( 'username', 'example username' ), ENT_QUOTES ); ?>" /></td>
+			<td><input name="uname" id="uname" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBUser") ? htmlspecialchars( getenv("ProjectNami.DBUser") ) : htmlspecialchars( _x( 'username', 'example username' ), ENT_QUOTES ) ); ?>" /></td>
 			<td><?php _e( 'Your MSSQL username. <span style="font-weight: bold; font-size: 12px; display: block;">Note: If using SQL Azure, username is of the form username@servername.</span>' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="pwd"><?php _e( 'Password' ); ?></label></th>
-			<td><input name="pwd" id="pwd" type="text" size="25" value="<?php echo htmlspecialchars( _x( 'password', 'example password' ), ENT_QUOTES ); ?>" autocomplete="off" /></td>
+			<td><input name="pwd" id="pwd" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBPass") ? htmlspecialchars( getenv("ProjectNami.DBPass"), ENT_QUOTES ) : htmlspecialchars( _x( 'password', 'example password' ), ENT_QUOTES ) ); ?>" autocomplete="off" /></td>
 			<td><?php _e( '&hellip;and your MSSQL password.' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="dbhost"><?php _e( 'Database Host' ); ?></label></th>
-			<td><input name="dbhost" id="dbhost" type="text" size="25" value="localhost" /></td>
+			<td><input name="dbhost" id="dbhost" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBHost") ? getenv("ProjectNami.DBHost") : "localhost" ); ?>" /></td>
 			<td><?php _e( 'You should be able to get this info from your web host, if <code>localhost</code> does not work.' ); ?></td>
 		</tr>
 		<tr>
@@ -275,10 +275,16 @@ switch($step) {
 
 		switch ( $constant ) {
 			case 'DB_NAME'     :
+				$config_file[ $line_num ] = "define('" . $constant . "'," . $padding . "( getenv('ProjectNami.DBName') ? getenv('ProjectNami.DBName') : '" . addcslashes( constant( $constant ), "\\'" ) . "'));\r\n";
+				break;
 			case 'DB_USER'     :
+				$config_file[ $line_num ] = "define('" . $constant . "'," . $padding . "( getenv('ProjectNami.DBUser') ? getenv('ProjectNami.DBUser') : '" . addcslashes( constant( $constant ), "\\'" ) . "'));\r\n";
+				break;
 			case 'DB_PASSWORD' :
+				$config_file[ $line_num ] = "define('" . $constant . "'," . $padding . "( getenv('ProjectNami.DBPass') ? getenv('ProjectNami.DBPass') : '" . addcslashes( constant( $constant ), "\\'" ) . "'));\r\n";
+				break;
 			case 'DB_HOST'     :
-				$config_file[ $line_num ] = "define('" . $constant . "'," . $padding . "'" . addcslashes( constant( $constant ), "\\'" ) . "');\r\n";
+				$config_file[ $line_num ] = "define('" . $constant . "'," . $padding . "( getenv('ProjectNami.DBHost') ? getenv('ProjectNami.DBHost') : '" . addcslashes( constant( $constant ), "\\'" ) . "'));\r\n";
 				break;
 			case 'AUTH_KEY'         :
 			case 'SECURE_AUTH_KEY'  :
