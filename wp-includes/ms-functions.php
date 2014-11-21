@@ -1378,7 +1378,7 @@ function install_blog( $blog_id, $blog_title = '' ) {
 	// Set everything up
 	make_db_current_silent( 'blog' );
 	populate_options();
-	$wp_roles->_init();
+	$wp_roles = new WP_Roles();
 	populate_roles();
 
 	$url = untrailingslashit( $url );

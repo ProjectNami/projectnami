@@ -15,16 +15,6 @@ class Fields_map
     var $filepath = '';
 
     /**
-     * php4 style call to constructor.
-     * 
-     * @since 2.7.1
-     *
-     */
-    function Fields_map($blogid = null) {
-        return $this->__construct($blogid = null);
-    }
-
-    /**
      * Set filepath
      *
      * PHP5 style constructor for compatibility with PHP5.
