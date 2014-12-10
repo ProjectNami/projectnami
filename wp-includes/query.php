@@ -2213,7 +2213,7 @@ class WP_Query {
 	 * @param string $orderby Alias for the field to order by.
 	 * @return string|bool Table-prefixed value to used in the ORDER clause. False otherwise.
 	 */
-	protected function parse_orderby( $orderby ) {
+	protected function parse_orderby( $orderby, &$orderbyfields ) {
 		global $wpdb;
 
 		// Used to filter values.
@@ -2256,15 +2256,15 @@ class WP_Query {
 				if ( ! empty( $type ) ) {
 					$meta_type = $this->meta_query->get_cast_for_type( $type );
 					$orderby = "meta_value";
-					$orderbyfields = ", CAST($wpdb->postmeta.meta_value AS {$meta_type}) as meta_value";
+					$orderbyfields = $orderbyfields . ", CAST($wpdb->postmeta.meta_value AS {$meta_type}) as meta_value";
 				} else {
 					$orderby = "$wpdb->postmeta.meta_value";
-                    $orderbyfields = ", $wpdb->postmeta.meta_value";
+                    $orderbyfields = $orderbyfields . ", $wpdb->postmeta.meta_value";
 				}
 				break;
 			case 'meta_value_num':
 				$orderby = "meta_value";
-				$orderbyfields = ", $wpdb->postmeta.meta_value+0 as meta_value";
+				$orderbyfields = $orderbyfields . ", $wpdb->postmeta.meta_value+0 as meta_value";
 				break;
 			default:
 				$orderby = "$wpdb->posts.post_" . $orderby;
@@ -2836,7 +2836,7 @@ class WP_Query {
 			if ( is_array( $q['orderby'] ) ) {
 				foreach ( $q['orderby'] as $_orderby => $order ) {
 					$orderby = addslashes_gpc( urldecode( $_orderby ) );
-					$parsed  = $this->parse_orderby( $orderby );
+					$parsed  = $this->parse_orderby( $orderby, $orderbyfields );
 
 					if ( ! $parsed ) {
 						continue;
@@ -2851,7 +2851,7 @@ class WP_Query {
 				$q['orderby'] = addslashes_gpc( $q['orderby'] );
 
 				foreach ( explode( ' ', $q['orderby'] ) as $i => $orderby ) {
-					$parsed = $this->parse_orderby( $orderby );
+					$parsed = $this->parse_orderby( $orderby, $orderbyfields );
 					// Only allow certain values for safety.
 					if ( ! $parsed ) {
 						continue;
