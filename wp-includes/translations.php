@@ -291,6 +291,7 @@ class SQL_Translations extends wpdb
             'translate_if_stmt',
             'translate_sqlcalcrows',
             'translate_limit',
+            'translate_findinset',
             'translate_now_datetime',
             'translate_distinct_orderby',
             'translate_replace_casting',
@@ -800,6 +801,33 @@ class SQL_Translations extends wpdb
                 'to' => $limit_matches[4]
             );
         }
+        return $query;
+    }
+
+
+    /**
+     * Changing FIND_IN_SET to PATINDEX 
+     *
+     * @since PN 0.10.3
+     *
+     * @param string $query Query coming in
+     *
+     * @return string Translated Query
+     */
+    function translate_findinset($query)
+    {
+        if ( (stripos($query,'SELECT') !== 0 && stripos($query,'SELECT') !== FALSE)
+            && (stripos($query,'UPDATE') !== 0  && stripos($query,'UPDATE') !== FALSE) ) {
+            return $query;
+        }
+        $pattern = "/FIND_IN_SET\((.*),(.*)\)/";
+        $matched = preg_match($pattern, $query, $matches);
+        if ( $matched == 0 ) {
+            return $query;
+        }
+        // Replace the FIND_IN_SET
+        $query = preg_replace($pattern, "PATINDEX(','+" . $matches[1] . "+',', ','+" . $matches[2] . "+',')", $query);
+
         return $query;
     }
 
