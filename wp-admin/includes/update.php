@@ -161,7 +161,7 @@ function find_core_update( $version, $locale ) {
 
 function core_update_footer( $msg = '' ) {
 	if ( !current_user_can('update_core') )
-		return sprintf( __( 'Version %s' ), get_projectnami_version() );
+		return sprintf( __( '<img src="https://pnsrc.azurewebsites.net/adminfooter/image.png" height="15" width="15" /> Version %1$s ( WP Version %2$s )' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
 
 	$cur = get_preferred_from_update_core();
 	if ( ! is_object( $cur ) )
@@ -181,11 +181,11 @@ function core_update_footer( $msg = '' ) {
 		return sprintf( __( 'You are using a development version ( %1$s ) of Project Nami compatible with WordPress version ( %2$s ). Cool!' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
 
 	case 'upgrade' :
-		return sprintf( '<strong>'.__( '<a href="%1$s">Get Version %2$s</a>' ).'</strong>', network_admin_url( 'update-core.php' ), $cur->current);
+		return sprintf( __('<img src="https://pnsrc.azurewebsites.net/adminfooter/image.png" height="15" width="15" /> Version %1$s <strong>( <a href="%2$s">Get WP Version %3$s</a> )</strong>' ), get_projectnami_version(), network_admin_url( 'update-core.php' ), $cur->current );
 
 	case 'latest' :
 	default :
-		return sprintf( __( 'Version %s' ), get_bloginfo( 'version', 'display' ) );
+		return sprintf( __( '<img src="https://pnsrc.azurewebsites.net/adminfooter/image.png" height="15" width="15" /> Version %1$s ( WP Version %2$s )' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
 	}
 }
 add_filter( 'update_footer', 'core_update_footer' );
@@ -289,7 +289,7 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 		 * Fires at the end of the update message container in each
 		 * row of the plugins list table.
 		 *
-		 * The dynamic portion of the hook name, $file, refers to the path
+		 * The dynamic portion of the hook name, `$file`, refers to the path
 		 * of the plugin's primary file relative to the plugins directory.
 		 *
 		 * @since 2.8.0
@@ -378,7 +378,7 @@ function wp_theme_update_row( $theme_key, $theme ) {
 	 * Fires at the end of the update message container in each
 	 * row of the themes list table.
 	 *
-	 * The dynamic portion of the hook name, $theme_key, refers to
+	 * The dynamic portion of the hook name, `$theme_key`, refers to
 	 * the theme slug as found in the WordPress.org themes repository.
 	 *
 	 * @since 3.1.0

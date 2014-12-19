@@ -53,7 +53,7 @@ function wp_get_db_schema( $scope = 'all', $blog_id = null ) {
  constraint $wpdb->terms" . "_PK PRIMARY KEY (term_id)
 )
 GO
-CREATE UNIQUE INDEX $wpdb->terms" . "_UK1 on $wpdb->terms (slug)
+CREATE INDEX $wpdb->terms" . "_IDX1 on $wpdb->terms (slug)
 GO
 CREATE INDEX $wpdb->terms" . "_IDX2 on $wpdb->terms (name)
 GO
@@ -369,7 +369,8 @@ $wp_queries = wp_get_db_schema( 'all' );
  * Create WordPress options and set the default values.
  *
  * @since 1.5.0
- * @uses $wpdb
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
  * @uses $wp_db_version
  */
 function populate_options() {
@@ -703,6 +704,7 @@ function populate_roles_160() {
 
 	// Add caps for Editor role
 	$role =& get_role('editor');
+	$role = get_role('editor');
 	$role->add_cap('moderate_comments');
 	$role->add_cap('manage_categories');
 	$role->add_cap('manage_links');
@@ -725,6 +727,7 @@ function populate_roles_160() {
 
 	// Add caps for Author role
 	$role =& get_role('author');
+	$role = get_role('author');
 	$role->add_cap('upload_files');
 	$role->add_cap('edit_posts');
 	$role->add_cap('edit_published_posts');
@@ -968,6 +971,7 @@ Your new SITE_NAME site has been successfully set up at:
 BLOG_URL
 
 You can log in to the administrator account with the following information:
+
 Username: USERNAME
 Password: PASSWORD
 Log in here: BLOG_URLwp-login.php

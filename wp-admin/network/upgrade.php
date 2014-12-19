@@ -52,7 +52,7 @@ switch ( $action ) {
 			update_site_option( 'wpmu_upgrade_site', $wp_db_version );
 		}
 
-		$blogs = $wpdb->get_results( "SELECT * FROM {$wpdb->blogs} WHERE site_id = '{$wpdb->siteid}' AND spam = '0' AND deleted = '0' AND archived = '0' ORDER BY registered DESC OFFSET {$n} ROW FETCH NEXT 5 ROWS ONLY", ARRAY_A );
+		$blogs = $wpdb->get_results( "SELECT blog_id FROM {$wpdb->blogs} WHERE site_id = '{$wpdb->siteid}' AND spam = '0' AND deleted = '0' AND archived = '0' ORDER BY registered DESC OFFSET {$n} ROW FETCH NEXT 5 ROWS ONLY", ARRAY_A );
 		if ( empty( $blogs ) ) {
 			echo '<p>' . __( 'All done!' ) . '</p>';
 			break;
