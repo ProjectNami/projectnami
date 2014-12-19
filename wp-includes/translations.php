@@ -1019,7 +1019,7 @@ class SQL_Translations extends wpdb
 
 
     /**
-     * When INSERTING 0000-00-00 00:00:00 or '' for datetime SQL Server says wtf
+     * When INSERTING 0001-01-01 00:00:00 or '' for datetime SQL Server says wtf
      * because it's null value begins at 1900-01-01...so lets change this to current time.
      *
      * @since 2.7.1
@@ -1055,9 +1055,9 @@ class SQL_Translations extends wpdb
             // values are in the preg_data array, we'll fix them there
             foreach ( $date_fields as $df ) {
                 $v = $this->preg_data[$df['pos']];
-                $quote = ( stripos($v, "'0000-00-00 00:00:00'") === 0 || $v === "''" ) ? "'" : '';
-                if ( stripos($v, '0000-00-00 00:00:00') === 0
-                    || stripos($v, "'0000-00-00 00:00:00'") === 0
+                $quote = ( stripos($v, "'0001-01-01 00:00:00'") === 0 || $v === "''" ) ? "'" : '';
+                if ( stripos($v, '0001-01-01 00:00:00') === 0
+                    || stripos($v, "'0001-01-01 00:00:00'") === 0
                     || $v === "''" ) {
                     if ( stripos($df['field'], 'gmt') > 0 ) {
                         $v = $quote . gmdate('Y-m-d H:i:s') . $quote;
@@ -1255,7 +1255,7 @@ class SQL_Translations extends wpdb
             }
         }
 
-        $query = str_ireplace("'0000-00-00 00:00:00'", 'getdate()', $query);
+        $query = str_ireplace("'0001-01-01 00:00:00'", 'getdate()', $query);
         $query = str_ireplace("default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP", '', $query);
 
         // strip unsigned
@@ -1705,7 +1705,7 @@ class SQL_Translations extends wpdb
                                             dc.definition
                                         FROM sys.default_constraints AS dc
                                         WHERE dc.parent_column_id = c.column_id AND c.object_id = dc.parent_object_id)
-                                    , '') THEN '0000-00-00 00:00:00'
+                                    , '') THEN '0001-01-01 00:00:00'
                 ELSE
                     ISNULL((
                         SELECT TOP(1)
