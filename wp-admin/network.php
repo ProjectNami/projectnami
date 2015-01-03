@@ -40,7 +40,7 @@ foreach ( $wpdb->tables( 'ms_global' ) as $table => $prefixed_table )
 function network_domain_check() {
 	global $wpdb;
 
-	$sql = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->site'" );
+	$sql = "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->site'";
 	if ( $wpdb->get_var( $sql ) ) {
 		return $wpdb->get_var( "SELECT TOP 1 domain FROM $wpdb->site ORDER BY id ASC" );
 	}
@@ -458,7 +458,7 @@ define('BLOG_ID_CURRENT_SITE', 1);
                 </rule>
                 <rule name="WordPress Rule 4" stopProcessing="true">
                     <match url="^' . $iis_subdir_match . '(wp-(content|admin|includes).*)" ignoreCase="false" />
-                    <action type="Rewrite" url="' . $iis_rewrite_base . '{R:1}" />
+                    <action type="Rewrite" url="' . $iis_rewrite_base . '{R:2}" />
                 </rule>
                 <rule name="WordPress Rule 5" stopProcessing="true">
                     <match url="^' . $iis_subdir_match . '([_0-9a-zA-Z-]+/)?(.*\.php)$" ignoreCase="false" />
