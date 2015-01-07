@@ -384,6 +384,9 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 30133 )
 		upgrade_410();
 
+	if ( $wp_current_db_version < 30134 )
+		upgrade_410a();
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -483,6 +486,18 @@ function upgrade_410() {
 	if ( $wp_current_db_version < 30133 ) {
 		sqlsrv_query( $wpdb->dbh, "if exists (select * from sysindexes where name = '$wpdb->terms" . "_UK1') DROP INDEX $wpdb->terms" . "_UK1 ON $wpdb->terms" );
 		sqlsrv_query( $wpdb->dbh, "if not exists (select * from sysindexes where name = '$wpdb->terms" . "_IDX1') CREATE INDEX $wpdb->terms" . "_IDX1 ON $wpdb->terms (slug)" );
+	}
+}
+
+/**
+ * Execute changes as required by PN post WP 4.1.0.
+ *
+ * @since 4.1.0
+ */
+function upgrade_410a() {
+	global $wp_current_db_version, $wpdb;
+	if ( $wp_current_db_version < 30134 ) {
+		sqlsrv_query( $wpdb->dbh, "if not exists (select * from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = '$wpdb->signups' and column_name = 'meta') alter table $wpdb->signups add meta nvarchar(max) NULL" );
 	}
 }
 

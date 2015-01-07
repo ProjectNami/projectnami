@@ -796,6 +796,8 @@ class SQL_Translations extends wpdb
             $limit_matches[1] = (int) $limit_matches[1];
             $limit_matches[4] = (int) $limit_matches[4];
 
+            $query = $query . " OFFSET " . $limit_matches[1] . " ROWS FETCH NEXT " . $limit_matches[4] . " ROWS ONLY";
+
             $this->limit = array(
                 'from' => $limit_matches[1], 
                 'to' => $limit_matches[4]

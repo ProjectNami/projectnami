@@ -323,6 +323,7 @@ CREATE TABLE $wpdb->signups (
   activated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
   active tinyint NOT NULL default 0,
   activation_key nvarchar(50) NOT NULL default '',
+  meta nvarchar(max) NULL,
   constraint $wpdb->signups" . "_PK PRIMARY KEY  (signup_id)
 )
 
