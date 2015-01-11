@@ -718,7 +718,7 @@ class SQL_Translations extends wpdb
          * 
          * Akismet
          */
-        if (stristr($query, "INNER JOIN " . $this->prefix . "comments as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
+        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
             $query = str_ireplace(
                 'USING (comment_id)', 
                 'ON c.comment_id = m.comment_id', $query);
