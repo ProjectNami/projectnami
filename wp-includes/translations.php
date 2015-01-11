@@ -784,7 +784,7 @@ class SQL_Translations extends wpdb
             return $query;
         }
         // Check for true offset
-        if ( count($limit_matches) == 5 && $limit_matches[1] != '0' ) {
+        if ( count($limit_matches) == 5 ) {
             $true_offset = true;
         } elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
             $limit_matches[1] = $limit_matches[4];
