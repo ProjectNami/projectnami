@@ -742,6 +742,12 @@ class SQL_Translations extends wpdb
                 'ORDER BY max(post_modified_gmt)', $query);
         }
 
+        if (stristr($query, " && meta_key = ") !== FALSE) {
+            $query = str_ireplace(
+                ' && meta_key = ', 
+                ' AND meta_key = ', $query);
+        }
+
         /**
          * End Project Nami specific translations
          */
