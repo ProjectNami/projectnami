@@ -718,7 +718,7 @@ class SQL_Translations extends wpdb
          * 
          * Akismet
          */
-        if (stristr($query, "INNER JOIN " . $this->prefix . "comments as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
+        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
             $query = str_ireplace(
                 'USING (comment_id)', 
                 'ON c.comment_id = m.comment_id', $query);
@@ -740,6 +740,12 @@ class SQL_Translations extends wpdb
             $query = str_ireplace(
                 'ORDER BY post_modified_gmt', 
                 'ORDER BY max(post_modified_gmt)', $query);
+        }
+
+        if (stristr($query, " && meta_key = ") !== FALSE) {
+            $query = str_ireplace(
+                ' && meta_key = ', 
+                ' AND meta_key = ', $query);
         }
 
         /**
@@ -778,7 +784,7 @@ class SQL_Translations extends wpdb
             return $query;
         }
         // Check for true offset
-        if ( count($limit_matches) == 5 && $limit_matches[1] != '0' ) {
+        if ( count($limit_matches) == 5 ) {
             $true_offset = true;
         } elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
             $limit_matches[1] = $limit_matches[4];
