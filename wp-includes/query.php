@@ -2827,12 +2827,12 @@ class WP_Query {
 			 * while leaving the value unset or otherwise empty sets the default.
 			 */
 			if ( isset( $q['orderby'] ) && ( is_array( $q['orderby'] ) || false === $q['orderby'] ) ) {
-				$orderby = '';
+				$orderby = "$wpdb->posts.post_date " . $q['order'];
 			} else {
 				$orderby = "$wpdb->posts.post_date " . $q['order'];
 			}
 		} elseif ( 'none' == $q['orderby'] ) {
-			$orderby = '';
+			$orderby = "$wpdb->posts.post_date " . $q['order'];
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
 			$orderby = "CASE( {$wpdb->posts}.ID )";
             foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
