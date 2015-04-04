@@ -543,7 +543,7 @@ class SQL_Translations extends wpdb
         }
         
         // Project Nami
-        // Remote ORDER BY clauses from DELETE commands
+        // Remove ORDER BY clauses from DELETE commands
         if ( $this->delete_query ) {
             $order_pos = stripos($query, 'ORDER BY');
             if ($order_pos !== false) {
@@ -747,6 +747,62 @@ class SQL_Translations extends wpdb
                 ' && meta_key = ', 
                 ' AND meta_key = ', $query);
         }
+
+        /**
+         * Booking
+         */
+        if (stristr($query, "COLLATE utf8_general_ci") !== FALSE) {
+            $query = str_ireplace(
+                'COLLATE utf8_general_ci', 
+                ' ', $query);
+        }
+
+        if (stristr($query, "ORDER BY dt, bkBY dt.booking_date") !== FALSE) {
+            $query = str_ireplace(
+                'ORDER BY dt, bkBY dt.booking_date', 
+                'ORDER BY dt.booking_date', $query);
+        }
+
+        if (stristr($query, "wp_bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
+            $query = str_ireplace(
+                "wp_bookingdates WHERE Key_name = 'booking_id_dates'", 
+                "wp_bookingdates' and ind.name = 'booking_id_dates", $query);
+        }
+
+        /**
+         * CURDATE handling test
+         */
+        if (stristr($query, "CURDATE()+ INTERVAL 2 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 2 day', 
+                'CAST(dateadd(d,2,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()+ INTERVAL 3 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 3 day', 
+                'CAST(dateadd(d,3,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()+ INTERVAL 4 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 4 day', 
+                'CAST(dateadd(d,4,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE() - INTERVAL 1 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE() - INTERVAL 1 day', 
+                'CAST(dateadd(d,-1,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()', 
+                'CAST(GETDATE() AS DATE)', $query);
+        }
+
+
 
         /**
          * End Project Nami specific translations
