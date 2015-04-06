@@ -1524,6 +1524,7 @@ class wpdb {
                 case 195:
                 case 261:
                 case 321:
+                case 1018:
                 case 8127:
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			            $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";

@@ -782,7 +782,11 @@ function dbDelta( $queries = '', $execute = true ) {
 
 	// Separate individual queries into an array
 	if ( !is_array($queries) ) {
-		$queries = explode( 'GO', $queries );
+        if (stristr($queries, "GO") !== FALSE) {
+    		$queries = explode( 'GO', $queries );
+        } else {
+    		$queries = explode( ';', $queries );
+        }
 		$queries = array_filter( $queries );
 	}
 
