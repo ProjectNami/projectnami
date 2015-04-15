@@ -1522,6 +1522,7 @@ class wpdb {
                 case 102:
                 case 156:
                 case 195:
+                case 207:
                 case 261:
                 case 321:
                 case 1018:
@@ -1802,18 +1803,20 @@ class wpdb {
 	 */
 	public function get_var( $query = null, $x = 0, $y = 0 ) {
 		$this->func_call = "\$db->get_var(\"$query\", $x, $y)";
-
+        /*
 		if ( $query && $x == 0 && $y == 0 ) {
 		
-			$result = sqlsrv_query($this->dbh, $query );
+			//$result = sqlsrv_query($this->dbh, $query );
+            $result = $this->query( $query );
 			
 			if(false === $result)
 				return null;
 			
-			$row = sqlsrv_fetch_array( $result );
+			//$row = sqlsrv_fetch_array( $result );
+            $row = $this->last_result[0];
 			return $row[ 0 ];
 		}
-		
+		*/
 		if ( $query ) {
 			$this->query( $query );
 		}
