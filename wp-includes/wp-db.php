@@ -1582,6 +1582,7 @@ class wpdb {
                 case 156:
                 case 195:
                 case 207:
+                case 241:
                 case 261:
                 case 321:
                 case 1018:
@@ -1744,6 +1745,7 @@ class wpdb {
 		$data = $this->process_fields( $table, $data, $format );
 		if ( false === $data ) {
 			return false;
+		}
 
 		$formats = $values = array();
 		foreach ( $data as $value ) {
@@ -1751,10 +1753,10 @@ class wpdb {
 			$values[]  = $value['value'];
 		}
 
-		$fields  = '`' . implode( '`, `', array_keys( $data ) ) . '`';
+		$fields  = '[' . implode( '], [', array_keys( $data ) ) . ']';
 		$formats = implode( ', ', $formats );
 
-		$sql = "$type INTO `$table` ($fields) VALUES ($formats)";
+		$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
 
 		$this->insert_id = 0;
 		$this->check_current_query = false;
@@ -1782,7 +1784,7 @@ class wpdb {
 	 */
 	public function update( $table, $data, $where, $format = null, $where_format = null ) {
 		if ( ! is_array( $data ) || ! is_array( $where ) ) {
- 			return false;
+			return false;
 		}
 
 		$data = $this->process_fields( $table, $data, $format );
@@ -1832,7 +1834,7 @@ class wpdb {
 	public function delete( $table, $where, $where_format = null ) {
 		if ( ! is_array( $where ) ) {
 			return false;
-		}
+        }
 
 		$where = $this->process_fields( $table, $where, $where_format );
 		if ( false === $where ) {
@@ -1852,6 +1854,7 @@ class wpdb {
 		$this->check_current_query = false;
 		return $this->query( $this->prepare( $sql, $values ) );
 	}
+
 
 	/**
 	 * Processes arrays of field/value pairs and field formats.
@@ -1956,7 +1959,7 @@ class wpdb {
 		}
 
 		return $data;
-	}
+ 	}
 
 	/**
 	 * Retrieve one variable from the database.
@@ -1978,6 +1981,7 @@ class wpdb {
 		if ( $this->check_safe_collation( $query ) ) {
 			$this->check_current_query = false;
 		}
+
         /*
 		if ( $query && $x == 0 && $y == 0 ) {
 		
@@ -2179,6 +2183,10 @@ class wpdb {
 		if ( isset( $this->table_charset[ $tablekey ] ) ) {
 			return $this->table_charset[ $tablekey ];
 		}
+
+        $charset = 'latin1';
+		$this->table_charset[ $tablekey ] = $charset;
+		return $charset;
 
 		$charsets = $columns = array();
 		$results = $this->get_results( "SHOW FULL COLUMNS FROM [$table]" );
@@ -2402,6 +2410,7 @@ class wpdb {
 	 */
 		// If any of the columns don't have one of these collations, it needs more sanity checking.
 	protected function strip_invalid_text( $data ) {
+        return $data;
 		// Some multibyte character sets that we can check in PHP.
 		$mb_charsets = array(
 			'ascii'   => 'ASCII',
@@ -2867,3 +2876,4 @@ class wpdb {
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('productversion')) as 'version'" );
 	}
 }
+
