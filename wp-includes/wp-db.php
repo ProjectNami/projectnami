@@ -2346,6 +2346,9 @@ class wpdb {
 	 * @return bool True if the collation is safe, false if it isn't.
 	 */
 	protected function check_safe_collation( $query ) {
+        // Using nvarchar with MSSQL, so collation should not matter
+        return true;
+
 		if ( $this->checking_collation ) {
 			return true;
 		}
