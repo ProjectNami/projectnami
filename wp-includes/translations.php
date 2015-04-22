@@ -763,10 +763,10 @@ class SQL_Translations extends wpdb
                 'ORDER BY dt.booking_date', $query);
         }
 
-        if (stristr($query, "wp_bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
+        if (stristr($query, "bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
             $query = str_ireplace(
-                "wp_bookingdates WHERE Key_name = 'booking_id_dates'", 
-                "wp_bookingdates' and ind.name = 'booking_id_dates", $query);
+                "bookingdates WHERE Key_name = 'booking_id_dates'", 
+                "bookingdates' and ind.name = 'booking_id_dates", $query);
         }
 
         /**
@@ -802,7 +802,43 @@ class SQL_Translations extends wpdb
                 'CAST(GETDATE() AS DATE)', $query);
         }
 
+        /**
+         * W3 Total Cache
+         */
+        if (stristr($query, "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'") !== FALSE) {
+            $query = str_ireplace(
+                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'", 
+                '', $query);
+        }
 
+        if ( (stristr($query, "REPLACE INTO") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
+            $query = str_ireplace(
+                'REPLACE INTO', 
+                'INSERT', $query);
+        }
+
+        if (stristr($query, "w3tc_cdn_queue") !== FALSE) {
+            $query = str_ireplace(
+                '"', 
+                "'", $query);
+        }
+
+        if ( (stristr($query, 'pm.meta_value AS file') !== FALSE) && (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
+            $query = str_ireplace(
+                'pm.meta_value AS file', 
+                "pm.meta_value AS [file]", $query);
+            $query = $query . ", pm.meta_value, pm2.meta_value";
+        }
+
+        if ( (stristr($query, '"_wp_attached_file"') !== FALSE) || (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
+            $query = str_ireplace(
+                '"', 
+                "'", $query);
+        }
+
+        if ( (stristr($query, "CREATE TABLE") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
+            $query = "IF NOT EXISTS (select * from sysobjects WHERE name = '" . $this->get_blog_prefix() . "w3tc_cdn_queue')" . $query;
+        }
 
         /**
          * End Project Nami specific translations
@@ -1320,6 +1356,7 @@ class SQL_Translations extends wpdb
         }
 
         $query = str_ireplace("'0001-01-01 00:00:00'", 'getdate()', $query);
+        $query = str_ireplace("'0000-00-00 00:00:00'", 'getdate()', $query);
         $query = str_ireplace("default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP", '', $query);
 
         // strip unsigned
