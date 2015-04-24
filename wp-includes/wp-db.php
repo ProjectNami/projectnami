@@ -1404,7 +1404,6 @@ class wpdb {
 		} else {
 			$this->dbh = sqlsrv_connect( $this->dbhost, array( "Database"=> $this->dbname, "UID"=> $this->dbuser, "PWD"=> $this->dbpassword, 'ReturnDatesAsStrings'=>true) );
 			}
-		}
 
 		if ( ! $this->dbh && $allow_bail ) {
 			wp_load_translations_early();
