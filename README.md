@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-###Version: `0.10.9`###
+###Version: `1.0.0`###
 
 ###Description:###
 

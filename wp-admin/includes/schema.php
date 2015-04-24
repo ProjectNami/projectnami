@@ -44,6 +44,13 @@ function wp_get_db_schema( $scope = 'all', $blog_id = null ) {
 	// Engage multisite if in the middle of turning it on from network.php.
 	$is_multisite = is_multisite() || ( defined( 'WP_INSTALLING_NETWORK' ) && WP_INSTALLING_NETWORK );
 
+	/*
+	 * Indexes have a maximum size of 767 bytes. Historically, we haven't need to be concerned about that.
+	 * As of 4.2, however, we moved to utf8mb4, which uses 4 bytes per character. This means that an index which
+	 * used to have room for floor(767/3) = 255 characters, now only has room for floor(767/4) = 191 characters.
+	 */
+	$max_index_length = 191;
+
 	// Blog specific tables.
 	$blog_tables = "CREATE TABLE $wpdb->terms (
  term_id int NOT NULL identity(1,1),
@@ -705,7 +712,6 @@ function populate_roles_160() {
 
 	// Add caps for Editor role
 	$role =& get_role('editor');
-	$role = get_role('editor');
 	$role->add_cap('moderate_comments');
 	$role->add_cap('manage_categories');
 	$role->add_cap('manage_links');
@@ -728,7 +734,6 @@ function populate_roles_160() {
 
 	// Add caps for Author role
 	$role =& get_role('author');
-	$role = get_role('author');
 	$role->add_cap('upload_files');
 	$role->add_cap('edit_posts');
 	$role->add_cap('edit_published_posts');
@@ -966,7 +971,7 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 		$site_admins = get_site_option( 'site_admins' );
 	}
 
-	$welcome_email = __( 'Dear User,
+	$welcome_email = __( 'Howdy USERNAME,
 
 Your new SITE_NAME site has been successfully set up at:
 BLOG_URL
