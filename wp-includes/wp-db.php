@@ -2001,6 +2001,46 @@ class wpdb {
 			$this->check_current_query = false;
 		}
 
+		if ( $query && $x == 0 && $y == 0 ) {
+		
+			$result = sqlsrv_query($this->dbh, $query );
+			
+            // If there is an error, first attempt to translate
+            $errors = sqlsrv_errors();
+		    if( ! empty( $errors ) && is_array( $errors ) ) {
+                switch ( $errors[ 0 ][ 'code' ] ){
+                    case 102:
+                    case 156:
+                    case 195:
+                    case 207:
+                    case 241:
+                    case 261:
+                    case 321:
+                    case 1018:
+                    case 8127:
+                        if ( getenv( 'ProjectNamiLogTranslate' ) ){
+			                $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
+			                error_log( $begintransmsg, 3, 'D:\home\LogFiles\translate.log' );
+                        }
+			            $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+
+                        $query = $sqltranslate->translate( $query );
+                        if ( getenv( 'ProjectNamiLogTranslate' ) ){
+			                $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result: $query \n";
+			                error_log( $endtransmsg, 3, 'D:\home\LogFiles\translate.log' );
+                        }
+
+            			$result = sqlsrv_query($this->dbh, $query );
+                }
+		    }
+
+			if(false === $result)
+				return null;
+			
+			$row = sqlsrv_fetch_array( $result );
+			return $row[ 0 ];
+		}
+
 		if ( $query ) {
 			$this->query( $query );
 		}
