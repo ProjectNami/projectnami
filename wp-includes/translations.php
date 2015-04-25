@@ -387,10 +387,13 @@ class SQL_Translations extends wpdb
             $end_pos = strlen($query);
             $param = substr($query, 17, $end_pos - 17);
             // quoted with double quotes instead of single?
-            $param = trim($param, '"');
+            // $param = trim($param, '"');
+            $param = str_ireplace('"', "'", $param);
+            /*
             if($param[0] !== "'") {
                 $param = "'$param'";
             }
+            */
             $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE ' . $param;
         }
         // DESCRIBE - this is pretty darn close to mysql equiv, however it will need to have a flag to modify the result set
