@@ -1358,6 +1358,8 @@ class SQL_Translations extends wpdb
             }
         }
 
+        $query = str_ireplace(" bool NOT NULL DEFAULT 0,", ' bit NOT NULL DEFAULT 0,', $query);
+        $query = str_ireplace(" bool DEFAULT 0,", ' bit DEFAULT 0,', $query);
         $query = str_ireplace("'0001-01-01 00:00:00'", 'getdate()', $query);
         $query = str_ireplace("'0000-00-00 00:00:00'", 'getdate()', $query);
         $query = str_ireplace("default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP", '', $query);
