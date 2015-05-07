@@ -469,8 +469,11 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 30134 )
 		upgrade_410a();
 
-	if ( $wp_current_db_version < 31533 )
-		upgrade_421();
+	// Don't harsh my mellow. upgrade_422() must be called before
+	// upgrade_420() to catch bad comments prior to any auto-expansion of
+	// MySQL column widths.
+	if ( $wp_current_db_version < 31534 )
+		upgrade_422();
 
 	maybe_disable_link_manager();
 
@@ -592,13 +595,21 @@ function upgrade_410a() {
  * @since 4.2.1
  */
 function upgrade_421() {
+}
+
+/**
+ * Execute changes made in WordPress 4.2.2.
+ *
+ * @since 4.2.2
+ */
+function upgrade_422() {
 	global $wp_current_db_version, $wpdb;
 
-	if ( $wp_current_db_version < 31533 ) {
+	if ( $wp_current_db_version < 31534 ) {
 		$comments = $wpdb->get_results(
-			"SELECT comment_ID FROM $wpdb->comments
+			"SELECT comment_ID FROM {$wpdb->comments}
 			WHERE comment_date_gmt > '2015-04-26'
-			AND LEN( comment_content ) >= 65535
+			AND LEN( comment_content ) >= 65525
 			AND ( comment_content LIKE '%<%' OR comment_content LIKE '%>%' )"
 		);
 
