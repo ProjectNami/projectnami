@@ -723,7 +723,7 @@ class SQL_Translations extends wpdb
          */
         if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
             $query = str_ireplace(
-                'USING (comment_id)', 
+                'USING(comment_id)', 
                 'ON c.comment_id = m.comment_id', $query);
         }
 
@@ -870,39 +870,75 @@ class SQL_Translations extends wpdb
         $pattern = '/LIMIT\s*(\d+)((\s*,?\s*)(\d+)*);{0,1}$/is';
         $matched = preg_match($pattern, $query, $limit_matches);
         if ( $matched == 0 ) {
-            return $query;
-        }
-        // Remove the LIMIT statement
-        $true_offset = false;
-        $query = preg_replace($pattern, '', $query);
-        if ( $this->delete_query ) {
-            return $query;
-        }
-        // Check for true offset
-        if ( count($limit_matches) == 5 ) {
-            $true_offset = true;
-        } elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
-            $limit_matches[1] = $limit_matches[4];
-        }
-
-        // Rewrite the query.
-        if ( $true_offset === false ) {
-            if ( stripos($query, 'DISTINCT') > 0 ) {
-                $query = str_ireplace('DISTINCT', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query);
-            } else {
-                $query = str_ireplace('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query);
-                $query = str_ireplace('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query);
+            $pattern = '/LIMIT\s*(\d+)((\s*offset?\s*)(\d+)*);{0,1}$/is';
+            $matched = preg_match($pattern, $query, $limit_matches);
+            if ( $matched == 0 ) {
+                return $query;
             }
+            // Remove the LIMIT statement
+            $true_offset = false;
+            $query = preg_replace($pattern, '', $query);
+            if ( $this->delete_query ) {
+                return $query;
+            }
+            // Check for true offset
+            if ( count($limit_matches) == 5 && $limit_matches[4] > 0 ) {
+                $true_offset = true;
+            } 
+
+            // Rewrite the query.
+            if ( $true_offset === false ) {
+                if ( stripos($query, 'DISTINCT') > 0 ) {
+                    $query = str_ireplace('DISTINCT', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query);
+                } else {
+                    $query = str_ireplace('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query);
+                    $query = str_ireplace('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query);
+                }
+            } else {
+                $limit_matches[1] = (int) $limit_matches[1];
+                $limit_matches[4] = (int) $limit_matches[4];
+
+                $query = $query . " OFFSET " . $limit_matches[4] . " ROWS FETCH NEXT " . $limit_matches[1] . " ROWS ONLY";
+
+                $this->limit = array(
+                    'from' => $limit_matches[4], 
+                    'to' => $limit_matches[1]
+                );
+            }
+
         } else {
-            $limit_matches[1] = (int) $limit_matches[1];
-            $limit_matches[4] = (int) $limit_matches[4];
+            // Remove the LIMIT statement
+            $true_offset = false;
+            $query = preg_replace($pattern, '', $query);
+            if ( $this->delete_query ) {
+                return $query;
+            }
+            // Check for true offset
+            if ( count($limit_matches) == 5 ) {
+                $true_offset = true;
+            } elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
+                $limit_matches[1] = $limit_matches[4];
+            }
 
-            $query = $query . " OFFSET " . $limit_matches[1] . " ROWS FETCH NEXT " . $limit_matches[4] . " ROWS ONLY";
+            // Rewrite the query.
+            if ( $true_offset === false ) {
+                if ( stripos($query, 'DISTINCT') > 0 ) {
+                    $query = str_ireplace('DISTINCT', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query);
+                } else {
+                    $query = str_ireplace('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query);
+                    $query = str_ireplace('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query);
+                }
+            } else {
+                $limit_matches[1] = (int) $limit_matches[1];
+                $limit_matches[4] = (int) $limit_matches[4];
 
-            $this->limit = array(
-                'from' => $limit_matches[1], 
-                'to' => $limit_matches[4]
-            );
+                $query = $query . " OFFSET " . $limit_matches[1] . " ROWS FETCH NEXT " . $limit_matches[4] . " ROWS ONLY";
+
+                $this->limit = array(
+                    'from' => $limit_matches[1], 
+                    'to' => $limit_matches[4]
+                );
+            }
         }
         return $query;
     }
