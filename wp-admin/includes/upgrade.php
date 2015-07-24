@@ -469,9 +469,6 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 30134 )
 		upgrade_410a();
 
-	// Don't harsh my mellow. upgrade_422() must be called before
-	// upgrade_420() to catch bad comments prior to any auto-expansion of
-	// MySQL column widths.
 	if ( $wp_current_db_version < 31534 )
 		upgrade_422();
 

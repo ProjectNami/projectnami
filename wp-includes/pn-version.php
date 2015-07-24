@@ -1,5 +1,5 @@
 <?php
 
-$pn_version = '1.0.3';
+$pn_version = '1.0.4';
 
 ?>
