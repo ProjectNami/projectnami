@@ -126,7 +126,7 @@ class SQL_Translations extends wpdb
      * @access public
      * @var bool
      */
-    var $azure = false;
+    var $azure = true;
     
     /**
      * Preceeding query
@@ -1444,9 +1444,9 @@ class SQL_Translations extends wpdb
                     $end_pos = $start_pos + 13;
                 }
 
-                if ($sub !== 'COLLATE') {
+        /*      if ($sub !== 'COLLATE') {
                     $query = $this->add_collation($query, $end_pos);
-                }
+                } */
             }
         }
 
@@ -1544,6 +1544,7 @@ class SQL_Translations extends wpdb
             'user_nicename',
             'user_id',
         );
+        $primary_key_found = FALSE;
         for ($i = 0; $i < $count; $i++) {
             if ($keys[$i]['pos'] < $lowest_start_pos || $lowest_start_pos === false) {
                 $lowest_start_pos = $keys[$i]['pos'];
@@ -1554,9 +1555,12 @@ class SQL_Translations extends wpdb
             switch ($keys[$i]['type']) {
                 case 'PRIMARY KEY':
                     $str = "CONSTRAINT [" . $table . "_" . implode('_', $keys[$i]['field']) . "] PRIMARY KEY CLUSTERED (" . implode(',', $keys[$i]['field']) . ") WITH (IGNORE_DUP_KEY = OFF)";
+                    $primary_key_found = TRUE;
+                    /*
                     if (!$this->azure ) {
                         $str .= " ON [PRIMARY]";
                     }
+                    */
                 break;
                 case 'UNIQUE KEY':
                     $check = true;
@@ -1566,10 +1570,11 @@ class SQL_Translations extends wpdb
                         }
                     }
                     if ($check) {
-                        if ($this->azure) {
+                        if ( $primary_key_found ) {
                             $str = 'CONSTRAINT [' . $table . '_' . implode('_', $keys[$i]['field']) . '] UNIQUE NONCLUSTERED (' . implode(',', $keys[$i]['field']) . ')';
                         } else {
-                            $str = 'CONSTRAINT [' . $table . '_' . implode('_', $keys[$i]['field']) . '] UNIQUE NONCLUSTERED (' . implode(',', $keys[$i]['field']) . ')';
+                            $str = 'CONSTRAINT [' . $table . '_' . implode('_', $keys[$i]['field']) . '] PRIMARY KEY CLUSTERED (' . implode(',', $keys[$i]['field']) . ')';
+                            $primary_key_found = TRUE;
                         }
                     } else {
                         $str = '';
@@ -1590,10 +1595,11 @@ class SQL_Translations extends wpdb
                         } elseif (!is_array($this->following_query)) {
                             $this->following_query = array($this->following_query);
                         }
-                        if ($this->azure) {
+                        if ( $this->azure && !$primary_key_found ) {
                             $this->following_query[] = 'CREATE CLUSTERED INDEX ' . 
                             $table . '_' . implode('_', $keys[$i]['field']) . 
                             ' ON '.$table.'('.implode(',', $keys[$i]['field']).')';
+                            $primary_key_found = TRUE;
                         } else {
                             $this->following_query[] = 'CREATE NONCLUSTERED INDEX ' . 
                             $table . '_' . implode('_', $keys[$i]['field']) . 
@@ -1609,7 +1615,7 @@ class SQL_Translations extends wpdb
         }
         if ($key_str !== '') {
             if ($add_primary && !$this->azure) {
-                $query = substr_replace($query, $key_str . ") ON [PRIMARY];", $lowest_start_pos);
+                //$query = substr_replace($query, $key_str . ") ON [PRIMARY];", $lowest_start_pos);
             } else {
                 $query = substr_replace($query, $key_str . ");", $lowest_start_pos);
             }
