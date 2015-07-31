@@ -716,6 +716,8 @@ class SQL_Translations extends wpdb
                 'ON ' . $this->prefix . 'terms.term_id = ' . $this->prefix . 'term_taxonomy.term_id', $query);
         }
 
+        $query = str_ireplace("'0000-00-00 00:00:00'", "'0001-01-01 00:00:00'", $query);
+
         /**
          * Begin Project Nami specific translations
          * 
