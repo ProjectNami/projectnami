@@ -2856,11 +2856,14 @@ class WP_Query {
 			 */
 			if ( isset( $q['orderby'] ) && ( is_array( $q['orderby'] ) || false === $q['orderby'] ) ) {
 				$orderby = "$wpdb->posts.post_date " . $q['order'];
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 			} else {
 				$orderby = "$wpdb->posts.post_date " . $q['order'];
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 			}
 		} elseif ( 'none' == $q['orderby'] ) {
 			$orderby = "$wpdb->posts.post_date " . $q['order'];
+            $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
 			$orderby = "CASE( {$wpdb->posts}.ID )";
             foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
