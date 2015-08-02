@@ -1598,6 +1598,7 @@ class wpdb {
 		if( ! empty( $errors ) && is_array( $errors ) ) {
             switch ( $errors[ 0 ][ 'code' ] ){
                 case 102:
+                case 145:
                 case 156:
                 case 195:
                 case 207:
@@ -1605,6 +1606,7 @@ class wpdb {
                 case 261:
                 case 321:
                 case 1018:
+                case 8120:
                 case 8127:
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			            $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
@@ -2043,6 +2045,7 @@ class wpdb {
 		    if( ! empty( $errors ) && is_array( $errors ) ) {
                 switch ( $errors[ 0 ][ 'code' ] ){
                     case 102:
+                    case 145:
                     case 156:
                     case 195:
                     case 207:
@@ -2050,6 +2053,7 @@ class wpdb {
                     case 261:
                     case 321:
                     case 1018:
+                    case 8120:
                     case 8127:
                         if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			                $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";

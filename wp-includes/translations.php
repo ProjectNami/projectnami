@@ -1013,24 +1013,33 @@ class SQL_Translations extends wpdb
      */
     function translate_distinct_orderby($query)
     {
-        if (preg_match('/^\s*SELECT\s*DISTINCT/i', $query)) {
-            if ( stripos($query, 'ORDER') > 0 ) {
-                $ord = '';
-                $order_pos = stripos($query, 'ORDER');
-                if ( stripos($query, 'BY', $order_pos) > $order_pos ) {
-                    $fields = $this->get_as_fields($query);
-                    $ob = stripos($query, 'BY', $order_pos);
-                    if ( stripos($query, ' ASC', $ob) > 0 ) {
-                        $ord = stripos($query, ' ASC', $ob);
-                    }
-                    if ( stripos($query, ' DESC', $ob) > 0 ) {
-                        $ord = stripos($query, ' DESC', $ob);
-                    }
-                    $str = 'BY ';
-                    $str .= implode(', ',$fields);
+        if ( stripos($query, 'tribe_event_' ) ) {
+            if ( stripos($query, 'post_date ASC' ) ){
+                $query = str_replace('.ID  FROM', '.ID, post_date  FROM', $query);
+            }
+            if ( stripos($query, '.*, MIN(' ) ){
+                $query = str_replace('ORDER BY', 'group by ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count ORDER BY', $query);
+            }
+        } else {
+            if (preg_match('/^\s*SELECT\s*DISTINCT/i', $query)) {
+                if ( stripos($query, 'ORDER') > 0 ) {
+                    $ord = '';
+                    $order_pos = stripos($query, 'ORDER');
+                    if ( stripos($query, 'BY', $order_pos) > $order_pos ) {
+                        $fields = $this->get_as_fields($query);
+                        $ob = stripos($query, 'BY', $order_pos);
+                        if ( stripos($query, ' ASC', $ob) > 0 ) {
+                            $ord = stripos($query, ' ASC', $ob);
+                        }
+                        if ( stripos($query, ' DESC', $ob) > 0 ) {
+                            $ord = stripos($query, ' DESC', $ob);
+                        }
+                        $str = 'BY ';
+                        $str .= implode(', ',$fields);
 
-                    $query = substr_replace($query, $str, $ob, ($ord-$ob));
-                    $query = str_replace('ORDER BY BY', 'ORDER BY', $query);
+                        $query = substr_replace($query, $str, $ob, ($ord-$ob));
+                        $query = str_replace('ORDER BY BY', 'ORDER BY', $query);
+                    }
                 }
             }
         }
