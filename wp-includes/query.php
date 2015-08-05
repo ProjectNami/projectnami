@@ -2268,6 +2268,7 @@ class WP_Query {
 			case 'menu_order':
 			case 'comment_count':
 				$orderby_clause = "$wpdb->posts.{$orderby}";
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.{$orderby}";
 				break;
 			case 'rand':
 				$orderby_clause = 'NEWID()';
@@ -2290,10 +2291,12 @@ class WP_Query {
 				if ( array_key_exists( $orderby, $meta_clauses ) ) {
 					// $orderby corresponds to a meta_query clause.
 					$meta_clause = $meta_clauses[ $orderby ];
-					$orderby_clause = "CAST({$meta_clause['alias']}.meta_value AS {$meta_clause['cast']})";
+					$orderby_clause = "meta_value";
+					$orderbyfields = $orderbyfields . ", CAST({$meta_clause['alias']}.meta_value AS {$meta_clause['cast']}) as meta_value";
 				} else {
 					// Default: order by post field.
 					$orderby_clause = "$wpdb->posts.post_" . sanitize_key( $orderby );
+                    $orderbyfields = $orderbyfields . ", $wpdb->posts.post_" . sanitize_key( $orderby );
 				}
 
 				break;
@@ -2853,11 +2856,14 @@ class WP_Query {
 			 */
 			if ( isset( $q['orderby'] ) && ( is_array( $q['orderby'] ) || false === $q['orderby'] ) ) {
 				$orderby = "$wpdb->posts.post_date " . $q['order'];
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 			} else {
 				$orderby = "$wpdb->posts.post_date " . $q['order'];
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 			}
 		} elseif ( 'none' == $q['orderby'] ) {
 			$orderby = "$wpdb->posts.post_date " . $q['order'];
+            $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
 			$orderby = "CASE( {$wpdb->posts}.ID )";
             foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
