@@ -4037,7 +4037,8 @@
                     "name": "ProjectNamiLogTranslate",
                     "value": 1
                 }
-            ]
+            ],
+            "phpVersion": "5.5"
           }
         },
         {
