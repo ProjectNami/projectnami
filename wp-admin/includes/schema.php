@@ -8,14 +8,17 @@
  * @subpackage Administration
  */
 
-// Declare these as global in case schema.php is included from a function.
+/**
+ * Declare these as global in case schema.php is included from a function.
+ *
+ * @global wpdb   $wpdb
+ * @global array  $wp_queries
+ * @global string $charset_collate
+ */
 global $wpdb, $wp_queries, $charset_collate;
 
 /**
  * The database character collate.
- * @var string
- * @global string
- * @name $charset_collate
  */
 $charset_collate = $wpdb->get_charset_collate();
 
@@ -23,6 +26,8 @@ $charset_collate = $wpdb->get_charset_collate();
  * Retrieve the SQL for creating database tables.
  *
  * @since 3.3.0
+ *
+ * @global wpdb $wpdb
  *
  * @param string $scope Optional. The tables for which to retrieve SQL. Can be all, global, ms_global, or blog tables. Defaults to all.
  * @param int $blog_id Optional. The blog ID for which to retrieve SQL. Default is the current blog ID.
@@ -379,7 +384,8 @@ $wp_queries = wp_get_db_schema( 'all' );
  * @since 1.5.0
  *
  * @global wpdb $wpdb WordPress database abstraction object.
- * @uses $wp_db_version
+ * @global int  $wp_db_version
+ * @global int  $wp_current_db_version
  */
 function populate_options() {
 	global $wpdb, $wp_db_version, $wp_current_db_version;
@@ -536,6 +542,9 @@ function populate_options() {
 
 	// 3.5
 	'link_manager_enabled' => 0,
+
+	// 4.3.0
+	'finished_splitting_shared_terms' => 1,
 	);
 
 	// 3.3
@@ -632,7 +641,7 @@ function populate_options() {
 			AND b.option_value < %d";
 		$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like( '_site_transient_timeout_' ) . '%', $time ) );
 	}
-	*/
+    */
 }
 
 /**
@@ -916,6 +925,11 @@ endif;
  *
  * @since 3.0.0
  *
+ * @global wpdb       $wpdb
+ * @global object     $current_site
+ * @global int        $wp_db_version
+ * @global WP_Rewrite $wp_rewrite
+ *
  * @param int $network_id ID of network to populate.
  * @return bool|WP_Error True on success, or WP_Error on warning (with the install otherwise successful,
  *                       so the error code must be checked) or failure.
@@ -971,6 +985,7 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 		$site_admins = get_site_option( 'site_admins' );
 	}
 
+	/* translators: Do not translate USERNAME, SITE_NAME, BLOG_URL, PASSWORD: those are placeholders. */
 	$welcome_email = __( 'Howdy USERNAME,
 
 Your new SITE_NAME site has been successfully set up at:

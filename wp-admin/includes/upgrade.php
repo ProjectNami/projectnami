@@ -118,6 +118,10 @@ if ( !function_exists('wp_install_defaults') ) :
  *
  * @since 2.1.0
  *
+ * @global wpdb       $wpdb
+ * @global WP_Rewrite $wp_rewrite
+ * @global string     $table_prefix
+ *
  * @param int $user_id User ID.
  */
 function wp_install_defaults( $user_id ) {
@@ -153,31 +157,31 @@ function wp_install_defaults( $user_id ) {
 		$first_post = get_site_option( 'first_post' );
 
 		if ( empty($first_post) )
-			$first_post = __( 'Welcome to <a href="SITE_URL">SITE_NAME</a>. This is your first post. Edit or delete it, then start blogging!' );
+			$first_post = __( 'Welcome to <a href="SITE_URL">SITE_NAME</a>. This is your first post. Edit or delete it, then start writing!' );
 
 		$first_post = str_replace( "SITE_URL", esc_url( network_home_url() ), $first_post );
 		$first_post = str_replace( "SITE_NAME", get_current_site()->site_name, $first_post );
 	} else {
-		$first_post = __('Welcome to WordPress. This is your first post. Edit or delete it, then start blogging!');
+		$first_post = __( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' );
 	}
 
 	$wpdb->insert( $wpdb->posts, array(
-								'post_author' => $user_id,
-								'post_date' => $now,
-								'post_date_gmt' => $now_gmt,
-								'post_content' => $first_post,
-								'post_excerpt' => '',
-								'post_title' => __('Hello world!'),
-								/* translators: Default post slug */
-								'post_name' => sanitize_title( _x('hello-world', 'Default post slug') ),
-								'post_modified' => $now,
-								'post_modified_gmt' => $now_gmt,
-								'guid' => $first_post_guid,
-								'comment_count' => 1,
-								'to_ping' => '',
-								'pinged' => '',
-								'post_content_filtered' => ''
-								));
+		'post_author' => $user_id,
+		'post_date' => $now,
+		'post_date_gmt' => $now_gmt,
+		'post_content' => $first_post,
+		'post_excerpt' => '',
+		'post_title' => __('Hello world!'),
+		/* translators: Default post slug */
+		'post_name' => sanitize_title( _x('hello-world', 'Default post slug') ),
+		'post_modified' => $now,
+		'post_modified_gmt' => $now_gmt,
+		'guid' => $first_post_guid,
+		'comment_count' => 1,
+		'to_ping' => '',
+		'pinged' => '',
+		'post_content_filtered' => ''
+	));
 	$wpdb->insert( $wpdb->term_relationships, array('term_taxonomy_id' => $cat_tt_id, 'object_id' => 1) );
 
 	// Default comment
@@ -191,19 +195,19 @@ To delete a comment, just log in and view the post&#039;s comments. There you wi
 		$first_comment = get_site_option( 'first_comment', $first_comment );
 	}
 	$wpdb->insert( $wpdb->comments, array(
-								'comment_post_ID' => 1,
-								'comment_author' => $first_comment_author,
-								'comment_author_email' => '',
-								'comment_author_url' => $first_comment_url,
-								'comment_date' => $now,
-								'comment_date_gmt' => $now_gmt,
-								'comment_content' => $first_comment
-								));
+		'comment_post_ID' => 1,
+		'comment_author' => $first_comment_author,
+		'comment_author_email' => '',
+		'comment_author_url' => $first_comment_url,
+		'comment_date' => $now,
+		'comment_date_gmt' => $now_gmt,
+		'comment_content' => $first_comment
+	));
 
 	// First Page
 	$first_page = sprintf( __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:
 
-<blockquote>Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my blog. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)</blockquote>
+<blockquote>Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my website. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)</blockquote>
 
 ...or something like this:
 
@@ -214,22 +218,22 @@ As a new WordPress user, you should go to <a href=\"%s\">your dashboard</a> to d
 		$first_page = get_site_option( 'first_page', $first_page );
 	$first_post_guid = get_option('home') . '/?page_id=2';
 	$wpdb->insert( $wpdb->posts, array(
-								'post_author' => $user_id,
-								'post_date' => $now,
-								'post_date_gmt' => $now_gmt,
-								'post_content' => $first_page,
-								'post_excerpt' => '',
-								'post_title' => __( 'Sample Page' ),
-								/* translators: Default page slug */
-								'post_name' => __( 'sample-page' ),
-								'post_modified' => $now,
-								'post_modified_gmt' => $now_gmt,
-								'guid' => $first_post_guid,
-								'post_type' => 'page',
-								'to_ping' => '',
-								'pinged' => '',
-								'post_content_filtered' => ''
-								));
+		'post_author' => $user_id,
+		'post_date' => $now,
+		'post_date_gmt' => $now_gmt,
+		'post_content' => $first_page,
+		'post_excerpt' => '',
+		'post_title' => __( 'Sample Page' ),
+		/* translators: Default page slug */
+		'post_name' => __( 'sample-page' ),
+		'post_modified' => $now,
+		'post_modified_gmt' => $now_gmt,
+		'guid' => $first_post_guid,
+		'post_type' => 'page',
+		'to_ping' => '',
+		'pinged' => '',
+		'post_content_filtered' => ''
+	));
 	$wpdb->insert( $wpdb->postmeta, array( 'post_id' => 2, 'meta_key' => '_wp_page_template', 'meta_value' => 'default' ) );
 
 	// Set up default widgets for default theme.
@@ -386,7 +390,9 @@ if ( !function_exists('wp_upgrade') ) :
  *
  * @since 2.1.0
  *
- * @return null If no update is necessary or site isn't completely installed, null.
+ * @global int  $wp_current_db_version
+ * @global int  $wp_db_version
+ * @global wpdb $wpdb
  */
 function wp_upgrade() {
 	global $wp_current_db_version, $wp_db_version, $wpdb;
@@ -433,7 +439,8 @@ endif;
  *
  * @since 1.0.1
  *
- * @return null If no update is necessary, null.
+ * @global int $wp_current_db_version
+ * @global int $wp_db_version
  */
 function upgrade_all() {
 	global $wp_current_db_version, $wp_db_version;
@@ -457,9 +464,6 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 26691 )
 		upgrade_380();
 
-	if ( $wp_current_db_version < 26692 )
-		upgrade_383();
-
 	if ( $wp_current_db_version < 29630 )
 		upgrade_400();
 
@@ -469,8 +473,8 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 30134 )
 		upgrade_410a();
 
-	if ( $wp_current_db_version < 31534 )
-		upgrade_422();
+	if ( $wp_current_db_version < 33055 )
+		upgrade_430();
 
 	maybe_disable_link_manager();
 
@@ -485,6 +489,8 @@ function upgrade_all() {
  * Execute changes made in WordPress 3.7.
  *
  * @since 3.7.0
+ *
+ * @global int $wp_current_db_version
  */
 function upgrade_370() {
 	global $wp_current_db_version;
@@ -497,6 +503,8 @@ function upgrade_370() {
  *
  * @since 3.7.2
  * @since 3.8.0
+ *
+ * @global int $wp_current_db_version
  */
 function upgrade_372() {
 	global $wp_current_db_version;
@@ -508,6 +516,8 @@ function upgrade_372() {
  * Execute changes made in WordPress 3.8.0.
  *
  * @since 3.8.0
+ *
+ * @global int $wp_current_db_version
  */
 function upgrade_380() {
 	global $wp_current_db_version;
@@ -517,37 +527,11 @@ function upgrade_380() {
 }
 
 /**
- * Execute changes made in WordPress 3.8.3.
- *
- * @since 3.8.3
- */
-function upgrade_383() {
-	global $wp_current_db_version, $wpdb;
-	if ( $wp_current_db_version < 26692 ) {
-		// Find all lost Quick Draft auto-drafts and promote them to proper drafts.
-		$posts = $wpdb->get_results( "SELECT ID, post_title, post_content FROM $wpdb->posts WHERE post_type = 'post'
-			AND post_status = 'auto-draft' AND post_date >= '2014-04-08 00:00:00'" );
-
-		foreach ( $posts as $post ) {
-			// A regular auto-draft should never have content as that would mean it should have been promoted.
-			// If an auto-draft has content, it's from Quick Draft and it should be recovered.
-			if ( '' === $post->post_content ) {
-				// If it does not have content, we must evaluate whether the title should be recovered.
-				if ( 'Auto Draft' === $post->post_title || __( 'Auto Draft' ) === $post->post_title ) {
-					// This a plain old auto draft. Ignore it.
-					continue;
-				}
-			}
-
-			$wpdb->update( $wpdb->posts, array( 'post_status' => 'draft' ), array( 'ID' => $post->ID ) );
-			clean_post_cache( $post->ID );
-		}
-	}
-}
-/**
  * Execute changes made in WordPress 4.0.0.
  *
  * @since 4.0.0
+ *
+ * @global int $wp_current_db_version
  */
 function upgrade_400() {
 	global $wp_current_db_version;
@@ -584,35 +568,51 @@ function upgrade_410a() {
 	if ( $wp_current_db_version < 30134 ) {
 		sqlsrv_query( $wpdb->dbh, "if not exists (select * from INFORMATION_SCHEMA.COLUMNS where TABLE_NAME = '$wpdb->signups' and column_name = 'meta') alter table $wpdb->signups add meta nvarchar(max) NULL" );
 	}
-}
+ }
 
 /**
- * Execute changes made in WordPress 4.2.1.
+ * Executes changes made in WordPress 4.3.0.
  *
- * @since 4.2.1
- */
-function upgrade_421() {
-}
-
-/**
- * Execute changes made in WordPress 4.2.2.
+ * @since 4.3.0
  *
- * @since 4.2.2
+ * @global int  $wp_current_db_version Current version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
  */
-function upgrade_422() {
+function upgrade_430() {
 	global $wp_current_db_version, $wpdb;
 
-	if ( $wp_current_db_version < 31534 ) {
-		$comments = $wpdb->get_results(
+	if ( $wp_current_db_version < 32364 ) {
+		upgrade_430_fix_comments();
+	}
+
+	// Shared terms are split in a separate process.
+	if ( $wp_current_db_version < 32814 ) {
+		update_option( 'finished_splitting_shared_terms', 0 );
+		wp_schedule_single_event( time() + ( 1 * MINUTE_IN_SECONDS ), 'wp_split_shared_term_batch' );
+	}
+
+}
+
+/**
+ * Executes comments changes made in WordPress 4.3.0.
+ *
+ * @since 4.3.0
+ *
+ * @global int  $wp_current_db_version Current version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
+ */
+function upgrade_430_fix_comments() {
+	global $wp_current_db_version, $wpdb;
+
+	$comments = $wpdb->get_results(
 			"SELECT comment_ID FROM {$wpdb->comments}
 			WHERE comment_date_gmt > '2015-04-26'
 			AND LEN( comment_content ) >= 65525
 			AND ( comment_content LIKE '%<%' OR comment_content LIKE '%>%' )"
-		);
+	);
 
-		foreach ( $comments as $comment ) {
-			wp_delete_comment( $comment->comment_ID, true );
-		}
+	foreach ( $comments as $comment ) {
+		wp_delete_comment( $comment->comment_ID, true );
 	}
 }
 
@@ -620,6 +620,9 @@ function upgrade_422() {
  * Executes network-level upgrade routines.
  *
  * @since 3.0.0
+ *
+ * @global int   $wp_current_db_version
+ * @global wpdb  $wpdb
  */
 function upgrade_network() {
 	global $wp_current_db_version, $wpdb;
@@ -730,6 +733,8 @@ function upgrade_network() {
  *
  * @since 1.0.0
  *
+ * @global wpdb  $wpdb
+ *
  * @param string $table_name Database table name to create.
  * @param string $create_ddl SQL statement to create table.
  * @return bool If table already exists or was created by function.
@@ -758,9 +763,11 @@ function maybe_create_table($table_name, $create_ddl) {
  *
  * @since 1.0.1
  *
+ * @global wpdb  $wpdb
+ *
  * @param string $table Database table name.
  * @param string $index Index name to drop.
- * @return bool True, when finished.
+ * @return true True, when finished.
  */
 function drop_index($table, $index) {
 	global $wpdb;
@@ -779,9 +786,11 @@ function drop_index($table, $index) {
  *
  * @since 1.0.1
  *
+ * @global wpdb  $wpdb
+ *
  * @param string $table Database table name.
  * @param string $index Database table index column.
- * @return bool True, when done with execution.
+ * @return true True, when done with execution.
  */
 function add_clean_index($table, $index) {
 	global $wpdb;
@@ -795,10 +804,12 @@ function add_clean_index($table, $index) {
  *
  * @since 1.3.0
  *
+ * @global wpdb  $wpdb
+ *
  * @param string $table_name  The table name to modify.
  * @param string $column_name The column name to add to the table.
  * @param string $create_ddl  The SQL statement used to add the column.
- * @return True if already exists or on successful completion, false on error.
+ * @return bool True if already exists or on successful completion, false on error.
  */
 function maybe_add_column($table_name, $column_name, $create_ddl) {
 	global $wpdb;
@@ -826,6 +837,8 @@ function maybe_add_column($table_name, $column_name, $create_ddl) {
  * @ignore
  * @since 1.5.1
  * @access private
+ *
+ * @global wpdb  $wpdb
  *
  * @param string $setting Option name.
  * @return mixed
@@ -885,6 +898,8 @@ function deslash($content) {
  * Useful for creating new tables and updating existing tables to a new structure.
  *
  * @since 1.5.0
+ *
+ * @global wpdb  $wpdb
  *
  * @param string|array $queries Optional. The query to run. Can be multiple queries
  *                              in an array, or a string of queries separated by
@@ -991,7 +1006,7 @@ function make_site_theme_from_oldschool($theme_name, $template) {
 
 				// Don't copy anything.
 				continue;
-				}
+			}
 		}
 
 		if (! @copy("$oldpath/$oldfile", "$site_dir/$newfile"))
@@ -1044,7 +1059,7 @@ function make_site_theme_from_oldschool($theme_name, $template) {
  *
  * @param string $theme_name The name of the theme.
  * @param string $template   The directory name of the theme.
- * @return null|false
+ * @return false|void
  */
 function make_site_theme_from_default($theme_name, $template) {
 	$site_dir = WP_CONTENT_DIR . "/themes/$template";
@@ -1183,6 +1198,8 @@ function translate_level_to_role($level) {
  * Checks the version of the installed MySQL binary.
  *
  * @since 2.1.0
+ *
+ * @global wpdb  $wpdb
  */
 function wp_check_mysql_version() {
 	global $wpdb;
@@ -1212,6 +1229,9 @@ function maybe_disable_automattic_widgets() {
  * Disables the Link Manager on upgrade if, at the time of upgrade, no links exist in the DB.
  *
  * @since 3.5.0
+ *
+ * @global int  $wp_current_db_version
+ * @global wpdb $wpdb
  */
 function maybe_disable_link_manager() {
 	global $wp_current_db_version, $wpdb;
@@ -1224,6 +1244,9 @@ function maybe_disable_link_manager() {
  * Runs before the schema is upgraded.
  *
  * @since 2.9.0
+ *
+ * @global int  $wp_current_db_version
+ * @global wpdb $wpdb
  */
 function pre_schema_upgrade() {
 	global $wp_current_db_version, $wpdb;
@@ -1232,7 +1255,7 @@ function pre_schema_upgrade() {
 	// To be removed.
 
 	// Multisite schema upgrades.
-	if ( $wp_current_db_version < 25448 && is_multisite() && ! defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) && is_main_network() ) {
+	if ( $wp_current_db_version < 25448 && is_multisite() && wp_should_upgrade_global_tables() ) {
 
 		// Upgrade verions prior to 3.7
 		if ( $wp_current_db_version < 25179 ) {
@@ -1253,6 +1276,8 @@ function pre_schema_upgrade() {
  *
  * @since 3.0.0
  *
+ * @global wpdb   $wpdb
+ * @global string $charset_collate
  */
 if ( !function_exists( 'install_global_terms' ) ) :
 function install_global_terms() {
@@ -1272,3 +1297,49 @@ CREATE TABLE $wpdb->sitecategories (
 	dbDelta( $ms_queries );
 }
 endif;
+
+/**
+ * Determine if global tables should be upgraded.
+ *
+ * This function performs a series of checks to ensure the environment allows
+ * for the safe upgrading of global WordPress database tables. It is necessary
+ * because global tables will commonly grow to millions of rows on large
+ * installations, and the ability to control their upgrade routines can be
+ * critical to the operation of large networks.
+ *
+ * In a future iteration, this function may use `wp_is_large_network()` to more-
+ * intelligently prevent global table upgrades. Until then, we make sure
+ * WordPress is on the main site of the main network, to avoid running queries
+ * more than once in multi-site or multi-network environments.
+ *
+ * @since 4.3.0
+ *
+ * @return bool Whether to run the upgrade routines on global tables.
+ */
+function wp_should_upgrade_global_tables() {
+
+	// Return false early if explicitly not upgrading
+	if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
+		return false;
+	}
+
+	// Assume global tables should be upgraded
+	$should_upgrade = true;
+
+	// Set to false if not on main network (does not matter if not multi-network)
+	if ( ! is_main_network() ) {
+		$should_upgrade = false;
+	}
+
+	// Set to false if not on main site of current network (does not matter if not multi-site)
+	if ( ! is_main_site() ) {
+		$should_upgrade = false;
+	}
+
+	/**
+	 * Filter if upgrade routines should be run on global tables.
+	 *
+	 * @param bool $should_upgrade Whether to run the upgrade routines on global tables.
+	 */
+	return apply_filters( 'wp_should_upgrade_global_tables', $should_upgrade );
+}
