@@ -476,6 +476,9 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 33055 )
 		upgrade_430();
 
+	if ( $wp_current_db_version < 33056 )
+		upgrade_430a();
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -615,6 +618,19 @@ function upgrade_430_fix_comments() {
 		wp_delete_comment( $comment->comment_ID, true );
 	}
 }
+
+/**
+ * Execute changes as required by PN post WP 4.3.0.
+ *
+ * @since 4.3.0
+ */
+function upgrade_430a() {
+    $cron_array = _get_cron_array();
+    if ( isset( $cron_array['wp_batch_split_terms'] ) ) {
+        unset( $cron_array['wp_batch_split_terms'] );
+        _set_cron_array( $cron_array );
+    }
+ }
 
 /**
  * Executes network-level upgrade routines.

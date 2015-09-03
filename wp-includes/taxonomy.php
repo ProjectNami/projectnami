@@ -4354,7 +4354,7 @@ function _wp_batch_split_terms() {
 	$lock_name = 'term_split.lock';
 
 	// Try to lock.
-	$lock_result = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO `$wpdb->options` ( `option_name`, `option_value`, `autoload` ) VALUES (%s, %s, 'no') /* LOCK */", $lock_name, time() ) );
+	$lock_result = $wpdb->query( $wpdb->prepare( "INSERT $wpdb->options ( option_name, option_value, autoload ) VALUES (%s, %s, 'no') /* LOCK */", $lock_name, time() ) );
 
 	if ( ! $lock_result ) {
 		$lock_result = get_option( $lock_name );
@@ -4371,11 +4371,11 @@ function _wp_batch_split_terms() {
 
 	// Get a list of shared terms (those with more than one associated row in term_taxonomy).
 	$shared_terms = $wpdb->get_results(
-		"SELECT tt.term_id, t.*, count(*) as term_tt_count FROM {$wpdb->term_taxonomy} tt
+		"SELECT TOP 10 tt.term_id, t.*, count(*) as term_tt_count FROM {$wpdb->term_taxonomy} tt
 		 LEFT JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
 		 GROUP BY t.term_id
 		 HAVING term_tt_count > 1
-		 LIMIT 10"
+		 "
 	);
 
 	// No more terms, we're done here.
@@ -4445,7 +4445,7 @@ function _wp_batch_split_terms() {
  */
 function _wp_check_for_scheduled_split_terms() {
 	if ( ! get_option( 'finished_splitting_shared_terms' ) && ! wp_next_scheduled( 'wp_batch_split_terms' ) ) {
-		wp_schedule_single_event( 'wp_batch_split_terms', time() + MINUTE_IN_SECONDS );
+		wp_schedule_single_event( time() + MINUTE_IN_SECONDS, 'wp_batch_split_terms' );
 	}
 }
 
