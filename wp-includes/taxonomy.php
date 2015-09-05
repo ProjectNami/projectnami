@@ -4373,8 +4373,8 @@ function _wp_batch_split_terms() {
 	$shared_terms = $wpdb->get_results(
 		"SELECT TOP 10 tt.term_id, t.*, count(*) as term_tt_count FROM {$wpdb->term_taxonomy} tt
 		 LEFT JOIN {$wpdb->terms} t ON t.term_id = tt.term_id
-		 GROUP BY t.term_id
-		 HAVING term_tt_count > 1
+		 GROUP BY tt.term_id, t.term_id, t.name, t.slug, t.term_group
+		 HAVING count(*) > 1
 		 "
 	);
 
@@ -4398,7 +4398,7 @@ function _wp_batch_split_terms() {
 
 	// Get term taxonomy data for all shared terms.
 	$shared_term_ids = implode( ',', array_keys( $shared_terms ) );
-	$shared_tts = $wpdb->get_results( "SELECT * FROM {$wpdb->term_taxonomy} WHERE `term_id` IN ({$shared_term_ids})" );
+	$shared_tts = $wpdb->get_results( "SELECT * FROM {$wpdb->term_taxonomy} WHERE term_id IN ({$shared_term_ids})" );
 
 	// Split term data recording is slow, so we do it just once, outside the loop.
 	$split_term_data = get_option( '_split_terms', array() );

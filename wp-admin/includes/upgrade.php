@@ -476,7 +476,7 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 33055 )
 		upgrade_430();
 
-	if ( $wp_current_db_version < 33056 )
+	if ( $wp_current_db_version < 33057 )
 		upgrade_430a();
 
 	maybe_disable_link_manager();
@@ -630,6 +630,7 @@ function upgrade_430a() {
         unset( $cron_array['wp_batch_split_terms'] );
         _set_cron_array( $cron_array );
     }
+	update_option( 'finished_splitting_shared_terms', false );
  }
 
 /**
