@@ -4437,7 +4437,7 @@ function _wp_batch_split_terms() {
 }
 
 /**
- * In order to avoid the wp_batch_split_terms() job being accidentally removed,
+ * In order to avoid the _wp_batch_split_terms() job being accidentally removed,
  * check that it's still scheduled while we haven't finished splitting terms.
  *
  * @ignore
