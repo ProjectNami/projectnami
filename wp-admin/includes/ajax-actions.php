@@ -1718,12 +1718,18 @@ function wp_ajax_find_posts() {
 				break;
 		}
 
+		/*
+		 * PN Mod: Start
+		 * MSSQL won't accept a date of 0000-00-00 00:00:00 and considers it invalid.
+		 * Default instead to 0001-01-01 00:00:00.
+		 */
 		if ( '0001-01-01 00:00:00' == $post->post_date ) {
 			$time = '';
 		} else {
 			/* translators: date format in table columns, see http://php.net/date */
 			$time = mysql2date(__('Y/m/d'), $post->post_date);
 		}
+		// PN Mod: End
 
 		$html .= '<tr class="' . trim( 'found-posts ' . $alt ) . '"><td class="found-radio"><input type="radio" id="found-'.$post->ID.'" name="found_post_id" value="' . esc_attr($post->ID) . '"></td>';
 		$html .= '<td><label for="found-'.$post->ID.'">' . esc_html( $title ) . '</label></td><td class="no-break">' . esc_html( $post_types[$post->post_type]->labels->singular_name ) . '</td><td class="no-break">'.esc_html( $time ) . '</td><td class="no-break">' . esc_html( $stat ). ' </td></tr>' . "\n\n";
