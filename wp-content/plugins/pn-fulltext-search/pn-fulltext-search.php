@@ -32,6 +32,7 @@ class PN_Fulltext_Search
     {
 		add_action( 'init', array( $this, 'init' ) );
         register_activation_hook( __FILE__, array( 'PN_Fulltext_Search', 'activate' ) );
+        register_deactivation_hook( __FILE__, array( 'PN_Fulltext_Search', 'deactivate' ) );
 	}
 
     function activate()
@@ -57,6 +58,15 @@ class PN_Fulltext_Search
 
         // Enable the full text index
         $wpdb->query( "ALTER FULLTEXT INDEX ON {$wpdb->get_blog_prefix()}fulltext_search ENABLE" );
+    }
+
+    function deactivate()
+    {
+        global $wpdb;
+
+        // Drop the full text view if it exists
+        $wpdb->query( "if exists (select * from INFORMATION_SCHEMA.TABLES where table_name = '{$wpdb->get_blog_prefix()}fulltext_search') exec('DROP VIEW [dbo].[{$wpdb->get_blog_prefix()}fulltext_search]')" );
+
     }
 
 	public function init() 
