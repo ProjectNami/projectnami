@@ -412,14 +412,14 @@ class SQL_Translations extends wpdb
         // SHOW COLUMNS
         if ( stripos($query, 'SHOW COLUMNS FROM ') === 0 ) {
             $like_matched = preg_match("/ like '(.*?)'/i", $query, $like_match);
-            if $like_matched {
+            if ($like_matched) {
                 $query = str_ireplace($like_match, '', $query);
             }
             $end_pos = strlen($query);
             $param = substr($query, 18, $end_pos - 18);
             $param = "'". trim($param, "'") . "'";
             $query = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ' . $param;
-            if $like_matched {
+            if ($like_matched) {
                 $query = $query . " AND COLUMN_NAME " . $like_match;
             }
         }
