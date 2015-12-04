@@ -3944,17 +3944,18 @@
       "name": "[parameters('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[parameters('siteLocation')]",
-      "apiVersion": "2.0",
+      "apiVersion": "2014-04-01-preview",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
-        "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]"
+        "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
+        "version": "12.0"
       },
       "resources": [
         {
           "name": "[parameters('siteName')]",
           "type": "databases",
           "location": "[parameters('siteLocation')]",
-          "apiVersion": "2.0",
+          "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
@@ -3966,7 +3967,7 @@
           }
         },
         {
-          "apiVersion": "2.0",
+          "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],

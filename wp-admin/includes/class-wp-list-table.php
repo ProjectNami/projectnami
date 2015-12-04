@@ -528,12 +528,18 @@ class WP_List_Table {
 			return;
 		}
 
+		/*
+		 * PN Mod: Start
+		 * MSSQL can't ORDER BY post_date alone since it is not actually being SELECTed.
+		 * The workaround is to ORDER BY both YEAR( post_date ) DESC and MONTH( post_date ) DESC to get the same effect.
+		 */
 		$months = $wpdb->get_results( $wpdb->prepare( "
 			SELECT DISTINCT YEAR( post_date ) AS year, MONTH( post_date ) AS month
 			FROM $wpdb->posts
 			WHERE post_type = %s
 			ORDER BY YEAR( post_date ) DESC, MONTH( post_date ) DESC
 		", $post_type ) );
+		// PN Mod: End
 
 		/**
 		 * Filter the 'Months' drop-down results.

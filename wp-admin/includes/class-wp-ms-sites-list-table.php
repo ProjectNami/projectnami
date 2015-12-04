@@ -148,7 +148,12 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 		if ( ! wp_is_large_network() )
 			$total = $wpdb->get_var( str_replace( 'SELECT *', 'SELECT COUNT( blog_id )', $query ) );
 
+		/*
+		 * PN Mod: Start
+		 * Replace MySQL LIMIT with MSSQL's OFFSET FETCH.
+		 */
 		$query .= " OFFSET " . intval( ( $pagenum - 1 ) * $per_page ) . " ROWS FETCH NEXT " . intval( $per_page ) . " ROWS ONLY";
+		// PN Mod: End
 		$this->items = $wpdb->get_results( $query, ARRAY_A );
 
 		if ( wp_is_large_network() )
@@ -314,7 +319,13 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 			$date = __( 'Y/m/d g:i:s a' );
 		}
 
+		/*
+		 * PN Mod: Start
+		 * MSSQL won't accept a date of 0000-00-00 00:00:00 and considers it invalid.
+		 * Default instead to 0001-01-01 00:00:00.
+		 */
 		echo ( $blog['last_updated'] == '0001-01-01 00:00:00' ) ? __( 'Never' ) : mysql2date( $date, $blog['last_updated'] );
+		// PN Mod: End
 	}
 
 	/**
@@ -334,11 +345,17 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 			$date = __( 'Y/m/d g:i:s a' );
 		}
 
+		/*
+		 * PN Mod: Start
+		 * MSSQL won't accept a date of 0000-00-00 00:00:00 and considers it invalid.
+		 * Default instead to 0001-01-01 00:00:00.
+		 */
 		if ( $blog['registered'] == '0001-01-01 00:00:00' ) {
 			echo '&#x2014;';
 		} else {
 			echo mysql2date( $date, $blog['registered'] );
 		}
+		// PN Mod: End
 	}
 
 	/**

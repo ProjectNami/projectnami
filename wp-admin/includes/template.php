@@ -680,7 +680,7 @@ function meta_form( $post = null ) {
 	$sql = "SELECT TOP $limit meta_key
 		FROM $wpdb->postmeta
 		WHERE meta_key NOT BETWEEN '_' AND '_z'
-		HAVING meta_key NOT LIKE %s
+		AND meta_key NOT LIKE %s
 		ORDER BY meta_key";
 	$keys = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) );
 	if ( $keys ) {
