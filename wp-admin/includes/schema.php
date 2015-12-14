@@ -57,7 +57,19 @@ function wp_get_db_schema( $scope = 'all', $blog_id = null ) {
 	$max_index_length = 191;
 
 	// Blog specific tables.
-	$blog_tables = "CREATE TABLE $wpdb->terms (
+	$blog_tables = "CREATE TABLE $wpdb->termmeta (
+  meta_id int NOT NULL identity(1,1),
+  term_id int NOT NULL default 0,
+  meta_key nvarchar(255) default NULL,
+  meta_value nvarchar(max),
+  CONSTRAINT $wpdb->termmeta" . "_PK PRIMARY KEY NONCLUSTERED  (meta_id)
+)
+GO
+CREATE CLUSTERED INDEX $wpdb->termmeta" . "_CLU1 on $wpdb->termmeta (term_id)
+GO
+CREATE INDEX $wpdb->termmeta" . "_IDX2 on $wpdb->termmeta (meta_key)
+GO
+CREATE TABLE $wpdb->terms (
  term_id int NOT NULL identity(1,1),
  name nvarchar(200) NOT NULL default '',
  slug nvarchar(200) NOT NULL default '',
