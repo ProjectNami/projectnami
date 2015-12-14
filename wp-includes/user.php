@@ -2285,6 +2285,7 @@ function wp_destroy_all_sessions() {
  * @return array Array of user IDs.
  */
 function wp_get_users_with_no_role() {
+    return array(); // PN - return empty until solution for REGEXP worked out
 	global $wpdb;
 
 	if ( is_multisite() ) {
