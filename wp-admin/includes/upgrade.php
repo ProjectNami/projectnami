@@ -682,6 +682,7 @@ function upgrade_431() {
 		unset( $cron_array['wp_batch_split_terms'] );
 		_set_cron_array( $cron_array );
 	}
+	update_option( 'finished_splitting_shared_terms', false );
 }
 
 /**
@@ -696,7 +697,10 @@ function upgrade_440() {
 	global $wp_current_db_version, $wpdb;
 
 	if ( $wp_current_db_version < 34030 ) {
-		$wpdb->query( "ALTER TABLE {$wpdb->options} MODIFY option_name VARCHAR(191)" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} ALTER COLUMN option_name VARCHAR(191)" );
+		$wpdb->query( "CREATE TABLE $wpdb->termmeta (meta_id int NOT NULL identity(1,1), term_id int NOT NULL default 0, meta_key nvarchar(255) default NULL, meta_value nvarchar(max), CONSTRAINT $wpdb->termmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id))" );
+		$wpdb->query( "CREATE CLUSTERED INDEX $wpdb->termmeta" . "_CLU1 on $wpdb->termmeta (term_id)" );
+		$wpdb->query( "CREATE INDEX $wpdb->termmeta" . "_IDX2 on $wpdb->termmeta (meta_key)" );
 	}
 
 	// Remove the unused 'add_users' role.
