@@ -2274,3 +2274,32 @@ function wp_destroy_all_sessions() {
 	$manager = WP_Session_Tokens::get_instance( get_current_user_id() );
 	$manager->destroy_all();
 }
+
+/**
+ * Get the user IDs of all users with no role on this site.
+ *
+ * This function returns an empty array when used on Multisite.
+ *
+ * @since 4.4.0
+ *
+ * @return array Array of user IDs.
+ */
+function wp_get_users_with_no_role() {
+	global $wpdb;
+
+	if ( is_multisite() ) {
+		return array();
+	}
+
+	$prefix = $wpdb->get_blog_prefix();
+	$regex  = implode( '|', wp_roles()->get_names() );
+	$regex  = preg_replace( '/[^a-zA-Z_\|-]/', '', $regex );
+	$users  = $wpdb->get_col( $wpdb->prepare( "
+		SELECT user_id
+		FROM $wpdb->usermeta
+		WHERE meta_key = '{$prefix}capabilities'
+		AND meta_value NOT REGEXP %s
+	", $regex ) );
+
+	return $users;
+}
