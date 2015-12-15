@@ -1809,11 +1809,12 @@ class Theme_Upgrader extends WP_Upgrader {
 }
 
 /**
- * Language pack upgrader, for updating translations of plugins, themes, and core.
+ * Core class used for updating/installing language packs (translations)
+ * for plugins, themes, and core.
  *
- * @package WordPress
- * @subpackage Upgrader
  * @since 3.7.0
+ *
+ * @see WP_Upgrader
  */
 class Language_Pack_Upgrader extends WP_Upgrader {
 
@@ -1821,6 +1822,7 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * Result of the language pack upgrade.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 * @var array|WP_Error $result
 	 * @see WP_Upgrader::$result
 	 */
@@ -1830,20 +1832,23 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * Whether a bulk upgrade/install is being performed.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 * @var bool $bulk
 	 */
 	public $bulk = true;
 
 	/**
-	 * Asynchronously upgrade language packs after other upgrades have been made.
+	 * Asynchronously upgrades language packs after other upgrades have been made.
 	 *
 	 * Hooked to the {@see 'upgrader_process_complete'} action by default.
 	 *
 	 * @since 3.7.0
-	 *
+	 * @access public
 	 * @static
 	 *
-	 * @param false|WP_Upgrader $upgrader
+	 * @param false|WP_Upgrader $upgrader Optional. WP_Upgrader instance or false. If `$upgrader` is
+	 *                                    a Language_Pack_Upgrader instance, the method will bail to
+	 *                                    avoid recursion. Otherwise unused. Default false.
 	 */
 	public static function async_upgrade( $upgrader = false ) {
 		// Avoid recursion.
@@ -1857,8 +1862,10 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 			return;
 		}
 
-		// Avoid messing with VCS installs, at least for now.
-		// Noted: this is not the ideal way to accomplish this.
+		/*
+		 * Avoid messing with VCS installs, at least for now.
+		 * Noted: this is not the ideal way to accomplish this.
+		 */
 		$check_vcs = new WP_Automatic_Updater;
 		if ( $check_vcs->is_vcs_checkout( WP_CONTENT_DIR ) ) {
 			return;
@@ -1886,9 +1893,14 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 			return;
 		}
 
-		$skin = new Language_Pack_Upgrader_Skin( array(
-			'skip_header_footer' => true,
-		) );
+		// Re-use the automatic upgrader skin if the parent upgrader is using it.
+		if ( $upgrader && $upgrader->skin instanceof Automatic_Upgrader_Skin ) {
+			$skin = $upgrader->skin;
+		} else {
+			$skin = new Language_Pack_Upgrader_Skin( array(
+				'skip_header_footer' => true,
+			) );
+		}
 
 		$lp_upgrader = new Language_Pack_Upgrader( $skin );
 		$lp_upgrader->bulk_upgrade( $language_updates );
@@ -1898,6 +1910,7 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * Initialize the upgrade strings.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 */
 	public function upgrade_strings() {
 		$this->strings['starting_upgrade'] = __( 'Some of your translations need updating. Sit tight for a few more seconds while we update them as well.' );
@@ -1913,6 +1926,7 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * Upgrade a language pack.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @param string|false $update Optional. Whether an update offer is available. Default false.
 	 * @param array        $args   Optional. Other optional arguments, see
@@ -1937,6 +1951,7 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * Bulk upgrade language packs.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem Subclass
 	 *
@@ -2064,6 +2079,7 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * {@see Language_Pack_Upgrader::bulk_upgrade()}.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem Subclass
 	 *
@@ -2088,9 +2104,15 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 				$mo = true;
 		}
 
-		if ( ! $mo || ! $po )
+		if ( ! $mo || ! $po ) {
 			return new WP_Error( 'incompatible_archive_pomo', $this->strings['incompatible_archive'],
-				__( 'The language pack is missing either the <code>.po</code> or <code>.mo</code> files.' ) );
+				/* translators: 1: .po 2: .mo */
+				sprintf( __( 'The language pack is missing either the %1$s or %2$s files.' ),
+					'<code>.po</code>',
+					'<code>.mo</code>'
+				)
+			);
+		}
 
 		return $source;
 	}
@@ -2099,6 +2121,7 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 	 * Get the name of an item being updated.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @param object $update The data for an update.
 	 * @return string The name of the item being updated.
@@ -2126,11 +2149,14 @@ class Language_Pack_Upgrader extends WP_Upgrader {
 }
 
 /**
- * Core Upgrader class for WordPress. It allows for WordPress to upgrade itself in combination with the wp-admin/includes/update-core.php file
+ * Core class used for updating core.
  *
- * @package WordPress
- * @subpackage Upgrader
+ * It allows for WordPress to upgrade itself in combination with
+ * the wp-admin/includes/update-core.php file.
+ *
  * @since 2.8.0
+ *
+ * @see WP_Upgrader
  */
 class Core_Upgrader extends WP_Upgrader {
 
@@ -2138,6 +2164,7 @@ class Core_Upgrader extends WP_Upgrader {
 	 * Initialize the upgrade strings.
 	 *
 	 * @since 2.8.0
+	 * @access public
 	 */
 	public function upgrade_strings() {
 		$this->strings['up_to_date'] = __('WordPress is at the latest version.');
@@ -2154,9 +2181,10 @@ class Core_Upgrader extends WP_Upgrader {
 	 * Upgrade WordPress core.
 	 *
 	 * @since 2.8.0
+	 * @access public
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem Subclass
-	 * @global callback           $_wp_filesystem_direct_method
+	 * @global callable           $_wp_filesystem_direct_method
 	 *
 	 * @param object $current Response object for whether WordPress is current.
 	 * @param array  $args {
@@ -2324,6 +2352,7 @@ class Core_Upgrader extends WP_Upgrader {
 	 * Determines if this WordPress Core version should update to an offered version or not.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @static
 	 *
@@ -2429,9 +2458,10 @@ class Core_Upgrader extends WP_Upgrader {
 	}
 
 	/**
-	 * Compare the disk file checksums agains the expected checksums.
+	 * Compare the disk file checksums against the expected checksums.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @global string $wp_version
 	 * @global string $wp_local_package
@@ -2459,10 +2489,11 @@ class Core_Upgrader extends WP_Upgrader {
 }
 
 /**
- * Upgrade Skin helper for File uploads. This class handles the upload process and passes it as if it's a local file to the Upgrade/Installer functions.
+ * Core class used for handling file uploads.
  *
- * @package WordPress
- * @subpackage Upgrader
+ * This class handles the upload process and passes it as if it's a local file
+ * to the Upgrade/Installer functions.
+ *
  * @since 2.8.0
  */
 class File_Upload_Upgrader {
@@ -2471,6 +2502,7 @@ class File_Upload_Upgrader {
 	 * The full path to the file package.
 	 *
 	 * @since 2.8.0
+	 * @access public
 	 * @var string $package
 	 */
 	public $package;
@@ -2479,6 +2511,7 @@ class File_Upload_Upgrader {
 	 * The name of the file.
 	 *
 	 * @since 2.8.0
+	 * @access public
 	 * @var string $filename
 	 */
 	public $filename;
@@ -2487,6 +2520,7 @@ class File_Upload_Upgrader {
 	 * The ID of the attachment post for this file.
 	 *
 	 * @since 3.3.0
+	 * @access public
 	 * @var int $id
 	 */
 	public $id = 0;
@@ -2495,6 +2529,7 @@ class File_Upload_Upgrader {
 	 * Construct the upgrader for a form.
 	 *
 	 * @since 2.8.0
+	 * @access public
 	 *
 	 * @param string $form      The name of the form the file was uploaded from.
 	 * @param string $urlholder The name of the `GET` parameter that holds the filename.
@@ -2554,6 +2589,7 @@ class File_Upload_Upgrader {
 	 * Delete the attachment/uploaded file.
 	 *
 	 * @since 3.2.2
+	 * @access public
 	 *
 	 * @return bool Whether the cleanup was successful.
 	 */
@@ -2569,10 +2605,8 @@ class File_Upload_Upgrader {
 }
 
 /**
- * The WordPress automatic background updater.
+ * Core class used for handling automatic background updates.
  *
- * @package WordPress
- * @subpackage Upgrader
  * @since 3.7.0
  */
 class WP_Automatic_Updater {
@@ -2581,6 +2615,7 @@ class WP_Automatic_Updater {
 	 * Tracks update results during processing.
 	 *
 	 * @var array
+	 * @access protected
 	 */
 	protected $update_results = array();
 
@@ -2588,13 +2623,14 @@ class WP_Automatic_Updater {
 	 * Whether the entire automatic updater is disabled.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 */
 	public function is_disabled() {
 		// Background updates are disabled if you don't want file changes.
-		// if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS )
+		if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS )
 			return true;
 
-		if ( defined( 'WP_INSTALLING' ) )
+		if ( wp_installing() )
 			return true;
 
 		// More fine grained control can be done through the WP_AUTO_UPDATE_CORE constant and filters.
@@ -2628,6 +2664,7 @@ class WP_Automatic_Updater {
 	 * how things get updated.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @param string $context The filesystem path to check, in addition to ABSPATH.
 	 */
@@ -2680,8 +2717,9 @@ class WP_Automatic_Updater {
 	 * Tests to see if we can and should update a specific item.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
-	 * @global wpdb $wpdb
+	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
 	 * @param string $type    The type of update being checked: 'core', 'theme',
 	 *                        'plugin', 'translation'.
@@ -2763,6 +2801,7 @@ class WP_Automatic_Updater {
 	 * Notifies an administrator of a core update.
 	 *
 	 * @since 3.7.0
+	 * @access protected
 	 *
 	 * @param object $item The update offer.
 	 */
@@ -2806,6 +2845,7 @@ class WP_Automatic_Updater {
 	 * Update an item, if appropriate.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @param string $type The type of update being checked: 'core', 'theme', 'plugin', 'translation'.
 	 * @param object $item The update offer.
@@ -2839,6 +2879,18 @@ class WP_Automatic_Updater {
 		// Determine whether we can and should perform this update.
 		if ( ! $this->should_update( $type, $item, $context ) )
 			return false;
+
+		/**
+		 * Fires immediately prior to an auto-update.
+		 *
+		 * @since 4.4.0
+		 *
+		 * @param string $type    The type of update being checked: 'core', 'theme', 'plugin', or 'translation'.
+		 * @param object $item    The update offer.
+		 * @param string $context The filesystem context (a path) against which filesystem access and status
+		 *                        should be checked.
+		 */
+		do_action( 'pre_auto_update', $type, $item, $context );
 
 		$upgrader_item = $item;
 		switch ( $type ) {
@@ -2909,6 +2961,7 @@ class WP_Automatic_Updater {
 	 * Kicks off the background update process, looping through all pending updates.
 	 *
 	 * @since 3.7.0
+	 * @access public
 	 *
 	 * @global wpdb   $wpdb
 	 * @global string $wp_version
@@ -3047,6 +3100,9 @@ class WP_Automatic_Updater {
 	 * If we tried to perform a core update, check if we should send an email,
 	 * and if we need to avoid processing future updates.
 	 *
+	 * @since Unknown
+	 * @access protected
+	 *
 	 * @global string $wp_version
 	 *
 	 * @param object|WP_Error $update_result The result of the core update. Includes the update offer and result.
@@ -3135,6 +3191,7 @@ class WP_Automatic_Updater {
 	 * Sends an email upon the completion or failure of a background core update.
 	 *
 	 * @since 3.7.0
+	 * @access protected
 	 *
 	 * @global string $wp_version
 	 *
@@ -3334,6 +3391,7 @@ class WP_Automatic_Updater {
 	 * Prepares and sends an email of a full log of background update results, useful for debugging and geekery.
 	 *
 	 * @since 3.7.0
+	 * @access protected
 	 */
 	protected function send_debug_email() {
 		$update_count = 0;
