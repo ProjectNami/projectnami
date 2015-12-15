@@ -75,7 +75,7 @@ final class WP_Comment {
 	 * @access public
 	 * @var string
 	 */
-	public $comment_date = '0000-00-00 00:00:00';
+	public $comment_date = '0001-01-01 00:00:00';
 
 	/**
 	 * Comment GMT date in YYYY-MM-DD HH::MM:SS format.
@@ -84,7 +84,7 @@ final class WP_Comment {
 	 * @access public
 	 * @var string
 	 */
-	public $comment_date_gmt = '0000-00-00 00:00:00';
+	public $comment_date_gmt = '0001-01-01 00:00:00';
 
 	/**
 	 * Comment content.

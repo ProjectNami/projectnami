@@ -3034,8 +3034,8 @@ function wp_insert_post( $postarr, $wp_error = false ) {
 	 * If the post date is empty (due to having been new or a draft) and status
 	 * is not 'draft' or 'pending', set date to now.
 	 */
-	if ( empty( $postarr['post_date'] ) || '0000-00-00 00:00:00' == $postarr['post_date'] ) {
-		if ( empty( $postarr['post_date_gmt'] ) || '0000-00-00 00:00:00' == $postarr['post_date_gmt'] ) {
+	if ( empty( $postarr['post_date'] ) || '0001-01-01 00:00:00' == $postarr['post_date'] ) {
+		if ( empty( $postarr['post_date_gmt'] ) || '0001-01-01 00:00:00' == $postarr['post_date_gmt'] ) {
 			$post_date = current_time( 'mysql' );
 		} else {
 			$post_date = get_date_from_gmt( $postarr['post_date_gmt'] );
@@ -4517,7 +4517,7 @@ function get_pages( $args = array() ) {
 				$orderby = "$wpdb->posts.ID";
 				break;
 			case 'rand':
-				$orderby = 'RAND()';
+				$orderby = 'NEWID()';
 				break;
 			case 'comment_count':
 				$orderby = "$wpdb->posts.comment_count";
