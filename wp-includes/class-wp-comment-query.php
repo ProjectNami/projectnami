@@ -619,14 +619,17 @@ class WP_Comment_Query {
 
 		if ( ! empty( $number ) ) {
 			if ( $offset ) {
-				$limits = 'LIMIT ' . $offset . ',' . $number;
+				$limits = 'OFFSET ' . $offset . ' ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			} else {
-				$limits = 'LIMIT ' . $number;
+				$limits = 'OFFSET 0 ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			}
 		}
 
 		if ( $this->query_vars['count'] ) {
 			$fields = 'COUNT(*)';
+			$orderby = ''; // ORDER BY breaks in MSSQL here since comment_date_gmt won't be in the query statement.
+			$order = '';
+			$limits = '';
 		} else {
 			$fields = "$wpdb->comments.comment_ID";
 		}

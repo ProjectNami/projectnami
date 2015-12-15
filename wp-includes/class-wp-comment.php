@@ -199,7 +199,7 @@ final class WP_Comment {
 		$_comment = wp_cache_get( $comment_id, 'comment' );
 
 		if ( ! $_comment ) {
-			$_comment = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->comments WHERE comment_ID = %d LIMIT 1", $comment_id ) );
+			$_comment = $wpdb->get_row( $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->comments WHERE comment_ID = %d", $comment_id ) );
 
 			if ( ! $_comment ) {
 				return false;
