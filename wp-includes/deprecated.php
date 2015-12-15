@@ -3370,7 +3370,7 @@ function format_to_post( $content ) {
  */
 function like_escape($text) {
 	_deprecated_function( __FUNCTION__, '4.0', 'wpdb::esc_like()' );
-	return str_replace( array( "%", "_" ), array( "\\%", "\\_" ), $text );
+	return str_replace(array("%", "_"), array("[%]", "[_]"), $text);
 }
 
 /**

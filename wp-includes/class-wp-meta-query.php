@@ -297,8 +297,12 @@ class WP_Meta_Query {
 		if ( ! preg_match( '/^(?:BINARY|CHAR|DATE|DATETIME|SIGNED|UNSIGNED|TIME|NUMERIC(?:\(\d+(?:,\s?\d+)?\))?|DECIMAL(?:\(\d+(?:,\s?\d+)?\))?)$/', $meta_type ) )
 			return 'CHAR';
 
-		if ( 'NUMERIC' == $meta_type )
-			$meta_type = 'SIGNED';
+        switch ( $meta_type ){
+            case 'SIGNED' :
+            case 'UNSIGNED' :
+            case 'NUMERIC' :
+                $meta_type = 'INT';
+        }
 
 		return $meta_type;
 	}

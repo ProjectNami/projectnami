@@ -4606,10 +4606,10 @@ function send_nosniff_header() {
  * @return string SQL clause.
  */
 function _wp_mysql_week( $column ) {
+	global $wpdb;
+
 	switch ( $start_of_week = (int) get_option( 'start_of_week' ) ) {
 	case 1 :
-		sqlsrv_query( $wpdb->dbh, "SET DATEFIRST 1" );
-		return "DATEPART( wk, $column )";
 	case 2 :
 	case 3 :
 	case 4 :

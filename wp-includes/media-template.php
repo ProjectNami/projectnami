@@ -1089,6 +1089,7 @@ function wp_print_media_templates() {
 					<input type="checkbox" data-setting="loop" />
 					<span><?php _e( 'Loop' ); ?></span>
 				</label>
+				<div class="clear"></div>
 			</div>
 		</div>
 	</script>

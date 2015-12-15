@@ -1829,7 +1829,7 @@ function get_calendar( $initial = true, $echo = true ) {
 		$thisyear = (int) substr( $m, 0, 4 );
 		//it seems MySQL's weeks disagree with PHP's
 		$d = ( ( $w - 1 ) * 7 ) + 6;
-		$thismonth = $wpdb->get_var("SELECT DATE_FORMAT((DATE_ADD('{$thisyear}0101', INTERVAL $d DAY) ), '%m')");
+		$thismonth = $wpdb->get_var("SELECT DATE_FORMAT((DATEADD(DAY, $d, '{$thisyear}0101')), '%m')");
 	} elseif ( ! empty( $m ) ) {
 		$thisyear = (int) substr( $m, 0, 4 );
 		if ( strlen( $m ) < 6 ) {
@@ -3351,9 +3351,11 @@ function get_the_generator( $type = '' ) {
 	switch ( $type ) {
 		case 'html':
 			$gen = '<meta name="generator" content="WordPress ' . get_bloginfo( 'version' ) . '">';
+            $gen .= '<meta name="projectnami:version" content="' . get_projectnami_version() . '">';
 			break;
 		case 'xhtml':
 			$gen = '<meta name="generator" content="WordPress ' . get_bloginfo( 'version' ) . '" />';
+            $gen .= '<meta name="projectnami:version" content="' . get_projectnami_version() . '" />';
 			break;
 		case 'atom':
 			$gen = '<generator uri="https://wordpress.org/" version="' . get_bloginfo_rss( 'version' ) . '">WordPress</generator>';
