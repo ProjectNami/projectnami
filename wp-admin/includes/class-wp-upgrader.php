@@ -2626,6 +2626,11 @@ class WP_Automatic_Updater {
 	 * @access public
 	 */
 	public function is_disabled() {
+		// PN Mod: Start
+		// Disable this since it would break a PN install.
+		return true;
+		// PN Mod: End
+
 		// Background updates are disabled if you don't want file changes.
 		if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS )
 			return true;
