@@ -78,7 +78,7 @@ if ( !isset( $current_site ) || !isset( $current_blog ) ) {
 		 */
 		if ( ! $current_site = wp_cache_get( 'current_network', 'site-options' ) ) {
 			// Are there even two networks installed?
-			$one_network = $wpdb->get_row( "SELECT * FROM $wpdb->site LIMIT 2" ); // [sic]
+			$one_network = $wpdb->get_row( "SELECT TOP 2 * FROM $wpdb->site" ); // [sic]
 			if ( 1 === $wpdb->num_rows ) {
 				$current_site = new WP_Network( $one_network );
 				wp_cache_add( 'current_network', $current_site, 'site-options' );

@@ -2189,7 +2189,7 @@ class WP_Query {
 
 			if ( $n && $include ) {
 				$like = '%' . $wpdb->esc_like( $term ) . '%';
-				$q['search_orderby_title'][] = $wpdb->prepare( "$wpdb->posts.post_title LIKE %s", $like );
+				$q['search_orderby_title'][] = "$wpdb->posts.post_title";
 			}
 
 			$like = $n . $wpdb->esc_like( $term ) . $n;
@@ -2297,7 +2297,7 @@ class WP_Query {
 			// If the search terms contain negative queries, don't bother ordering by sentence matches.
 			$like = '';
 			if ( ! preg_match( '/(?:\s|^)\-/', $q['s'] ) ) {
-				$like = '%' . $wpdb->esc_like( $q['s'] ) . '%';
+    			$like = $wpdb->esc_like( $q['s'] );
 			}
 
 			$search_orderby = '(CASE ';
@@ -2338,7 +2338,7 @@ class WP_Query {
 	 * @param string $orderby Alias for the field to order by.
 	 * @return string|false Table-prefixed value to used in the ORDER clause. False otherwise.
 	 */
-	protected function parse_orderby( $orderby ) {
+	protected function parse_orderby( $orderby, &$orderbyfields ) {
 		global $wpdb;
 
 		// Used to filter values.
@@ -2380,9 +2380,10 @@ class WP_Query {
 			case 'menu_order':
 			case 'comment_count':
 				$orderby_clause = "$wpdb->posts.{$orderby}";
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.{$orderby}";
 				break;
 			case 'rand':
-				$orderby_clause = 'RAND()';
+				$orderby_clause = 'NEWID()';
 				break;
 			case $primary_meta_key:
 			case 'meta_value':
@@ -2390,20 +2391,23 @@ class WP_Query {
 					$orderby_clause = "meta_value";
 					$orderbyfields = $orderbyfields . ", CAST({$primary_meta_query['alias']}.meta_value AS {$sql_type}) as meta_value";
 				} else {
-					$orderby_clause = "{$primary_meta_query['alias']}.meta_value";
+                    $orderbyfields = $orderbyfields . ", {$primary_meta_query['alias']}.meta_value";
 				}
 				break;
 			case 'meta_value_num':
-				$orderby_clause = "{$primary_meta_query['alias']}.meta_value+0";
+				$orderby_clause = "meta_value";
+				$orderbyfields = $orderbyfields . ", {$primary_meta_query['alias']}.meta_value+0 as meta_value";
 				break;
 			default:
 				if ( array_key_exists( $orderby, $meta_clauses ) ) {
 					// $orderby corresponds to a meta_query clause.
 					$meta_clause = $meta_clauses[ $orderby ];
-					$orderby_clause = "CAST({$meta_clause['alias']}.meta_value AS {$meta_clause['cast']})";
+					$orderby_clause = "meta_value";
+					$orderbyfields = $orderbyfields . ", CAST({$meta_clause['alias']}.meta_value AS {$meta_clause['cast']}) as meta_value";
 				} else {
 					// Default: order by post field.
 					$orderby_clause = "$wpdb->posts.post_" . sanitize_key( $orderby );
+                    $orderbyfields = $orderbyfields . ", $wpdb->posts.post_" . sanitize_key( $orderby );
 				}
 
 				break;
@@ -2539,6 +2543,7 @@ class WP_Query {
 		$join = '';
 		$search = '';
 		$groupby = '';
+        $orderbyfields = '';
 		$post_status_join = false;
 		$page = 1;
 
@@ -2972,12 +2977,15 @@ class WP_Query {
 			 * while leaving the value unset or otherwise empty sets the default.
 			 */
 			if ( isset( $q['orderby'] ) && ( is_array( $q['orderby'] ) || false === $q['orderby'] ) ) {
-				$orderby = '';
+				$orderby = "$wpdb->posts.post_date " . $q['order'];
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 			} else {
 				$orderby = "$wpdb->posts.post_date " . $q['order'];
+                $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 			}
 		} elseif ( 'none' == $q['orderby'] ) {
-			$orderby = '';
+			$orderby = "$wpdb->posts.post_date " . $q['order'];
+            $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
 			$orderby = "CASE( {$wpdb->posts}.ID )";
             foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
@@ -2995,7 +3003,7 @@ class WP_Query {
 			if ( is_array( $q['orderby'] ) ) {
 				foreach ( $q['orderby'] as $_orderby => $order ) {
 					$orderby = addslashes_gpc( urldecode( $_orderby ) );
-					$parsed  = $this->parse_orderby( $orderby );
+					$parsed  = $this->parse_orderby( $orderby, $orderbyfields );
 
 					if ( ! $parsed ) {
 						continue;
@@ -3010,7 +3018,7 @@ class WP_Query {
 				$q['orderby'] = addslashes_gpc( $q['orderby'] );
 
 				foreach ( explode( ' ', $q['orderby'] ) as $i => $orderby ) {
-					$parsed = $this->parse_orderby( $orderby );
+					$parsed = $this->parse_orderby( $orderby, $orderbyfields );
 					// Only allow certain values for safety.
 					if ( ! $parsed ) {
 						continue;
@@ -3028,24 +3036,24 @@ class WP_Query {
 			}
 		}
 
+        /*
 		// Order search results by relevance only when another "orderby" is not specified in the query.
 		if ( ! empty( $q['s'] ) ) {
 			$search_orderby = '';
 			if ( ! empty( $q['search_orderby_title'] ) && ( empty( $q['orderby'] ) && ! $this->is_feed ) || ( isset( $q['orderby'] ) && 'relevance' === $q['orderby'] ) )
 				$search_orderby = $this->parse_search_order( $q );
 
-			/**
 			 * Filter the ORDER BY used when ordering search results.
 			 *
 			 * @since 3.7.0
 			 *
 			 * @param string   $search_orderby The ORDER BY clause.
 			 * @param WP_Query $this           The current WP_Query instance.
-			 */
 			$search_orderby = apply_filters( 'posts_search_orderby', $search_orderby, $this );
 			if ( $search_orderby )
 				$orderby = $orderby ? $search_orderby . ', ' . $orderby : $search_orderby;
 		}
+        */
 
 		if ( is_array( $post_type ) && count( $post_type ) > 1 ) {
 			$post_type_cap = 'multiple_post_type';
