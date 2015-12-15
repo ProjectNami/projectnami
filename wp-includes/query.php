@@ -3219,9 +3219,9 @@ class WP_Query {
 			// If 'offset' is provided, it takes precedence over 'paged'.
 			if ( isset( $q['offset'] ) && is_numeric( $q['offset'] ) ) {
 				$q['offset'] = absint( $q['offset'] );
-				$pgstrt = $q['offset'] . ', ';
+				$pgstrt = $q['offset'];
 			} else {
-				$pgstrt = absint( ( $page - 1 ) * $q['posts_per_page'] ) . ', ';
+				$pgstrt = absint( ( $page - 1 ) * $q['posts_per_page'] );
 			}
 			$limits = 'OFFSET  ' . $pgstrt  . ' ROWS FETCH NEXT ' . $q['posts_per_page'] . ' ROWS ONLY';
 		}
