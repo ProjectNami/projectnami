@@ -698,7 +698,7 @@ function upgrade_440() {
 
 	if ( $wp_current_db_version < 34030 ) {
 		$wpdb->query( "DROP INDEX $wpdb->options" . "_UK1 ON $wpdb->options" );
-		$wpdb->query( "ALTER TABLE {$wpdb->options} ALTER COLUMN option_name VARCHAR(191)" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} ALTER COLUMN option_name NVARCHAR(191) NOT NULL" );
 		$wpdb->query( "CREATE UNIQUE INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)" );
 		$wpdb->query( "CREATE TABLE $wpdb->termmeta (meta_id int NOT NULL identity(1,1), term_id int NOT NULL default 0, meta_key nvarchar(255) default NULL, meta_value nvarchar(max), CONSTRAINT $wpdb->termmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id))" );
 		$wpdb->query( "CREATE CLUSTERED INDEX $wpdb->termmeta" . "_CLU1 on $wpdb->termmeta (term_id)" );
