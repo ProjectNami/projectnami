@@ -2462,9 +2462,9 @@ function wp_get_sites( $args = array() ) {
 
 	if ( isset( $args['limit'] ) && $args['limit'] ) {
 		if ( isset( $args['offset'] ) && $args['offset'] )
-			$query .= $wpdb->prepare( "LIMIT %d , %d ", $args['offset'], $args['limit'] );
+			$query .= $wpdb->prepare( "OFFSET %d ROWS FETCH NEXT %d ROWS ONLY ", $args['offset'], $args['limit'] );
 		else
-			$query .= $wpdb->prepare( "LIMIT %d ", $args['limit'] );
+			$query .= $wpdb->prepare( "OFFSET 0 ROWS FETCH NEXT %d ROWS ONLY ", $args['limit'] );
 	}
 
 	$site_results = $wpdb->get_results( $query, ARRAY_A );
