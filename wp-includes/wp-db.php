@@ -1145,7 +1145,7 @@ class wpdb {
 	 */
 	function _escape( $data ) {
 		if ( is_array( $data ) ) {
-			foreach ( $data as $k => $v ) {
+			foreach ( (array) $data as $k => $v ) {
 				if ( is_array($v) )
 					$data[$k] = $this->_escape( $v );
 				else
@@ -1175,14 +1175,14 @@ class wpdb {
 		if ( func_num_args() === 1 && function_exists( '_deprecated_function' ) )
 			_deprecated_function( __METHOD__, '3.6', 'wpdb::prepare() or esc_sql()' );
 		if ( is_array( $data ) ) {
-			foreach ( $data as $k => $v ) {
+			foreach ( (array) $data as $k => $v ) {
 				if ( is_array( $v ) )
-					$data[$k] = $this->escape( $v, 'recursive' );
+					$data[$k] = $this->escape( $v );
 				else
-					$data[$k] = $this->_weak_escape( $v, 'internal' );
+					$data[$k] = $this->_weak_escape( $v );
 			}
 		} else {
-			$data = $this->_weak_escape( $data, 'internal' );
+			$data = $this->_weak_escape( $data );
 		}
 
 		return $data;
