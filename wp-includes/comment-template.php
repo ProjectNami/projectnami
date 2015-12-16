@@ -1286,7 +1286,7 @@ function comments_template( $file = '/comments.php', $separate_comments = false 
 		'status'  => 'approve',
 		'post_id' => $post->ID,
 		'hierarchical' => 'threaded',
-		'no_found_rows' => false,
+		'no_found_rows' => true,
 		'update_comment_meta_cache' => false, // We lazy-load comment meta for performance.
 	);
 
