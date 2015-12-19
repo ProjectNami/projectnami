@@ -156,11 +156,18 @@ function wp_install_defaults( $user_id ) {
 	if ( is_multisite() ) {
 		$first_post = get_site_option( 'first_post' );
 
-		if ( empty($first_post) )
-			$first_post = __( 'Welcome to <a href="SITE_URL">SITE_NAME</a>. This is your first post. Edit or delete it, then start writing!' );
+		if ( ! $first_post ) {
+			/* translators: %s: site link */
+			$first_post = __( 'Welcome to %s. This is your first post. Edit or delete it, then start blogging!' );
+		}
 
-		$first_post = str_replace( "SITE_URL", esc_url( network_home_url() ), $first_post );
-		$first_post = str_replace( "SITE_NAME", get_current_site()->site_name, $first_post );
+		$first_post = sprintf( $first_post,
+			sprintf( '<a href="%s">%s</a>', esc_url( network_home_url() ), get_current_site()->site_name )
+		);
+
+		// Back-compat for pre-4.4
+		$first_post = str_replace( 'SITE_URL', esc_url( network_home_url() ), $first_post );
+		$first_post = str_replace( 'SITE_NAME', get_current_site()->site_name, $first_post );
 	} else {
 		$first_post = __( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' );
 	}
@@ -393,7 +400,7 @@ if ( !function_exists('wp_upgrade') ) :
  *
  * @global int  $wp_current_db_version
  * @global int  $wp_db_version
- * @global wpdb $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function wp_upgrade() {
 	global $wp_current_db_version, $wp_db_version, $wpdb;
@@ -477,8 +484,11 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 33055 )
 		upgrade_430();
 
-	if ( $wp_current_db_version < 33057 )
-		upgrade_430a();
+	if ( $wp_current_db_version < 33056 )
+		upgrade_431();
+
+	if ( $wp_current_db_version < 35700 )
+		upgrade_440();
 
 	maybe_disable_link_manager();
 
@@ -487,7 +497,6 @@ function upgrade_all() {
 	update_option( 'db_version', $wp_db_version );
 	update_option( 'db_upgraded', true );
 }
-
 
 /**
  * Execute changes made in WordPress 3.7.
@@ -565,7 +574,8 @@ function upgrade_410() {
 /**
  * Execute changes as required by PN post WP 4.1.0.
  *
- * @since 4.1.0
+ * @global int   $wp_current_db_version
+ * @global wpdb  $wpdb
  */
 function upgrade_410a() {
 	global $wp_current_db_version, $wpdb;
@@ -623,16 +633,46 @@ function upgrade_430_fix_comments() {
 /**
  * Execute changes as required by PN post WP 4.3.0.
  *
- * @since 4.3.0
+ * @since 4.3.1
  */
-function upgrade_430a() {
-    $cron_array = _get_cron_array();
-    if ( isset( $cron_array['wp_batch_split_terms'] ) ) {
-        unset( $cron_array['wp_batch_split_terms'] );
-        _set_cron_array( $cron_array );
-    }
+function upgrade_431() {
+	// Fix incorrect cron entries for term splitting
+	$cron_array = _get_cron_array();
+	if ( isset( $cron_array['wp_batch_split_terms'] ) ) {
+		unset( $cron_array['wp_batch_split_terms'] );
+		_set_cron_array( $cron_array );
+	}
 	update_option( 'finished_splitting_shared_terms', false );
- }
+}
+
+/**
+ * Executes changes made in WordPress 4.4.0.
+ *
+ * @since 4.4.0
+ *
+ * @global int  $wp_current_db_version Current version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
+ */
+function upgrade_440() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version < 34030 ) {
+		$wpdb->query( "DROP INDEX $wpdb->options" . "_UK1 ON $wpdb->options" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} ALTER COLUMN option_name NVARCHAR(191) NOT NULL" );
+		$wpdb->query( "CREATE UNIQUE INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)" );
+		$wpdb->query( "CREATE TABLE $wpdb->termmeta (meta_id int NOT NULL identity(1,1), term_id int NOT NULL default 0, meta_key nvarchar(255) default NULL, meta_value nvarchar(max), CONSTRAINT $wpdb->termmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id))" );
+		$wpdb->query( "CREATE CLUSTERED INDEX $wpdb->termmeta" . "_CLU1 on $wpdb->termmeta (term_id)" );
+		$wpdb->query( "CREATE INDEX $wpdb->termmeta" . "_IDX2 on $wpdb->termmeta (meta_key)" );
+	}
+
+	// Remove the unused 'add_users' role.
+	$roles = wp_roles();
+	foreach ( $roles->role_objects as $role ) {
+		if ( $role->has_cap( 'add_users' ) ) {
+			$role->remove_cap( 'add_users' );
+		}
+	}
+}
 
 /**
  * Executes network-level upgrade routines.
@@ -965,7 +1005,7 @@ function dbDelta( $queries = '', $execute = true ) {
 function make_db_current( $tables = 'all' ) {
 	$alterations = dbDelta( $tables );
 	echo "<ol>\n";
-	foreach($alterations as $alteration) echo "<li>$alteration</li>\n";
+	foreach ($alterations as $alteration) echo "<li>$alteration</li>\n";
 	echo "</ol>\n";
 }
 

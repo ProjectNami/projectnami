@@ -242,7 +242,7 @@ function get_bookmarks( $args = '' ) {
 			$length = ", LEN(link_name) AS length";
 			break;
 		case 'rand':
-			$orderby = 'rand()';
+			$orderby = 'newid()';
 			break;
 		case 'link_id':
 			$orderby = "$wpdb->links.link_id";
