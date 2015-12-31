@@ -25,21 +25,6 @@ if ( is_multisite() ) {
 		exit;
 	}
 
-/**
- * Check for an existing network.
- *
- * @since 3.0.0
- *
- * @global wpdb $wpdb
- *
- * @return Whether a network exists.
- */
-function network_domain_check() {
-	global $wpdb;
-
-	$sql = "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->site'";
-	if ( $wpdb->get_var( $sql ) ) {
-		return $wpdb->get_var( "SELECT TOP 1 domain FROM $wpdb->site ORDER BY id ASC" );
 	if ( ! defined( 'MULTISITE' ) ) {
 		wp_die( __( 'The Network creation panel is not for WordPress MU networks.' ) );
 	}
