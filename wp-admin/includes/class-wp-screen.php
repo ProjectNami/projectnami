@@ -530,7 +530,7 @@ final class WP_Screen {
 			}
 		}
 
-		sort( $priorities );
+		ksort( $priorities );
 
 		$sorted = array();
 		foreach ( $priorities as $list ) {
@@ -1087,7 +1087,7 @@ final class WP_Screen {
 
 			$id = "$column-hide";
 			echo '<label>';
-			echo '<input class="hide-column-tog" name="' . $id . '" type="checkbox" value="' . $column . '"' . checked( ! in_array( $column, $hidden ), true, false ) . ' />';
+			echo '<input class="hide-column-tog" name="' . $id . '" type="checkbox" id="' . $id . '" value="' . $column . '"' . checked( ! in_array( $column, $hidden ), true, false ) . ' />';
 			echo "$title</label>\n";
 		}
 		?>
