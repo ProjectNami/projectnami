@@ -2092,12 +2092,6 @@ div.action-links,
 		padding-top: 2px;
 	}
 
-	#wpbody-content .wp-list-table.plugins .plugin-title,
-	#wpbody-content .wp-list-table.plugins .theme-title {
-		padding-right: 12px;
-		white-space: normal;
-	}
-
 	.wp-list-table.plugins .plugin-title,
 	.wp-list-table.plugins .theme-title {
 		padding-top: 13px;
@@ -2155,7 +2149,7 @@ div.action-links,
 	.wp-list-table.plugins .plugin-title strong,
 	.wp-list-table.plugins .theme-title strong {
 		font-size: 1.4em;
-		line-height: 1.5;
+		line-height: 1.6em;
 	}
 
 	/* Add New plugins page */
