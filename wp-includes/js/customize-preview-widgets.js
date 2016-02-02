@@ -2,7 +2,8 @@
 
 	if ( ! wp || ! wp.customize ) { return; }
 
-	var api = wp.customize;
+	var api = wp.customize,
+		OldPreview;
 
 	/**
 	 * wp.customize.WidgetCustomizerPreview
@@ -19,8 +20,6 @@
 
 		init: function () {
 			var self = this;
-
-			this.preview = api.preview;
 			this.buildWidgetSelectors();
 			this.highlightControls();
 
@@ -104,6 +103,17 @@
 			});
 		}
 	};
+
+	/**
+	 * Capture the instance of the Preview since it is private
+	 */
+	OldPreview = api.Preview;
+	api.Preview = OldPreview.extend( {
+		initialize: function( params, options ) {
+			api.WidgetCustomizerPreview.preview = this;
+			OldPreview.prototype.initialize.call( this, params, options );
+		}
+	} );
 
 	$(function () {
 		var settings = window._wpWidgetCustomizerPreviewSettings;

@@ -135,11 +135,10 @@ if ( !isset( $current_site ) || !isset( $current_blog ) ) {
 		ms_not_installed( $domain, $path );
 	}
 
-	// During activation of a new subdomain, the requested site does not yet exist.
+	// @todo Investigate when exactly this can occur.
 	if ( empty( $current_blog ) && wp_installing() ) {
 		$current_blog = new stdClass;
 		$current_blog->blog_id = $blog_id = 1;
-		$current_blog->public = 1;
 	}
 
 	// No site has been found, bail.
