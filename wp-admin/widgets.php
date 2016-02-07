@@ -406,13 +406,10 @@ foreach ( $wp_registered_sidebars as $sidebar => $registered_sidebar ) {
 		if ( !empty( $registered_sidebar['class'] ) )
 			$wrap_class .= ' ' . $registered_sidebar['class'];
 
-		$is_inactive_widgets = 'wp_inactive_widgets' == $registered_sidebar['id'];
 		?>
 		<div class="<?php echo esc_attr( $wrap_class ); ?>">
 			<div class="widget-holder inactive">
 				<?php wp_list_widget_controls( $registered_sidebar['id'], $registered_sidebar['name'] ); ?>
-
-				<?php if ( $is_inactive_widgets ) { ?>
 				<div class="remove-inactive-widgets">
 					<form action="" method="post">
 						<p>
@@ -430,11 +427,8 @@ foreach ( $wp_registered_sidebars as $sidebar => $registered_sidebar ) {
 						<?php wp_nonce_field( 'remove-inactive-widgets', '_wpnonce_remove_inactive_widgets' ); ?>
 					</form>
 				</div>
-				<?php } ?>
 			</div>
-			<?php if ( $is_inactive_widgets ) { ?>
 			<p class="description"><?php _e( 'This will clear all items from the inactive widgets list. You will not be able to restore any customizations.' ); ?></p>
-			<?php } ?>
 		</div>
 		<?php
 

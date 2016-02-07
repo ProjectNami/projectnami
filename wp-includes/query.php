@@ -2300,7 +2300,7 @@ class WP_Query {
     			$like = $wpdb->esc_like( $q['s'] );
 			}
 
-			$search_orderby = '';
+			$search_orderby = '(CASE ';
 
 			// sentence match in 'post_title'
 			$search_orderby .= "WHEN PATINDEX('%{$like}%', $wpdb->posts.post_title) > 0 THEN 1 ";
@@ -2317,10 +2317,7 @@ class WP_Query {
 
 			// sentence match in 'post_content'
 			$search_orderby .= " WHEN PATINDEX('%{$like}%', $wpdb->posts.post_content) > 0 THEN 3 ";
-
-			if ( $search_orderby ) {
-				$search_orderby = '(CASE ' . $search_orderby . 'ELSE 4 END)';
-			}
+			$search_orderby .= ' ELSE 4 END)';
 		} else {
 			// single word or sentence search
 			$search_orderby = reset( $q['search_orderby_title'] ) . ' DESC';
@@ -5004,11 +5001,16 @@ class WP_Query {
  *
  * @global WP_Query   $wp_query   Global WP_Query instance.
  * @global wpdb       $wpdb       WordPress database abstraction object.
+ * @global WP_Rewrite $wp_rewrite WordPress rewrite component.
  */
 function wp_old_slug_redirect() {
-	global $wp_query;
+	global $wp_query, $wp_rewrite;
 
-	if ( is_404() && '' !== $wp_query->query_vars['name'] ) :
+	if ( get_queried_object() ) {
+		return;
+	}
+
+	if ( '' !== $wp_query->query_vars['name'] ) :
 		global $wpdb;
 
 		// Guess the current post_type based on the query vars.
@@ -5050,10 +5052,19 @@ function wp_old_slug_redirect() {
 
 		$link = get_permalink( $id );
 
-		if ( isset( $GLOBALS['wp_query']->query_vars['paged'] ) && $GLOBALS['wp_query']->query_vars['paged'] > 1 ) {
+		if ( is_feed() ) {
+			$link = user_trailingslashit( trailingslashit( $link ) . 'feed' );
+		} elseif ( isset( $GLOBALS['wp_query']->query_vars['paged'] ) && $GLOBALS['wp_query']->query_vars['paged'] > 1 ) {
 			$link = user_trailingslashit( trailingslashit( $link ) . 'page/' . $GLOBALS['wp_query']->query_vars['paged'] );
 		} elseif( is_embed() ) {
 			$link = user_trailingslashit( trailingslashit( $link ) . 'embed' );
+		} elseif ( is_404() ) {
+			// Add rewrite endpoints if necessary.
+			foreach ( $wp_rewrite->endpoints as $endpoint ) {
+				if ( $endpoint[2] && false !== get_query_var( $endpoint[2], false ) ) {
+					$link = user_trailingslashit( trailingslashit( $link ) . $endpoint[1] );
+				}
+			}
 		}
 
 		/**
