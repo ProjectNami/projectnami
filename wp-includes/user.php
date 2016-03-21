@@ -7,7 +7,7 @@
  */
 
 /**
- * Authenticate user with remember capability.
+ * Authenticates and logs a user in with 'remember' capability.
  *
  * The credentials is an array that has 'user_login', 'user_password', and
  * 'remember' indices. If the credentials is not given, then the log in form
@@ -104,7 +104,7 @@ function wp_signon( $credentials = array(), $secure_cookie = '' ) {
 }
 
 /**
- * Authenticate the user using the username and password.
+ * Authenticate a user, confirming the username and password are valid.
  *
  * @since 2.8.0
  *
@@ -163,6 +163,78 @@ function wp_authenticate_username_password($user, $username, $password) {
 				/* translators: %s: user name */
 				__( '<strong>ERROR</strong>: The password you entered for the username %s is incorrect.' ),
 				'<strong>' . $username . '</strong>'
+			) .
+			' <a href="' . wp_lostpassword_url() . '">' .
+			__( 'Lost your password?' ) .
+			'</a>'
+		);
+	}
+
+	return $user;
+}
+
+/**
+ * Authenticate the user using the email and password.
+ *
+ * @since 4.5.0
+ *
+ * @param WP_User|WP_Error|null $user     WP_User or WP_Error object if a previous
+ *                                        callback failed authentication.
+ * @param string                $email    Email address for authentication.
+ * @param string                $password Password for authentication.
+ * @return WP_User|WP_Error WP_User on success, WP_Error on failure.
+ */
+function wp_authenticate_email_password( $user, $email, $password ) {
+	if ( $user instanceof WP_User ) {
+		return $user;
+	}
+
+	if ( empty( $email ) || empty( $password ) ) {
+		if ( is_wp_error( $user ) ) {
+			return $user;
+		}
+
+		$error = new WP_Error();
+
+		if ( empty( $email ) ) {
+			$error->add( 'empty_username', __( '<strong>ERROR</strong>: The email field is empty.' ) ); // Uses 'empty_username' for back-compat with wp_signon()
+		}
+
+		if ( empty( $password ) ) {
+			$error->add( 'empty_password', __( '<strong>ERROR</strong>: The password field is empty.' ) );
+		}
+
+		return $error;
+	}
+
+	if ( ! is_email( $email ) ) {
+		return $user;
+	}
+
+	$user = get_user_by( 'email', $email );
+
+	if ( ! $user ) {
+		return new WP_Error( 'invalid_email',
+			__( '<strong>ERROR</strong>: Invalid email address.' ) .
+			' <a href="' . wp_lostpassword_url() . '">' .
+			__( 'Lost your password?' ) .
+			'</a>'
+		);
+	}
+
+	/** This filter is documented in wp-includes/user.php */
+	$user = apply_filters( 'wp_authenticate_user', $user, $password );
+
+	if ( is_wp_error( $user ) ) {
+		return $user;
+	}
+
+	if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+		return new WP_Error( 'incorrect_password',
+			sprintf(
+				/* translators: %s: email address */
+				__( '<strong>ERROR</strong>: The password you entered for the email address %s is incorrect.' ),
+				'<strong>' . $email . '</strong>'
 			) .
 			' <a href="' . wp_lostpassword_url() . '">' .
 			__( 'Lost your password?' ) .
@@ -278,7 +350,7 @@ function wp_validate_logged_in_cookie( $user_id ) {
  * @param int          $userid      User ID.
  * @param array|string $post_type   Optional. Single post type or array of post types to count the number of posts for. Default 'post'.
  * @param bool         $public_only Optional. Whether to only return counts for public posts. Default false.
- * @return int Number of posts the user has written in this post type.
+ * @return string Number of posts the user has written in this post type.
  */
 function count_user_posts( $userid, $post_type = 'post', $public_only = false ) {
 	global $wpdb;
@@ -1289,7 +1361,7 @@ function validate_username( $username ) {
  *                                             https. Default false.
  *     @type string      $user_registered      Date the user registered. Format is 'Y-m-d H:i:s'.
  *     @type string|bool $show_admin_bar_front Whether to display the Admin Bar for the user on the
- *                                             site's frontend. Default true.
+ *                                             site's front end. Default true.
  *     @type string      $role                 User's role.
  * }
  * @return int|WP_Error The newly created user's ID or a WP_Error object if the user could not
@@ -1684,6 +1756,7 @@ function wp_update_user($userdata) {
 	}
 
 	wp_cache_delete( $user['user_email'], 'useremail' );
+	wp_cache_delete( $user['user_nicename'], 'userslugs' );
 
 	// Merge old and new fields with new fields overwriting old ones.
 	$userdata = array_merge( $user, $userdata );
@@ -1691,7 +1764,7 @@ function wp_update_user($userdata) {
 
 	if ( ! is_wp_error( $user_id ) ) {
 
-		$blog_name = wp_specialchars_decode( get_option( 'blogname' ) );
+		$blog_name = wp_specialchars_decode( get_option( 'blogname' ), ENT_QUOTES );
 
 		if ( ! empty( $send_password_change_email ) ) {
 
@@ -1743,7 +1816,7 @@ All at ###SITENAME###
 			$pass_change_email['message'] = str_replace( '###USERNAME###', $user['user_login'], $pass_change_email['message'] );
 			$pass_change_email['message'] = str_replace( '###ADMIN_EMAIL###', get_option( 'admin_email' ), $pass_change_email['message'] );
 			$pass_change_email['message'] = str_replace( '###EMAIL###', $user['user_email'], $pass_change_email['message'] );
-			$pass_change_email['message'] = str_replace( '###SITENAME###', get_option( 'blogname' ), $pass_change_email['message'] );
+			$pass_change_email['message'] = str_replace( '###SITENAME###', $blog_name, $pass_change_email['message'] );
 			$pass_change_email['message'] = str_replace( '###SITEURL###', home_url(), $pass_change_email['message'] );
 
 			wp_mail( $pass_change_email['to'], sprintf( $pass_change_email['subject'], $blog_name ), $pass_change_email['message'], $pass_change_email['headers'] );
@@ -1797,7 +1870,7 @@ All at ###SITENAME###
 			$email_change_email['message'] = str_replace( '###USERNAME###', $user['user_login'], $email_change_email['message'] );
 			$email_change_email['message'] = str_replace( '###ADMIN_EMAIL###', get_option( 'admin_email' ), $email_change_email['message'] );
 			$email_change_email['message'] = str_replace( '###EMAIL###', $user['user_email'], $email_change_email['message'] );
-			$email_change_email['message'] = str_replace( '###SITENAME###', get_option( 'blogname' ), $email_change_email['message'] );
+			$email_change_email['message'] = str_replace( '###SITENAME###', $blog_name, $email_change_email['message'] );
 			$email_change_email['message'] = str_replace( '###SITEURL###', home_url(), $email_change_email['message'] );
 
 			wp_mail( $email_change_email['to'], sprintf( $email_change_email['subject'], $blog_name ), $email_change_email['message'], $email_change_email['headers'] );
@@ -1899,8 +1972,13 @@ function wp_get_user_contact_methods( $user = null ) {
 /**
  * The old private function for setting up user contact methods.
  *
+ * Use wp_get_user_contact_methods() instead.
+ *
  * @since 2.9.0
  * @access private
+ *
+ * @param WP_User $user Optional. WP_User object. Default null.
+ * @return array Array of contact methods and their labels.
  */
 function _wp_get_user_contactmethods( $user = null ) {
 	return wp_get_user_contact_methods( $user );
@@ -1965,7 +2043,7 @@ function get_password_reset_key( $user ) {
 	 *
 	 * @since 2.7.0
 	 *
-	 * @param bool true           Whether to allow the password to be reset. Default true.
+	 * @param bool $allow         Whether to allow the password to be reset. Default true.
 	 * @param int  $user_data->ID The ID of the user attempting to reset a password.
 	 */
 	$allow = apply_filters( 'allow_password_reset', true, $user->ID );
@@ -2055,6 +2133,10 @@ function check_password_reset_key($key, $login) {
 	} else {
 		$pass_key = $row->user_activation_key;
 		$expiration_time = false;
+	}
+
+	if ( ! $pass_key ) {
+		return new WP_Error( 'invalid_key', __( 'Invalid key' ) );
 	}
 
 	$hash_is_correct = $wp_hasher->CheckPassword( $key, $pass_key );
@@ -2326,4 +2408,73 @@ function wp_get_users_with_no_role() {
 	", $regex ) );
 
 	return $users;
+}
+
+/**
+ * Retrieves the current user object.
+ *
+ * Will set the current user, if the current user is not set. The current user
+ * will be set to the logged-in person. If no user is logged-in, then it will
+ * set the current user to 0, which is invalid and won't have any permissions.
+ *
+ * This function is used by the pluggable functions wp_get_current_user() and
+ * get_currentuserinfo(), which is deprecated, for backward compatibility.
+ *
+ * @since 4.5.0
+ * @access private
+ *
+ * @see wp_get_current_user()
+ * @global WP_User $current_user Checks if the current user is set.
+ *
+ * @return WP_User Current WP_User instance.
+ */
+function _wp_get_current_user() {
+	global $current_user;
+
+	if ( ! empty( $current_user ) ) {
+		if ( $current_user instanceof WP_User ) {
+			return $current_user;
+		}
+
+		// Upgrade stdClass to WP_User
+		if ( is_object( $current_user ) && isset( $current_user->ID ) ) {
+			$cur_id = $current_user->ID;
+			$current_user = null;
+			wp_set_current_user( $cur_id );
+			return $current_user;
+		}
+
+		// $current_user has a junk value. Force to WP_User with ID 0.
+		$current_user = null;
+		wp_set_current_user( 0 );
+		return $current_user;
+	}
+
+	if ( defined('XMLRPC_REQUEST') && XMLRPC_REQUEST ) {
+		wp_set_current_user( 0 );
+		return $current_user;
+	}
+
+	/**
+	 * Filter the current user.
+	 *
+	 * The default filters use this to determine the current user from the
+	 * request's cookies, if available.
+	 *
+	 * Returning a value of false will effectively short-circuit setting
+	 * the current user.
+	 *
+	 * @since 3.9.0
+	 *
+	 * @param int|bool $user_id User ID if one has been determined, false otherwise.
+	 */
+	$user_id = apply_filters( 'determine_current_user', false );
+	if ( ! $user_id ) {
+		wp_set_current_user( 0 );
+		return $current_user;
+	}
+
+	wp_set_current_user( $user_id );
+
+	return $current_user;
 }

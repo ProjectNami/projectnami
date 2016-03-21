@@ -95,6 +95,7 @@ function setup_config_display_header( $body_classes = array() ) {
 	<meta name="viewport" content="width=device-width" />
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<meta name="robots" content="noindex,nofollow" />
+	<meta name="robots" content="noindex,nofollow" />
 	<title><?php _e( 'WordPress &rsaquo; Setup Configuration File' ); ?></title>
 	<?php wp_admin_css( 'install', true ); ?>
 </head>
@@ -187,7 +188,7 @@ switch($step) {
 		<tr>
 			<th scope="row"><label for="dbname"><?php _e( 'Database Name' ); ?></label></th>
 			<td><input name="dbname" id="dbname" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBName") ? getenv("ProjectNami.DBName") : "wordpress" ); ?>" /></td>
-			<td><?php _e( 'The name of the database you want to run WP in.' ); ?></td>
+			<td><?php _e( 'The name of the database you want to use with WordPress.' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="uname"><?php _e( 'User Name' ); ?></label></th>

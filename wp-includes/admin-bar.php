@@ -574,7 +574,7 @@ function wp_admin_bar_edit_menu( $wp_admin_bar ) {
 				) );
 			}
 		} elseif ( 'edit-tags' == $current_screen->base
-			&& isset( $tag ) && is_object( $tag )
+			&& isset( $tag ) && is_object( $tag ) && ! is_wp_error( $tag )
 			&& ( $tax = get_taxonomy( $tag->taxonomy ) )
 			&& $tax->public )
 		{
@@ -692,16 +692,16 @@ function wp_admin_bar_comments_menu( $wp_admin_bar ) {
 
 	$awaiting_mod = wp_count_comments();
 	$awaiting_mod = $awaiting_mod->moderated;
-	$awaiting_title = esc_attr( sprintf( _n( '%s comment awaiting moderation', '%s comments awaiting moderation', $awaiting_mod ), number_format_i18n( $awaiting_mod ) ) );
+	$awaiting_text = sprintf( _n( '%s comment awaiting moderation', '%s comments awaiting moderation', $awaiting_mod ), number_format_i18n( $awaiting_mod ) );
 
 	$icon  = '<span class="ab-icon"></span>';
-	$title = '<span id="ab-awaiting-mod" class="ab-label awaiting-mod pending-count count-' . $awaiting_mod . '">' . number_format_i18n( $awaiting_mod ) . '</span>';
+	$title = '<span id="ab-awaiting-mod" class="ab-label awaiting-mod pending-count count-' . $awaiting_mod . '" aria-hidden="true">' . number_format_i18n( $awaiting_mod ) . '</span>';
+	$title .= '<span class="screen-reader-text">' . $awaiting_text . '</span>';
 
 	$wp_admin_bar->add_menu( array(
 		'id'    => 'comments',
 		'title' => $icon . $title,
 		'href'  => admin_url('edit-comments.php'),
-		'meta'  => array( 'title' => $awaiting_title ),
 	) );
 }
 
@@ -879,7 +879,7 @@ function _admin_bar_bump_cb() { ?>
  *
  * @since 3.1.0
  *
- * @global WP_Admin_Bar $wp_admin_bar
+ * @global bool $show_admin_bar
  *
  * @param bool $show Whether to allow the admin bar to show.
  */
@@ -893,8 +893,8 @@ function show_admin_bar( $show ) {
  *
  * @since 3.1.0
  *
- * @global WP_Admin_Bar $wp_admin_bar
- * @global string       $pagenow
+ * @global bool   $show_admin_bar
+ * @global string $pagenow
  *
  * @return bool Whether the admin bar should be showing.
  */

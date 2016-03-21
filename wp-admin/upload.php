@@ -82,7 +82,11 @@ if ( 'grid' === $mode ) {
 		?>
 		</h1>
 		<div class="error hide-if-js">
-			<p><?php _e( 'The grid view for the Media Library requires JavaScript. <a href="upload.php?mode=list">Switch to the list view</a>.' ); ?></p>
+			<p><?php printf(
+				/* translators: %s: list view URL */
+				__( 'The grid view for the Media Library requires JavaScript. <a href="%s">Switch to the list view</a>.' ),
+				'upload.php?mode=list'
+			); ?></p>
 		</div>
 	</div>
 	<?php
@@ -182,7 +186,7 @@ get_current_screen()->add_help_tab( array(
 'title'		=> __('Overview'),
 'content'	=>
 	'<p>' . __( 'All the files you&#8217;ve uploaded are listed in the Media Library, with the most recent uploads listed first. You can use the Screen Options tab to customize the display of this screen.' ) . '</p>' .
-	'<p>' . __( 'You can narrow the list by file type/status using the text link filters at the top of the screen. You also can refine the list by date using the dropdown menu above the media table.' ) . '</p>' .
+	'<p>' . __( 'You can narrow the list by file type/status or by date using the dropdown menus above the media table.' ) . '</p>' .
 	'<p>' . __( 'You can view your media in a simple visual grid or a list with columns. Switch between these views using the icons to the left above the media.' ) . '</p>'
 ) );
 get_current_screen()->add_help_tab( array(
@@ -220,8 +224,11 @@ echo esc_html( $title );
 if ( current_user_can( 'upload_files' ) ) { ?>
 	<a href="media-new.php" class="page-title-action"><?php echo esc_html_x('Add New', 'file'); ?></a><?php
 }
-if ( ! empty( $_REQUEST['s'] ) )
-	printf( '<span class="subtitle">' . __('Search results for &#8220;%s&#8221;') . '</span>', get_search_query() ); ?>
+if ( isset( $_REQUEST['s'] ) && strlen( $_REQUEST['s'] ) ) {
+	/* translators: %s: search keywords */
+	printf( '<span class="subtitle">' . __( 'Search results for &#8220;%s&#8221;' ) . '</span>', get_search_query() );
+}
+?>
 </h1>
 
 <?php
@@ -232,12 +239,24 @@ if ( ! empty( $_GET['posted'] ) ) {
 }
 
 if ( ! empty( $_GET['attached'] ) && $attached = absint( $_GET['attached'] ) ) {
-	$message = sprintf( _n( 'Reattached %d attachment.', 'Reattached %d attachments.', $attached ), $attached );
+	if ( 1 == $attached ) {
+		$message = __( 'Media attachment reattached.' );
+	} else {
+		/* translators: %s: number of media attachments */
+		$message = _n( '%s media attachment reattached.', '%s media attachments reattached.', $attached );
+	}
+	$message = sprintf( $message, number_format_i18n( $attached ) );
 	$_SERVER['REQUEST_URI'] = remove_query_arg( array( 'detach', 'attached' ), $_SERVER['REQUEST_URI'] );
 }
 
 if ( ! empty( $_GET['detach'] ) && $detached = absint( $_GET['detach'] ) ) {
-	$message = sprintf( _n( 'Detached %d attachment.', 'Detached %d attachments.', $detached ), $detached );
+	if ( 1 == $detached ) {
+		$message = __( 'Media attachment detached.' );
+	} else {
+		/* translators: %s: number of media attachments */
+		$message = _n( '%s media attachment detached.', '%s media attachments detached.', $detached );
+	}
+	$message = sprintf( $message, number_format_i18n( $detached ) );
 	$_SERVER['REQUEST_URI'] = remove_query_arg( array( 'detach', 'attached' ), $_SERVER['REQUEST_URI'] );
 }
 
@@ -245,7 +264,8 @@ if ( ! empty( $_GET['deleted'] ) && $deleted = absint( $_GET['deleted'] ) ) {
 	if ( 1 == $deleted ) {
 		$message = __( 'Media attachment permanently deleted.' );
 	} else {
-		$message = _n( '%d media attachment permanently deleted.', '%d media attachments permanently deleted.', $deleted );
+		/* translators: %s: number of media attachments */
+		$message = _n( '%s media attachment permanently deleted.', '%s media attachments permanently deleted.', $deleted );
 	}
 	$message = sprintf( $message, number_format_i18n( $deleted ) );
 	$_SERVER['REQUEST_URI'] = remove_query_arg(array('deleted'), $_SERVER['REQUEST_URI']);
@@ -255,7 +275,8 @@ if ( ! empty( $_GET['trashed'] ) && $trashed = absint( $_GET['trashed'] ) ) {
 	if ( 1 == $trashed ) {
 		$message = __( 'Media attachment moved to the trash.' );
 	} else {
-		$message = _n( '%d media attachment moved to the trash.', '%d media attachments moved to the trash.', $trashed );
+		/* translators: %s: number of media attachments */
+		$message = _n( '%s media attachment moved to the trash.', '%s media attachments moved to the trash.', $trashed );
 	}
 	$message = sprintf( $message, number_format_i18n( $trashed ) );
 	$message .= ' <a href="' . esc_url( wp_nonce_url( 'upload.php?doaction=undo&action=untrash&ids='.(isset($_GET['ids']) ? $_GET['ids'] : ''), "bulk-media" ) ) . '">' . __('Undo') . '</a>';
@@ -266,7 +287,8 @@ if ( ! empty( $_GET['untrashed'] ) && $untrashed = absint( $_GET['untrashed'] ) 
 	if ( 1 == $untrashed ) {
 		$message = __( 'Media attachment restored from the trash.' );
 	} else {
-		$message = _n( '%d media attachment restored from the trash.', '%d media attachments restored from the trash.', $untrashed );
+		/* translators: %s: number of media attachments */
+		$message = _n( '%s media attachment restored from the trash.', '%s media attachments restored from the trash.', $untrashed );
 	}
 	$message = sprintf( $message, number_format_i18n( $untrashed ) );
 	$_SERVER['REQUEST_URI'] = remove_query_arg(array('untrashed'), $_SERVER['REQUEST_URI']);

@@ -16,30 +16,39 @@
  */
 class Walker_PageDropdown extends Walker {
 	/**
-	 * @see Walker::$tree_type
+	 * Walker tree type.
+	 *
 	 * @since 2.1.0
+	 * @see Walker::$tree_type
 	 * @var string
 	 */
 	public $tree_type = 'page';
 
 	/**
-	 * @see Walker::$db_fields
+	 * Database fields.
+	 *
 	 * @since 2.1.0
+	 * @see Walker::$db_fields
 	 * @todo Decouple this
 	 * @var array
 	 */
 	public $db_fields = array ('parent' => 'post_parent', 'id' => 'ID');
 
 	/**
-	 * @see Walker::start_el()
+	 * Starts the element output.
+	 *
 	 * @since 2.1.0
+	 *
+	 * @see Walker::start_el()
 	 *
 	 * @param string $output Passed by reference. Used to append additional content.
 	 * @param object $page   Page data object.
-	 * @param int    $depth  Depth of page in reference to parent pages. Used for padding.
-	 * @param array  $args   Uses 'selected' argument for selected page to set selected HTML attribute for option
-	 *                       element. Uses 'value_field' argument to fill "value" attribute. See {@see wp_dropdown_pages()}.
-	 * @param int    $id
+	 * @param int    $depth  Optional. Depth of page in reference to parent pages. Used for padding.
+	 *                       Default 0.
+	 * @param array  $args   Optional. Uses 'selected' argument for selected page to set selected HTML
+	 *                       attribute for option element. Uses 'value_field' argument to fill "value"
+	 *                       attribute. See {@see wp_dropdown_pages()}. Default empty array.
+	 * @param int    $id     Optional. ID of the current page. Default 0 (unused).
 	 */
 	public function start_el( &$output, $page, $depth = 0, $args = array(), $id = 0 ) {
 		$pad = str_repeat('&nbsp;', $depth * 3);
@@ -68,6 +77,7 @@ class Walker_PageDropdown extends Walker {
 		 * @param object $page  Page data object.
 		 */
 		$title = apply_filters( 'list_pages', $title, $page );
+
 		$output .= $pad . esc_html( $title );
 		$output .= "</option>\n";
 	}

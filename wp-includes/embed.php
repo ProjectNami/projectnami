@@ -387,9 +387,10 @@ function get_post_embed_url( $post = null ) {
 		return false;
 	}
 
-	if ( get_option( 'permalink_structure' ) ) {
-		$embed_url = trailingslashit( get_permalink( $post ) ) . user_trailingslashit( 'embed' );
-	} else {
+	$embed_url     = trailingslashit( get_permalink( $post ) ) . user_trailingslashit( 'embed' );
+	$path_conflict = get_page_by_path( str_replace( home_url(), '', $embed_url ), OBJECT, get_post_types( array( 'public' => true ) ) );
+
+	if ( ! get_option( 'permalink_structure' ) || $path_conflict ) {
 		$embed_url = add_query_arg( array( 'embed' => 'true' ), get_permalink( $post ) );
 	}
 
@@ -776,7 +777,7 @@ function wp_filter_oembed_result( $result, $data, $url ) {
 
 	if ( ! empty( $content[1] ) ) {
 		// We have a blockquote to fall back on. Hide the iframe by default.
-		$html = str_replace( '<iframe', '<iframe style="display:none;"', $html );
+		$html = str_replace( '<iframe', '<iframe style="position: absolute; clip: rect(1px, 1px, 1px, 1px);"', $html );
 		$html = str_replace( '<blockquote', '<blockquote class="wp-embedded-content"', $html );
 	}
 
@@ -952,7 +953,7 @@ function print_embed_scripts() {
  * @return string The filtered content.
  */
 function _oembed_filter_feed_content( $content ) {
-	return str_replace( '<iframe class="wp-embedded-content" sandbox="allow-scripts" security="restricted" style="display:none;"', '<iframe class="wp-embedded-content" sandbox="allow-scripts" security="restricted"', $content );
+	return str_replace( '<iframe class="wp-embedded-content" sandbox="allow-scripts" security="restricted" style="position: absolute; clip: rect(1px, 1px, 1px, 1px);"', '<iframe class="wp-embedded-content" sandbox="allow-scripts" security="restricted"', $content );
 }
 
 /**
@@ -1044,4 +1045,30 @@ function print_embed_sharing_dialog() {
 		</div>
 	</div>
 	<?php
+}
+
+/**
+ * Prints the necessary markup for the site title.
+ *
+ * @since 4.5.0
+ */
+function the_embed_site_title() {
+	$site_title = sprintf(
+		'<a href="%s" target="_top"><img src="%s" srcset="%s 2x" width="32" height="32" alt="" class="wp-embed-site-icon"/><span>%s</span></a>',
+		esc_url( home_url() ),
+		esc_url( get_site_icon_url( 32, admin_url( 'images/w-logo-blue.png' ) ) ),
+		esc_url( get_site_icon_url( 64, admin_url( 'images/w-logo-blue.png' ) ) ),
+		esc_html( get_bloginfo( 'name' ) )
+	);
+
+	$site_title = '<div class="wp-embed-site-title">' . $site_title . '</div>';
+
+	/**
+	 * Filter the site title HTML in the embed footer.
+	 *
+	 * @since 4.4.0
+	 *
+	 * @param string $site_title The site title HTML.
+	 */
+	echo apply_filters( 'embed_site_title_html', $site_title );
 }

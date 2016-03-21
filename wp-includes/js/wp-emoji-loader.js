@@ -1,5 +1,5 @@
 ( function( window, document, settings ) {
-	var src, ready;
+	var src, ready, ii, tests;
 
 	/**
 	 * Detect if the browser supports rendering emoji or flag emoji. Flag emoji are a single glyph
@@ -57,16 +57,18 @@
 				 * center pixel. In browsers that don't support emoji, the character will be rendered
 				 * as an empty square, so the center pixel will be blank.
 				 */
-				context.fillText( String.fromCharCode( 55357, 56835 ), 0, 0 );
-			} else {
+				context.fillText( stringFromCharCode( 55357, 56835 ), 0, 0 );
+				return context.getImageData( 16, 16, 1, 1 ).data[0] !== 0;
+			case 'unicode8':
 				/*
 				 * To check for Unicode 8 support, let's try rendering the most important advancement
 				 * that the Unicode Consortium have made in years: the burrito.
 				 */
-				context.fillText( String.fromCharCode( 55356, 57135 ), 0, 0 );
-			}
-			return context.getImageData( 16, 16, 1, 1 ).data[0] !== 0;
+				context.fillText( stringFromCharCode( 55356, 57135 ), 0, 0 );
+				return context.getImageData( 16, 16, 1, 1 ).data[0] !== 0;
 		}
+
+		return false;
 	}
 
 	function addScript( src ) {

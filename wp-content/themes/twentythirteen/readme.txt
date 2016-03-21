@@ -52,6 +52,16 @@ Source: http://www.genericons.com
 
 https://codex.wordpress.org/Twenty_Thirteen_Theme_Changelog#Version_1.7
 
+= 1.8 =
+* Released: January 6, 2016
+
+https://codex.wordpress.org/Twenty_Thirteen_Theme_Changelog#Version_1.8
+
+= 1.7 =
+* Released: December 8, 2015
+
+https://codex.wordpress.org/Twenty_Thirteen_Theme_Changelog#Version_1.7
+
 = 1.6 =
 * Released: August 18, 2015
 

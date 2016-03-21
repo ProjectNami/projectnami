@@ -1041,9 +1041,9 @@ class wpdb {
 			$dbh = $this->dbh;
 
 		if ( $this->use_mysqli ) {
-			$success = @mysqli_select_db( $dbh, $db );
+			$success = mysqli_select_db( $dbh, $db );
 		} else {
-			$success = @mysql_select_db( $db, $dbh );
+			$success = mysql_select_db( $db, $dbh );
 		}
 		if ( ! $success ) {
 			$this->ready = false;
@@ -1519,11 +1519,11 @@ class wpdb {
 	 */
 	public function check_connection( $allow_bail = true ) {
 		if ( $this->use_mysqli ) {
-			if ( @mysqli_ping( $this->dbh ) ) {
+			if ( ! empty( $this->dbh ) && mysqli_ping( $this->dbh ) ) {
 				return true;
 			}
 		} else {
-			if ( @mysql_ping( $this->dbh ) ) {
+			if ( ! empty( $this->dbh ) && mysql_ping( $this->dbh ) ) {
 				return true;
 			}
 		}
@@ -3011,14 +3011,14 @@ class wpdb {
 			return;
 
 		if ( $this->use_mysqli ) {
-			$num_fields = @mysqli_num_fields( $this->result );
+			$num_fields = mysqli_num_fields( $this->result );
 			for ( $i = 0; $i < $num_fields; $i++ ) {
-				$this->col_info[ $i ] = @mysqli_fetch_field( $this->result );
+				$this->col_info[ $i ] = mysqli_fetch_field( $this->result );
 			}
 		} else {
-			$num_fields = @mysql_num_fields( $this->result );
+			$num_fields = mysql_num_fields( $this->result );
 			for ( $i = 0; $i < $num_fields; $i++ ) {
-				$this->col_info[ $i ] = @mysql_fetch_field( $this->result, $i );
+				$this->col_info[ $i ] = mysql_fetch_field( $this->result, $i );
 			}
 		}
 	}
@@ -3094,6 +3094,34 @@ class wpdb {
 			return false;
 		}
 		wp_die($message);
+	}
+
+
+	/**
+	 * Closes the current database connection.
+	 *
+	 * @since 4.5.0
+	 * @access public.
+	 *
+	 * @return bool True if the connection was successfully closed, false if it wasn't,
+	 *              or the connection doesn't exist.
+	 */
+	public function close() {
+		if ( ! $this->dbh ) {
+			return false;
+		}
+
+		if ( $this->use_mysqli ) {
+			$closed = mysqli_close( $this->dbh );
+		} else {
+			$closed = mysql_close( $this->dbh );
+		}
+
+		if ( $closed ) {
+			$this->dbh = null;
+		}
+
+		return $closed;
 	}
 
 	/**
@@ -3193,7 +3221,7 @@ class wpdb {
 	}
 
 	/**
-	 * The database version number.
+	 * Retrieves the MySQL server version.
 	 *
 	 * @since 2.7.0
 	 *

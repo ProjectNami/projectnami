@@ -1,11 +1,11 @@
 <?php
 /**
- * BackPress Styles Procedural API
+ * Dependencies API: Styles functions
  *
  * @since 2.6.0
  *
  * @package WordPress
- * @subpackage BackPress
+ * @subpackage Dependencies
  */
 
 /**
@@ -106,8 +106,9 @@ function wp_add_inline_style( $handle, $data ) {
  * @param string|bool $ver    String specifying the stylesheet version number. Used to ensure that the correct version
  *                            is sent to the client regardless of caching. Default 'false'. Accepts 'false', 'null', or 'string'.
  * @param string      $media  Optional. The media for which this stylesheet has been defined.
- *                            Default 'all'. Accepts 'all', 'aural', 'braille', 'handheld', 'projection', 'print',
- *                            'screen', 'tty', or 'tv'.
+ *                            Default 'all'. Accepts media types like 'all', 'print' and 'screen', or media queries like
+ *                            '(orientation: portrait)' and '(max-width: 640px)'.
+ *
  * @return bool Whether the style has been registered. True on success, false on failure.
  */
 function wp_register_style( $handle, $src, $deps = array(), $ver = false, $media = 'all' ) {
@@ -136,7 +137,8 @@ function wp_deregister_style( $handle ) {
  *
  * Registers the style if source provided (does NOT overwrite) and enqueues.
  *
- * @see WP_Dependencies::add(), WP_Dependencies::enqueue()
+ * @see WP_Dependencies::add()
+ * @see WP_Dependencies::enqueue()
  * @link http://www.w3.org/TR/CSS2/media.html#media-types List of CSS media types.
  *
  * @since 2.6.0
@@ -148,8 +150,8 @@ function wp_deregister_style( $handle ) {
  *                            to ensure that the correct version is sent to the client regardless of caching, and so
  *                            should be included if a version number is available and makes sense for the stylesheet.
  * @param string      $media  Optional. The media for which this stylesheet has been defined.
- *                            Default 'all'. Accepts 'all', 'aural', 'braille', 'handheld', 'projection', 'print',
- *                            'screen', 'tty', or 'tv'.
+ *                            Default 'all'. Accepts media types like 'all', 'print' and 'screen', or media queries like
+ *                            '(orientation: portrait)' and '(max-width: 640px)'.
  */
 function wp_enqueue_style( $handle, $src = false, $deps = array(), $ver = false, $media = 'all' ) {
 	_wp_scripts_maybe_doing_it_wrong( __FUNCTION__ );

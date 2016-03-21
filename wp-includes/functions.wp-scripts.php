@@ -1,11 +1,11 @@
 <?php
 /**
- * BackPress Scripts Procedural API
+ * Dependencies API: Scripts functions
  *
  * @since 2.6.0
  *
  * @package WordPress
- * @subpackage BackPress
+ * @subpackage Dependencies
  */
 
 /**
@@ -57,7 +57,7 @@ function _wp_scripts_maybe_doing_it_wrong( $function ) {
  * @see WP_Scripts::do_items()
  * @global WP_Scripts $wp_scripts The WP_Scripts object for printing scripts.
  *
- * @since 2.6.0
+ * @since 2.1.0
  *
  * @param string|bool|array $handles Optional. Scripts to be printed. Default 'false'.
  * @return array On success, a processed array of WP_Dependencies items; otherwise, an empty array.
@@ -86,13 +86,43 @@ function wp_print_scripts( $handles = false ) {
 }
 
 /**
+ * Adds extra code to a registered script.
+ *
+ * Code will only be added if the script in already in the queue.
+ * Accepts a string $data containing the Code. If two or more code blocks
+ * are added to the same script $handle, they will be printed in the order
+ * they were added, i.e. the latter added code can redeclare the previous.
+ *
+ * @since 4.5.0
+ *
+ * @see WP_Scripts::add_inline_script()
+ *
+ * @param string $handle   Name of the script to add the inline script to. Must be lowercase.
+ * @param string $data     String containing the javascript to be added.
+ * @param string $position Optional. Whether to add the inline script before the handle
+ *                         or after. Default 'after'.
+ * @return bool True on success, false on failure.
+ */
+function wp_add_inline_script( $handle, $data, $position = 'after' ) {
+	_wp_scripts_maybe_doing_it_wrong( __FUNCTION__ );
+
+	if ( false !== stripos( $data, '</script>' ) ) {
+		_doing_it_wrong( __FUNCTION__, __( 'Do not pass script tags to wp_add_inline_script().' ), '4.5.0' );
+		$data = trim( preg_replace( '#<script[^>]*>(.*)</script>#is', '$1', $data ) );
+	}
+
+	return wp_scripts()->add_inline_script( $handle, $data, $position );
+}
+
+/**
  * Register a new script.
  *
  * Registers a script to be linked later using the wp_enqueue_script() function.
  *
- * @see WP_Dependencies::add(), WP_Dependencies::add_data()
+ * @see WP_Dependencies::add()
+ * @see WP_Dependencies::add_data()
  *
- * @since 2.6.0
+ * @since 2.1.0
  * @since 4.3.0 A return value was added.
  *
  * @param string      $handle    Name of the script. Should be unique.
@@ -137,7 +167,7 @@ function wp_register_script( $handle, $src, $deps = array(), $ver = false, $in_f
  * @link https://core.trac.wordpress.org/ticket/11520
  * @global WP_Scripts $wp_scripts The WP_Scripts object for printing scripts.
  *
- * @since 2.6.0
+ * @since 2.2.0
  *
  * @todo Documentation cleanup
  *
@@ -165,7 +195,7 @@ function wp_localize_script( $handle, $object_name, $l10n ) {
  *
  * @see WP_Dependencies::remove()
  *
- * @since 2.6.0
+ * @since 2.1.0
  *
  * @param string $handle Name of the script to be removed.
  */
@@ -190,7 +220,7 @@ function wp_deregister_script( $handle ) {
 		);
 
 		if ( in_array( $handle, $no ) ) {
-			$message = sprintf( __( 'Do not deregister the %1$s script in the administration area. To target the frontend theme, use the %2$s hook.' ),
+			$message = sprintf( __( 'Do not deregister the %1$s script in the administration area. To target the front-end theme, use the %2$s hook.' ),
 				"<code>$handle</code>", '<code>wp_enqueue_scripts</code>' );
 			_doing_it_wrong( __FUNCTION__, $message, '3.6' );
 			return;
@@ -205,9 +235,11 @@ function wp_deregister_script( $handle ) {
  *
  * Registers the script if $src provided (does NOT overwrite), and enqueues it.
  *
- * @see WP_Dependencies::add(), WP_Dependencies::add_data(), WP_Dependencies::enqueue()
+ * @see WP_Dependencies::add()
+ * @see WP_Dependencies::add_data()
+ * @see WP_Dependencies::enqueue()
  *
- * @since 2.6.0
+ * @since 2.1.0
  *
  * @param string      $handle    Name of the script.
  * @param string|bool $src       Path to the script from the root directory of WordPress. Example: '/js/myscript.js'.
@@ -263,7 +295,7 @@ function wp_dequeue_script( $handle ) {
  * @param string $handle Name of the script.
  * @param string $list   Optional. Status of the script to check. Default 'enqueued'.
  *                       Accepts 'enqueued', 'registered', 'queue', 'to_do', and 'done'.
- * @return bool Whether the script script is queued.
+ * @return bool Whether the script is queued.
  */
 function wp_script_is( $handle, $list = 'enqueued' ) {
 	_wp_scripts_maybe_doing_it_wrong( __FUNCTION__ );

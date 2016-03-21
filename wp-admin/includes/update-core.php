@@ -700,6 +700,8 @@ $_old_files = array(
 'wp-admin/js/wp-fullscreen.min.js',
 'wp-includes/js/tinymce/wp-mce-help.php',
 'wp-includes/js/tinymce/plugins/wpfullscreen',
+// 4.5
+'wp-includes/theme-compat/comments-popup.php',
 );
 
 /**
@@ -1093,7 +1095,7 @@ function update_core($from, $to) {
 
 	// Clear the cache to prevent an update_option() from saving a stale db_version to the cache
 	wp_cache_flush();
-	// (Not all cache backends listen to 'flush')
+	// (Not all cache back ends listen to 'flush')
 	wp_cache_delete( 'alloptions', 'options' );
 
 	// Remove working directory

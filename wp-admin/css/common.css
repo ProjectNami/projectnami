@@ -114,6 +114,13 @@
 	clear: both;
 }
 
+/* modern clearfix */
+.wp-clearfix:after {
+	content: "";
+	display: table;
+	clear: both;
+}
+
 /* Hide visually but not from screen readers */
 .screen-reader-text,
 .screen-reader-text span,
@@ -265,13 +272,14 @@ a:active {
 }
 
 a:focus,
-a:focus .media-icon img {
+a:focus .media-icon img,
+.wp-person a:focus .gravatar {
 	color: #124964;
-    -webkit-box-shadow:
-    	0 0 0 1px #5b9dd9,
+	-webkit-box-shadow:
+		0 0 0 1px #5b9dd9,
 		0 0 2px 1px rgba(30, 140, 190, .8);
-    box-shadow:
-    	0 0 0 1px #5b9dd9,
+	box-shadow:
+		0 0 0 1px #5b9dd9,
 		0 0 2px 1px rgba(30, 140, 190, .8);
 }
 
@@ -337,8 +345,12 @@ h3 {
 	margin: 1em 0;
 }
 
+.update-core-php h2 {
+	margin-top: 2em;
+}
+
 .update-php h2,
-.update-core-php h2,
+.update-messages h2,
 h4 {
 	font-size: 1em;
 	margin: 1.33em 0;
@@ -431,7 +443,7 @@ code {
 
 .subsubsub a .count,
 .subsubsub a.current .count {
-	color: #999;
+	color: #555d66; /* #f1f1f1 background */
 	font-weight: normal;
 }
 
@@ -504,6 +516,7 @@ code {
 }
 
 .widefat th input,
+.updates-table td input,
 .widefat thead td input,
 .widefat tfoot td input {
 	margin: 0 0 0 8px;
@@ -517,18 +530,13 @@ code {
 	vertical-align: top;
 }
 
-.widefat th input[type=checkbox],
-.widefat thead td input[type=checkbox],
-.widefat tfoot td input[type=checkbox] {
-	margin-top: -1px;
-}
-
 .widefat tbody th.check-column {
 	padding: 9px 0 22px;
 }
 
 .widefat thead td.check-column,
 .widefat tbody th.check-column,
+.updates-table tbody td.check-column,
 .widefat tfoot td.check-column {
 	padding: 11px 0 0 3px;
 }
@@ -578,7 +586,7 @@ code {
 .subtitle {
 	margin: 0;
 	padding-left: 25px;
-	color: #777;
+	color: #555d66;
 	font-size: 14px;
 	font-weight: normal;
 }
@@ -653,11 +661,6 @@ ul.striped > :nth-child(odd),
 	border-right-color: #99d;
 }
 
-.media-upload-form label.form-help,
-td.help {
-	color: #9a9a9a;
-}
-
 /* Helper classes for plugins to leverage the active WordPress color scheme */
 
 .highlight {
@@ -690,7 +693,7 @@ td.help {
 }
 
 .wp-ui-text-icon {
-	color: #999;
+	color: #82878c; /* same as new icons */
 }
 
 /* For emoji replacement images */
@@ -908,26 +911,6 @@ abbr.required,
 	margin-left: 18px;
 }
 
-.side-info {
-	margin: 0;
-	padding: 4px;
-	font-size: 11px;
-}
-
-.side-info h5 {
-	padding-bottom: 7px;
-	font-size: 14px;
-	margin: 12px 2px 5px;
-	border-bottom: 1px solid #dadada;
-}
-
-.side-info ul {
-	margin: 0;
-	padding-left: 18px;
-	list-style: square;
-	color: #666;
-}
-
 .approve,
 .unapproved .unapprove {
 	display: none;
@@ -980,7 +963,7 @@ th.action-links {
 	padding: 4px 10px;
 	-webkit-border-radius: 30px;
 	border-radius: 30px;
-	background: #777;
+	background: #72777c;
 	color: #fff;
 	font-size: 14px;
 	font-weight: 600;
@@ -1071,7 +1054,7 @@ th.action-links {
 	margin: 0 5px 0 0;
 	width: 16px;
 	height: 16px;
-	color: #777;
+	color: #72777c;
 	-webkit-transition: color .1s ease-in 0;
 	transition: color .1s ease-in 0;
 	font-family: dashicons;
@@ -1134,7 +1117,7 @@ th.action-links {
 	-webkit-border-radius: 2px;
 	border-radius: 2px;
 	border: none;
-	background: #777;
+	background: #72777c;
 	color: #fff;
 }
 
@@ -1336,7 +1319,6 @@ div.error p,
 
 .updated a {
 	padding-bottom: 2px;
-	text-decoration: none;
 }
 
 .notice-alt {
@@ -1546,7 +1528,7 @@ form.upgrade .hint {
 	background: none;
 	-webkit-border-radius: 0;
 	border-radius: 0;
-	color: #777;
+	color: #72777c;
 	line-height: 1.7;
 	padding: 3px 6px 3px 16px;
 }
@@ -1660,7 +1642,7 @@ form.upgrade .hint {
 }
 
 .screen-options + .screen-options {
-    margin-top: 10px;
+	margin-top: 10px;
 }
 
 .metabox-prefs .submit {
@@ -1833,6 +1815,23 @@ html.wp-toolbar {
 .metabox-holder .postbox-container .empty-container {
 	border: 3px dashed #b4b9be;
 	height: 250px;
+	position: relative;
+}
+
+.metabox-holder .postbox-container .empty-container:after {
+	content: attr(data-emptystring);
+	margin: auto;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	height: 1em;
+	width: 200px;
+	text-align: center;
+	color: #ccc;
+	font-size:18px;
+	display: none;
 }
 
 .metabox-holder.columns-1 .postbox-container .empty-container,
@@ -1979,7 +1978,7 @@ html.wp-toolbar {
 	left: 0;
 	right: 0;
 	padding: 10px 20px;
-	color: #777;
+	color: #555d66;
 }
 
 #wpfooter p {
@@ -2057,15 +2056,22 @@ h1.nav-tab-wrapper, /* Back-compat for pre-4.4 */
 h3.nav-tab-wrapper {
 	border-bottom: 1px solid #ccc;
 	margin: 0;
-	padding: 9px 15px 0 0;
+	padding-top: 9px;
 	line-height: inherit;
 }
 
-/* contain floats */
-.nav-tab-wrapper:after {
-	content: "";
-	display: table;
-	clear: both;
+/* Back-compat for plugins. Deprecated. Use .wp-clearfix instead. */
+.nav-tab-wrapper:not(.wp-clearfix):after {
+ 	content: "";
+ 	display: table;
+ 	clear: both;
+ }
+
+.ie8 .nav-tab-wrapper {
+	/* contain floats establishing a new block formatting context */
+	display: inline-block;
+	width: 100%;
+	vertical-align: top;
 }
 
 /*------------------------------------------------------------------------------
@@ -2154,7 +2160,7 @@ body.iframe {
 }
 
 .media-icon img {
-	border: 1px solid #e7e7e7;
+	border: 1px solid #e5e5e5;
 	border: 1px solid rgba(0, 0, 0, 0.07);
 }
 
@@ -2515,6 +2521,10 @@ div.action-links {
 	margin: 0 0 10px;
 }
 
+#plugin-information .fyi-description {
+	margin-top: 0;
+}
+
 #plugin-information .counter-container {
 	margin: 3px 0;
 }
@@ -2528,7 +2538,7 @@ div.action-links {
 #plugin-information .counter-back {
 	height: 17px;
 	width: 92px;
-	background-color: #ececec;
+	background-color: #e5e5e5;
 	float: left;
 }
 
@@ -2624,7 +2634,7 @@ div.action-links {
 	overflow: hidden; /* clearfix */
 	width: 100%;
 	margin-bottom: 20px;
-	border-bottom: 1px solid #e6e6e6;
+	border-bottom: 1px solid #e5e5e5;
 }
 
 #plugin-information .review-title-section {
@@ -2935,10 +2945,10 @@ img {
 
 .js .postbox .handlediv:focus .toggle-indicator:before {
 	-webkit-box-shadow:
-    	0 0 0 1px #5b9dd9,
+		0 0 0 1px #5b9dd9,
 		0 0 2px 1px rgba(30, 140, 190, .8);
-    box-shadow:
-    	0 0 0 1px #5b9dd9,
+	box-shadow:
+		0 0 0 1px #5b9dd9,
 		0 0 2px 1px rgba(30, 140, 190, .8);
 }
 
@@ -3068,7 +3078,7 @@ img {
 .item-edit:hover,
 .sidebar-name:hover .sidebar-name-arrow,
 .accordion-section-title:hover:after {
-	color: #777;
+	color: #555d66;
 }
 
 .widget-top a.widget-action:after {
@@ -3632,15 +3642,13 @@ img {
 	h1.nav-tab-wrapper,
 	.wrap h2.nav-tab-wrapper,
 	h3.nav-tab-wrapper {
-		padding-left: 0;
 		border-bottom: 0;
 	}
 
 	h1 .nav-tab,
 	h2 .nav-tab,
 	h3 .nav-tab {
-		margin-top: 10px;
-		margin-right: 10px;
+		margin: 10px 10px 0 0;
 		border-bottom: 1px solid #ccc;
 	}
 }

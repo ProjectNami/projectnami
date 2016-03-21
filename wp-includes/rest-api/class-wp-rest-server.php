@@ -340,6 +340,7 @@ class WP_REST_Server {
 		 * Allows modification of the response before returning.
 		 *
 		 * @since 4.4.0
+		 * @since 4.5.0 Applied to embedded responses.
 		 *
 		 * @param WP_HTTP_Response $result  Result to send to the client. Usually a WP_REST_Response.
 		 * @param WP_REST_Server   $this    Server instance.
@@ -460,7 +461,28 @@ class WP_REST_Server {
 
 		// Convert links to part of the data.
 		$data = array();
+		$curies = $response->get_curies();
+		$used_curies = array();
+
 		foreach ( $links as $rel => $items ) {
+
+			// Convert $rel URIs to their compact versions if they exist.
+			foreach ( $curies as $curie ) {
+				$href_prefix = substr( $curie['href'], 0, strpos( $curie['href'], '{rel}' ) );
+				if ( strpos( $rel, $href_prefix ) !== 0 ) {
+					continue;
+				}
+				$used_curies[ $curie['name'] ] = $curie;
+
+				// Relation now changes from '$uri' to '$curie:$relation'
+				$rel_regex = str_replace( '\{rel\}', '([\w]+)', preg_quote( $curie['href'], '!' ) );
+				preg_match( '!' . $rel_regex . '!', $rel, $matches );
+				if ( $matches ) {
+					$rel = $curie['name'] . ':' . $matches[1];
+				}
+				break;
+			}
+
 			$data[ $rel ] = array();
 
 			foreach ( $items as $item ) {
@@ -468,6 +490,11 @@ class WP_REST_Server {
 				$attributes['href'] = $item['href'];
 				$data[ $rel ][] = $attributes;
 			}
+		}
+
+		// Push the curies onto the start of the links array.
+		if ( $used_curies ) {
+			$data = array_merge( array( 'curies' => array_values( $used_curies ) ), $data );
 		}
 
 		return $data;
@@ -505,41 +532,28 @@ class WP_REST_Server {
 
 			foreach ( $links as $item ) {
 				// Determine if the link is embeddable.
-				if ( empty( $item['embeddable'] ) || strpos( $item['href'], $api_root ) !== 0 ) {
+				if ( empty( $item['embeddable'] ) ) {
 					// Ensure we keep the same order.
 					$embeds[] = array();
 					continue;
 				}
 
 				// Run through our internal routing and serve.
-				$route = substr( $item['href'], strlen( untrailingslashit( $api_root ) ) );
-				$query_params = array();
-
-				// Parse out URL query parameters.
-				$parsed = parse_url( $route );
-				if ( empty( $parsed['path'] ) ) {
+				$request = WP_REST_Request::from_url( $item['href'] );
+				if ( ! $request ) {
 					$embeds[] = array();
 					continue;
 				}
 
-				if ( ! empty( $parsed['query'] ) ) {
-					parse_str( $parsed['query'], $query_params );
-
-					// Ensure magic quotes are stripped.
-					if ( get_magic_quotes_gpc() ) {
-						$query_params = stripslashes_deep( $query_params );
-					}
-				}
-
 				// Embedded resources get passed context=embed.
-				if ( empty( $query_params['context'] ) ) {
-					$query_params['context'] = 'embed';
+				if ( empty( $request['context'] ) ) {
+					$request['context'] = 'embed';
 				}
 
-				$request = new WP_REST_Request( 'GET', $parsed['path'] );
-
-				$request->set_query_params( $query_params );
 				$response = $this->dispatch( $request );
+
+				/** This filter is documented in wp-includes/rest-api/class-wp-rest-server.php */
+				$response = apply_filters( 'rest_post_dispatch', rest_ensure_response( $response ), $this, $request );
 
 				$embeds[] = $this->response_to_data( $response, false );
 			}
@@ -794,7 +808,11 @@ class WP_REST_Server {
 				$callback  = $handler['callback'];
 				$response = null;
 
-				$checked_method = 'HEAD' === $method ? 'GET' : $method;
+				// Fallback to GET method if no HEAD method is registered.
+				$checked_method = $method;
+				if ( 'HEAD' === $method && empty( $handler['methods']['HEAD'] ) ) {
+					$checked_method = 'GET';
+				}
 				if ( empty( $handler['methods'][ $checked_method ] ) ) {
 					continue;
 				}
@@ -848,11 +866,14 @@ class WP_REST_Server {
 					 * Allow plugins to override dispatching the request.
 					 *
 					 * @since 4.4.0
+					 * @since 4.5.0 Added `$route` and `$handler` parameters.
 					 *
 					 * @param bool            $dispatch_result Dispatch result, will be used if not empty.
 					 * @param WP_REST_Request $request         Request used to generate the response.
+					 * @param string          $route           Route matched for the request.
+					 * @param array           $handler         Route handler used for the request.
 					 */
-					$dispatch_result = apply_filters( 'rest_dispatch_request', null, $request );
+					$dispatch_result = apply_filters( 'rest_dispatch_request', null, $request, $route, $handler );
 
 					// Allow plugins to halt the request via this filter.
 					if ( null !== $dispatch_result ) {

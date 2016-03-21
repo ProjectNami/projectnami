@@ -110,7 +110,7 @@ function wp_generate_attachment_metadata( $attachment_id, $file ) {
 		 * Filter the image sizes automatically generated when uploading an image.
 		 *
 		 * @since 2.9.0
-		 * @since 4.4.0 The `$metadata` argument was addeed
+		 * @since 4.4.0 Added the `$metadata` argument.
 		 *
 		 * @param array $sizes    An associative array of image sizes.
 		 * @param array $metadata An associative array of image metadata: width, height, file.
@@ -408,11 +408,13 @@ function wp_read_image_metadata( $file ) {
 		}
 	}
 
-	foreach ( $meta as &$value ) {
-		if ( is_string( $value ) ) {
-			$value = wp_kses_post( $value );
+	foreach ( $meta['keywords'] as $key => $keyword ) {
+		if ( ! seems_utf8( $keyword ) ) {
+			$meta['keywords'][ $key ] = utf8_encode( $keyword );
 		}
 	}
+
+	$meta = wp_kses_post_deep( $meta );
 
 	/**
 	 * Filter the array of meta data read from an image's exif data.
