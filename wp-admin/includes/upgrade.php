@@ -1431,6 +1431,6 @@ function upgrade_450() {
 
 	// Remove unused email confirmation options, moved to usermeta.
 	if ( $wp_current_db_version < 36679 && is_multisite() ) {
-		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name REGEXP '^[0-9]+_new_email$'" );
+		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '[0-9]%_new_email'" );
 	}
 }
