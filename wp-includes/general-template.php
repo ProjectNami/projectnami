@@ -2026,7 +2026,7 @@ function get_calendar( $initial = true, $echo = true ) {
 	$daywithpost = array();
 
 	// Get days with posts
-	$dayswithposts = $wpdb->get_results("SELECT DISTINCT DAY(post_date)
+	$dayswithposts = $wpdb->get_results("SELECT DISTINCT DAY(post_date) as post_date
 		FROM $wpdb->posts WHERE post_date >= '{$thisyear}-{$thismonth}-01 00:00:00'
 		AND post_type = 'post' AND post_status = 'publish'
 		AND post_date <= '{$thisyear}-{$thismonth}-{$last_day} 23:59:59'", ARRAY_N);
