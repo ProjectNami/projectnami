@@ -408,9 +408,6 @@ function register_taxonomy( $taxonomy, $object_type, $args = array() ) {
 	} else {
 		// Force query_var to false for non-public taxonomies.
 		$args['query_var'] = false;
-	} else {
-		// Force query_var to false for non-public taxonomies.
-		$args['query_var'] = false;
 	}
 
 	if ( false !== $args['rewrite'] && ( is_admin() || '' != get_option( 'permalink_structure' ) ) ) {
