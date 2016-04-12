@@ -303,10 +303,10 @@ class WP_REST_Server {
 
 		$request = new WP_REST_Request( $_SERVER['REQUEST_METHOD'], $path );
 
-		$request->set_query_params( $_GET );
-		$request->set_body_params( $_POST );
+		$request->set_query_params( wp_unslash( $_GET ) );
+		$request->set_body_params( wp_unslash( $_POST ) );
 		$request->set_file_params( $_FILES );
-		$request->set_headers( $this->get_headers( $_SERVER ) );
+		$request->set_headers( $this->get_headers( wp_unslash( $_SERVER ) ) );
 		$request->set_body( $this->get_raw_data() );
 
 		/*
@@ -421,7 +421,7 @@ class WP_REST_Server {
 	 */
 	public function response_to_data( $response, $embed ) {
 		$data  = $response->get_data();
-		$links = $this->get_response_links( $response );
+		$links = $this->get_compact_response_links( $response );
 
 		if ( ! empty( $links ) ) {
 			// Convert links to part of the data.
@@ -454,13 +454,45 @@ class WP_REST_Server {
 	 */
 	public static function get_response_links( $response ) {
 		$links = $response->get_links();
-
 		if ( empty( $links ) ) {
 			return array();
 		}
 
 		// Convert links to part of the data.
 		$data = array();
+		foreach ( $links as $rel => $items ) {
+			$data[ $rel ] = array();
+
+			foreach ( $items as $item ) {
+				$attributes = $item['attributes'];
+				$attributes['href'] = $item['href'];
+				$data[ $rel ][] = $attributes;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Retrieves the CURIEs (compact URIs) used for relations.
+	 *
+	 * Extracts the links from a response into a structured hash, suitable for
+	 * direct output.
+	 *
+	 * @since 4.5.0
+	 * @access public
+	 * @static
+	 *
+	 * @param WP_REST_Response $response Response to extract links from.
+	 * @return array Map of link relation to list of link hashes.
+	 */
+	public static function get_compact_response_links( $response ) {
+		$links = self::get_response_links( $response );
+
+		if ( empty( $links ) ) {
+			return array();
+		}
+
 		$curies = $response->get_curies();
 		$used_curies = array();
 
@@ -472,32 +504,26 @@ class WP_REST_Server {
 				if ( strpos( $rel, $href_prefix ) !== 0 ) {
 					continue;
 				}
-				$used_curies[ $curie['name'] ] = $curie;
 
 				// Relation now changes from '$uri' to '$curie:$relation'
-				$rel_regex = str_replace( '\{rel\}', '([\w]+)', preg_quote( $curie['href'], '!' ) );
+				$rel_regex = str_replace( '\{rel\}', '(.+)', preg_quote( $curie['href'], '!' ) );
 				preg_match( '!' . $rel_regex . '!', $rel, $matches );
 				if ( $matches ) {
-					$rel = $curie['name'] . ':' . $matches[1];
+					$new_rel = $curie['name'] . ':' . $matches[1];
+					$used_curies[ $curie['name'] ] = $curie;
+					$links[ $new_rel ] = $items;
+					unset( $links[ $rel ] );
+					break;
 				}
-				break;
-			}
-
-			$data[ $rel ] = array();
-
-			foreach ( $items as $item ) {
-				$attributes = $item['attributes'];
-				$attributes['href'] = $item['href'];
-				$data[ $rel ][] = $attributes;
 			}
 		}
 
 		// Push the curies onto the start of the links array.
 		if ( $used_curies ) {
-			$data = array_merge( array( 'curies' => array_values( $used_curies ) ), $data );
+			$links['curies'] = array_values( $used_curies );
 		}
 
-		return $data;
+		return $links;
 	}
 
 	/**
@@ -520,7 +546,6 @@ class WP_REST_Server {
 		}
 
 		$embedded = array();
-		$api_root = rest_url();
 
 		foreach ( $data['_links'] as $rel => $links ) {
 			// Ignore links to self, for obvious reasons.
@@ -946,6 +971,7 @@ class WP_REST_Server {
 			'name'           => get_option( 'blogname' ),
 			'description'    => get_option( 'blogdescription' ),
 			'url'            => get_option( 'siteurl' ),
+			'home'           => home_url(),
 			'namespaces'     => array_keys( $this->namespaces ),
 			'authentication' => array(),
 			'routes'         => $this->get_data_for_routes( $this->get_routes(), $request['context'] ),

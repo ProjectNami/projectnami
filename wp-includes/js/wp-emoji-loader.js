@@ -13,7 +13,7 @@
 	function browserSupportsEmoji( type ) {
 		var canvas = document.createElement( 'canvas' ),
 			context = canvas.getContext && canvas.getContext( '2d' ),
-			tone;
+			tonedata, tone, tone2;
 
 		if ( ! context || ! context.fillText ) {
 			return false;

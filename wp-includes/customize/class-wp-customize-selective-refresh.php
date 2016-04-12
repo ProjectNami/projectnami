@@ -1,6 +1,6 @@
 <?php
 /**
- * WordPress Customize Selective Refresh class
+ * Customize API: WP_Customize_Selective_Refresh class
  *
  * @package WordPress
  * @subpackage Customize
@@ -8,7 +8,7 @@
  */
 
 /**
- * WordPress Customize Selective Refresh class.
+ * Core Customizer class for implementing selective refresh.
  *
  * @since 4.5.0
  */
@@ -24,6 +24,8 @@ final class WP_Customize_Selective_Refresh {
 	/**
 	 * Customize manager.
 	 *
+	 * @since 4.5.0
+	 * @access public
 	 * @var WP_Customize_Manager
 	 */
 	public $manager;
@@ -182,8 +184,6 @@ final class WP_Customize_Selective_Refresh {
 			'renderQueryVar' => self::RENDER_QUERY_VAR,
 			'l10n'           => array(
 				'shiftClickToEdit' => __( 'Shift-click to edit this element.' ),
-				/* translators: %s: message from JS error */
-				'errorMessageTpl'  => __( 'Script error: %s' ),
 				/* translators: %s: document.write() */
 				'badDocumentWrite' => sprintf( __( '%s is forbidden' ), 'document.write()' ),
 			),

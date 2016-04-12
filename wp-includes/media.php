@@ -1020,7 +1020,7 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 	 */
 	$image_meta = apply_filters( 'wp_calculate_image_srcset_meta', $image_meta, $size_array, $image_src, $attachment_id );
 
-	if ( empty( $image_meta['sizes'] ) ) {
+	if ( empty( $image_meta['sizes'] ) || ! isset( $image_meta['file'] ) || strlen( $image_meta['file'] ) < 4 ) {
 		return false;
 	}
 
@@ -1065,6 +1065,14 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 	$image_ratio = $image_height / $image_width;
 
 	/*
+	 * If currently on HTTPS, prefer HTTPS URLs when we know they're supported by the domain
+	 * (which is to say, when they share the domain name of the current request).
+	 */
+	if ( is_ssl() && 'https' !== substr( $image_baseurl, 0, 5 ) && parse_url( $image_baseurl, PHP_URL_HOST ) === $_SERVER['HTTP_HOST'] ) {
+		$image_baseurl = set_url_scheme( $image_baseurl, 'https' );
+	}
+
+	/*
 	 * Images that have been edited in WordPress after being uploaded will
 	 * contain a unique hash. Look for that hash and use it later to filter
 	 * out images that are leftovers from previous versions.
@@ -1103,10 +1111,16 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 	 * versions of the same edit.
 	 */
 	foreach ( $image_sizes as $image ) {
+		$is_src = false;
+
+		// Check if image meta isn't corrupted.
+		if ( ! is_array( $image ) ) {
+			continue;
+		}
 
 		// If the file name is part of the `src`, we've confirmed a match.
 		if ( ! $src_matched && false !== strpos( $image_src, $dirname . $image['file'] ) ) {
-			$src_matched = true;
+			$src_matched = $is_src = true;
 		}
 
 		// If the file name is part of the `src`, we've confirmed a match.
@@ -1123,9 +1137,7 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 		 * Filter out images that are wider than '$max_srcset_image_width' unless
 		 * that file is in the 'src' attribute.
 		 */
-		if ( $max_srcset_image_width && $image['width'] > $max_srcset_image_width &&
-			false === strpos( $image_src, $image['file'] ) ) {
-
+		if ( $max_srcset_image_width && $image['width'] > $max_srcset_image_width && ! $is_src ) {
 			continue;
 		}
 
@@ -1139,11 +1151,18 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 		// If the new ratio differs by less than 0.002, use it.
 		if ( abs( $image_ratio - $image_ratio_compare ) < 0.002 ) {
 			// Add the URL, descriptor, and value to the sources array to be returned.
-			$sources[ $image['width'] ] = array(
+			$source = array(
 				'url'        => $image_baseurl . $image['file'],
 				'descriptor' => 'w',
 				'value'      => $image['width'],
 			);
+
+			// The 'src' image has to be the first in the 'srcset', because of a bug in iOS8. See #35030.
+			if ( $is_src ) {
+				$sources = array( $image['width'] => $source ) + $sources;
+			} else {
+				$sources[ $image['width'] ] = $source;
+			}
 		}
 	}
 
@@ -3403,7 +3422,7 @@ function wp_enqueue_media( $args = array() ) {
 		'filterByDate'           => __( 'Filter by date' ),
 		'filterByType'           => __( 'Filter by type' ),
 		'searchMediaLabel'       => __( 'Search Media' ),
-		'noMedia'                => __( 'No media attachments found.' ),
+		'noMedia'                => __( 'No media files found.' ),
 
 		// Library Details
 		'attachmentDetails'  => __( 'Attachment Details' ),

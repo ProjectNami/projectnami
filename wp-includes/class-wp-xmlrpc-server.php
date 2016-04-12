@@ -247,9 +247,22 @@ class wp_xmlrpc_server extends IXR_Server {
 		}
 
 		/**
-		 * Filter whether XML-RPC is enabled.
+		 * Filter whether XML-RPC methods requiring authentication are enabled.
 		 *
-		 * This is the proper filter for turning off XML-RPC.
+		 * Contrary to the way it's named, this filter does not control whether XML-RPC is *fully*
+		 * enabled, rather, it only controls whether XML-RPC methods requiring authentication - such
+		 * as for publishing purposes - are enabled.
+		 *
+		 * Further, the filter does not control whether pingbacks or other custom endpoints that don't
+		 * require authentication are enabled. This behavior is expected, and due to how parity was matched
+		 * with the `enable_xmlrpc` UI option the filter replaced when it was introduced in 3.5.
+		 *
+		 * To disable XML-RPC methods that require authentication, use:
+		 *
+		 *     add_filter( 'xmlrpc_enabled', '__return_false' );
+		 *
+		 * For more granular control over all XML-RPC methods and requests, see the {@see 'xmlrpc_methods'}
+		 * and {@see 'xmlrpc_element_limit'} hooks.
 		 *
 		 * @since 3.5.0
 		 *
@@ -1351,9 +1364,15 @@ class wp_xmlrpc_server extends IXR_Server {
 			$dateCreated = $post_data['post_date']->getIso();
 		}
 
+		// Default to not flagging the post date to be edited unless it's intentional.
+		$post_data['edit_date'] = false;
+
 		if ( ! empty( $dateCreated ) ) {
 			$post_data['post_date'] = get_date_from_gmt( iso8601_to_datetime( $dateCreated ) );
 			$post_data['post_date_gmt'] = iso8601_to_datetime( $dateCreated, 'GMT' );
+
+			// Flag the post date to be edited.
+			$post_data['edit_date'] = true;
 		}
 
 		if ( ! isset( $post_data['ID'] ) )
@@ -5362,16 +5381,22 @@ class wp_xmlrpc_server extends IXR_Server {
 		elseif ( !empty( $content_struct['dateCreated']) )
 			$dateCreated = $content_struct['dateCreated']->getIso();
 
+		// Default to not flagging the post date to be edited unless it's intentional.
+		$edit_date = false;
+
 		if ( !empty( $dateCreated ) ) {
 			$post_date = get_date_from_gmt(iso8601_to_datetime($dateCreated));
 			$post_date_gmt = iso8601_to_datetime($dateCreated, 'GMT');
+
+			// Flag the post date to be edited.
+			$edit_date = true;
 		} else {
 			$post_date     = $postdata['post_date'];
 			$post_date_gmt = $postdata['post_date_gmt'];
 		}
 
 		// We've got all the data -- post it.
-		$newpost = compact('ID', 'post_content', 'post_title', 'post_category', 'post_status', 'post_excerpt', 'comment_status', 'ping_status', 'post_date', 'post_date_gmt', 'to_ping', 'post_name', 'post_password', 'post_parent', 'menu_order', 'post_author', 'tags_input', 'page_template');
+		$newpost = compact('ID', 'post_content', 'post_title', 'post_category', 'post_status', 'post_excerpt', 'comment_status', 'ping_status', 'edit_date', 'post_date', 'post_date_gmt', 'to_ping', 'post_name', 'post_password', 'post_parent', 'menu_order', 'post_author', 'tags_input', 'page_template');
 
 		$result = wp_update_post($newpost, true);
 		if ( is_wp_error( $result ) )

@@ -109,7 +109,7 @@ wp.customize.selectiveRefresh = ( function( $, api ) {
 		placements: function() {
 			var partial = this, selector;
 
-			selector = partial.params.selector;
+			selector = partial.params.selector || '';
 			if ( selector ) {
 				selector += ', ';
 			}
@@ -255,7 +255,7 @@ wp.customize.selectiveRefresh = ( function( $, api ) {
 		 * @returns {boolean} Whether the rendering was successful and the fallback was not invoked.
 		 */
 		renderContent: function( placement ) {
-			var partial = this, content, newContainerElement, errorMessageElement;
+			var partial = this, content, newContainerElement;
 			if ( ! placement.container ) {
 				partial.fallback( new Error( 'no_container' ), [ placement ] );
 				return false;
@@ -314,13 +314,6 @@ wp.customize.selectiveRefresh = ( function( $, api ) {
 				if ( 'undefined' !== typeof console && console.error ) {
 					console.error( partial.id, error );
 				}
-				placement.container.addClass( 'customize-render-content-error' );
-				errorMessageElement = placement.container.find( '.customize-render-content-error-message:first' );
-				if ( ! errorMessageElement.length ) {
-					errorMessageElement = $( '<span class="customize-render-content-error-message"><span>' );
-					placement.container.append( errorMessageElement );
-				}
-				errorMessageElement.text( self.data.l10n.errorMessageTpl.replace( '%s', error.message ) );
 			}
 			/* jshint ignore:start */
 			document.write = self.orginalDocumentWrite;

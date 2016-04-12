@@ -2194,8 +2194,8 @@ class WP_Query {
 			else
 				$term = trim( $term, "\"' " );
 
-			// Avoid single A-Z.
-			if ( ! $term || ( 1 === strlen( $term ) && preg_match( '/^[a-z]$/i', $term ) ) )
+			// Avoid single A-Z and single dashes.
+			if ( ! $term || ( 1 === strlen( $term ) && preg_match( '/^[a-z\-]$/i', $term ) ) )
 				continue;
 
 			if ( in_array( call_user_func( $strtolower, $term ), $stopwords, true ) )
@@ -4953,19 +4953,10 @@ function wp_old_slug_redirect() {
 
 		$link = get_permalink( $id );
 
-		if ( is_feed() ) {
-			$link = user_trailingslashit( trailingslashit( $link ) . 'feed' );
-		} elseif ( isset( $GLOBALS['wp_query']->query_vars['paged'] ) && $GLOBALS['wp_query']->query_vars['paged'] > 1 ) {
+		if ( isset( $GLOBALS['wp_query']->query_vars['paged'] ) && $GLOBALS['wp_query']->query_vars['paged'] > 1 ) {
 			$link = user_trailingslashit( trailingslashit( $link ) . 'page/' . $GLOBALS['wp_query']->query_vars['paged'] );
 		} elseif( is_embed() ) {
 			$link = user_trailingslashit( trailingslashit( $link ) . 'embed' );
-		} elseif ( is_404() ) {
-			// Add rewrite endpoints if necessary.
-			foreach ( $wp_rewrite->endpoints as $endpoint ) {
-				if ( $endpoint[2] && false !== get_query_var( $endpoint[2], false ) ) {
-					$link = user_trailingslashit( trailingslashit( $link ) . $endpoint[1] );
-				}
-			}
 		}
 
 		/**

@@ -47,6 +47,11 @@ Source: http://www.genericons.com
 
 == Changelog ==
 
+= 1.9 =
+* Released: April 12, 2016
+
+https://codex.wordpress.org/Twenty_Thirteen_Theme_Changelog#Version_1.9
+
 = 1.7 =
 * Released: December 8, 2015
 

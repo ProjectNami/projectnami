@@ -1264,13 +1264,15 @@ class wpdb {
 	 * Use this only before wpdb::prepare() or esc_sql().  Reversing the order is very bad for security.
 	 *
 	 * Example Prepared Statement:
-	 *  $wild = '%';
-	 *  $find = 'only 43% of planets';
-	 *  $like = $wild . $wpdb->esc_like( $find ) . $wild;
-	 *  $sql  = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE post_content LIKE %s", $like );
+	 *
+	 *     $wild = '%';
+	 *     $find = 'only 43% of planets';
+	 *     $like = $wild . $wpdb->esc_like( $find ) . $wild;
+	 *     $sql  = $wpdb->prepare( "SELECT * FROM $wpdb->posts WHERE post_content LIKE '%s'", $like );
 	 *
 	 * Example Escape Chain:
-	 *  $sql  = esc_sql( $wpdb->esc_like( $input ) );
+	 *
+	 *     $sql  = esc_sql( $wpdb->esc_like( $input ) );
 	 *
 	 * @since 4.0.0
 	 * @access public
@@ -3101,7 +3103,7 @@ class wpdb {
 	 * Closes the current database connection.
 	 *
 	 * @since 4.5.0
-	 * @access public.
+	 * @access public
 	 *
 	 * @return bool True if the connection was successfully closed, false if it wasn't,
 	 *              or the connection doesn't exist.
@@ -3119,6 +3121,8 @@ class wpdb {
 
 		if ( $closed ) {
 			$this->dbh = null;
+			$this->ready = false;
+			$this->has_connected = false;
 		}
 
 		return $closed;
