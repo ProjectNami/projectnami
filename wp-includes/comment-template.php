@@ -1285,10 +1285,15 @@ function comments_template( $file = '/comments.php', $separate_comments = false 
 		'order' => 'ASC',
 		'status'  => 'approve',
 		'post_id' => $post->ID,
-		'hierarchical' => 'threaded',
-		'no_found_rows' => true,
+		'no_found_rows' => false,
 		'update_comment_meta_cache' => false, // We lazy-load comment meta for performance.
 	);
+
+	if ( get_option('thread_comments') ) {
+		$comment_args['hierarchical'] = 'threaded';
+	} else {
+		$comment_args['hierarchical'] = false;
+	}
 
 	if ( $user_ID ) {
 		$comment_args['include_unapproved'] = array( $user_ID );
@@ -1317,9 +1322,12 @@ function comments_template( $file = '/comments.php', $separate_comments = false 
 				'count'   => true,
 				'orderby' => false,
 				'post_id' => $post->ID,
-				'parent'  => 0,
 				'status'  => 'approve',
 			);
+
+			if ( $comment_args['hierarchical'] ) {
+				$top_level_args['parent'] = 0;
+			}
 
 			if ( isset( $comment_args['include_unapproved'] ) ) {
 				$top_level_args['include_unapproved'] = $comment_args['include_unapproved'];
@@ -1331,22 +1339,50 @@ function comments_template( $file = '/comments.php', $separate_comments = false 
 		}
 	}
 
+	/**
+	 * Filters the arguments used to query comments in comments_template().
+	 *
+	 * @since 4.5.0
+	 *
+	 * @see WP_Comment_Query::__construct()
+	 *
+	 * @param array $comment_args {
+	 *     Array of WP_Comment_Query arguments.
+	 *
+	 *     @type string|array $orderby                   Field(s) to order by.
+	 *     @type string       $order                     Order of results. Accepts 'ASC' or 'DESC'.
+	 *     @type string       $status                    Comment status.
+	 *     @type array        $include_unapproved        Array of IDs or email addresses whose unapproved comments
+	 *                                                   will be included in results.
+	 *     @type int          $post_id                   ID of the post.
+	 *     @type bool         $no_found_rows             Whether to refrain from querying for found rows.
+	 *     @type bool         $update_comment_meta_cache Whether to prime cache for comment meta.
+	 *     @type bool|string  $hierarchical              Whether to query for comments hierarchically.
+	 *     @type int          $offset                    Comment offset.
+	 *     @type int          $number                    Number of comments to fetch.
+	 * }
+	 */
+	$comment_args = apply_filters( 'comments_template_query_args', $comment_args );
 	$comment_query = new WP_Comment_Query( $comment_args );
 	$_comments = $comment_query->comments;
 
 	// Trees must be flattened before they're passed to the walker.
-	$comments_flat = array();
-	foreach ( $_comments as $_comment ) {
-		$comments_flat[]  = $_comment;
-		$comment_children = $_comment->get_children( array(
-			'format' => 'flat',
-			'status' => $comment_args['status'],
-			'orderby' => $comment_args['orderby']
-		) );
+	if ( $comment_args['hierarchical'] ) {
+		$comments_flat = array();
+		foreach ( $_comments as $_comment ) {
+			$comments_flat[]  = $_comment;
+			$comment_children = $_comment->get_children( array(
+				'format' => 'flat',
+				'status' => $comment_args['status'],
+				'orderby' => $comment_args['orderby']
+			) );
 
-		foreach ( $comment_children as $comment_child ) {
-			$comments_flat[] = $comment_child;
+			foreach ( $comment_children as $comment_child ) {
+				$comments_flat[] = $comment_child;
+			}
 		}
+	} else {
+		$comments_flat = $_comments;
 	}
 
 	/**
@@ -1877,27 +1913,6 @@ function wp_list_comments( $args = array(), $comments = null ) {
 	 * @param array $r An array of arguments for displaying comments.
 	 */
 	$r = apply_filters( 'wp_list_comments_args', $r );
-
-	/*
-	 * If 'page' or 'per_page' has been passed, and does not match what's in $wp_query,
-	 * perform a separate comment query and allow Walker_Comment to paginate.
-	 */
-	if ( is_singular() && ( $r['page'] || $r['per_page'] ) ) {
-		$current_cpage = get_query_var( 'cpage' );
-		if ( ! $current_cpage ) {
-			$current_cpage = 'newest' === get_option( 'default_comments_page' ) ? 1 : $wp_query->max_num_comment_pages;
-		}
-
-		$current_per_page = get_query_var( 'comments_per_page' );
-		if ( $r['page'] != $current_cpage || $r['per_page'] != $current_per_page ) {
-			$comments = get_comments( array(
-				'post_id' => get_queried_object_id(),
-				'orderby' => 'comment_date_gmt',
-				'order' => 'ASC',
-				'status' => 'all',
-			) );
-		}
-	}
 
 	// Figure out what comments we'll be looping through ($_comments)
 	if ( null !== $comments ) {
