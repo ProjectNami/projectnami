@@ -27,10 +27,10 @@ if ( !function_exists('wp_install') ) :
  *
  * @since 2.1.0
  *
- * @param string $blog_title    Blog title.
+ * @param string $blog_title    Site title.
  * @param string $user_name     User's username.
  * @param string $user_email    User's email.
- * @param bool   $public        Whether blog is public.
+ * @param bool   $public        Whether site is public.
  * @param string $deprecated    Optional. Not used.
  * @param string $user_password Optional. User's chosen password. Default empty (random password).
  * @param string $language      Optional. Language chosen. Default empty.
@@ -64,7 +64,7 @@ function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated 
 
 	/*
 	 * Create default user. If the user already exists, the user tables are
-	 * being shared among blogs. Just set the role in that case.
+	 * being shared among sites. Just set the role in that case.
 	 */
 	$user_id = username_exists($user_name);
 	$user_password = trim($user_password);
@@ -360,8 +360,8 @@ if ( !function_exists('wp_new_blog_notification') ) :
  *
  * @since 2.1.0
  *
- * @param string $blog_title Blog title.
- * @param string $blog_url   Blog url.
+ * @param string $blog_title Site title.
+ * @param string $blog_url   Site url.
  * @param int    $user_id    User ID.
  * @param string $password   User's Password.
  */
@@ -445,6 +445,7 @@ endif;
  * Contains conditional checks to determine which upgrade scripts to run,
  * based on database version and WP version being updated-to.
  *
+ * @ignore
  * @since 1.0.1
  *
  * @global int $wp_current_db_version
@@ -489,6 +490,9 @@ function upgrade_all() {
 
 	if ( $wp_current_db_version < 35700 )
 		upgrade_440();
+
+	if ( $wp_current_db_version < 36686 )
+		upgrade_450();
 
 	maybe_disable_link_manager();
 
@@ -789,6 +793,7 @@ function upgrade_network() {
  * already present. It doesn't rely on MySQL's "IF NOT EXISTS" statement, but chooses
  * to query all tables first and then run the SQL statement creating the table.
  *
+ * @ignore
  * @since 1.0.0
  *
  * @global wpdb  $wpdb
@@ -842,6 +847,7 @@ function drop_index($table, $index) {
 /**
  * Adds an index to a specified table.
  *
+ * @ignore
  * @since 1.0.1
  *
  * @global wpdb  $wpdb
@@ -862,6 +868,7 @@ function add_clean_index($table, $index) {
  *
  * @since 1.3.0
  *
+ * @ignore
  * @global wpdb  $wpdb
  *
  * @param string $table_name  The table name to modify.
@@ -924,6 +931,7 @@ function __get_option($setting) {
 /**
  * Filters for content to remove unnecessary slashes.
  *
+ * @ignore
  * @since 1.5.0
  *
  * @param string $content The content to modify.
@@ -1226,6 +1234,7 @@ function make_site_theme() {
 /**
  * Translate user level to user role name.
  *
+ * @ignore
  * @since 2.0.0
  *
  * @param int $level User level.
@@ -1255,6 +1264,7 @@ function translate_level_to_role($level) {
 /**
  * Checks the version of the installed MySQL binary.
  *
+ * @ignore
  * @since 2.1.0
  *
  * @global wpdb  $wpdb
@@ -1302,6 +1312,7 @@ function maybe_disable_link_manager() {
  * Runs before the schema is upgraded.
  *
  * @since 2.9.0
+ * @ignore
  *
  * @global int  $wp_current_db_version
  * @global wpdb $wpdb
@@ -1400,4 +1411,26 @@ function wp_should_upgrade_global_tables() {
 	 * @param bool $should_upgrade Whether to run the upgrade routines on global tables.
 	 */
 	return apply_filters( 'wp_should_upgrade_global_tables', $should_upgrade );
+}
+
+/**
+ * Executes changes made in WordPress 4.5.0.
+ *
+ * @ignore
+ * @since 4.5.0
+ *
+ * @global int  $wp_current_db_version Current database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
+ */
+function upgrade_450() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version < 36180 ) {
+		wp_clear_scheduled_hook( 'wp_maybe_auto_update' );
+	}
+
+	// Remove unused email confirmation options, moved to usermeta.
+	if ( $wp_current_db_version < 36679 && is_multisite() ) {
+		$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '[0-9]%[_]new[_]email'" );
+	}
 }

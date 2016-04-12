@@ -169,7 +169,7 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 		}
 	}
 
-	// Trigger a background updates check if running non-interactively, and we weren't called from the update handler.
+	// Trigger background updates if running non-interactively, and we weren't called from the update handler.
 	if ( defined( 'DOING_CRON' ) && DOING_CRON && ! doing_action( 'wp_maybe_auto_update' ) ) {
 		do_action( 'wp_maybe_auto_update' );
 	}
@@ -262,14 +262,17 @@ function wp_update_plugins( $extra_stats = array() ) {
 
 	$to_send = compact( 'plugins', 'active' );
 
+	$locales = array_values( get_available_languages() );
 	/**
 	 * Filter the locales requested for plugin translations.
 	 *
 	 * @since 3.7.0
+	 * @since 4.5.0 Changed default value of `$locales` to include all locales.
 	 *
-	 * @param array $locales Plugin locale. Default is current locale of the site.
+	 * @param array $locales Plugin locales. Default is all available locales of the site.
 	 */
-	$locales = apply_filters( 'plugins_update_check_locales', array( get_locale() ) );
+	$locales = apply_filters( 'plugins_update_check_locales', $locales );
+	$locales = array_unique( $locales );
 
 	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 		$timeout = 30;
@@ -310,8 +313,14 @@ function wp_update_plugins( $extra_stats = array() ) {
 	$response = json_decode( wp_remote_retrieve_body( $raw_response ), true );
 	foreach ( $response['plugins'] as &$plugin ) {
 		$plugin = (object) $plugin;
+		if ( isset( $plugin->compatibility ) ) {
+			$plugin->compatibility = (object) $plugin->compatibility;
+			foreach ( $plugin->compatibility as &$data ) {
+				$data = (object) $data;
+			}
+		}
 	}
-	unset( $plugin );
+	unset( $plugin, $data );
 	foreach ( $response['no_update'] as &$plugin ) {
 		$plugin = (object) $plugin;
 	}
@@ -339,7 +348,6 @@ function wp_update_plugins( $extra_stats = array() ) {
  * installing.
  *
  * @since 2.7.0
- * @uses $wp_version Used to notify the WordPress version.
  *
  * @param array $extra_stats Extra statistics to report to the WordPress.org API.
  */
@@ -427,14 +435,17 @@ function wp_update_themes( $extra_stats = array() ) {
 
 	$request['themes'] = $themes;
 
+	$locales = array_values( get_available_languages() );
 	/**
 	 * Filter the locales requested for theme translations.
 	 *
 	 * @since 3.7.0
+	 * @since 4.5.0 Changed default value of `$locales` to include all locales.
 	 *
-	 * @param array $locales Theme locale. Default is current locale of the site.
+	 * @param array $locales Theme locales. Default is all available locales of the site.
 	 */
-	$locales = apply_filters( 'themes_update_check_locales', array( get_locale() ) );
+	$locales = apply_filters( 'themes_update_check_locales', $locales );
+	$locales = array_unique( $locales );
 
 	if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
 		$timeout = 30;
@@ -582,6 +593,10 @@ function wp_get_update_data() {
 }
 
 /**
+ * Determines whether core should be updated.
+ *
+ * @since 2.8.0
+ *
  * @global string $wp_version
  */
 function _maybe_update_core() {

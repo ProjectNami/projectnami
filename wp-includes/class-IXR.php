@@ -201,7 +201,6 @@ class IXR_Message
     var $_value;
     var $_currentTag;
     var $_currentTagContents;
-    var $_valueHasType = false;
     // The XML parser
     var $_parser;
 
@@ -325,8 +324,6 @@ class IXR_Message
                 $this->_arraystructstypes[] = 'struct';
                 $this->_arraystructs[] = array();
                 break;
-            case 'value':
-                $this->_valueHasType = false;
         }
     }
 

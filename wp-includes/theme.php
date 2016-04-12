@@ -177,7 +177,7 @@ function get_stylesheet_directory() {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @param string $stylesheet_dir Absolute path to the current them.
+	 * @param string $stylesheet_dir Absolute path to the current theme.
 	 * @param string $stylesheet     Directory name of the current theme.
 	 * @param string $theme_root     Absolute path to themes directory.
 	 */
@@ -723,7 +723,7 @@ function switch_theme( $stylesheet ) {
 	} else {
 		/*
 		 * Since retrieve_widgets() is called when initializing a theme in the Customizer,
-		 * we need to to remove the theme mods to avoid overwriting changes made via
+		 * we need to remove the theme mods to avoid overwriting changes made via
 		 * the Customizer when accessing wp-admin/widgets.php.
 		 */
 		if ( 'wp_ajax_customize_save' === current_action() ) {
@@ -739,15 +739,18 @@ function switch_theme( $stylesheet ) {
 	}
 
 	update_option( 'theme_switched', $old_theme->get_stylesheet() );
+
 	/**
 	 * Fires after the theme is switched.
 	 *
 	 * @since 1.5.0
+	 * @since 4.5.0 Introduced the `$old_theme` parameter.
 	 *
 	 * @param string   $new_name  Name of the new theme.
 	 * @param WP_Theme $new_theme WP_Theme instance of the new theme.
+	 * @param WP_Theme $old_theme WP_Theme instance of the old theme.
 	 */
-	do_action( 'switch_theme', $new_name, $new_theme );
+	do_action( 'switch_theme', $new_name, $new_theme, $old_theme );
 }
 
 /**
@@ -771,7 +774,7 @@ function validate_current_theme() {
 	 *
 	 * @since 2.7.0
 	 *
-	 * @param bool true Validation flag to check the current theme.
+	 * @param bool $validate Whether to validate the current theme. Default true.
 	 */
 	if ( wp_installing() || ! apply_filters( 'validate_current_theme', true ) )
 		return true;
@@ -1204,7 +1207,7 @@ function get_uploaded_header_images() {
 	foreach ( (array) $headers as $header ) {
 		$url = esc_url_raw( wp_get_attachment_url( $header->ID ) );
 		$header_data = wp_get_attachment_metadata( $header->ID );
-		$header_index = basename($url);
+		$header_index = $header->ID;
 
 		$header_images[$header_index] = array();
 		$header_images[$header_index]['attachment_id'] = $header->ID;

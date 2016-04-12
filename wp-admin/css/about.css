@@ -128,7 +128,7 @@
 .about-wrap .about-text {
 	margin: 1em 200px 1em 0;
 	min-height: 60px;
-	color: #777;
+	color: #555d66;
 }
 
 /* 1.2 - Structure */
@@ -145,6 +145,14 @@
 	display: inline-block;
 	float: none;
 	margin-right: 4.799999999%;
+	width: calc( 47.6% - 4px );
+	vertical-align: middle;
+}
+.about-wrap .feature-section.two-col .col {
+	display: inline-block;
+	float: none;
+	margin-right: 4.799999999%;
+	width: -webkit-calc( 47.6% - 4px );
 	width: calc( 47.6% - 4px );
 	vertical-align: middle;
 }
@@ -191,6 +199,10 @@
 .about-wrap .headline-feature h3 {
 	margin-top: 0;
 	text-align: left;
+}
+
+.about-wrap .feature-section.two-col h3 {
+	margin-top: 0;
 }
 
 .about-wrap .feature-section.two-col h3 {
@@ -331,21 +343,21 @@
 
 .about-wrap h3.wp-people-group {
 	margin: 2.6em 0 1.33em;
+	padding: 0;
 	font-size: 16px;
 	line-height: inherit;
 }
 
-.about-wrap ul.wp-people-group {
-	overflow: hidden;
+.about-wrap .wp-people-group {
 	padding: 0 5px;
 	margin: 0 -15px 0 -5px;
 }
 
-.about-wrap ul.compact {
+.about-wrap .compact {
 	margin-bottom: 0
 }
 
-.about-wrap li.wp-person {
+.about-wrap .wp-person {
 	display: inline-block;
 	vertical-align: top;
 	margin-right: 10px;
@@ -354,33 +366,36 @@
 	width: 280px;
 }
 
-.about-wrap ul.compact li.wp-person {
+.about-wrap .compact .wp-person {
 	height: auto;
 	width: 180px;
 	padding-bottom: 0;
 	margin-bottom: 0;
 }
 
-.about-wrap li.wp-person img.gravatar {
+.about-wrap .wp-person .gravatar {
 	float: left;
 	margin: 0 10px 10px 0;
-	padding: 2px;
+	padding: 1px;
 	width: 60px;
 	height: 60px;
 }
 
-.about-wrap ul.compact li.wp-person img.gravatar {
+.about-wrap .compact .wp-person .gravatar {
 	width: 30px;
 	height: 30px;
 }
 
-.about-wrap li.wp-person a.web {
-	display: block;
+.about-wrap .wp-person .web {
 	margin: 6px 0 2px;
 	font-size: 16px;
 	font-weight: normal;
-	line-height: 1.6em;
+	line-height: 2em;
 	text-decoration: none;
+}
+
+.about-wrap .wp-person .title {
+	display: block;
 }
 
 .about-wrap #wp-people-group-validators + p.wp-credits-list {
@@ -507,10 +522,20 @@
 	}
 
 	.about-wrap .feature-section.two-col .col,
+	.about-wrap .feature-section.two-col .col,
 	.about-wrap .three-col .col,
 	.about-wrap .headline-feature .feature-section .col {
 		width: 100% !important;
 		float: none !important;
+	}
+
+	.about-wrap .feature-section.two-col .col:last-of-type {
+		margin-top: 0;
+	}
+
+	.feature-section.under-the-hood.three-col .col,
+	.feature-section.under-the-hood.one-col .col {
+		padding-bottom: 0;
 	}
 
 	.about-wrap .feature-section.two-col .col:last-of-type {

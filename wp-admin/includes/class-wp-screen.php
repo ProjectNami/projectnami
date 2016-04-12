@@ -693,7 +693,7 @@ final class WP_Screen {
 	 *                                      Default 'Filter items list'.
 	 *     @type string $heading_pagination Screen reader text for the pagination heading.
 	 *                                      Default 'Items list navigation'.
-	 *     @type string heading_list        Screen reader text for the items list heading.
+	 *     @type string $heading_list        Screen reader text for the items list heading.
 	 *                                      Default 'Items list'.
 	 * }
 	 */
@@ -1201,6 +1201,8 @@ final class WP_Screen {
 			return;
 		}
 
+		$view_mode_post_types = get_post_types( array( 'hierarchical' => false, 'show_ui' => true ) );
+
 		/**
 		 * Filter the post types that have different view mode options.
 		 *
@@ -1209,7 +1211,6 @@ final class WP_Screen {
 		 * @param array $view_mode_post_types Array of post types that can change view modes.
 		 *                                    Default hierarchical post types with show_ui on.
 		 */
-		$view_mode_post_types = get_post_types( array( 'hierarchical' => false, 'show_ui' => true ) );
 		$view_mode_post_types = apply_filters( 'view_mode_post_types', $view_mode_post_types );
 
 		if ( ! in_array( $this->post_type, $view_mode_post_types ) ) {
