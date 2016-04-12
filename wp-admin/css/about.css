@@ -159,24 +159,24 @@
 	float: left;
 	position: relative;
 }
+
 .about-wrap .two-col .col {
 	margin-right: 4.799999999%;
 	width: 47.6%;
 }
-.about-wrap .feature-section.two-col .col {
-	display: inline-block;
-	float: none;
-	margin-right: 4.799999999%;
-	width: calc( 47.6% - 4px );
-	vertical-align: middle;
+
+.about-wrap .two-col img {
+	margin-bottom: 1.5em;
 }
+
 .about-wrap .feature-section.two-col .col {
 	display: inline-block;
 	float: none;
+	margin-top: 1em;
 	margin-right: 4.799999999%;
 	width: -webkit-calc( 47.6% - 4px );
 	width: calc( 47.6% - 4px );
-	vertical-align: middle;
+	vertical-align: top;
 }
 
 .about-wrap .three-col .col {
@@ -230,10 +230,6 @@
 .about-wrap .headline-feature h3 {
 	margin-top: 0;
 	text-align: left;
-}
-
-.about-wrap .feature-section.two-col h3 {
-	margin-top: 0;
 }
 
 .about-wrap .feature-section.two-col h3 {
@@ -462,41 +458,24 @@
 		width: 100%;
 	}
 
-	.about-wrap .feature-section.two-col .col,
-	.about-wrap .feature-section.two-col .col,
-	.about-wrap .three-col .col,
-	.about-wrap .headline-feature .feature-section .col {
+	.about-wrap .two-col .col,
+	.about-wrap .three-col .col {
 		width: 100% !important;
 		float: none !important;
 	}
 
-	.about-wrap .feature-section.two-col .col:last-of-type {
-		margin-top: 0;
-	}
-
-	.feature-section.under-the-hood.three-col .col,
-	.feature-section.under-the-hood.one-col .col {
+	.about-wrap .under-the-hood.three-col .col,
+	.about-wrap .under-the-hood.two-col .col,
+	.about-wrap .under-the-hood.one-col .col {
+		margin-bottom: 2em;
 		padding-bottom: 0;
 	}
 
-	.about-wrap .feature-section.two-col .col:last-of-type {
+	.about-wrap .under-the-hood:nth-of-type(2n) {
 		margin-top: 0;
 	}
 
-	.feature-section.under-the-hood.three-col .col,
-	.feature-section.under-the-hood.one-col .col {
-		padding-bottom: 0;
-	}
-}
-
-@media only screen and (max-width: 400px) {
-	.about-wrap .feature-list svg {
-		margin-top: 15px;
-		height: 65px;
-		width: 65px;
-	}
-	.about-wrap .feature-list.finer-points h4,
-	.about-wrap .feature-list.finer-points p {
-		margin-left: 80px;
+	.about-wrap .under-the-hood:nth-of-type(2n) h4 {
+		margin-top: 0;
 	}
 }
