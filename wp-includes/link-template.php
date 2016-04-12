@@ -904,7 +904,7 @@ function edit_tag_link( $link = '', $before = '', $after = '', $tag = null ) {
 }
 
 /**
- * Retrieve edit term url.
+ * Retrieves the URL for editing a given term.
  *
  * @since 3.1.0
  * @since 4.5.0 The `$taxonomy` argument was made optional.
@@ -928,7 +928,7 @@ function get_edit_term_link( $term_id, $taxonomy = '', $object_type = '' ) {
 
 	$args = array(
 		'taxonomy' => $taxonomy,
-		'term_id'  => $term->term_id,
+		'tag_ID'   => $term->term_id,
 	);
 
 	if ( $object_type ) {
@@ -1222,7 +1222,7 @@ function get_preview_post_link( $post = null, $query_args = array(), $preview_li
 	$post_type_object = get_post_type_object( $post->post_type );
 	if ( is_post_type_viewable( $post_type_object ) ) {
 		if ( ! $preview_link ) {
-			$preview_link = get_permalink( $post );
+			$preview_link = set_url_scheme( get_permalink( $post ) );
 		}
 
 		$query_args['preview'] = 'true';

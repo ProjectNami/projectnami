@@ -73,7 +73,7 @@
 									 */
 									while( node.nextSibling && 3 === node.nextSibling.nodeType ) {
 										node.nodeValue = node.nodeValue + node.nextSibling.nodeValue;
-										node.parentNode.removedChild( node.nextSibling );
+										node.parentNode.removeChild( node.nextSibling );
 									}
 								}
 
@@ -158,8 +158,7 @@
 							return false;
 					}
 
-					if ( ! settings.supports.flag && settings.supports.simple && settings.supports.unicode8 && settings.supports.diversity &&
-						! /^1f1(?:e[6-9a-f]|f[0-9a-f])-1f1(?:e[6-9a-f]|f[0-9a-f])$/.test( icon ) ) {
+					if ( settings.supports.everythingExceptFlag && ! /^1f1(?:e[6-9a-f]|f[0-9a-f])-1f1(?:e[6-9a-f]|f[0-9a-f])$/.test( icon ) ) {
 
 						return false;
 					}
@@ -187,8 +186,6 @@
 		 * Initialize our emoji support, and set up listeners.
 		 */
 		if ( settings ) {
-			replaceEmoji = ! settings.supports.simple || ! settings.supports.flag || ! settings.supports.unicode8 || ! settings.supports.diversity;
-
 			if ( settings.DOMReady ) {
 				load();
 			} else {

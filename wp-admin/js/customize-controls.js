@@ -77,7 +77,7 @@
 	 * @param {Function} [params.completeCallback]
 	 */
 	focus = function ( params ) {
-		var construct, completeCallback, focus;
+		var construct, completeCallback, focus, focusElement;
 		construct = this;
 		params = params || {};
 		focus = function () {
@@ -90,8 +90,12 @@
 				focusContainer = construct.container;
 			}
 
-			// Note that we can't use :focusable due to a jQuery UI issue. See: https://github.com/jquery/jquery-ui/pull/1583
-			focusContainer.find( 'input, select, textarea, button, object, a[href], [tabindex]' ).filter( ':visible' ).first().focus();
+			focusElement = focusContainer.find( '.control-focus:first' );
+			if ( 0 === focusElement.length ) {
+				// Note that we can't use :focusable due to a jQuery UI issue. See: https://github.com/jquery/jquery-ui/pull/1583
+				focusElement = focusContainer.find( 'input, select, textarea, button, object, a[href], [tabindex]' ).filter( ':visible' ).first();
+			}
+			focusElement.focus();
 		};
 		if ( params.completeCallback ) {
 			completeCallback = params.completeCallback;
@@ -1790,8 +1794,16 @@
 					control.pausePlayer();
 				});
 
-			// Re-render whenever the control's setting changes.
-			control.setting.bind( function () { control.renderContent(); } );
+			control.setting.bind( function( value ) {
+
+				// Send attachment information to the preview for possible use in `postMessage` transport.
+				wp.media.attachment( value ).fetch().done( function() {
+					wp.customize.previewer.send( control.setting.id + '-attachment-data', this.attributes );
+				} );
+
+				// Re-render whenever the control's setting changes.
+				control.renderContent();
+			} );
 		},
 
 		pausePlayer: function () {
@@ -2085,22 +2097,22 @@
 				xInit = parseInt( control.params.width, 10 ),
 				yInit = parseInt( control.params.height, 10 ),
 				ratio = xInit / yInit,
-				xImg  = realWidth,
-				yImg  = realHeight,
+				xImg  = xInit,
+				yImg  = yInit,
 				x1, y1, imgSelectOptions;
 
 			controller.set( 'canSkipCrop', ! control.mustBeCropped( flexWidth, flexHeight, xInit, yInit, realWidth, realHeight ) );
 
-			if ( xImg / yImg > ratio ) {
-				yInit = yImg;
+			if ( realWidth / realHeight > ratio ) {
+				yInit = realHeight;
 				xInit = yInit * ratio;
 			} else {
-				xInit = xImg;
+				xInit = realWidth;
 				yInit = xInit / ratio;
 			}
 
-			x1 = ( xImg - xInit ) / 2;
-			y1 = ( yImg - yInit ) / 2;
+			x1 = ( realWidth - xInit ) / 2;
+			y1 = ( realHeight - yInit ) / 2;
 
 			imgSelectOptions = {
 				handles: true,
@@ -2109,6 +2121,8 @@
 				persistent: true,
 				imageWidth: realWidth,
 				imageHeight: realHeight,
+				minWidth: xImg > xInit ? xInit : xImg,
+				minHeight: yImg > yInit ? yInit : yImg,
 				x1: x1,
 				y1: y1,
 				x2: xInit + x1,
@@ -2118,11 +2132,15 @@
 			if ( flexHeight === false && flexWidth === false ) {
 				imgSelectOptions.aspectRatio = xInit + ':' + yInit;
 			}
-			if ( flexHeight === false ) {
-				imgSelectOptions.maxHeight = yInit;
+
+			if ( true === flexHeight ) {
+				delete imgSelectOptions.minHeight;
+				imgSelectOptions.maxWidth = realWidth;
 			}
-			if ( flexWidth === false ) {
-				imgSelectOptions.maxWidth = xInit;
+
+			if ( true === flexWidth ) {
+				delete imgSelectOptions.minWidth;
+				imgSelectOptions.maxHeight = realHeight;
 			}
 
 			return imgSelectOptions;
@@ -2303,43 +2321,6 @@
 	});
 
 	/**
-	 * A control for selecting custom logos.
-	 *
-	 * @class
-	 * @augments wp.customize.MediaControl
-	 * @augments wp.customize.Control
-	 * @augments wp.customize.Class
-	 */
-	api.CustomLogoControl = api.MediaControl.extend({
-
-		/**
-		 * When the control's DOM structure is ready,
-		 * set up internal event bindings.
-		 */
-		ready: function() {
-			var control = this;
-
-			// Shortcut so that we don't have to use _.bind every time we add a callback.
-			_.bindAll( control, 'restoreDefault', 'removeFile', 'openFrame', 'select' );
-
-			// Bind events, with delegation to facilitate re-rendering.
-			control.container.on( 'click keydown', '.upload-button', control.openFrame );
-			control.container.on( 'click keydown', '.thumbnail-image img', control.openFrame );
-			control.container.on( 'click keydown', '.default-button', control.restoreDefault );
-			control.container.on( 'click keydown', '.remove-button', control.removeFile );
-
-			control.setting.bind( function( attachmentId ) {
-				wp.media.attachment( attachmentId ).fetch().done( function() {
-					wp.customize.previewer.send( 'custom-logo-attachment-data', this.attributes );
-				} );
-
-				// Re-render whenever the control's setting changes.
-				control.renderContent();
-			} );
-		}
-	});
-
-	/**
 	 * @class
 	 * @augments wp.customize.Control
 	 * @augments wp.customize.Class
@@ -2375,6 +2356,10 @@
 				api.HeaderTool.UploadsList,
 				api.HeaderTool.DefaultsList
 			]);
+
+			// Ensure custom-header-crop Ajax requests bootstrap the Customizer to activate the previewed theme.
+			wp.media.controller.Cropper.prototype.defaults.doCropArgs.wp_customize = 'on';
+			wp.media.controller.Cropper.prototype.defaults.doCropArgs.theme = api.settings.theme.stylesheet;
 		},
 
 		/**
@@ -3245,7 +3230,6 @@
 		image:         api.ImageControl,
 		cropped_image: api.CroppedImageControl,
 		site_icon:     api.SiteIconControl,
-		custom_logo:   api.CustomLogoControl,
 		header:        api.HeaderControl,
 		background:    api.BackgroundControl,
 		theme:         api.ThemeControl

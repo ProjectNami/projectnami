@@ -845,11 +845,11 @@ function has_site_icon( $blog_id = 0 ) {
 }
 
 /**
- * Whether the site has a custom logo.
+ * Determines whether the site has a custom logo.
  *
  * @since 4.5.0
  *
- * @param int $blog_id Optional. ID of the blog in question. Default current blog.
+ * @param int $blog_id Optional. ID of the blog in question. Default is the ID of the current blog.
  * @return bool Whether the site has a custom logo or not.
  */
 function has_custom_logo( $blog_id = 0 ) {
@@ -871,7 +871,7 @@ function has_custom_logo( $blog_id = 0 ) {
  *
  * @since 4.5.0
  *
- * @param int $blog_id Optional. ID of the blog in question. Default current blog.
+ * @param int $blog_id Optional. ID of the blog in question. Default is the ID of the current blog.
  * @return string Custom logo markup.
  */
 function get_custom_logo( $blog_id = 0 ) {
@@ -883,30 +883,26 @@ function get_custom_logo( $blog_id = 0 ) {
 
 	$custom_logo_id = get_theme_mod( 'custom_logo' );
 
-	if ( is_multisite() && ms_is_switched() ) {
-		restore_current_blog();
-	}
-	$size = get_theme_support( 'custom-logo' );
-	$size = $size[0]['size'];
-
 	// We have a logo. Logo is go.
 	if ( $custom_logo_id ) {
 		$html = sprintf( '<a href="%1$s" class="custom-logo-link" rel="home" itemprop="url">%2$s</a>',
 			esc_url( home_url( '/' ) ),
-			wp_get_attachment_image( $custom_logo_id, $size, false, array(
-				'class'     => "custom-logo attachment-$size",
-				'data-size' => $size,
-				'itemprop'  => 'logo',
+			wp_get_attachment_image( $custom_logo_id, 'full', false, array(
+				'class'    => 'custom-logo',
+				'itemprop' => 'logo',
 			) )
 		);
 	}
 
 	// If no logo is set but we're in the Customizer, leave a placeholder (needed for the live preview).
 	elseif ( is_customize_preview() ) {
-		$html = sprintf( '<a href="%1$s" class="custom-logo-link" style="display:none;"><img class="custom-logo" data-size="%2$s" /></a>',
-			esc_url( home_url( '/' ) ),
-			esc_attr( $size )
+		$html = sprintf( '<a href="%1$s" class="custom-logo-link" style="display:none;"><img class="custom-logo"/></a>',
+			esc_url( home_url( '/' ) )
 		);
+	}
+
+	if ( is_multisite() && ms_is_switched() ) {
+		restore_current_blog();
 	}
 
 	/**
@@ -915,9 +911,8 @@ function get_custom_logo( $blog_id = 0 ) {
 	 * @since 4.5.0
 	 *
 	 * @param string $html Custom logo HTML output.
-	 * @param string $size Size specified in add_theme_support declaration, or 'thumbnail' default.
 	 */
-	return apply_filters( 'get_custom_logo', $html, $size );
+	return apply_filters( 'get_custom_logo', $html );
 }
 
 /**
@@ -925,7 +920,7 @@ function get_custom_logo( $blog_id = 0 ) {
  *
  * @since 4.5.0
  *
- * @param int $blog_id Optional. ID of the blog in question. Default current blog.
+ * @param int $blog_id Optional. ID of the blog in question. Default is the ID of the current blog.
  */
 function the_custom_logo( $blog_id = 0 ) {
 	echo get_custom_logo( $blog_id );
@@ -1599,7 +1594,7 @@ function get_archives_link($url, $text, $format = 'html', $before = '', $after =
 	 * Filter the archive link content.
 	 *
 	 * @since 2.6.0
-	 * @since 4.5.0 Added `$url`, `$text`, `$format`, `$before`, and `$after` params.
+	 * @since 4.5.0 Added the `$url`, `$text`, `$format`, `$before`, and `$after` parameters.
 	 *
 	 * @param string $link_html The archive HTML link content.
 	 * @param string $url       URL to archive.
@@ -1681,22 +1676,6 @@ function wp_get_archives( $args = '' ) {
 
 	// this is what will separate dates on weekly archive links
 	$archive_week_separator = '&#8211;';
-
-	// over-ride general date format ? 0 = no: use the date format set in Options, 1 = yes: over-ride
-	$archive_date_format_over_ride = 0;
-
-	// options for daily archive (only if you over-ride the general date format)
-	$archive_day_date_format = 'Y/m/d';
-
-	// options for weekly archive (only if you over-ride the general date format)
-	$archive_week_start_date_format = 'Y/m/d';
-	$archive_week_end_date_format	= 'Y/m/d';
-
-	if ( ! $archive_date_format_over_ride ) {
-		$archive_day_date_format = get_option( 'date_format' );
-		$archive_week_start_date_format = get_option( 'date_format' );
-		$archive_week_end_date_format = get_option( 'date_format' );
-	}
 
 	$sql_where = $wpdb->prepare( "WHERE post_type = %s AND post_status = 'publish'", $r['post_type'] );
 
@@ -1791,7 +1770,7 @@ function wp_get_archives( $args = '' ) {
 					$url = add_query_arg( 'post_type', $r['post_type'], $url );
 				}
 				$date = sprintf( '%1$d-%2$02d-%3$02d 00:00:00', $result->year, $result->month, $result->dayofmonth );
-				$text = mysql2date( $archive_day_date_format, $date );
+				$text = mysql2date( get_option( 'date_format' ), $date );
 				if ( $r['show_post_count'] ) {
 					$r['after'] = '&nbsp;(' . $result->posts . ')' . $after;
 				}
@@ -1815,8 +1794,8 @@ function wp_get_archives( $args = '' ) {
 					$arc_year       = $result->yr;
 					$arc_w_last     = $result->week;
 					$arc_week       = get_weekstartend( $result->yyyymmdd, get_option( 'start_of_week' ) );
-					$arc_week_start = date_i18n( $archive_week_start_date_format, $arc_week['start'] );
-					$arc_week_end   = date_i18n( $archive_week_end_date_format, $arc_week['end'] );
+					$arc_week_start = date_i18n( get_option( 'date_format' ), $arc_week['start'] );
+					$arc_week_end   = date_i18n( get_option( 'date_format' ), $arc_week['end'] );
 					$url            = sprintf( '%1$s/%2$s%3$sm%4$s%5$s%6$sw%7$s%8$d', home_url(), '', '?', '=', $arc_year, '&amp;', '=', $result->week );
 					if ( 'post' !== $r['post_type'] ) {
 						$url = add_query_arg( 'post_type', $r['post_type'], $url );

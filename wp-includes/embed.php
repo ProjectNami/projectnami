@@ -490,7 +490,14 @@ JS;
 		esc_url( $embed_url ),
 		absint( $width ),
 		absint( $height ),
-		esc_attr__( 'Embedded WordPress Post' )
+		esc_attr(
+			sprintf(
+				/* translators: 1: post title, 2: site name */
+				__( '&#8220;%1$s&#8221; &#8212; %2$s' ),
+				get_the_title( $post ),
+				get_bloginfo( 'name' )
+			)
+		)
 	);
 
 	/**
@@ -1048,7 +1055,7 @@ function print_embed_sharing_dialog() {
 }
 
 /**
- * Prints the necessary markup for the site title.
+ * Prints the necessary markup for the site title in an embed template.
  *
  * @since 4.5.0
  */

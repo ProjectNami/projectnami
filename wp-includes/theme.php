@@ -949,18 +949,18 @@ function remove_theme_mods() {
 }
 
 /**
- * Retrieve text color for custom header.
+ * Retrieves the custom header text color in HEX format.
  *
  * @since 2.1.0
  *
- * @return string
+ * @return string Header text color in HEX format (minus the hash symbol).
  */
 function get_header_textcolor() {
 	return get_theme_mod('header_textcolor', get_theme_support( 'custom-header', 'default-text-color' ) );
 }
 
 /**
- * Display text color for custom header.
+ * Displays the custom header text color in HEX format (minus the hash symbol).
  *
  * @since 2.1.0
  */
@@ -1559,6 +1559,26 @@ function add_theme_support( $feature ) {
 				$args[0] = array_merge( $_wp_theme_features['html5'][0], $args[0] );
 			break;
 
+		case 'custom-logo':
+			if ( ! is_array( $args ) ) {
+				$args = array( 0 => array() );
+			}
+			$defaults = array(
+				'width'       => null,
+				'height'      => null,
+				'flex-width'  => false,
+				'flex-height' => false,
+				'header-text' => '',
+			);
+			$args[0] = wp_parse_args( array_intersect_key( $args[0], $defaults ), $defaults );
+
+			// Allow full flexibility if no size is specified.
+			if ( is_null( $args[0]['width'] ) && is_null( $args[0]['height'] ) ) {
+				$args[0]['flex-width']  = true;
+				$args[0]['flex-height'] = true;
+			}
+			break;
+
 		case 'custom-header-uploads' :
 			return add_theme_support( 'custom-header', array( 'uploads' => true ) );
 
@@ -1732,6 +1752,30 @@ function _custom_header_background_just_in_time() {
 }
 
 /**
+ * Adds CSS to hide header text for custom logo, based on Customizer setting.
+ *
+ * @since 4.5.0
+ * @access private
+ */
+function _custom_logo_header_styles() {
+	if ( ! current_theme_supports( 'custom-header', 'header-text' ) && get_theme_support( 'custom-logo', 'header-text' ) && ! get_theme_mod( 'header_text', true ) ) {
+		$classes = (array) get_theme_support( 'custom-logo', 'header-text' );
+		$classes = array_map( 'sanitize_html_class', $classes );
+		$classes = '.' . implode( ', .', $classes );
+
+		?>
+		<!-- Custom Logo: hide header text -->
+		<style id="custom-logo-css" type="text/css">
+			<?php echo $classes; ?> {
+				position: absolute;
+				clip: rect(1px, 1px, 1px, 1px);
+			}
+		</style>
+	<?php
+	}
+}
+
+/**
  * Gets the theme support arguments passed when registering that support
  *
  * @since 3.1.0
@@ -1751,6 +1795,7 @@ function get_theme_support( $feature ) {
 
 	$args = array_slice( func_get_args(), 1 );
 	switch ( $feature ) {
+		case 'custom-logo' :
 		case 'custom-header' :
 		case 'custom-background' :
 			if ( isset( $_wp_theme_features[ $feature ][0][ $args[0] ] ) )
@@ -1877,12 +1922,11 @@ function current_theme_supports( $feature ) {
 			$type = $args[0];
 			return in_array( $type, $_wp_theme_features[$feature][0] );
 
+		case 'custom-logo':
 		case 'custom-header':
-		case 'custom-background' :
-			// specific custom header and background capabilities can be registered by passing
-			// an array to add_theme_support()
-			$header_support = $args[0];
-			return ( isset( $_wp_theme_features[$feature][0][$header_support] ) && $_wp_theme_features[$feature][0][$header_support] );
+		case 'custom-background':
+			// Specific capabilities can be registered by passing an array to add_theme_support().
+			return ( isset( $_wp_theme_features[ $feature ][0][ $args[0] ] ) && $_wp_theme_features[ $feature ][0][ $args[0] ] );
 	}
 
 	/**
@@ -1890,7 +1934,7 @@ function current_theme_supports( $feature ) {
 	 *
 	 * The dynamic portion of the hook name, `$feature`, refers to the specific theme
 	 * feature. Possible values include 'post-formats', 'post-thumbnails', 'custom-background',
-	 * 'custom-header', 'menus', 'automatic-feed-links', and 'html5'.
+	 * 'custom-header', 'menus', 'automatic-feed-links', 'html5', and `customize-selective-refresh-widgets`.
 	 *
 	 * @since 3.4.0
 	 *
@@ -1927,6 +1971,7 @@ function require_if_theme_supports( $feature, $include ) {
  * @access private
  * @since 3.0.0
  * @since 4.3.0 Also removes `header_image_data`.
+ * @since 4.5.0 Also removes custom logo theme mods.
  *
  * @param int $id The attachment id.
  */
@@ -1934,6 +1979,12 @@ function _delete_attachment_theme_mod( $id ) {
 	$attachment_image = wp_get_attachment_url( $id );
 	$header_image     = get_header_image();
 	$background_image = get_background_image();
+	$custom_logo_id   = get_theme_mod( 'custom_logo' );
+
+	if ( $custom_logo_id && $custom_logo_id == $id ) {
+		remove_theme_mod( 'custom_logo' );
+		remove_theme_mod( 'header_text' );
+	}
 
 	if ( $header_image && $header_image == $attachment_image ) {
 		remove_theme_mod( 'header_image' );

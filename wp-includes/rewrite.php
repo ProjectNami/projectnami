@@ -212,7 +212,7 @@ function add_permastruct( $name, $struct, $args = array() ) {
 }
 
 /**
- * Remove permalink structure.
+ * Removes a permalink structure.
  *
  * Can only be used to remove permastructs that were added using add_permastruct().
  * Built-in permastructs cannot be removed.
@@ -447,7 +447,7 @@ function wp_resolve_numeric_slug_conflicts( $query_vars = array() ) {
 }
 
 /**
- * Examine a url and try to determine the post ID it represents.
+ * Examine a URL and try to determine the post ID it represents.
  *
  * Checks are supposedly from the hosted site blog.
  *

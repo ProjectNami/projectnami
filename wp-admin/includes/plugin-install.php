@@ -300,7 +300,8 @@ function install_plugins_upload() {
  *
  */
 function install_plugins_favorites_form() {
-	$user = ! empty( $_GET['user'] ) ? wp_unslash( $_GET['user'] ) : get_user_option( 'wporg_favorites' );
+	$user   = get_user_option( 'wporg_favorites' );
+	$action = 'save_wporg_username_' . get_current_user_id();
 	?>
 	<p class="install-help"><?php _e( 'If you have marked plugins as favorites on WordPress.org, you can browse them here.' ); ?></p>
 	<form method="get">
@@ -309,6 +310,7 @@ function install_plugins_favorites_form() {
 			<label for="user"><?php _e( 'Your WordPress.org username:' ); ?></label>
 			<input type="search" id="user" name="user" value="<?php echo esc_attr( $user ); ?>" />
 			<input type="submit" class="button" value="<?php esc_attr_e( 'Get Favorites' ); ?>" />
+			<input type="hidden" id="wporg-username-nonce" name="_wpnonce" value="<?php echo esc_attr( wp_create_nonce( $action ) ); ?>" />
 		</p>
 	</form>
 	<?php
@@ -582,8 +584,8 @@ function install_plugin_information() {
 			foreach ( $api->ratings as $key => $ratecount ) {
 				// Avoid div-by-zero.
 				$_rating = $api->num_ratings ? ( $ratecount / $api->num_ratings ) : 0;
-				/* translators: 1: number of stars, 2: number of reviews */
-				$aria_label = esc_attr( sprintf( _n( 'Reviews with %1$d star: %2$d. Opens in a new window.', 'Reviews with %1$d stars: %2$d. Opens in a new window.', $key ),
+				/* translators: 1: number of stars (used to determine singular/plural), 2: number of reviews */
+				$aria_label = esc_attr( sprintf( _n( 'Reviews with %1$d star: %2$s. Opens in a new window.', 'Reviews with %1$d stars: %2$s. Opens in a new window.', $key ),
 					$key,
 					number_format_i18n( $ratecount )
 				) );

@@ -74,12 +74,6 @@
 	padding: 11px 10px;
 }
 
-#poststuff .inside-submitbox,
-#side-sortables .inside-submitbox {
-	margin: 0 3px;
-	font-size: 11px;
-}
-
 input#link_description,
 input#link_url {
 	width: 98%;
@@ -135,17 +129,13 @@ input#link_url {
 	float: left;
 }
 
-.submitbox .submit {
-	text-align: left;
-	padding: 12px 10px 10px;
-	font-size: 11px;
-	background-color: #464646;
-	color: #ccc;
-}
-
 .submitbox .submitdelete {
 	text-decoration: none;
 	padding: 1px 2px;
+}
+
+body.post-new-php .submitbox .submitdelete {
+	display: none;
 }
 
 /* @todo: do we really need this? word on the street is we don't and this
@@ -164,10 +154,6 @@ stray rule may actually be compensated for elsewhere. */
 	margin-bottom: 8px;
 	margin-right: 4px;
 	padding: 6px;
-}
-
-.inside-submitbox #post_status {
-	margin: 2px 0 2px -2px;
 }
 
 #post-status-select {
@@ -271,11 +257,6 @@ ul.category-tabs li,
 	border: 0 none;
 }
 
-#side-sortables .inside-submitbox .insidebox,
-.stuffbox .insidebox {
-	margin: 11px 0;
-}
-
 /* @todo: make this a more generic class */
 ul.category-tabs,
 ul.add-menu-item-tabs,
@@ -292,7 +273,7 @@ ul.add-menu-item-tabs li {
 ul.category-tabs li.tabs,
 ul.add-menu-item-tabs li.tabs,
 .wp-tab-active {
-	border: 1px solid #dfdfdf;
+	border: 1px solid #ddd;
 	border-bottom-color: #fdfdfd;
 	background-color: #fdfdfd;
 }
@@ -373,8 +354,10 @@ form#tags-filter {
 	cursor: row-resize;
 }
 
+/*rtl:ignore*/
 .rtl #content-resize-handle {
-	background: transparent url(../images/resize-rtl.gif) no-repeat scroll left bottom;
+	background-image: url(../images/resize-rtl.gif);
+	background-position: left bottom;
 }
 
 .wp-editor-expand #content-resize-handle {
@@ -727,7 +710,7 @@ span.wp-media-buttons-icon:before {
 #postcustomstuff table {
 	margin: 0;
 	width: 100%;
-	border: 1px solid #dfdfdf;
+	border: 1px solid #ddd;
 	border-spacing: 0;
 	background-color: #f9f9f9;
 }
@@ -960,7 +943,7 @@ a.post-state-format.format-link:before {
 	max-height: 200px;
 	overflow: auto;
 	padding: 0 0.9em;
-	border: solid 1px #dfdfdf;
+	border: solid 1px #ddd;
 	background-color: #fdfdfd;
 }
 
@@ -1148,8 +1131,21 @@ p.popular-tags a {
 	padding: 10px 15px;
 }
 
-.comment-ays td p:last-of-type {
+.comment-ays .comment-content a[href]:after {
+	content: '(' attr( href ) ')';
+	display: inline-block;
+	padding: 0 4px;
+	color: #72777C;
+	font-size: 13px;
+}
+
+.comment-ays .comment-content p.edit-comment {
 	margin-top: 10px;
+}
+
+.comment-ays .comment-content p.edit-comment a[href]:after {
+	content: '';
+	padding: 0;
 }
 
 .comment-ays-submit .button-cancel {
@@ -1329,9 +1325,11 @@ table.links-table {
 		background-size: 11px 11px;
 	}
 
+	/*rtl:ignore*/
 	.rtl #content-resize-handle,
 	.rtl #post-body .wp_themeSkin .mceStatusbar a.mceResize {
-		background: transparent url(../images/resize-rtl-2x.gif) no-repeat scroll right bottom;
+		background-image: url(../images/resize-rtl-2x.gif);
+		background-position: left bottom;
 	}
 }
 
