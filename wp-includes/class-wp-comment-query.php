@@ -885,7 +885,7 @@ class WP_Comment_Query {
 		$this->sql_clauses['limits']  = $limits;
 
 		if ( ! $this->query_vars['no_found_rows'] ) {
-    		$wpdb->query( "SELECT COUNT(*) as [found_rows] {$this->sql_clauses['from']} {$where} {$this->sql_clauses['groupby']}" );
+			$wpdb->query( "SELECT COUNT(*) as [found_rows] {$this->sql_clauses['from']} {$where} {$this->sql_clauses['groupby']}" );
 		}
 
 		$this->request = "{$this->sql_clauses['select']} {$this->sql_clauses['from']} {$where} {$this->sql_clauses['groupby']} {$this->sql_clauses['orderby']} {$this->sql_clauses['limits']}";
