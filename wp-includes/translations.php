@@ -1422,6 +1422,9 @@ class SQL_Translations extends wpdb
         $query = str_ireplace("unsigned ", '', $query);
         $query = str_ireplace("unsigned,", ',', $query);
 
+        // change mediumint
+        $query = str_ireplace("mediumint", "int", $query);
+
         if ($this->create_query) {
             // strip collation, engine type, etc from end of query
             $pos = stripos($query, '(', stripos($query, 'TABLE '));
