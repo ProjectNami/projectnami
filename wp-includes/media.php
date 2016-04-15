@@ -985,16 +985,6 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 	 */
 	$image_meta = apply_filters( 'wp_calculate_image_srcset_meta', $image_meta, $size_array, $image_src, $attachment_id );
 
-	/**
-	 * Let plugins pre-filter the image meta to be able to fix inconsistencies in the stored data.
-	 *
-	 * @param array  $image_meta    The image meta data as returned by 'wp_get_attachment_metadata()'.
-	 * @param array  $size_array    Array of width and height values in pixels (in that order).
-	 * @param string $image_src     The 'src' of the image.
-	 * @param int    $attachment_id The image attachment ID or 0 if not supplied.
-	 */
-	$image_meta = apply_filters( 'wp_calculate_image_srcset_meta', $image_meta, $size_array, $image_src, $attachment_id );
-
 	if ( empty( $image_meta['sizes'] ) || ! isset( $image_meta['file'] ) || strlen( $image_meta['file'] ) < 4 ) {
 		return false;
 	}
@@ -1034,10 +1024,8 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 		$dirname = trailingslashit( $dirname );
 	}
 
-	$image_baseurl = trailingslashit( $image_baseurl ) . $dirname;
-
-	// Calculate the image aspect ratio.
-	$image_ratio = $image_height / $image_width;
+	$upload_dir = wp_get_upload_dir();
+	$image_baseurl = trailingslashit( $upload_dir['baseurl'] ) . $dirname;
 
 	/*
 	 * If currently on HTTPS, prefer HTTPS URLs when we know they're supported by the domain
@@ -1069,13 +1057,6 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 
 	/**
 	 * To make sure the ID matches our image src, we will check to see if any sizes in our attachment
-	 * meta match our $image_src. If no mathces are found we don't return a srcset to avoid serving
-	 * an incorrect image. See #35045.
-	 */
-	$src_matched = false;
-
-	/**
-	 * To make sure the ID matches our image src, we will check to see if any sizes in our attachment
 	 * meta match our $image_src. If no matches are found we don't return a srcset to avoid serving
 	 * an incorrect image. See #35045.
 	 */
@@ -1098,11 +1079,6 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 			$src_matched = $is_src = true;
 		}
 
-		// If the file name is part of the `src`, we've confirmed a match.
-		if ( ! $src_matched && false !== strpos( $image_src, $dirname . $image['file'] ) ) {
-			$src_matched = true;
-		}
-
 		// Filter out images that are from previous edits.
 		if ( $image_edited && ! strpos( $image['file'], $image_edit_hash[0] ) ) {
 			continue;
@@ -1116,15 +1092,21 @@ function wp_calculate_image_srcset( $size_array, $image_src, $image_meta, $attac
 			continue;
 		}
 
-		// Calculate the new image ratio.
-		if ( $image['width'] ) {
-			$image_ratio_compare = $image['height'] / $image['width'];
+		/**
+		 * To check for varying crops, we calculate the expected size of the smaller
+		 * image if the larger were constrained by the width of the smaller and then
+		 * see if it matches what we're expecting.
+		 */
+		if ( $image_width > $image['width'] ) {
+			$constrained_size = wp_constrain_dimensions( $image_width, $image_height, $image['width'] );
+			$expected_size = array( $image['width'], $image['height'] );
 		} else {
-			$image_ratio_compare = 0;
+			$constrained_size = wp_constrain_dimensions( $image['width'], $image['height'], $image_width );
+			$expected_size = array( $image_width, $image_height );
 		}
 
-		// If the new ratio differs by less than 0.002, use it.
-		if ( abs( $image_ratio - $image_ratio_compare ) < 0.002 ) {
+		// If the image dimensions are within 1px of the expected size, use it.
+		if ( abs( $constrained_size[0] - $expected_size[0] ) <= 1 && abs( $constrained_size[1] - $expected_size[1] ) <= 1 ) {
 			// Add the URL, descriptor, and value to the sources array to be returned.
 			$source = array(
 				'url'        => $image_baseurl . $image['file'],
