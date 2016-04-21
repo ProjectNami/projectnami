@@ -1768,7 +1768,7 @@ class SQL_Translations extends wpdb
 	function on_update_to_merge($query) {
 	
 		if (!strpos($query, 'ON DUPLICATE KEY UPDATE')) 
-			return;
+			return $query;
 			
 		/* Get groupings before 'ON DUPLICATE KEY UPDATE' */
 		preg_match( '/insert\s+into([\s0-9,a-z$_]*)\s*\(*([\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
@@ -1787,7 +1787,7 @@ class SQL_Translations extends wpdb
 		*/
 		
 		if (sizeof($insertgroups) < 4)
-			return;
+			return $query;
 		
 		$newsql = 'MERGE INTO ' . $insertgroups[1] . ' WITH (HOLDLOCK) AS target USING ';
 	
@@ -1809,7 +1809,7 @@ class SQL_Translations extends wpdb
 		*/
 		
 		if (sizeof($updatefields) < 2)
-			return;
+			return $query;
 		
 		preg_match_all( '/([0-9a-z$_]*)\s*=\s*VALUES\s*\((.*?)\)/is', $updatefields[1], $updatefieldvalues );
 		
@@ -1840,7 +1840,7 @@ class SQL_Translations extends wpdb
 		*/
 		
 		if (sizeof($updatefieldvalues) < 3)
-			return;
+			return $query;
 	
 		$fieldnamessize = sizeof($insertfields);
 		$valuessize = sizeof($insertvalues);
