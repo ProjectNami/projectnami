@@ -277,7 +277,8 @@ class SQL_Translations extends wpdb
         if ( strripos($query, '--SERIALIZED') !== FALSE ) {
             $query = str_replace('--SERIALIZED', '', $query);
             if ($this->insert_query) {
-                $query = $this->on_duplicate_key($query);
+                // $query = $this->on_duplicate_key($query);
+				$query = $this->on_update_to_merge($query);
             }
             $query = $this->translate_general($query);
             $query = vsprintf($query, $this->preg_data);
@@ -322,8 +323,10 @@ class SQL_Translations extends wpdb
         $this->preg_data = array();
 
         if ( $this->insert_query ) {
-            $query = $this->on_duplicate_key($query);
-            $query = $this->split_insert_values($query);
+            // $query = $this->on_duplicate_key($query);
+            // $query = $this->split_insert_values($query);
+			/* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
+			$query = $this->on_update_to_merge($query);
         }
 
         // debug code
@@ -1022,7 +1025,7 @@ class SQL_Translations extends wpdb
     {
         if ( stripos($query, 'tribe_event_' ) ) {
             if ( stripos($query, 'post_date ASC' ) ){
-                $query = str_replace('.ID  FROM', '.ID, post_date  FROM', $query);
+                $query = str_replace('.ID  FROM', '.ID, post_date, menu_order  FROM', $query);
             }
             if ( stripos($query, '.*, MIN(' ) ){
                 $query = str_replace('ORDER BY', 'group by ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count ORDER BY', $query);
@@ -1032,19 +1035,20 @@ class SQL_Translations extends wpdb
                 if ( stripos($query, 'ORDER') > 0 ) {
                     $ord = '';
                     $order_pos = stripos($query, 'ORDER');
-                    if ( stripos($query, 'BY', $order_pos) > $order_pos ) {
+                    $ob = stripos($query, 'BY', $order_pos);
+                    if ( $ob > $order_pos ) {
                         $fields = $this->get_as_fields($query);
-                        $ob = stripos($query, 'BY', $order_pos);
                         if ( stripos($query, ' ASC', $ob) > 0 ) {
                             $ord = stripos($query, ' ASC', $ob);
                         }
                         if ( stripos($query, ' DESC', $ob) > 0 ) {
                             $ord = stripos($query, ' DESC', $ob);
                         }
-                        $str = 'BY ';
-                        $str .= implode(', ',$fields);
-
-                        $query = substr_replace($query, $str, $ob, ($ord-$ob));
+						if (sizeof($fields) > 0) {
+							$str = 'BY ';
+							$str .= implode(', ',$fields);
+							$query = substr_replace($query, $str, $ob, ($ord-$ob));
+						}
                         $query = str_replace('ORDER BY BY', 'ORDER BY', $query);
                     }
                 }
@@ -1684,6 +1688,8 @@ class SQL_Translations extends wpdb
      */
     function get_as_fields($query)
     {
+		/* Strip out any CAST conversion functions */
+		$query = preg_replace('/cast\s*\(.*as\s*\w+\s*\)/is','',$query);
         $arr = array();
         $tok = preg_split('/[\s,]+/', $query);
         $count = count($tok);
@@ -1754,6 +1760,156 @@ class SQL_Translations extends wpdb
         return $result_set;
     }
     
+    /**
+     * Check to see if INSERT has an ON DUPLICATE KEY statement
+     * This is MySQL specific and will be removed and put into 
+     * a following_query MERGE STATEMENT
+     *
+     * @param string $query Query coming in
+     * @return string query without ON DUPLICATE KEY statement
+     */
+	function on_update_to_merge($query) {
+	
+		if (!strpos($query, 'ON DUPLICATE KEY UPDATE')) 
+			return $query;
+			
+		/* Get groupings before 'ON DUPLICATE KEY UPDATE' */
+		preg_match( '/insert\s+into([\s0-9,a-z$_]*)\s*\(*([\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
+		
+		/* You should get something like this:
+			array(4) {
+			  [0]=>
+			  string(130) "INSERT INTO wp_blc_synch( container_id, container_type, synched, last_synch)	VALUES( 17839, 'post', 0, '0001-01-01 00:00:00' )"
+			  [1]=>
+			  string(13) " wp_blc_synch"
+			  [2]=>
+			  string(50) " container_id, container_type, synched, last_synch"
+			  [3]=>
+			  string(41) " 17839, 'post', 0, '0001-01-01 00:00:00' "
+			}	
+		*/
+		
+		if (sizeof($insertgroups) < 4)
+			return $query;
+		
+		$newsql = 'MERGE INTO ' . $insertgroups[1] . ' WITH (HOLDLOCK) AS target USING ';
+	
+		$insertfieldlist = $insertgroups[2];
+		$insertfields = explode(",", $insertfieldlist);
+		$insertvalueslist = $insertgroups[3];
+		$insertvalues = explode(",", $insertvalueslist);
+		
+		/* Get groupings after 'ON DUPLICATE KEY UPDATE' */
+		preg_match( '/\ON DUPLICATE KEY UPDATE(\s*.*)/is', $query, $updatefields );
+		
+		/* You should get something like this:
+			array(2) {
+			  [0]=>
+			  string(83) "ON DUPLICATE KEY UPDATE synched = VALUES(synched), last_synch = VALUES(last_synch))"
+			  [1]=>
+			  string(60) " synched = VALUES(1234), last_synch = VALUES(5678))"
+			}
+		*/
+		
+		if (sizeof($updatefields) < 2)
+			return $query;
+		
+		preg_match_all( '/([0-9a-z$_]*)\s*=\s*VALUES\s*\((.*?)\)/is', $updatefields[1], $updatefieldvalues );
+		
+		/* You should get something like this:
+			array(3) {
+			  [0]=>
+			  array(2) {
+				[0]=>
+				string(22) "synched = VALUES(1234)"
+				[1]=>
+				string(25) "last_synch = VALUES(5678)"
+			  }
+			  [1]=>
+			  array(2) {
+				[0]=>
+				string(7) "synched"
+				[1]=>
+				string(10) "last_synch"
+			  }
+			  [2]=>
+			  array(2) {
+				[0]=>
+				string(4) "1234"
+				[1]=>
+				string(4) "5678"
+			  }
+			}
+		*/
+		
+		if (sizeof($updatefieldvalues) < 3)
+			return $query;
+	
+		$fieldnamessize = sizeof($insertfields);
+		$valuessize = sizeof($insertvalues);
+		$updatefieldssize = sizeof($updatefieldvalues[1]);
+		
+		echo $fieldnamessize." fieldnamessize\r\n";
+		echo $valuessize." valuessize\r\n";
+		echo $updatefieldssize." updatefieldssize\r\n";
+		
+		/* Create Insert part of command. */
+		$insertcmd = '';
+		for ($i=0; $i<$fieldnamessize; $i++) {
+			if ($insertcmd == '')
+				$insertcmd  .= trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
+			else
+				$insertcmd  .= "," . trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
+			
+		}
+		$newsql .= "(SELECT " . $insertcmd . ") AS source (" . trim($insertgroups[2]) . ")";
+		
+		/* Create ON part of command. */
+		$on = '';
+		for ($i=0; $i<$fieldnamessize; $i++) {
+			if ($on == '')
+				$on  .= "source." . trim($insertfields[$i]) . "=target." . trim($insertfields[$i]);
+			else
+				$on  .= " AND source." . trim($insertfields[$i]) . "=target." . trim($insertfields[$i]);
+			
+		}
+		
+		$on = ' ON (' . $on . ')';
+		$newsql .= $on . ' WHEN MATCHED THEN UPDATE SET ';
+	
+		
+		/* Create UPDATE part of command. */
+		$update = '';
+		for ($i=0; $i<$updatefieldssize; $i++) {
+			if ($update == '') {
+				/* Does the value contain the actual fieldname?  If so, use the insert value. */
+				if (trim($updatefieldvalues[1][$i]) == trim($updatefieldvalues[2][$i])) {
+						for ($j=0; $j<$fieldnamessize; $j++) {
+							if (trim($insertfields[$j]) == trim($updatefieldvalues[1][$i]))
+
+								$update  .= trim($updatefieldvalues[1][$i]) . "=" . trim($insertvalues[$j]);
+			
+						}
+				} else
+					$update  .= trim($updatefieldvalues[1][$i]) . "=" . trim($updatefieldvalues[2][$i]);
+			} else {
+				/* Does the value contain the actual fieldname?  If so, use the insert value. */
+				if (trim($updatefieldvalues[1][$i]) == trim($updatefieldvalues[2][$i])) {
+						for ($j=0; $j<$fieldnamessize; $j++) {
+							if (trim($insertfields[$j]) == trim($updatefieldvalues[1][$i]))
+								$update  .= "," . trim($updatefieldvalues[1][$i]) . "=" . trim($insertvalues[$j]);
+			
+						}
+				} else
+					$update  .= "," . trim($updatefieldvalues[1][$i]) . "=" . trim($updatefieldvalues[2][$i]);
+				
+			}
+			
+		}
+		$newsql .= $update . ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
+		return $newsql;
+	}
+	
     /**
      * Check to see if INSERT has an ON DUPLICATE KEY statement
      * This is MySQL specific and will be removed and put into 
