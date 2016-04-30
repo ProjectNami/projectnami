@@ -374,7 +374,7 @@ class SQL_Translations extends wpdb
 		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
         	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
 
-		return $query;
+		return apply_filters( 'pre_translate_query', $query );
 	}
 
     /**
