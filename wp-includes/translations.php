@@ -242,6 +242,9 @@ class SQL_Translations extends wpdb
      */
     function translate($query)
     {
+	// Give this class/plugins a chance to process the query string before any translations are done.
+        $query = $this->pre_translate_query( $query );
+
         $this->preg_original = $query = trim($query);
 
         if (empty($this->fields_map)) {
@@ -357,6 +360,25 @@ class SQL_Translations extends wpdb
             $this->create_query = true;
         }
     }
+
+    
+	/**
+	* Additions made by the PN team to the translators.
+	*
+	* This function is called before any other translations
+	* are performed so have access to previously unhandled data.
+	*
+	* @param string $query Query coming in
+	*
+	* @return string Translate query
+	*/
+        function pre_translate_query( $query ) {
+		
+		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
+        	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
+
+		return apply_filters( 'pre_translate_query', $query );
+	}
 
     /**
      * More generalized information gathering queries
@@ -725,8 +747,6 @@ class SQL_Translations extends wpdb
                 'USING (term_id)', 
                 'ON ' . $this->prefix . 'terms.term_id = ' . $this->prefix . 'term_taxonomy.term_id', $query);
         }
-
-        $query = str_ireplace("'0000-00-00 00:00:00'", "'0001-01-01 00:00:00'", $query);
 
         /**
          * Begin Project Nami specific translations
