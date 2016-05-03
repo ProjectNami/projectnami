@@ -242,6 +242,9 @@ class SQL_Translations extends wpdb
      */
     function translate($query)
     {
+	// Give this class/plugins a chance to process the query string before any translations are done.
+        $query = $this->pre_translate_query( $query );
+
         $this->preg_original = $query = trim($query);
 
         if (empty($this->fields_map)) {
@@ -357,6 +360,154 @@ class SQL_Translations extends wpdb
             $this->create_query = true;
         }
     }
+
+    
+	/**
+	* Additions made by the PN team to the translators.
+	*
+	* This function is called before any other translations
+	* are performed so have access to previously unhandled data.
+	*
+	* @param string $query Query coming in
+	*
+	* @return string Translate query
+	*/
+        function pre_translate_query( $query ) {
+		
+		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
+        	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
+
+        /**
+         * Akismet
+         */
+        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
+            $query = str_ireplace(
+                'USING(comment_id)', 
+                'ON c.comment_id = m.comment_id', $query);
+        }
+
+        /**
+         * Jetpack
+         */
+        if (stristr($query, " AS UNSIGNED") !== FALSE) {
+            $query = str_ireplace(
+                ' AS UNSIGNED', 
+                ' AS BIGINT', $query);
+        }
+
+        /**
+         * Yoast SEO
+         */
+        if ( (stristr($query, "SELECT post_type, MAX(post_modified_gmt) AS date FROM") !== FALSE) && (stristr($query, "GROUP BY post_type ORDER BY post_modified_gmt") !== FALSE) ) {
+            $query = str_ireplace(
+                'ORDER BY post_modified_gmt', 
+                'ORDER BY max(post_modified_gmt)', $query);
+        }
+
+        if (stristr($query, " && meta_key = ") !== FALSE) {
+            $query = str_ireplace(
+                ' && meta_key = ', 
+                ' AND meta_key = ', $query);
+        }
+
+        /**
+         * Booking
+         */
+        if (stristr($query, "COLLATE utf8_general_ci") !== FALSE) {
+            $query = str_ireplace(
+                'COLLATE utf8_general_ci', 
+                ' ', $query);
+        }
+
+        if (stristr($query, "ORDER BY dt, bkBY dt.booking_date") !== FALSE) {
+            $query = str_ireplace(
+                'ORDER BY dt, bkBY dt.booking_date', 
+                'ORDER BY dt.booking_date', $query);
+        }
+
+        if (stristr($query, "bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
+            $query = str_ireplace(
+                "bookingdates WHERE Key_name = 'booking_id_dates'", 
+                "bookingdates' and ind.name = 'booking_id_dates", $query);
+        }
+
+        /**
+         * CURDATE handling test
+         */
+        if (stristr($query, "CURDATE()+ INTERVAL 2 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 2 day', 
+                'CAST(dateadd(d,2,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()+ INTERVAL 3 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 3 day', 
+                'CAST(dateadd(d,3,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()+ INTERVAL 4 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 4 day', 
+                'CAST(dateadd(d,4,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE() - INTERVAL 1 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE() - INTERVAL 1 day', 
+                'CAST(dateadd(d,-1,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()', 
+                'CAST(GETDATE() AS DATE)', $query);
+        }
+
+        /**
+         * W3 Total Cache
+         */
+        if (stristr($query, "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'") !== FALSE) {
+            $query = str_ireplace(
+                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'", 
+                '', $query);
+        }
+
+        if ( (stristr($query, "REPLACE INTO") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
+            $query = str_ireplace(
+                'REPLACE INTO', 
+                'INSERT', $query);
+        }
+
+        if (stristr($query, "w3tc_cdn_queue") !== FALSE) {
+            $query = str_ireplace(
+                '"', 
+                "'", $query);
+        }
+
+        if ( (stristr($query, 'pm.meta_value AS file') !== FALSE) && (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
+            $query = str_ireplace(
+                'pm.meta_value AS file', 
+                "pm.meta_value AS [file]", $query);
+            $query = $query . ", pm.meta_value, pm2.meta_value";
+        }
+
+        if ( (stristr($query, '"_wp_attached_file"') !== FALSE) || (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
+            $query = str_ireplace(
+                '"', 
+                "'", $query);
+        }
+
+        if ( (stristr($query, "CREATE TABLE") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
+            $query = "IF NOT EXISTS (select * from sysobjects WHERE name = '" . $this->get_blog_prefix() . "w3tc_cdn_queue')" . $query;
+        }
+
+        /**
+         * End Project Nami specific translations
+         */
+
+		return apply_filters( 'pre_translate_query', $query );
+	}
 
     /**
      * More generalized information gathering queries
@@ -725,139 +876,6 @@ class SQL_Translations extends wpdb
                 'USING (term_id)', 
                 'ON ' . $this->prefix . 'terms.term_id = ' . $this->prefix . 'term_taxonomy.term_id', $query);
         }
-
-        $query = str_ireplace("'0000-00-00 00:00:00'", "'0001-01-01 00:00:00'", $query);
-
-        /**
-         * Begin Project Nami specific translations
-         * 
-         * Akismet
-         */
-        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
-            $query = str_ireplace(
-                'USING(comment_id)', 
-                'ON c.comment_id = m.comment_id', $query);
-        }
-
-        /**
-         * Jetpack
-         */
-        if (stristr($query, " AS UNSIGNED") !== FALSE) {
-            $query = str_ireplace(
-                ' AS UNSIGNED', 
-                ' AS BIGINT', $query);
-        }
-
-        /**
-         * Yoast SEO
-         */
-        if ( (stristr($query, "SELECT post_type, MAX(post_modified_gmt) AS date FROM") !== FALSE) && (stristr($query, "GROUP BY post_type ORDER BY post_modified_gmt") !== FALSE) ) {
-            $query = str_ireplace(
-                'ORDER BY post_modified_gmt', 
-                'ORDER BY max(post_modified_gmt)', $query);
-        }
-
-        if (stristr($query, " && meta_key = ") !== FALSE) {
-            $query = str_ireplace(
-                ' && meta_key = ', 
-                ' AND meta_key = ', $query);
-        }
-
-        /**
-         * Booking
-         */
-        if (stristr($query, "COLLATE utf8_general_ci") !== FALSE) {
-            $query = str_ireplace(
-                'COLLATE utf8_general_ci', 
-                ' ', $query);
-        }
-
-        if (stristr($query, "ORDER BY dt, bkBY dt.booking_date") !== FALSE) {
-            $query = str_ireplace(
-                'ORDER BY dt, bkBY dt.booking_date', 
-                'ORDER BY dt.booking_date', $query);
-        }
-
-        if (stristr($query, "bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
-            $query = str_ireplace(
-                "bookingdates WHERE Key_name = 'booking_id_dates'", 
-                "bookingdates' and ind.name = 'booking_id_dates", $query);
-        }
-
-        /**
-         * CURDATE handling test
-         */
-        if (stristr($query, "CURDATE()+ INTERVAL 2 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()+ INTERVAL 2 day', 
-                'CAST(dateadd(d,2,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE()+ INTERVAL 3 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()+ INTERVAL 3 day', 
-                'CAST(dateadd(d,3,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE()+ INTERVAL 4 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()+ INTERVAL 4 day', 
-                'CAST(dateadd(d,4,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE() - INTERVAL 1 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE() - INTERVAL 1 day', 
-                'CAST(dateadd(d,-1,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE()") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()', 
-                'CAST(GETDATE() AS DATE)', $query);
-        }
-
-        /**
-         * W3 Total Cache
-         */
-        if (stristr($query, "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'") !== FALSE) {
-            $query = str_ireplace(
-                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'", 
-                '', $query);
-        }
-
-        if ( (stristr($query, "REPLACE INTO") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
-            $query = str_ireplace(
-                'REPLACE INTO', 
-                'INSERT', $query);
-        }
-
-        if (stristr($query, "w3tc_cdn_queue") !== FALSE) {
-            $query = str_ireplace(
-                '"', 
-                "'", $query);
-        }
-
-        if ( (stristr($query, 'pm.meta_value AS file') !== FALSE) && (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
-            $query = str_ireplace(
-                'pm.meta_value AS file', 
-                "pm.meta_value AS [file]", $query);
-            $query = $query . ", pm.meta_value, pm2.meta_value";
-        }
-
-        if ( (stristr($query, '"_wp_attached_file"') !== FALSE) || (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
-            $query = str_ireplace(
-                '"', 
-                "'", $query);
-        }
-
-        if ( (stristr($query, "CREATE TABLE") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
-            $query = "IF NOT EXISTS (select * from sysobjects WHERE name = '" . $this->get_blog_prefix() . "w3tc_cdn_queue')" . $query;
-        }
-
-        /**
-         * End Project Nami specific translations
-         */
 
         return $query;
     }
