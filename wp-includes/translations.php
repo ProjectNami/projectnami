@@ -377,6 +377,9 @@ class SQL_Translations extends wpdb
 		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
         	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
 
+		// Handle NULL-safe equal to operator.
+        	$query = str_replace( "<=>", "=", $query );
+
         /**
          * Akismet
          */
@@ -398,18 +401,48 @@ class SQL_Translations extends wpdb
         /**
          * Yoast SEO
          */
-        if ( (stristr($query, "SELECT post_type, MAX(post_modified_gmt) AS date FROM") !== FALSE) && (stristr($query, "GROUP BY post_type ORDER BY post_modified_gmt") !== FALSE) ) {
-            $query = str_ireplace(
-                'ORDER BY post_modified_gmt', 
-                'ORDER BY max(post_modified_gmt)', $query);
-        }
-
         if (stristr($query, " && meta_key = ") !== FALSE) {
             $query = str_ireplace(
                 ' && meta_key = ', 
                 ' AND meta_key = ', $query);
         }
 
+        if (stristr($query, "ORDER BY wp_posts.menu_order, wp_posts.post_date") !== FALSE) {
+            $query = str_ireplace(
+                'ORDER BY wp_posts.menu_order, wp_posts.post_date', 
+                'ORDER BY wp_posts.post_date', $query);
+        }
+
+		$searchstr = '/(SELECT\s+post_type\s*,\s*MAX\(post_modified_gmt\)\s+as\s+date\s+from)/is';
+		preg_match( $searchstr, $query, $groups );
+
+		/* You should an array of size 2 */
+		if (sizeof($groups) == 2) {
+			/* Get groupings */
+			preg_match( '/(GROUP\s+BY\s+post_type\s+ORDER\s+BY\s+post_modified_gmt)/is', $query, $groups );
+		
+			/* You should an array of size 2 */
+			if (sizeof($groups) == 2) {
+				$query = str_ireplace(
+                'ORDER BY post_modified_gmt', 
+                'ORDER BY max(post_modified_gmt)', $query);
+			}
+		}
+
+        /**
+         * The Events Calendar
+         */
+        if (stristr($query, "DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC") !== FALSE) {
+            $query = str_ireplace(
+                'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC', 
+                'CONVERT(VARCHAR(19),tribe_event_start.meta_value,120) ASC', $query);
+        }
+        if (stristr($query, "SELECT DISTINCT wp_posts.*, MIN(wp_postmeta.meta_value) as EventStartDate, MIN(tribe_event_end_date.meta_value) as EventEndDate") !== FALSE) {
+            $query = str_ireplace(
+                'WHERE 1=1  AND (((wp_posts.post_title', 
+                'WHERE 1=1  AND (wp_posts.post_title', $query);
+        }
+		
         /**
          * Booking
          */
@@ -501,6 +534,18 @@ class SQL_Translations extends wpdb
         if ( (stristr($query, "CREATE TABLE") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
             $query = "IF NOT EXISTS (select * from sysobjects WHERE name = '" . $this->get_blog_prefix() . "w3tc_cdn_queue')" . $query;
         }
+
+        /**
+         * Comments
+         */
+        $query = str_ireplace("WHERE ( post_status = 'publish' OR ( post_status = 'inherit' && post_type = 'attachment' ) )", 
+		"WHERE ( post_status = 'publish' OR ( post_status = 'inherit' AND post_type = 'attachment' ) )", $query);
+			
+        /**
+         * Counting
+         */
+        $query = str_ireplace("SELECT COUNT(  wp_posts.ID ) as [found_rows] FROM wp_posts  WHERE 1=1 AND 0", 
+		"SELECT COUNT(  wp_posts.ID ) as [found_rows] FROM wp_posts", $query);
 
         /**
          * End Project Nami specific translations
