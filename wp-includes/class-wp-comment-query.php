@@ -877,15 +877,16 @@ class WP_Comment_Query {
 		}
 
 		$found_rows = '';
-		if ( ! $this->query_vars['no_found_rows'] ) {
-			$found_rows = 'SQL_CALC_FOUND_ROWS';
-		}
 
 		$this->sql_clauses['select']  = "SELECT $found_rows $fields";
 		$this->sql_clauses['from']    = "FROM $wpdb->comments $join";
 		$this->sql_clauses['groupby'] = $groupby;
 		$this->sql_clauses['orderby'] = $orderby;
 		$this->sql_clauses['limits']  = $limits;
+
+		if ( ! $this->query_vars['no_found_rows'] ) {
+			$wpdb->query( "SELECT COUNT(*) as [found_rows] {$this->sql_clauses['from']} {$where} {$this->sql_clauses['groupby']}" );
+		}
 
 		$this->request = "{$this->sql_clauses['select']} {$this->sql_clauses['from']} {$where} {$this->sql_clauses['groupby']} {$this->sql_clauses['orderby']} {$this->sql_clauses['limits']}";
 

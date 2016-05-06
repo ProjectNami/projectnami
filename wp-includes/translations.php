@@ -242,6 +242,9 @@ class SQL_Translations extends wpdb
      */
     function translate($query)
     {
+	// Give this class/plugins a chance to process the query string before any translations are done.
+        $query = $this->pre_translate_query( $query );
+
         $this->preg_original = $query = trim($query);
 
         if (empty($this->fields_map)) {
@@ -277,7 +280,8 @@ class SQL_Translations extends wpdb
         if ( strripos($query, '--SERIALIZED') !== FALSE ) {
             $query = str_replace('--SERIALIZED', '', $query);
             if ($this->insert_query) {
-                $query = $this->on_duplicate_key($query);
+                // $query = $this->on_duplicate_key($query);
+				$query = $this->on_update_to_merge($query);
             }
             $query = $this->translate_general($query);
             $query = vsprintf($query, $this->preg_data);
@@ -322,8 +326,10 @@ class SQL_Translations extends wpdb
         $this->preg_data = array();
 
         if ( $this->insert_query ) {
-            $query = $this->on_duplicate_key($query);
-            $query = $this->split_insert_values($query);
+            // $query = $this->on_duplicate_key($query);
+            // $query = $this->split_insert_values($query);
+			/* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
+			$query = $this->on_update_to_merge($query);
         }
 
         // debug code
@@ -354,6 +360,199 @@ class SQL_Translations extends wpdb
             $this->create_query = true;
         }
     }
+
+    
+	/**
+	* Additions made by the PN team to the translators.
+	*
+	* This function is called before any other translations
+	* are performed so have access to previously unhandled data.
+	*
+	* @param string $query Query coming in
+	*
+	* @return string Translate query
+	*/
+        function pre_translate_query( $query ) {
+		
+		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
+        	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
+
+		// Handle NULL-safe equal to operator.
+        	$query = str_replace( "<=>", "=", $query );
+
+        /**
+         * Akismet
+         */
+        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
+            $query = str_ireplace(
+                'USING(comment_id)', 
+                'ON c.comment_id = m.comment_id', $query);
+        }
+
+        /**
+         * Jetpack
+         */
+        if (stristr($query, " AS UNSIGNED") !== FALSE) {
+            $query = str_ireplace(
+                ' AS UNSIGNED', 
+                ' AS BIGINT', $query);
+        }
+
+        /**
+         * Yoast SEO
+         */
+        if (stristr($query, " && meta_key = ") !== FALSE) {
+            $query = str_ireplace(
+                ' && meta_key = ', 
+                ' AND meta_key = ', $query);
+        }
+
+        if (stristr($query, "ORDER BY wp_posts.menu_order, wp_posts.post_date") !== FALSE) {
+            $query = str_ireplace(
+                'ORDER BY wp_posts.menu_order, wp_posts.post_date', 
+                'ORDER BY wp_posts.post_date', $query);
+        }
+
+		$searchstr = '/(SELECT\s+post_type\s*,\s*MAX\(post_modified_gmt\)\s+as\s+date\s+from)/is';
+		preg_match( $searchstr, $query, $groups );
+
+		/* You should an array of size 2 */
+		if (sizeof($groups) == 2) {
+			/* Get groupings */
+			preg_match( '/(GROUP\s+BY\s+post_type\s+ORDER\s+BY\s+post_modified_gmt)/is', $query, $groups );
+		
+			/* You should an array of size 2 */
+			if (sizeof($groups) == 2) {
+				$query = str_ireplace(
+                'ORDER BY post_modified_gmt', 
+                'ORDER BY max(post_modified_gmt)', $query);
+			}
+		}
+
+        /**
+         * The Events Calendar
+         */
+        if (stristr($query, "DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC") !== FALSE) {
+            $query = str_ireplace(
+                'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC', 
+                'CONVERT(VARCHAR(19),tribe_event_start.meta_value,120) ASC', $query);
+        }
+        if (stristr($query, "SELECT DISTINCT wp_posts.*, MIN(wp_postmeta.meta_value) as EventStartDate, MIN(tribe_event_end_date.meta_value) as EventEndDate") !== FALSE) {
+            $query = str_ireplace(
+                'WHERE 1=1  AND (((wp_posts.post_title', 
+                'WHERE 1=1  AND (wp_posts.post_title', $query);
+        }
+		
+        /**
+         * Booking
+         */
+        if (stristr($query, "COLLATE utf8_general_ci") !== FALSE) {
+            $query = str_ireplace(
+                'COLLATE utf8_general_ci', 
+                ' ', $query);
+        }
+
+        if (stristr($query, "ORDER BY dt, bkBY dt.booking_date") !== FALSE) {
+            $query = str_ireplace(
+                'ORDER BY dt, bkBY dt.booking_date', 
+                'ORDER BY dt.booking_date', $query);
+        }
+
+        if (stristr($query, "bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
+            $query = str_ireplace(
+                "bookingdates WHERE Key_name = 'booking_id_dates'", 
+                "bookingdates' and ind.name = 'booking_id_dates", $query);
+        }
+
+        /**
+         * CURDATE handling test
+         */
+        if (stristr($query, "CURDATE()+ INTERVAL 2 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 2 day', 
+                'CAST(dateadd(d,2,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()+ INTERVAL 3 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 3 day', 
+                'CAST(dateadd(d,3,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()+ INTERVAL 4 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()+ INTERVAL 4 day', 
+                'CAST(dateadd(d,4,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE() - INTERVAL 1 day") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE() - INTERVAL 1 day', 
+                'CAST(dateadd(d,-1,GETDATE()) AS DATE)', $query);
+        }
+
+        if (stristr($query, "CURDATE()") !== FALSE) {
+            $query = str_ireplace(
+                'CURDATE()', 
+                'CAST(GETDATE() AS DATE)', $query);
+        }
+
+        /**
+         * W3 Total Cache
+         */
+        if (stristr($query, "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'") !== FALSE) {
+            $query = str_ireplace(
+                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'", 
+                '', $query);
+        }
+
+        if ( (stristr($query, "REPLACE INTO") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
+            $query = str_ireplace(
+                'REPLACE INTO', 
+                'INSERT', $query);
+        }
+
+        if (stristr($query, "w3tc_cdn_queue") !== FALSE) {
+            $query = str_ireplace(
+                '"', 
+                "'", $query);
+        }
+
+        if ( (stristr($query, 'pm.meta_value AS file') !== FALSE) && (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
+            $query = str_ireplace(
+                'pm.meta_value AS file', 
+                "pm.meta_value AS [file]", $query);
+            $query = $query . ", pm.meta_value, pm2.meta_value";
+        }
+
+        if ( (stristr($query, '"_wp_attached_file"') !== FALSE) || (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
+            $query = str_ireplace(
+                '"', 
+                "'", $query);
+        }
+
+        if ( (stristr($query, "CREATE TABLE") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
+            $query = "IF NOT EXISTS (select * from sysobjects WHERE name = '" . $this->get_blog_prefix() . "w3tc_cdn_queue')" . $query;
+        }
+
+        /**
+         * Comments
+         */
+        $query = str_ireplace("WHERE ( post_status = 'publish' OR ( post_status = 'inherit' && post_type = 'attachment' ) )", 
+		"WHERE ( post_status = 'publish' OR ( post_status = 'inherit' AND post_type = 'attachment' ) )", $query);
+			
+        /**
+         * Counting
+         */
+        $query = str_ireplace("SELECT COUNT(  wp_posts.ID ) as [found_rows] FROM wp_posts  WHERE 1=1 AND 0", 
+		"SELECT COUNT(  wp_posts.ID ) as [found_rows] FROM wp_posts", $query);
+
+        /**
+         * End Project Nami specific translations
+         */
+
+		return apply_filters( 'pre_translate_query', $query );
+	}
 
     /**
      * More generalized information gathering queries
@@ -723,139 +922,6 @@ class SQL_Translations extends wpdb
                 'ON ' . $this->prefix . 'terms.term_id = ' . $this->prefix . 'term_taxonomy.term_id', $query);
         }
 
-        $query = str_ireplace("'0000-00-00 00:00:00'", "'0001-01-01 00:00:00'", $query);
-
-        /**
-         * Begin Project Nami specific translations
-         * 
-         * Akismet
-         */
-        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
-            $query = str_ireplace(
-                'USING(comment_id)', 
-                'ON c.comment_id = m.comment_id', $query);
-        }
-
-        /**
-         * Jetpack
-         */
-        if (stristr($query, " AS UNSIGNED") !== FALSE) {
-            $query = str_ireplace(
-                ' AS UNSIGNED', 
-                ' AS BIGINT', $query);
-        }
-
-        /**
-         * Yoast SEO
-         */
-        if ( (stristr($query, "SELECT post_type, MAX(post_modified_gmt) AS date FROM") !== FALSE) && (stristr($query, "GROUP BY post_type ORDER BY post_modified_gmt") !== FALSE) ) {
-            $query = str_ireplace(
-                'ORDER BY post_modified_gmt', 
-                'ORDER BY max(post_modified_gmt)', $query);
-        }
-
-        if (stristr($query, " && meta_key = ") !== FALSE) {
-            $query = str_ireplace(
-                ' && meta_key = ', 
-                ' AND meta_key = ', $query);
-        }
-
-        /**
-         * Booking
-         */
-        if (stristr($query, "COLLATE utf8_general_ci") !== FALSE) {
-            $query = str_ireplace(
-                'COLLATE utf8_general_ci', 
-                ' ', $query);
-        }
-
-        if (stristr($query, "ORDER BY dt, bkBY dt.booking_date") !== FALSE) {
-            $query = str_ireplace(
-                'ORDER BY dt, bkBY dt.booking_date', 
-                'ORDER BY dt.booking_date', $query);
-        }
-
-        if (stristr($query, "bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
-            $query = str_ireplace(
-                "bookingdates WHERE Key_name = 'booking_id_dates'", 
-                "bookingdates' and ind.name = 'booking_id_dates", $query);
-        }
-
-        /**
-         * CURDATE handling test
-         */
-        if (stristr($query, "CURDATE()+ INTERVAL 2 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()+ INTERVAL 2 day', 
-                'CAST(dateadd(d,2,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE()+ INTERVAL 3 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()+ INTERVAL 3 day', 
-                'CAST(dateadd(d,3,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE()+ INTERVAL 4 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()+ INTERVAL 4 day', 
-                'CAST(dateadd(d,4,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE() - INTERVAL 1 day") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE() - INTERVAL 1 day', 
-                'CAST(dateadd(d,-1,GETDATE()) AS DATE)', $query);
-        }
-
-        if (stristr($query, "CURDATE()") !== FALSE) {
-            $query = str_ireplace(
-                'CURDATE()', 
-                'CAST(GETDATE() AS DATE)', $query);
-        }
-
-        /**
-         * W3 Total Cache
-         */
-        if (stristr($query, "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'") !== FALSE) {
-            $query = str_ireplace(
-                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'", 
-                '', $query);
-        }
-
-        if ( (stristr($query, "REPLACE INTO") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
-            $query = str_ireplace(
-                'REPLACE INTO', 
-                'INSERT', $query);
-        }
-
-        if (stristr($query, "w3tc_cdn_queue") !== FALSE) {
-            $query = str_ireplace(
-                '"', 
-                "'", $query);
-        }
-
-        if ( (stristr($query, 'pm.meta_value AS file') !== FALSE) && (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
-            $query = str_ireplace(
-                'pm.meta_value AS file', 
-                "pm.meta_value AS [file]", $query);
-            $query = $query . ", pm.meta_value, pm2.meta_value";
-        }
-
-        if ( (stristr($query, '"_wp_attached_file"') !== FALSE) || (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
-            $query = str_ireplace(
-                '"', 
-                "'", $query);
-        }
-
-        if ( (stristr($query, "CREATE TABLE") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
-            $query = "IF NOT EXISTS (select * from sysobjects WHERE name = '" . $this->get_blog_prefix() . "w3tc_cdn_queue')" . $query;
-        }
-
-        /**
-         * End Project Nami specific translations
-         */
-
         return $query;
     }
 
@@ -1022,7 +1088,7 @@ class SQL_Translations extends wpdb
     {
         if ( stripos($query, 'tribe_event_' ) ) {
             if ( stripos($query, 'post_date ASC' ) ){
-                $query = str_replace('.ID  FROM', '.ID, post_date  FROM', $query);
+                $query = str_replace('.ID  FROM', '.ID, post_date, menu_order  FROM', $query);
             }
             if ( stripos($query, '.*, MIN(' ) ){
                 $query = str_replace('ORDER BY', 'group by ID, post_author, post_date, post_date_gmt, post_content, post_title, post_excerpt, post_status, comment_status, ping_status, post_password, post_name, to_ping, pinged, post_modified, post_modified_gmt, post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type, comment_count ORDER BY', $query);
@@ -1032,19 +1098,20 @@ class SQL_Translations extends wpdb
                 if ( stripos($query, 'ORDER') > 0 ) {
                     $ord = '';
                     $order_pos = stripos($query, 'ORDER');
-                    if ( stripos($query, 'BY', $order_pos) > $order_pos ) {
+                    $ob = stripos($query, 'BY', $order_pos);
+                    if ( $ob > $order_pos ) {
                         $fields = $this->get_as_fields($query);
-                        $ob = stripos($query, 'BY', $order_pos);
                         if ( stripos($query, ' ASC', $ob) > 0 ) {
                             $ord = stripos($query, ' ASC', $ob);
                         }
                         if ( stripos($query, ' DESC', $ob) > 0 ) {
                             $ord = stripos($query, ' DESC', $ob);
                         }
-                        $str = 'BY ';
-                        $str .= implode(', ',$fields);
-
-                        $query = substr_replace($query, $str, $ob, ($ord-$ob));
+						if (sizeof($fields) > 0) {
+							$str = 'BY ';
+							$str .= implode(', ',$fields);
+							$query = substr_replace($query, $str, $ob, ($ord-$ob));
+						}
                         $query = str_replace('ORDER BY BY', 'ORDER BY', $query);
                     }
                 }
@@ -1422,6 +1489,9 @@ class SQL_Translations extends wpdb
         $query = str_ireplace("unsigned ", '', $query);
         $query = str_ireplace("unsigned,", ',', $query);
 
+        // change mediumint
+        $query = str_ireplace("mediumint", "int", $query);
+
         if ($this->create_query) {
             // strip collation, engine type, etc from end of query
             $pos = stripos($query, '(', stripos($query, 'TABLE '));
@@ -1681,6 +1751,8 @@ class SQL_Translations extends wpdb
      */
     function get_as_fields($query)
     {
+		/* Strip out any CAST conversion functions */
+		$query = preg_replace('/cast\s*\(.*as\s*\w+\s*\)/is','',$query);
         $arr = array();
         $tok = preg_split('/[\s,]+/', $query);
         $count = count($tok);
@@ -1751,6 +1823,156 @@ class SQL_Translations extends wpdb
         return $result_set;
     }
     
+    /**
+     * Check to see if INSERT has an ON DUPLICATE KEY statement
+     * This is MySQL specific and will be removed and put into 
+     * a following_query MERGE STATEMENT
+     *
+     * @param string $query Query coming in
+     * @return string query without ON DUPLICATE KEY statement
+     */
+	function on_update_to_merge($query) {
+	
+		if (!strpos($query, 'ON DUPLICATE KEY UPDATE')) 
+			return $query;
+			
+		/* Get groupings before 'ON DUPLICATE KEY UPDATE' */
+		preg_match( '/insert\s+into([\s0-9,a-z$_]*)\s*\(*([\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
+		
+		/* You should get something like this:
+			array(4) {
+			  [0]=>
+			  string(130) "INSERT INTO wp_blc_synch( container_id, container_type, synched, last_synch)	VALUES( 17839, 'post', 0, '0001-01-01 00:00:00' )"
+			  [1]=>
+			  string(13) " wp_blc_synch"
+			  [2]=>
+			  string(50) " container_id, container_type, synched, last_synch"
+			  [3]=>
+			  string(41) " 17839, 'post', 0, '0001-01-01 00:00:00' "
+			}	
+		*/
+		
+		if (sizeof($insertgroups) < 4)
+			return $query;
+		
+		$newsql = 'MERGE INTO ' . $insertgroups[1] . ' WITH (HOLDLOCK) AS target USING ';
+	
+		$insertfieldlist = $insertgroups[2];
+		$insertfields = explode(",", $insertfieldlist);
+		$insertvalueslist = $insertgroups[3];
+		$insertvalues = explode(",", $insertvalueslist);
+		
+		/* Get groupings after 'ON DUPLICATE KEY UPDATE' */
+		preg_match( '/\ON DUPLICATE KEY UPDATE(\s*.*)/is', $query, $updatefields );
+		
+		/* You should get something like this:
+			array(2) {
+			  [0]=>
+			  string(83) "ON DUPLICATE KEY UPDATE synched = VALUES(synched), last_synch = VALUES(last_synch))"
+			  [1]=>
+			  string(60) " synched = VALUES(1234), last_synch = VALUES(5678))"
+			}
+		*/
+		
+		if (sizeof($updatefields) < 2)
+			return $query;
+		
+		preg_match_all( '/([0-9a-z$_]*)\s*=\s*VALUES\s*\((.*?)\)/is', $updatefields[1], $updatefieldvalues );
+		
+		/* You should get something like this:
+			array(3) {
+			  [0]=>
+			  array(2) {
+				[0]=>
+				string(22) "synched = VALUES(1234)"
+				[1]=>
+				string(25) "last_synch = VALUES(5678)"
+			  }
+			  [1]=>
+			  array(2) {
+				[0]=>
+				string(7) "synched"
+				[1]=>
+				string(10) "last_synch"
+			  }
+			  [2]=>
+			  array(2) {
+				[0]=>
+				string(4) "1234"
+				[1]=>
+				string(4) "5678"
+			  }
+			}
+		*/
+		
+		if (sizeof($updatefieldvalues) < 3)
+			return $query;
+	
+		$fieldnamessize = sizeof($insertfields);
+		$valuessize = sizeof($insertvalues);
+		$updatefieldssize = sizeof($updatefieldvalues[1]);
+		
+		echo $fieldnamessize." fieldnamessize\r\n";
+		echo $valuessize." valuessize\r\n";
+		echo $updatefieldssize." updatefieldssize\r\n";
+		
+		/* Create Insert part of command. */
+		$insertcmd = '';
+		for ($i=0; $i<$fieldnamessize; $i++) {
+			if ($insertcmd == '')
+				$insertcmd  .= trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
+			else
+				$insertcmd  .= "," . trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
+			
+		}
+		$newsql .= "(SELECT " . $insertcmd . ") AS source (" . trim($insertgroups[2]) . ")";
+		
+		/* Create ON part of command. */
+		$on = '';
+		for ($i=0; $i<$fieldnamessize; $i++) {
+			if ($on == '')
+				$on  .= "source." . trim($insertfields[$i]) . "=target." . trim($insertfields[$i]);
+			else
+				$on  .= " AND source." . trim($insertfields[$i]) . "=target." . trim($insertfields[$i]);
+			
+		}
+		
+		$on = ' ON (' . $on . ')';
+		$newsql .= $on . ' WHEN MATCHED THEN UPDATE SET ';
+	
+		
+		/* Create UPDATE part of command. */
+		$update = '';
+		for ($i=0; $i<$updatefieldssize; $i++) {
+			if ($update == '') {
+				/* Does the value contain the actual fieldname?  If so, use the insert value. */
+				if (trim($updatefieldvalues[1][$i]) == trim($updatefieldvalues[2][$i])) {
+						for ($j=0; $j<$fieldnamessize; $j++) {
+							if (trim($insertfields[$j]) == trim($updatefieldvalues[1][$i]))
+
+								$update  .= trim($updatefieldvalues[1][$i]) . "=" . trim($insertvalues[$j]);
+			
+						}
+				} else
+					$update  .= trim($updatefieldvalues[1][$i]) . "=" . trim($updatefieldvalues[2][$i]);
+			} else {
+				/* Does the value contain the actual fieldname?  If so, use the insert value. */
+				if (trim($updatefieldvalues[1][$i]) == trim($updatefieldvalues[2][$i])) {
+						for ($j=0; $j<$fieldnamessize; $j++) {
+							if (trim($insertfields[$j]) == trim($updatefieldvalues[1][$i]))
+								$update  .= "," . trim($updatefieldvalues[1][$i]) . "=" . trim($insertvalues[$j]);
+			
+						}
+				} else
+					$update  .= "," . trim($updatefieldvalues[1][$i]) . "=" . trim($updatefieldvalues[2][$i]);
+				
+			}
+			
+		}
+		$newsql .= $update . ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
+		return $newsql;
+	}
+	
     /**
      * Check to see if INSERT has an ON DUPLICATE KEY statement
      * This is MySQL specific and will be removed and put into 
