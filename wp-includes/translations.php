@@ -306,6 +306,7 @@ class SQL_Translations extends wpdb
             'translate_incompat_data_type',
             'translate_create_queries',
             'translate_specific',
+			'translate_plugin_symposium',
         );
 
         // Perform translations and record query changes.
@@ -1712,6 +1713,22 @@ class SQL_Translations extends wpdb
         return $query;
     }
 
+	 /**
+     * Replace || with OR in Symposium Plugin query
+     *
+     * @param string $query Query coming in
+     *
+     * @return string Translated Query
+     */
+	function translate_plugin_symposium($query) 
+	{
+		if ($start_pos = stripos($query, '(t.topic_parent = 0 || p.topic_parent = 0)')) {
+			$query = substr_replace($query, '(t.topic_parent = 0 OR p.topic_parent = 0)', $start_pos, 42);
+		}
+		
+		return $query;
+	}
+	
     /**
      * Given a first parenthesis ( ...will find its matching closing paren )
      *
