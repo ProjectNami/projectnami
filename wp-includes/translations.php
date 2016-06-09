@@ -305,7 +305,7 @@ class SQL_Translations extends wpdb
             'translate_insert_nulltime',
             'translate_incompat_data_type',
             'translate_create_queries',
-            'translate_specific',
+            'translate_specific',			
         );
 
         // Perform translations and record query changes.
@@ -379,6 +379,13 @@ class SQL_Translations extends wpdb
 
 		// Handle NULL-safe equal to operator.
         	$query = str_replace( "<=>", "=", $query );
+		
+		/**		
+		* Symposium Pro
+		*/
+		if ($start_pos = stripos($query, '(t.topic_parent = 0 || p.topic_parent = 0)')) {
+			$query = substr_replace($query, '(t.topic_parent = 0 OR p.topic_parent = 0)', $start_pos, 42);
+		}
 
         /**
          * Akismet
@@ -1712,6 +1719,7 @@ class SQL_Translations extends wpdb
         return $query;
     }
 
+	
     /**
      * Given a first parenthesis ( ...will find its matching closing paren )
      *
