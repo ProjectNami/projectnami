@@ -37,4 +37,4 @@ We needed a version of WordPress powered by MSSQL in the cloud on Windows Azure.
 
 * Project Nami requires ***MSSQL Server 2012*** or later in order to function properly. Until this version was released, there wasn't really an MSSQL native method of handling the MySQL `LIMIT` when using an offset. However, `OFFSET FETCH` can now be used in conjunction with an MSSQL `ORDER BY` to achieve the equivalent of a MySQL `LIMIT` with an offset.
 
-* Due to the use of the `sqlsrv` PHP extension, Project Nami will only run on Windows, at the moment.
+* Due to the use of the `sqlsrv` PHP extension, Project Nami will only run on Windows, at the moment, but Linux support is coming very soon.
