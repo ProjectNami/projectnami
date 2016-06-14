@@ -378,6 +378,13 @@ class SQL_Translations extends wpdb
 
 		// Handle NULL-safe equal to operator.
         	$query = str_replace( "<=>", "=", $query );
+         
+		/**        
+		* Symposium Pro
+		*/
+		if ($start_pos = stripos($query, '(t.topic_parent = 0 || p.topic_parent = 0)')) {
+		 $query = substr_replace($query, '(t.topic_parent = 0 OR p.topic_parent = 0)', $start_pos, 42);
+		}
 
 		/* Detect plugin. For use on Front End only. */
 		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
