@@ -1680,18 +1680,21 @@ class wpdb {
                 case 261:
                 case 321:
                 case 1018:
+                case 2627:
+				case 4145:
                 case 8120:
+				case 8155:
                 case 8127:
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
-			            $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
-			            error_log( $begintransmsg, 3, 'D:\home\LogFiles\translate.log' );
-                    }
+			            $begintransmsg = date("Y-m-d H:i:s") . " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin Query translation attempt:" . PHP_EOL .  $query . PHP_EOL;
+                        error_log( $begintransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+                     }
 			        $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 
                     $query = $sqltranslate->translate( $query );
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
-			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result: $query \n";
-			            error_log( $endtransmsg, 3, 'D:\home\LogFiles\translate.log' );
+			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
+                        error_log( $endtransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
                     }
     		        $this->last_query = $query;
 
@@ -1699,6 +1702,10 @@ class wpdb {
 
 		            // If there is an error then take note of it..
 		            $errors = sqlsrv_errors();
+					break;
+				default:
+					$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
+					error_log( $begintransmsg, 3, 'D:\home\LogFiles\php_errors.log' );				
             }
 		}
 		
@@ -2160,22 +2167,29 @@ class wpdb {
                     case 261:
                     case 321:
                     case 1018:
+                    case 2627:
+					case 4145:
                     case 8120:
+					case 8155:
                     case 8127:
-                        if ( getenv( 'ProjectNamiLogTranslate' ) ){
-			                $begintransmsg = date("Y-m-d H:i:s") . " -- Begin translation attempt: $query \n";
-			                error_log( $begintransmsg, 3, 'D:\home\LogFiles\translate.log' );
-                        }
-			            $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
-
-                        $query = $sqltranslate->translate( $query );
-                        if ( getenv( 'ProjectNamiLogTranslate' ) ){
-			                $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result: $query \n";
-			                error_log( $endtransmsg, 3, 'D:\home\LogFiles\translate.log' );
-                        }
+						if ( getenv( 'ProjectNamiLogTranslate' ) ) {
+							$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin get_var translation attempt:" . PHP_EOL .  $query . PHP_EOL;
+                            error_log( $begintransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+						}
+						$sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+	
+						$query = $sqltranslate->translate( $query );
+						if ( getenv( 'ProjectNamiLogTranslate' ) ) {
+							$endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
+                            error_log( $endtransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+						}
 
             			$result = sqlsrv_query($this->dbh, $query );
-                }
+						break;
+					default:
+						$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
+						error_log( $begintransmsg, 3, 'D:\home\LogFiles\php_errors.log' );
+				}
 		    }
 
 			if(false === $result)
