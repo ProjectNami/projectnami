@@ -1687,14 +1687,14 @@ class wpdb {
                 case 8127:
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			            $begintransmsg = date("Y-m-d H:i:s") . " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin Query translation attempt:" . PHP_EOL .  $query . PHP_EOL;
-                        error_log( $begintransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+                        error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' ); 
                      }
 			        $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 
                     $query = $sqltranslate->translate( $query );
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
-                        error_log( $endtransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+                        error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' ); 
                     }
     		        $this->last_query = $query;
 
@@ -2174,14 +2174,14 @@ class wpdb {
                     case 8127:
 						if ( getenv( 'ProjectNamiLogTranslate' ) ) {
 							$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin get_var translation attempt:" . PHP_EOL .  $query . PHP_EOL;
-                            error_log( $begintransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+                            error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' ); 
 						}
 						$sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 	
 						$query = $sqltranslate->translate( $query );
 						if ( getenv( 'ProjectNamiLogTranslate' ) ) {
 							$endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
-                            error_log( $endtransmsg, 3, dirname( getenv('error_log') ) . '\translate.log' ); 
+                            error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' ); 
 						}
 
             			$result = sqlsrv_query($this->dbh, $query );
