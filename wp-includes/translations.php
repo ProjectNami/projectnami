@@ -305,7 +305,8 @@ class SQL_Translations extends wpdb
             'translate_insert_nulltime',
             'translate_incompat_data_type',
             'translate_create_queries',
-            'translate_specific',			
+            'translate_specific',
+			'translate_if_not_exists_insert_merge',
         );
 
         // Perform translations and record query changes.
@@ -332,8 +333,6 @@ class SQL_Translations extends wpdb
 			$query = $this->on_update_to_merge($query);
         }
 
-        // debug code
-        // file_put_contents(dirname(__FILE__) . '/translate.log', $this->preg_original . PHP_EOL . $query . PHP_EOL . PHP_EOL, FILE_APPEND);
         return $query;
     }
     
@@ -379,76 +378,105 @@ class SQL_Translations extends wpdb
 
 		// Handle NULL-safe equal to operator.
         	$query = str_replace( "<=>", "=", $query );
-		
-		/**		
+         
+		/**        
 		* Symposium Pro
 		*/
 		if ($start_pos = stripos($query, '(t.topic_parent = 0 || p.topic_parent = 0)')) {
-			$query = substr_replace($query, '(t.topic_parent = 0 OR p.topic_parent = 0)', $start_pos, 42);
+		 $query = substr_replace($query, '(t.topic_parent = 0 OR p.topic_parent = 0)', $start_pos, 42);
 		}
 
+		/* Detect plugin. For use on Front End only. */
+		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		
         /**
          * Akismet
          */
-        if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
-            $query = str_ireplace(
-                'USING(comment_id)', 
-                'ON c.comment_id = m.comment_id', $query);
-        }
+		if ( is_plugin_active( 'akismet/akismet.php' ) ) {
+			if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
+				$query = str_ireplace(
+					'USING(comment_id)', 
+					'ON c.comment_id = m.comment_id', $query);
+			}
+		}
+
+        /**
+         * Broken Link Checker
+         */
+		if ( is_plugin_active( 'broken-link-checker/broken-link-checker.php' ) ) {
+			if (stristr($query, " INNER JOIN wp_blc_instances AS instances USING(link_id)") !== FALSE) {
+				$query = str_ireplace('USING(link_id)', 'ON links.link_id = instances.link_id', $query);
+			}
+			$query = str_ireplace('GROUP BY links.link_id', '', $query);
+            $query = preg_replace('/(where\s*1\s*and)/is', 'WHERE 1=1 AND', $query);
+            $query = preg_replace('/(where\s*1\s*and)/is', 'WHERE 1=1 AND', $query);
+			
+			$pattern = '/((select)\s*(\d*)\s*(from))/is';
+			preg_match($pattern, $query, $match);
+			if (sizeof($match) == 5) {
+				$query = preg_replace($pattern, $match[2] . ' ' . $match[3] . ' AS zero ' . $match[4], $query);
+			}
+		}
 
         /**
          * Jetpack
          */
-        if (stristr($query, " AS UNSIGNED") !== FALSE) {
-            $query = str_ireplace(
-                ' AS UNSIGNED', 
-                ' AS BIGINT', $query);
-        }
+		if ( is_plugin_active( 'jetpack/jetpack.php' ) ) {
+			if (stristr($query, " AS UNSIGNED") !== FALSE) {
+				$query = str_ireplace(
+					' AS UNSIGNED', 
+					' AS BIGINT', $query);
+			}
+		}
 
         /**
          * Yoast SEO
          */
-        if (stristr($query, " && meta_key = ") !== FALSE) {
-            $query = str_ireplace(
-                ' && meta_key = ', 
-                ' AND meta_key = ', $query);
-        }
-
-        if (stristr($query, "ORDER BY wp_posts.menu_order, wp_posts.post_date") !== FALSE) {
-            $query = str_ireplace(
-                'ORDER BY wp_posts.menu_order, wp_posts.post_date', 
-                'ORDER BY wp_posts.post_date', $query);
-        }
-
-		$searchstr = '/(SELECT\s+post_type\s*,\s*MAX\(post_modified_gmt\)\s+as\s+date\s+from)/is';
-		preg_match( $searchstr, $query, $groups );
-
-		/* You should an array of size 2 */
-		if (sizeof($groups) == 2) {
-			/* Get groupings */
-			preg_match( '/(GROUP\s+BY\s+post_type\s+ORDER\s+BY\s+post_modified_gmt)/is', $query, $groups );
+		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
+			if (stristr($query, " && meta_key = ") !== FALSE) {
+				$query = str_ireplace(
+					' && meta_key = ', 
+					' AND meta_key = ', $query);
+			}
 		
+			if (stristr($query, "ORDER BY wp_posts.menu_order, wp_posts.post_date") !== FALSE) {
+				$query = str_ireplace(
+					'ORDER BY wp_posts.menu_order, wp_posts.post_date', 
+					'ORDER BY wp_posts.post_date', $query);
+			}
+	
+			$searchstr = '/(SELECT\s+post_type\s*,\s*MAX\(post_modified_gmt\)\s+as\s+date\s+from)/is';
+			preg_match( $searchstr, $query, $groups );
+	
 			/* You should an array of size 2 */
 			if (sizeof($groups) == 2) {
-				$query = str_ireplace(
-                'ORDER BY post_modified_gmt', 
-                'ORDER BY max(post_modified_gmt)', $query);
+				/* Get groupings */
+				preg_match( '/(GROUP\s+BY\s+post_type\s+ORDER\s+BY\s+post_modified_gmt)/is', $query, $groups );
+			
+				/* You should an array of size 2 */
+				if (sizeof($groups) == 2) {
+					$query = str_ireplace(
+					'ORDER BY post_modified_gmt', 
+					'ORDER BY max(post_modified_gmt)', $query);
+				}
 			}
 		}
 
         /**
          * The Events Calendar
          */
-        if (stristr($query, "DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC") !== FALSE) {
-            $query = str_ireplace(
-                'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC', 
-                'CONVERT(VARCHAR(19),tribe_event_start.meta_value,120) ASC', $query);
-        }
-        if (stristr($query, "SELECT DISTINCT wp_posts.*, MIN(wp_postmeta.meta_value) as EventStartDate, MIN(tribe_event_end_date.meta_value) as EventEndDate") !== FALSE) {
-            $query = str_ireplace(
-                'WHERE 1=1  AND (((wp_posts.post_title', 
-                'WHERE 1=1  AND (wp_posts.post_title', $query);
-        }
+		if ( is_plugin_active( 'the-events-calendar/the-events-calendar.php' ) ) {
+			if (stristr($query, "DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC") !== FALSE) {
+				$query = str_ireplace(
+					'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC', 
+					'CONVERT(VARCHAR(19),tribe_event_start.meta_value,120) ASC', $query);
+			}
+			if (stristr($query, "SELECT DISTINCT wp_posts.*, MIN(wp_postmeta.meta_value) as EventStartDate, MIN(tribe_event_end_date.meta_value) as EventEndDate") !== FALSE) {
+				$query = str_ireplace(
+					'WHERE 1=1  AND (((wp_posts.post_title', 
+					'WHERE 1=1  AND (wp_posts.post_title', $query);
+			}
+		}
 		
         /**
          * Booking
@@ -549,10 +577,24 @@ class SQL_Translations extends wpdb
 		"WHERE ( post_status = 'publish' OR ( post_status = 'inherit' AND post_type = 'attachment' ) )", $query);
 			
         /**
-         * Counting
+         * Misc Queries
          */
-        $query = str_ireplace("SELECT COUNT(  wp_posts.ID ) as [found_rows] FROM wp_posts  WHERE 1=1 AND 0", 
-		"SELECT COUNT(  wp_posts.ID ) as [found_rows] FROM wp_posts", $query);
+        $query = str_ireplace('WHERE 1=1 AND 0', '', $query);
+
+		$searchstr = '/(SELECT\s*YEAR\(p\.post_date_gmt\)\s*AS\s*`year`,\s*MONTH\(p\.post_date_gmt\)\s*AS\s*`month`,\s*COUNT\(p\.ID\)\s*AS\s*`numposts`,\s*MAX\(p\.post_modified_gmt\)\s*as\s*`last_mod`\s*FROM\s*\w*\s*p)/is';
+		preg_match( $searchstr, $query, $groups );
+
+		/* You should an array of size 2 */
+		if (sizeof($groups) == 2) {
+			$pattern =  '/(ORDER\s*BY\s*p\.post_date_gmt\s*DESC)/is';
+			preg_match( $pattern, $query, $groups );
+		
+			/* You should an array of size 2 */
+			if (sizeof($groups) == 2) {
+				$query = preg_replace($pattern, 'ORDER BY YEAR(p.post_date_gmt), MONTH(p.post_date_gmt) DESC', $query);
+			}
+		}
+		 
 
         /**
          * End Project Nami specific translations
@@ -733,14 +775,14 @@ class SQL_Translations extends wpdb
         if (stristr($query, 'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID))') !== FALSE) {
             $query = str_ireplace(
                 'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID))', 
-                'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID)) as Computed', $query);
+                'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID)) as Computed ', $query);
         }
 
         // Computed
         // This is done as the SQLSRV driver doesn't seem to set a property value for computed
         // selected columns, thus WP doesn't have anything to work with.
         if (!preg_match('/COUNT\((.*?)\) as/i', $query)) {
-            $query = preg_replace('/COUNT\((.*?)\)/i', 'COUNT(\1) as Computed', $query);
+            $query = preg_replace('/COUNT\((.*?)\)/i', 'COUNT(\1) as Computed ', $query);
         }
 
         // Replace RAND() with NEWID() since RAND() generates the same result for the same query
@@ -859,6 +901,16 @@ class SQL_Translations extends wpdb
             $end_pos = $this->get_matching_paren($query, ($start_pos+6))+1;
             $query = substr_replace($query, '(CASE WHEN ' . $stmt, $start_pos, ($end_pos - $start_pos));
         }
+		
+		/* IF in SELECT statement */
+		if ($this->select_query) {
+			$pattern = '/(IF\s*\(*((.*),(.*),(.*))\)\s*(AS\s*\w*))/is';
+			preg_match($pattern, $query, $limit_matches);
+			if (count($limit_matches) == 7) {
+				$case_stmt = ' CASE WHEN ' . $limit_matches[3] . ' THEN ' . $limit_matches[4] . ' ELSE ' . $limit_matches[5] . ' END ' . $limit_matches[6];
+				$query = preg_replace($pattern, $case_stmt, $query);
+			}
+		}
         return $query;
     }
 
@@ -946,82 +998,101 @@ class SQL_Translations extends wpdb
     function translate_limit($query)
     {
         if ( (stripos($query,'SELECT') !== 0 && stripos($query,'SELECT') !== FALSE)
-            && (stripos($query,'UPDATE') !== 0  && stripos($query,'UPDATE') !== FALSE) ) {
+            && (stripos($query,'UPDATE') !== 0  && stripos($query,'UPDATE') !== FALSE) )
             return $query;
-        }
-        $pattern = '/LIMIT\s*(\d+)((\s*,?\s*)(\d+)*);{0,1}$/is';
-        $matched = preg_match($pattern, $query, $limit_matches);
-        if ( $matched == 0 ) {
-            $pattern = '/LIMIT\s*(\d+)((\s*offset?\s*)(\d+)*);{0,1}$/is';
-            $matched = preg_match($pattern, $query, $limit_matches);
-            if ( $matched == 0 ) {
-                return $query;
-            }
-            // Remove the LIMIT statement
-            $true_offset = false;
-            $query = preg_replace($pattern, '', $query);
-            if ( $this->delete_query ) {
-                return $query;
-            }
-            // Check for true offset
-            if ( count($limit_matches) == 5 && $limit_matches[4] > 0 ) {
-                $true_offset = true;
-            } 
+		
+		/* Search for LIMIT OFFSET first */
+		$pattern = '/LIMIT\s*(\d+)((\s*offset?\s*)(\d+)*);{0,1}/is';
+		preg_match($pattern, $query, $limit_matches);
+		if ( count($limit_matches) == 5 ) {
+			if ( $this->delete_query ) {
+				return $query;
+			}
+			
+			// Check for true offset
+			if ($limit_matches[4] > 0 ) {
+				$true_offset = true;
+			} else {
+				$true_offset = false;
+			}
 
-            // Rewrite the query.
-            if ( $true_offset === false ) {
-                if ( stripos($query, 'DISTINCT') > 0 ) {
-                    $query = str_ireplace('DISTINCT', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query);
-                } else {
-                    $query = str_ireplace('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query);
-                    $query = str_ireplace('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query);
-                }
-            } else {
-                $limit_matches[1] = (int) $limit_matches[1];
-                $limit_matches[4] = (int) $limit_matches[4];
+			/* Rewrite the query. */
+			if ( $true_offset === false ) {
+				/* Get position of LIMIT Statement */
+				$limit_pos = stripos($query, $limit_matches[0]);
+				
+				if ( stripos($query, 'DISTINCT') > 0 ) {
+					$query = $this->strReplaceNearest('DISTINCT ', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
+				} else {
+					$query = $this->strReplaceNearest('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
+					$query = $this->strReplaceNearest('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
+				}
 
-                $query = $query . " OFFSET " . $limit_matches[4] . " ROWS FETCH NEXT " . $limit_matches[1] . " ROWS ONLY";
+				/* Remove the LIMIT statement */
+				 $query = preg_replace($pattern, '', $query);
 
-                $this->limit = array(
-                    'from' => $limit_matches[4], 
-                    'to' => $limit_matches[1]
-                );
-            }
+			} else {
+				$limit_matches[1] = (int) $limit_matches[1];
+				$limit_matches[4] = (int) $limit_matches[4];
 
-        } else {
-            // Remove the LIMIT statement
-            $true_offset = false;
-            $query = preg_replace($pattern, '', $query);
-            if ( $this->delete_query ) {
-                return $query;
-            }
-            // Check for true offset
-            if ( count($limit_matches) == 5 ) {
-                $true_offset = true;
-            } elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
-                $limit_matches[1] = $limit_matches[4];
-            }
+				/* Replace the OFFSET command in its current location. */
+				$pretranslate = $query;
+				$query = preg_replace($pattern, " OFFSET " . $limit_matches[4] . " ROWS FETCH NEXT " . $limit_matches[1] . " ROWS ONLY", $query);
+				
+				$this->limit = array(
+					'from' => $limit_matches[4], 
+					'to' => $limit_matches[1]
+				);
+			}
+			
+		} else {
+			/* Search for LIMIT without OFFSET. */
+			$pattern = '/LIMIT\s*(\d+)((\s*,?\s*)(\d+)*);{0,1}/is';
+			$matched = preg_match($pattern, $query, $limit_matches);
+			if ( $matched == 1 ) {
+				$true_offset = false;
+				if ( $this->delete_query ) {
+					return $query;
+				}
+				// Check for true offset
+				if ( count($limit_matches) == 5 ) {
+					$true_offset = true;
+				} elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
+					$limit_matches[1] = $limit_matches[4];
+				}
+	
+				// Rewrite the query.
+				if ( $true_offset === false ) {
+					
+					/* Get position of LIMIT Statement */
+					$limit_pos = stripos($query, $limit_matches[0]);
+					
+					if ( stripos($query, 'DISTINCT') > 0 ) {
+						$query = $this->strReplaceNearest('DISTINCT ', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
+					} else {
+						$query = $this->strReplaceNearest('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
+						$query = $this->strReplaceNearest('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
+					}
+	
+					/* Remove the LIMIT statement */
+					 $query = preg_replace($pattern, '', $query);
 
-            // Rewrite the query.
-            if ( $true_offset === false ) {
-                if ( stripos($query, 'DISTINCT') > 0 ) {
-                    $query = str_ireplace('DISTINCT', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query);
-                } else {
-                    $query = str_ireplace('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query);
-                    $query = str_ireplace('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query);
-                }
-            } else {
-                $limit_matches[1] = (int) $limit_matches[1];
-                $limit_matches[4] = (int) $limit_matches[4];
-
-                $query = $query . " OFFSET " . $limit_matches[1] . " ROWS FETCH NEXT " . $limit_matches[4] . " ROWS ONLY";
-
-                $this->limit = array(
-                    'from' => $limit_matches[1], 
-                    'to' => $limit_matches[4]
-                );
-            }
-        }
+				} else {
+					$limit_matches[1] = (int) $limit_matches[1];
+					$limit_matches[4] = (int) $limit_matches[4];
+	
+					/* Replace the OFFSET command in its current location. */
+					$pretranslate = $query;
+					$query = preg_replace($pattern, " OFFSET " . $limit_matches[1] . " ROWS FETCH NEXT " . $limit_matches[4] . " ROWS ONLY", $query);
+	
+					$this->limit = array(
+						'from' => $limit_matches[1], 
+						'to' => $limit_matches[4]
+					);
+				}
+			}
+		}
+		
         return $query;
     }
 
@@ -1719,7 +1790,6 @@ class SQL_Translations extends wpdb
         return $query;
     }
 
-	
     /**
      * Given a first parenthesis ( ...will find its matching closing paren )
      *
@@ -1841,11 +1911,11 @@ class SQL_Translations extends wpdb
      */
 	function on_update_to_merge($query) {
 	
-		if (!strpos($query, 'ON DUPLICATE KEY UPDATE')) 
+		if (strpos($query, 'ON DUPLICATE KEY UPDATE') === false) 
 			return $query;
 			
 		/* Get groupings before 'ON DUPLICATE KEY UPDATE' */
-		preg_match( '/insert\s+into([\s0-9,a-z$_]*)\s*\(*([\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
+		preg_match( '/insert\s+into([\[\]\s0-9,a-z$_]*)\s*\(*([\[\]\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
 		
 		/* You should get something like this:
 			array(4) {
@@ -1871,7 +1941,7 @@ class SQL_Translations extends wpdb
 		$insertvalues = explode(",", $insertvalueslist);
 		
 		/* Get groupings after 'ON DUPLICATE KEY UPDATE' */
-		preg_match( '/\ON DUPLICATE KEY UPDATE(\s*.*)/is', $query, $updatefields );
+		preg_match( '/ON DUPLICATE KEY UPDATE(\s*.*)/is', $query, $updatefields );
 		
 		/* You should get something like this:
 			array(2) {
@@ -1885,7 +1955,7 @@ class SQL_Translations extends wpdb
 		if (sizeof($updatefields) < 2)
 			return $query;
 		
-		preg_match_all( '/([0-9a-z$_]*)\s*=\s*VALUES\s*\((.*?)\)/is', $updatefields[1], $updatefieldvalues );
+		preg_match_all( '/([\[\]0-9a-z$_]*)\s*=\s*VALUES\s*\((.*?)\)/is', $updatefields[1], $updatefieldvalues );
 		
 		/* You should get something like this:
 			array(3) {
@@ -1919,10 +1989,6 @@ class SQL_Translations extends wpdb
 		$fieldnamessize = sizeof($insertfields);
 		$valuessize = sizeof($insertvalues);
 		$updatefieldssize = sizeof($updatefieldvalues[1]);
-		
-		echo $fieldnamessize." fieldnamessize\r\n";
-		echo $valuessize." valuessize\r\n";
-		echo $updatefieldssize." updatefieldssize\r\n";
 		
 		/* Create Insert part of command. */
 		$insertcmd = '';
@@ -1978,6 +2044,128 @@ class SQL_Translations extends wpdb
 			
 		}
 		$newsql .= $update . ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
+		return $newsql;
+	}
+	
+	/**
+	* Replace the last occurrence of a string nearest to $lenOfSubject position
+	*
+	* @param string $search
+	* @param string $replace
+	* @param string $subject
+	* @param string $lenOfSubject
+	* @return string
+	*/
+	function strReplaceNearest ( $search, $replace, $subject, $lenOfSubject = null ) {
+	 
+		$lenOfSearch = strlen( $search );
+		$posOfSearch = strpos( $subject, $search );
+		
+		if ($posOfSearch === false)
+			return $subject;
+			
+		if ($lenOfSubject === null)
+			$lenOfSubject = strlen($subject);
+	 
+	 	$valid_pos = $posOfSearch;
+	 	while ($posOfSearch <= $lenOfSubject) {
+			$valid_pos = $posOfSearch;
+			$posOfSearch = strpos( $subject, $search, $valid_pos + 1);
+			
+			if ($posOfSearch === false)
+				break;
+		}
+		
+		return substr_replace( $subject, $replace, $valid_pos, $lenOfSearch );	 
+	}	
+
+    /**
+     * Check to see if INSERT has an IF NOT EXISTS statement
+     * This is MySQL specific and will be removed and put into 
+     * a following_query MERGE STATEMENT
+     *
+     * @param string $query Query coming in
+     * @return string query without ON DUPLICATE KEY statement
+	 *
+	 *  Example:
+	 *  IF NOT EXISTS (SELECT * FROM [wp_options] WHERE [option_name] = '_transient_doing_cron') 
+	 *  INSERT INTO [wp_options] ([option_name], [option_value], [autoload]) VALUES ('_transient_doing_cron', '1465291530.3025040626525878906250', 'yes') 
+	 *  else UPDATE [wp_options] set [option_value] = '1465291530.3025040626525878906250', [autoload] = 'yes' 
+	 *  where [option_name] = '_transient_doing_cron'
+
+     */
+	function translate_if_not_exists_insert_merge($query) {
+	
+		if (strpos($query, 'IF NOT EXISTS') === false)
+			return $query;
+			
+		/* Get groupings for INSERT INTO */
+		preg_match( '/insert\s+into([\[\]\s0-9,a-z$_]*)\s*\(*([\[\]\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
+		
+		/* You should get something like this:
+			array(4) {
+			  [0]=>
+			  string(130) "INSERT INTO wp_blc_synch( container_id, container_type, synched, last_synch)	VALUES( 17839, 'post', 0, '0001-01-01 00:00:00' )"
+			  [1]=>
+			  string(13) " wp_blc_synch"
+			  [2]=>
+			  string(50) " container_id, container_type, synched, last_synch"
+			  [3]=>
+			  string(41) " 17839, 'post', 0, '0001-01-01 00:00:00' "
+			}	
+		*/
+		
+		if (sizeof($insertgroups) < 4) 
+			return $query;
+			
+		$insertfieldlist = $insertgroups[2];
+		$insertfields = explode(",", $insertfieldlist);
+		$insertvalueslist = $insertgroups[3];
+		$insertvalues = explode(",", $insertvalueslist);
+		
+		/* Get groupings for WHERE clause  */
+		preg_match( '/WHERE(.*)INSERT\s*INTO/is', $query, $whereclause );
+		
+		/* You should get something like this:
+			array(2) {
+			  [0]=>
+			  string(83) "WHERE [option_name] = '_transient_doing_cron') INSERT INTO"
+			  [1]=>
+			  string(60) " [option_name] = '_transient_doing_cron')"
+			}
+		*/
+		
+		if (sizeof($whereclause) < 2)
+			return $query;
+		
+		/* strip out the last right paren. */
+		$whereclause[1] = $this->strReplaceNearest(')', '', $whereclause[1]);
+		$whereclause[1] = trim($whereclause[1]);
+		$fieldnamessize = sizeof($insertfields);
+		$valuessize = sizeof($insertvalues);
+		
+		$insertcmd = '';
+		$update = '';
+		for ($i=0; $i<$fieldnamessize; $i++) {
+			/* Create Insert part of command. */
+			if ($insertcmd == '')
+				$insertcmd  .= trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
+			else
+				$insertcmd  .= "," . trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
+			
+			/* Create UPDATE part of command. */
+			if ($update == '') {
+				$update  .= trim($insertfields[$i]) . "=" . trim($insertvalues[$i]);
+			} else {
+				$update  .= "," . trim($insertfields[$i]) . "=" . trim($insertvalues[$i]);
+			}
+		}
+		
+		$newsql = 'MERGE INTO ' . $insertgroups[1] . ' WITH (HOLDLOCK) AS target USING ';
+		$newsql .= "(SELECT " . $insertcmd . ") AS source (" . trim($insertgroups[2]) . ")";
+		$newsql .= ' ON (target.' . $whereclause[1] . ') WHEN MATCHED THEN UPDATE SET ';
+		$newsql .= $update . ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
+
 		return $newsql;
 	}
 	
