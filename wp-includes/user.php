@@ -829,15 +829,11 @@ function count_users($strategy = 'time') {
 		foreach ( $avail_roles as $this_role => $name ) {
 			$select_count[] = "(SELECT COUNT(*) FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] LIKE '%" . $wpdb->esc_like( $this_role ) . "%') as $this_role";
 		}
+		$select_count[] = "(SELECT COUNT(*) FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] = 'a:0:{}') as none";
 		$select_count = implode(', ', $select_count);
 
 		// Add the meta_value index to the selection list, then run the query.
-		$row = $wpdb->get_row( "SELECT $select_count, COUNT(*) FROM $wpdb->usermeta WHERE meta_key = '{$blog_prefix}capabilities'", ARRAY_N );
-		$query = "SELECT $select_count, COUNT(*) AS [all] FROM $wpdb->usermeta WHERE meta_key = '{$blog_prefix}capabilities'";
-		$result = sqlsrv_query( $wpdb->dbh, $query );
-		$result = sqlsrv_fetch_array($result);
-
-		$row = $result;
+		$row = $wpdb->get_row( "SELECT $select_count, COUNT(*) as total_users FROM $wpdb->usermeta WHERE meta_key = '{$blog_prefix}capabilities'", ARRAY_N );
 
 		// Run the previous loop again to associate results with role names.
 		$col = 0;
