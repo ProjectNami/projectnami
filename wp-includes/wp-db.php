@@ -1850,7 +1850,7 @@ class wpdb {
 		if ( ! in_array( strtoupper( $type ), array( 'REPLACE', 'INSERT' ) ) ) {
 			return false;
 		}
-
+		
 		$data = $this->process_fields( $table, $data, $format );
 		if ( false === $data ) {
 			return false;
@@ -1864,12 +1864,35 @@ class wpdb {
 
 		$fields  = '[' . implode( '], [', array_keys( $data ) ) . ']';
 		$formats = implode( ', ', $formats );
-
+	
+	if ($type == 'REPLACE') {		
+		$on = array();
+		$set = array();		
+		foreach($data as $field => $value) {
+			$on[] = "sourceTable.[$field] = targetTable.[$field]";
+			$set[] = "[$field] = " . $value['format'];			
+		}
+		//exa:		
+		//$set[0] == "[field1] = %s"
+		//$set[1] == "[field2] = %d"
+		$on = implode(' AND ', $on);
+		$set = implode(', ', $set);
+		//$on == "sourceTable.field1 = targetTable.field2 AND sourceTable.field2 = targetTable.field2"
+		//$set == "[field1] = %s, [field2] = %d"
+		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $formats) AS sourceTable ($fields)";
+		$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
+		//Since there are three sets of formats, one for the SELECT, one for the UPDATE and one for the INSERT, 
+		//we need to concatenate the $formats and $values arrays to themselves so that prepare can correctly match them up
+		$formats = array_merge($formats, $formats, $formats);
+		$values = array_merge($values, $values, $values);
+	} else {
+		//INSERT
 		$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
-
-		$this->check_current_query = false;
-		return $this->query( $this->prepare( $sql, $values ) );
 	}
+
+	$this->check_current_query = false;
+	return $this->query( $this->prepare( $sql, $values ) );
+}
 
 	/**
 	 * Update a row in the table
