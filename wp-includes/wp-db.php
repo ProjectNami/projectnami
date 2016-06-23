@@ -1850,12 +1850,12 @@ class wpdb {
 		if ( ! in_array( strtoupper( $type ), array( 'REPLACE', 'INSERT' ) ) ) {
 			return false;
 		}
-		
+
 		$data = $this->process_fields( $table, $data, $format );
 		if ( false === $data ) {
 			return false;
 		}
-
+		
 		$formats = $values = array();
 		foreach ( $data as $value ) {
 			$formats[] = $value['format'];
@@ -1865,26 +1865,48 @@ class wpdb {
 		$fields  = '[' . implode( '], [', array_keys( $data ) ) . ']';
 		$formats = implode( ', ', $formats );
 	
-	if ($type == 'REPLACE') {		
-		$on = array();
+	if ($type == 'REPLACE') {
+		//Get the primary key for the table, this assumes just a single primary key col, so not too robust.  
+		//This will also catch a primary foreign key, since it still gets a row in KEY_COLUMN_USAGE for PK
+		$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+						WHERE TABLE_NAME LIKE '$table' AND CONSTRAINT_NAME LIKE 'PK%'";
+		$this->query($keyColQuery);
+		$keyName = $this->lastResult[0]->COLUMN_NAME;        
+		
+		//check if the key column is available, otherwise look for a unique constraint
+		if ($data[$keyName] === null)
+		{
+			//Get the unique constraint for the table
+			$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+							WHERE TABLE_NAME LIKE '$table' AND CONSTRAINT_NAME LIKE 'UQ%'";
+			$this->query($keyColQuery);
+			$keyName = $this->lastResult[0]->COLUMN_NAME;        
+		}
+		
+		//Find the key's value from the list of field/values		
+		$keyValue = $data[$keyName]['value'];
+		$keyFormat = $data[$keyName]['format'];
+	
+		$on = "sourceTable.[$keyName] = targetTable.[$keyName]";
 		$set = array();		
-		foreach($data as $field => $value) {
-			$on[] = "sourceTable.[$field] = targetTable.[$field]";
+		foreach($data as $field => $value) {			
 			$set[] = "[$field] = " . $value['format'];			
 		}
 		//exa:		
+		//$on[0] == "sourceTable.[field1] = targetTable.[field1]"
+		//$on[1] == "sourceTable.[field2] = targetTable.[field2]"
 		//$set[0] == "[field1] = %s"
 		//$set[1] == "[field2] = %d"
 		$on = implode(' AND ', $on);
 		$set = implode(', ', $set);
 		//$on == "sourceTable.field1 = targetTable.field2 AND sourceTable.field2 = targetTable.field2"
 		//$set == "[field1] = %s, [field2] = %d"
-		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $formats) AS sourceTable ($fields)";
+		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName)";
 		$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
-		//Since there are three sets of formats, one for the SELECT, one for the UPDATE and one for the INSERT, 
-		//we need to concatenate the $formats and $values arrays to themselves so that prepare can correctly match them up
-		$formats = array_merge($formats, $formats, $formats);
-		$values = array_merge($values, $values, $values);
+		//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
+		//we need to concatenate the $keyFormat with 2 x $formats and $keyValue with 2 x $values arrays so that prepare can correctly match them up
+		$formats = array_merge($keyFormat, $formats, $formats);
+		$values = array_merge($keyValue, $values, $values);
 	} else {
 		//INSERT
 		$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
