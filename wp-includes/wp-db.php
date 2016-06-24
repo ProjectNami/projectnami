@@ -1900,7 +1900,7 @@ class wpdb {
 
 			foreach($keyNames as $uqCol) {
 				if ($data[$uqCol] !== null) {
-					$keyValue[0] = $data[$uqCol]['value'];
+					$keyValues[0] = $data[$uqCol]['value'];
 					$keyFormats[0] = $data[$uqCol]['format'];
 					$on[0] = "sourceTable.[$uqCol] = targetTable.[$uqCol]";					
 				}
@@ -1925,9 +1925,8 @@ class wpdb {
 		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
 		$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
 		//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
-		//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up
-		
-		$values = array_merge($keyValue, $values, $values);
+		//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up		
+		$values = array_merge($keyValues, $values, $values);
 	} else {
 		//INSERT
 		$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
