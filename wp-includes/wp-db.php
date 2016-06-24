@@ -1926,7 +1926,7 @@ class wpdb {
 		$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
 		//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
 		//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up
-		$formats = array_merge($keyFormat, $formats, $formats);
+		
 		$values = array_merge($keyValue, $values, $values);
 	} else {
 		//INSERT
