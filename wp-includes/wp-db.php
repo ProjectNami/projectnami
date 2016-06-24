@@ -1844,7 +1844,7 @@ class wpdb {
 	 * @param string $type         Optional. What type of operation is this? INSERT or REPLACE. Defaults to INSERT.
 	 * @return int|false The number of rows affected, or false on error.
 	 */
-		function _insert_replace_helper( $table, $data, $format = null, $type = 'INSERT' ) {
+	function _insert_replace_helper( $table, $data, $format = null, $type = 'INSERT' ) {
 		$this->insert_id = 0;
 
 		if ( ! in_array( strtoupper( $type ), array( 'REPLACE', 'INSERT' ) ) ) {
@@ -1865,76 +1865,57 @@ class wpdb {
 		$fields  = '[' . implode( '], [', array_keys( $data ) ) . ']';
 		$formats = implode( ', ', $formats );
 	
-	if ($type == 'REPLACE') {
-		//Get the primary key for the table, this assumes just a single primary key col, so not too robust.  
-		//This will also catch a primary foreign key, since it still gets a row in KEY_COLUMN_USAGE for PK
-		$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-						WHERE TABLE_NAME LIKE '$table' AND CONSTRAINT_NAME LIKE 'PK%'";
-		$this->query($keyColQuery);
+		if ($type == 'REPLACE') {
+			$columnNames = "'" . implode( "', '", array_keys($data)) . "'";
+			//Gets the key columns for the table		
+			$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+							WHERE TABLE_NAME = '$table' AND COLUMN_NAME IN ($columnNames)";
+			$this->query($keyColQuery);
+			
+			$keyNames = array();
+			$keyValues = array();
+			$keyFormats = array();		
+			$on = array();
+			
+			foreach($this->last_result as $row) {
+				$keyNames[] = $row->COLUMN_NAME;        
+			}
 		
-		$keyNames = array();
-		$keyValues = array();
-		$keyFormats = array();		
-		$on = array();
-		
-		foreach($this->lastResult as $row) {
-			$keyNames[] = $row->COLUMN_NAME;        
-		}
-		//check if the data is using primary key column(s), otherwise look for a unique constraint		
-		if ($data[$keyName[0]] !== null)
-		{			
 			foreach($keyNames as $keyCol) {				
 				$keyValues[] = $data[$keyCol]['value'];
 				$keyFormats[] = $data[$keyCol]['format'];
 				$on[] = "sourceTable.[$keyCol] = targetTable.[$keyCol]";
 			}			
-		}
-		else { //Try looking for the UQ cols and checking those against the data		
-			//Get the unique constraint for the table
-			$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-							WHERE TABLE_NAME LIKE '$table' AND CONSTRAINT_NAME LIKE 'UQ%'";
-			$this->query($keyColQuery);
-			foreach($this->lastResult as $row) {
-				$keyNames[] = $row->COLUMN_NAME;
+			
+					
+			$set = array();		
+			foreach($data as $field => $value) {			
+				$set[] = "[$field] = " . $value['format'];			
 			}
+			//exa:		
+			//$on[0] == "sourceTable.[keyCol1] = targetTable.[keyCol1]"
+			//$on[1] == "sourceTable.[keyCol2] = targetTable.[keyCol2]"
+			//$set[0] == "[field1] = %s"
+			//$set[1] == "[field2] = %d"
+			$on = implode(' AND ', $on);
+			$set = implode(', ', $set);
+			$keyFormat = implode(', ', $keyFormats); //if more than one key, looks like: keyCol1, keyCol2
+			$keyName = '[' . implode('], [', $keyNames) . ']';
+			//exa: $on == "sourceTable.keyCol1 = targetTable.keyCol1 AND sourceTable.keyCol2 = targetTable.keyCol2"
+			//exa: $set == "[field1] = %s, [field2] = %d"
+			$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
+			$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
+			//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
+			//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up		
+			$values = array_merge($keyValues, $values, $values);
+		} else {
+			//INSERT
+			$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
+		}
 
-			foreach($keyNames as $uqCol) {
-				if ($data[$uqCol] !== null) {
-					$keyValues[0] = $data[$uqCol]['value'];
-					$keyFormats[0] = $data[$uqCol]['format'];
-					$on[0] = "sourceTable.[$uqCol] = targetTable.[$uqCol]";					
-				}
-			}
-		}		
-		
-		$set = array();		
-		foreach($data as $field => $value) {			
-			$set[] = "[$field] = " . $value['format'];			
-		}
-		//exa:		
-		//$on[0] == "sourceTable.[keyCol1] = targetTable.[keyCol1]"
-		//$on[1] == "sourceTable.[keyCol2] = targetTable.[keyCol2]"
-		//$set[0] == "[field1] = %s"
-		//$set[1] == "[field2] = %d"
-		$on = implode(' AND ', $on);
-		$set = implode(', ', $set);
-		$keyFormat = implode(', ', $keyFormats); //if more than one key, looks like: keyCol1, keyCol2
-		$keyName = '[' . implode('], [', $keyNames) . ']';
-		//exa: $on == "sourceTable.keyCol1 = targetTable.keyCol1 AND sourceTable.keyCol2 = targetTable.keyCol2"
-		//exa: $set == "[field1] = %s, [field2] = %d"
-		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
-		$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
-		//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
-		//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up		
-		$values = array_merge($keyValues, $values, $values);
-	} else {
-		//INSERT
-		$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
+		$this->check_current_query = false;
+		return $this->query( $this->prepare( $sql, $values ) );
 	}
-
-	$this->check_current_query = false;
-	return $this->query( $this->prepare( $sql, $values ) );
-}
 
 	/**
 	 * Update a row in the table
