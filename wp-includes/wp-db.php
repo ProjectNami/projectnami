@@ -1919,7 +1919,7 @@ class wpdb {
 		$on = implode(' AND ', $on);
 		$set = implode(', ', $set);
 		$keyFormat = implode(', ', $keyFormats); //if more than one key, looks like: keyCol1, keyCol2
-		$keyName = implode(', ', $keyNames);
+		$keyName = '[' . implode('], [', $keyNames) . ']';
 		//exa: $on == "sourceTable.keyCol1 = targetTable.keyCol1 AND sourceTable.keyCol2 = targetTable.keyCol2"
 		//exa: $set == "[field1] = %s, [field2] = %d"
 		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
