@@ -1844,7 +1844,7 @@ class wpdb {
 	 * @param string $type         Optional. What type of operation is this? INSERT or REPLACE. Defaults to INSERT.
 	 * @return int|false The number of rows affected, or false on error.
 	 */
-	function _insert_replace_helper( $table, $data, $format = null, $type = 'INSERT' ) {
+		function _insert_replace_helper( $table, $data, $format = null, $type = 'INSERT' ) {
 		$this->insert_id = 0;
 
 		if ( ! in_array( strtoupper( $type ), array( 'REPLACE', 'INSERT' ) ) ) {
@@ -1871,40 +1871,61 @@ class wpdb {
 		$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
 						WHERE TABLE_NAME LIKE '$table' AND CONSTRAINT_NAME LIKE 'PK%'";
 		$this->query($keyColQuery);
-		$keyName = $this->lastResult[0]->COLUMN_NAME;        
 		
-		//check if the key column is available, otherwise look for a unique constraint
-		if ($data[$keyName] === null)
-		{
+		$keyNames = array();
+		$keyValues = array();
+		$keyFormats = array();		
+		$on = array();
+		
+		foreach($this->lastResult as $row) {
+			$keyNames[] = $row->COLUMN_NAME;        
+		}
+		//check if the data is using primary key column(s), otherwise look for a unique constraint		
+		if ($data[$keyName[0]] !== null)
+		{			
+			foreach($keyNames as $keyCol) {				
+				$keyValues[] = $data[$keyCol]['value'];
+				$keyFormats[] = $data[$keyCol]['format'];
+				$on[] = "sourceTable.[$keyCol] = targetTable.[$keyCol]";
+			}			
+		}
+		else { //Try looking for the UQ cols and checking those against the data		
 			//Get the unique constraint for the table
 			$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
 							WHERE TABLE_NAME LIKE '$table' AND CONSTRAINT_NAME LIKE 'UQ%'";
 			$this->query($keyColQuery);
-			$keyName = $this->lastResult[0]->COLUMN_NAME;        
-		}
+			foreach($this->lastResult as $row) {
+				$keyNames[] = $row->COLUMN_NAME;
+			}
+
+			foreach($keyNames as $uqCol) {
+				if ($data[$uqCol] !== null) {
+					$keyValue[0] = $data[$uqCol]['value'];
+					$keyFormats[0] = $data[$uqCol]['format'];
+					$on[0] = "sourceTable.[$uqCol] = targetTable.[$uqCol]";					
+				}
+			}
+		}		
 		
-		//Find the key's value from the list of field/values		
-		$keyValue = $data[$keyName]['value'];
-		$keyFormat = $data[$keyName]['format'];
-	
-		$on = "sourceTable.[$keyName] = targetTable.[$keyName]";
 		$set = array();		
 		foreach($data as $field => $value) {			
 			$set[] = "[$field] = " . $value['format'];			
 		}
 		//exa:		
-		//$on[0] == "sourceTable.[field1] = targetTable.[field1]"
-		//$on[1] == "sourceTable.[field2] = targetTable.[field2]"
+		//$on[0] == "sourceTable.[keyCol1] = targetTable.[keyCol1]"
+		//$on[1] == "sourceTable.[keyCol2] = targetTable.[keyCol2]"
 		//$set[0] == "[field1] = %s"
 		//$set[1] == "[field2] = %d"
 		$on = implode(' AND ', $on);
 		$set = implode(', ', $set);
-		//$on == "sourceTable.field1 = targetTable.field2 AND sourceTable.field2 = targetTable.field2"
-		//$set == "[field1] = %s, [field2] = %d"
-		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName)";
+		$keyFormat = implode(', ', $keyFormats); //if more than one key, looks like: keyCol1, keyCol2
+		$keyName = implode(', ', $keyNames);
+		//exa: $on == "sourceTable.keyCol1 = targetTable.keyCol1 AND sourceTable.keyCol2 = targetTable.keyCol2"
+		//exa: $set == "[field1] = %s, [field2] = %d"
+		$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
 		$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
 		//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
-		//we need to concatenate the $keyFormat with 2 x $formats and $keyValue with 2 x $values arrays so that prepare can correctly match them up
+		//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up
 		$formats = array_merge($keyFormat, $formats, $formats);
 		$values = array_merge($keyValue, $values, $values);
 	} else {
