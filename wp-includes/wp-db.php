@@ -3051,7 +3051,7 @@ class wpdb {
                 $new_field->type = $field->type;
                 $new_field->unsigned = null;
                 $new_field->zerofill = null;
-                $this->col_info[$i] = $new_field;
+                $this->col_info[] = $new_field;
         }
 	}
 
