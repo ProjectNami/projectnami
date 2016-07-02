@@ -2152,7 +2152,8 @@ class wpdb {
 
 		if ( $query && $x == 0 && $y == 0 ) {
 		
-			$result = sqlsrv_query($this->dbh, $query );
+   	        $this->_do_query( $query );
+            $result = $this->result;
 			
             // If there is an error, first attempt to translate
             $errors = sqlsrv_errors();
@@ -2184,7 +2185,8 @@ class wpdb {
                             error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' ); 
 						}
 
-            			$result = sqlsrv_query($this->dbh, $query );
+   	                    $this->_do_query( $query );
+                        $result = $this->result;
 						break;
 					default:
 						$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
@@ -3023,20 +3025,34 @@ class wpdb {
 	 * @access protected
 	 */
 	protected function load_col_info() {
+    /**
+     * Derived in part from
+     *
+     * WordPress DB Class in W3 Total Cache
+     *
+     * Original code from {@link http://php.justinvincent.com Justin Vincent (justin@visunet.ie)}
+     *
+     */
 		if ( $this->col_info )
 			return;
 
-		if ( $this->use_mysqli ) {
-			$num_fields = mysqli_num_fields( $this->result );
-			for ( $i = 0; $i < $num_fields; $i++ ) {
-				$this->col_info[ $i ] = mysqli_fetch_field( $this->result );
-			}
-		} else {
-			$num_fields = mysql_num_fields( $this->result );
-			for ( $i = 0; $i < $num_fields; $i++ ) {
-				$this->col_info[ $i ] = mysql_fetch_field( $this->result, $i );
-			}
-		}
+        foreach( sqlsrv_field_metadata( $this->query_statement_resource ) as $field) {
+                $new_field = new stdClass();
+                $new_field->name = $field->name;
+                $new_field->table = null;
+                $new_field->def = null;
+                $new_field->max_length = $field->size;
+                $new_field->not_null = true;
+                $new_field->primary_key = null;
+                $new_field->unique_key = null;
+                $new_field->multiple_key = null;
+                $new_field->numeric = null;
+                $new_field->blob = null;
+                $new_field->type = $field->type;
+                $new_field->unsigned = null;
+                $new_field->zerofill = null;
+                $this->col_info[$i] = $new_field;
+        }
 	}
 
 	/**
