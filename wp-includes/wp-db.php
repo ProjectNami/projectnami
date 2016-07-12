@@ -1862,7 +1862,7 @@ class wpdb {
 		if ( false === $data ) {
 			return false;
 		}
-
+		
 		$formats = $values = array();
 		foreach ( $data as $value ) {
 			$formats[] = $value['format'];
@@ -1871,8 +1871,54 @@ class wpdb {
 
 		$fields  = '[' . implode( '], [', array_keys( $data ) ) . ']';
 		$formats = implode( ', ', $formats );
-
-		$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
+	
+		if ($type == 'REPLACE') {
+			$columnNames = "'" . implode( "', '", array_keys($data)) . "'";
+			//Gets the key columns for the table		
+			$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+							WHERE TABLE_NAME = '$table' AND COLUMN_NAME IN ($columnNames)";
+			$this->query($keyColQuery);
+			
+			$keyNames = array();
+			$keyValues = array();
+			$keyFormats = array();		
+			$on = array();
+			
+			foreach($this->last_result as $row) {
+				$keyNames[] = $row->COLUMN_NAME;        
+			}
+		
+			foreach($keyNames as $keyCol) {				
+				$keyValues[] = $data[$keyCol]['value'];
+				$keyFormats[] = $data[$keyCol]['format'];
+				$on[] = "sourceTable.[$keyCol] = targetTable.[$keyCol]";
+			}			
+			
+					
+			$set = array();		
+			foreach($data as $field => $value) {			
+				$set[] = "[$field] = " . $value['format'];			
+			}
+			//exa:		
+			//$on[0] == "sourceTable.[keyCol1] = targetTable.[keyCol1]"
+			//$on[1] == "sourceTable.[keyCol2] = targetTable.[keyCol2]"
+			//$set[0] == "[field1] = %s"
+			//$set[1] == "[field2] = %d"
+			$on = implode(' AND ', $on);
+			$set = implode(', ', $set);
+			$keyFormat = implode(', ', $keyFormats); //if more than one key, looks like: keyCol1, keyCol2
+			$keyName = '[' . implode('], [', $keyNames) . ']';
+			//exa: $on == "sourceTable.keyCol1 = targetTable.keyCol1 AND sourceTable.keyCol2 = targetTable.keyCol2"
+			//exa: $set == "[field1] = %s, [field2] = %d"
+			$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
+			$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
+			//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
+			//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up		
+			$values = array_merge($keyValues, $values, $values);
+		} else {
+			//INSERT
+			$sql = "$type INTO [$table] ($fields) VALUES ($formats)";
+		}
 
 		$this->check_current_query = false;
 		return $this->query( $this->prepare( $sql, $values ) );
