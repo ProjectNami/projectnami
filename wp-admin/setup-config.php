@@ -196,7 +196,7 @@ switch($step) {
 		</tr>
 		<tr>
 			<th scope="row"><label for="pwd"><?php _e( 'Password' ); ?></label></th>
-			<td><input name="pwd" id="pwd" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBPass") ? htmlspecialchars( getenv("ProjectNami.DBPass"), ENT_QUOTES ) : htmlspecialchars( _x( 'password', 'example password' ), ENT_QUOTES ) ); ?>" autocomplete="off" /></td>
+			<td><input name="pwd" id="pwd" type="password" size="25" value="<?php echo ( getenv("ProjectNami.DBPass") ? htmlspecialchars( getenv("ProjectNami.DBPass"), ENT_QUOTES ) : htmlspecialchars( _x( 'password', 'example password' ), ENT_QUOTES ) ); ?>" autocomplete="off" /></td>
 			<td><?php _e( '&hellip;and your MSSQL password.' ); ?></td>
 		</tr>
 		<tr>
