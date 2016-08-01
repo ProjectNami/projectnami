@@ -3079,8 +3079,9 @@ class wpdb {
      * Original code from {@link http://php.justinvincent.com Justin Vincent (justin@visunet.ie)}
      *
      */
-		if ( $this->col_info )
+		if ( $this->col_info ) {
 			return;
+        }
 
         foreach( sqlsrv_field_metadata( $this->query_statement_resource ) as $field) {
                 $new_field = new stdClass();
