@@ -3083,7 +3083,7 @@ class wpdb {
 			return;
         }
 
-        foreach( sqlsrv_field_metadata( $this->query_statement_resource ) as $field) {
+        foreach( sqlsrv_field_metadata( $this->result ) as $field) {
                 $new_field = new stdClass();
                 $new_field->name = $field->name;
                 $new_field->table = null;
