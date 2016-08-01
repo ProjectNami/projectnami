@@ -1705,7 +1705,7 @@ class wpdb {
 					break;
 				default:
 					$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-					error_log( $begintransmsg, 3, 'D:\home\LogFiles\php_errors.log' );				
+					error_log( $begintransmsg, 3, ERRORLOGFILE );				
             }
 		}
 		
@@ -2236,7 +2236,7 @@ class wpdb {
 						break;
 					default:
 						$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-						error_log( $begintransmsg, 3, 'D:\home\LogFiles\php_errors.log' );
+						error_log( $begintransmsg, 3, ERRORLOGFILE );
 				}
 		    }
 
