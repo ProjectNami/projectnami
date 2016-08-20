@@ -1520,6 +1520,10 @@ function get_editor_stylesheets() {
  * The init hook may be too late for some features.
  *
  * @since 2.9.0
+ * @since 3.6.0 The `html5` feature was added
+ * @since 3.9.0 The `html5` feature now also accepts 'gallery' and 'caption'
+ * @since 4.1.0 The `title-tag` feature was added
+ * @since 4.5.0 The `customize-selective-refresh-widgets` feature was added
  *
  * @global array $_wp_theme_features
  *
