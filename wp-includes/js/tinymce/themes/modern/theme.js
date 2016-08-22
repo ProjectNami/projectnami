@@ -854,7 +854,7 @@ tinymce.ThemeManager.add('modern', function(editor) {
 		}
 		});
 
-		editor.shortcuts.add('ctrl+alt+e > ctrl+alt+p', '', function() {
+		editor.shortcuts.add('ctrl+shift+e > ctrl+shift+p', '', function() {
 			var match = findFrontMostMatch(editor.selection.getNode());
 			if (match && match.toolbar.panel) {
 				match.toolbar.panel.items()[0].focus();
