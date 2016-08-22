@@ -7,7 +7,7 @@
  */
 
 /**
- * Display the permalink for the current post.
+ * Displays the permalink for the current post.
  *
  * @since 1.2.0
  * @since 4.4.0 Added the `$post` parameter.
@@ -16,7 +16,7 @@
  */
 function the_permalink( $post = 0 ) {
 	/**
-	 * Filter the display of the permalink for the current post.
+	 * Filters the display of the permalink for the current post.
 	 *
 	 * @since 1.5.0
 	 * @since 4.4.0 Added the `$post` parameter.
@@ -28,7 +28,7 @@ function the_permalink( $post = 0 ) {
 }
 
 /**
- * Retrieve trailing slash string, if site is set for adding trailing slashes.
+ * Retrieves a trailing-slashed string if the site is set for adding trailing slashes.
  *
  * Conditionally adds a trailing slash if the permalink structure has a trailing
  * slash, strips the trailing slash if not. The string is passed through the
@@ -36,6 +36,7 @@ function the_permalink( $post = 0 ) {
  * site is not set to have them.
  *
  * @since 2.2.0
+ *
  * @global WP_Rewrite $wp_rewrite
  *
  * @param string $string URL with or without a trailing slash.
@@ -50,8 +51,7 @@ function user_trailingslashit($string, $type_of_url = '') {
 		$string = untrailingslashit($string);
 
 	/**
-	 * Filter the trailing slashed string, depending on whether the site is set
-	 * to use training slashes.
+	 * Filters the trailing-slashed string, depending on whether the site is set to use trailing slashes.
 	 *
 	 * @since 2.2.0
 	 *
@@ -64,7 +64,7 @@ function user_trailingslashit($string, $type_of_url = '') {
 }
 
 /**
- * Display permalink anchor for current post.
+ * Displays the permalink anchor for the current post.
  *
  * The permalink mode title will use the post title for the 'a' element 'id'
  * attribute. The id mode uses 'post-' with the post ID for the 'id' attribute.
@@ -88,7 +88,7 @@ function permalink_anchor( $mode = 'id' ) {
 }
 
 /**
- * Retrieve full permalink for current post or post ID.
+ * Retrieves the full permalink for the current post or post ID.
  *
  * This function is an alias for get_permalink().
  *
@@ -106,7 +106,7 @@ function get_the_permalink( $post = 0, $leavename = false ) {
 }
 
 /**
- * Retrieve full permalink for current post or post ID.
+ * Retrieves the full permalink for the current post or post ID.
  *
  * @since 1.0.0
  *
@@ -149,7 +149,7 @@ function get_permalink( $post = 0, $leavename = false ) {
 	$permalink = get_option('permalink_structure');
 
 	/**
-	 * Filter the permalink structure for a post before token replacement occurs.
+	 * Filters the permalink structure for a post before token replacement occurs.
 	 *
 	 * Only applies to posts with post_type of 'post'.
 	 *
@@ -222,7 +222,7 @@ function get_permalink( $post = 0, $leavename = false ) {
 	}
 
 	/**
-	 * Filter the permalink for a post.
+	 * Filters the permalink for a post.
 	 *
 	 * Only applies to posts with post_type of 'post'.
 	 *
@@ -236,7 +236,7 @@ function get_permalink( $post = 0, $leavename = false ) {
 }
 
 /**
- * Retrieve the permalink for a post with a custom post type.
+ * Retrieves the permalink for a post of a custom post type.
  *
  * @since 3.0.0
  *
@@ -281,7 +281,7 @@ function get_post_permalink( $id = 0, $leavename = false, $sample = false ) {
 	}
 
 	/**
-	 * Filter the permalink for a post with a custom post type.
+	 * Filters the permalink for a post of a custom post type.
 	 *
 	 * @since 3.0.0
 	 *
@@ -294,7 +294,7 @@ function get_post_permalink( $id = 0, $leavename = false, $sample = false ) {
 }
 
 /**
- * Retrieve the permalink for current page or page ID.
+ * Retrieves the permalink for the current page or page ID.
  *
  * Respects page_on_front. Use this one.
  *
@@ -326,7 +326,7 @@ function get_page_link( $post = false, $leavename = false, $sample = false ) {
 }
 
 /**
- * Retrieve the page permalink.
+ * Retrieves the page permalink.
  *
  * Ignores page_on_front. Internal use only.
  *
@@ -372,7 +372,7 @@ function _get_page_link( $post = false, $leavename = false, $sample = false ) {
 }
 
 /**
- * Retrieve permalink for attachment.
+ * Retrieves the permalink for an attachment.
  *
  * This can be used in the WordPress Loop or outside of it.
  *
@@ -419,7 +419,7 @@ function get_attachment_link( $post = null, $leavename = false ) {
 		$link = home_url( '/?attachment_id=' . $post->ID );
 
 	/**
-	 * Filter the permalink for an attachment.
+	 * Filters the permalink for an attachment.
 	 *
 	 * @since 2.0.0
 	 *
@@ -430,7 +430,7 @@ function get_attachment_link( $post = null, $leavename = false ) {
 }
 
 /**
- * Retrieve the permalink for the year archives.
+ * Retrieves the permalink for the year archives.
  *
  * @since 1.5.0
  *
@@ -452,7 +452,7 @@ function get_year_link($year) {
 	}
 
 	/**
-	 * Filter the year archive permalink.
+	 * Filters the year archive permalink.
 	 *
 	 * @since 1.5.0
 	 *
@@ -463,7 +463,7 @@ function get_year_link($year) {
 }
 
 /**
- * Retrieve the permalink for the month archives with year.
+ * Retrieves the permalink for the month archives with year.
  *
  * @since 1.0.0
  *
@@ -489,7 +489,7 @@ function get_month_link($year, $month) {
 	}
 
 	/**
-	 * Filter the month archive permalink.
+	 * Filters the month archive permalink.
 	 *
 	 * @since 1.5.0
 	 *
@@ -501,7 +501,7 @@ function get_month_link($year, $month) {
 }
 
 /**
- * Retrieve the permalink for the day archives with year and month.
+ * Retrieves the permalink for the day archives with year and month.
  *
  * @since 1.0.0
  *
@@ -545,7 +545,7 @@ function get_day_link($year, $month, $day) {
 }
 
 /**
- * Display the permalink for the feed type.
+ * Displays the permalink for the feed type.
  *
  * @since 3.0.0
  *
@@ -556,7 +556,7 @@ function the_feed_link( $anchor, $feed = '' ) {
 	$link = '<a href="' . esc_url( get_feed_link( $feed ) ) . '">' . $anchor . '</a>';
 
 	/**
-	 * Filter the feed link anchor tag.
+	 * Filters the feed link anchor tag.
 	 *
 	 * @since 3.0.0
 	 *
@@ -568,7 +568,7 @@ function the_feed_link( $anchor, $feed = '' ) {
 }
 
 /**
- * Retrieve the permalink for the feed type.
+ * Retrieves the permalink for the feed type.
  *
  * @since 1.5.0
  *
@@ -604,7 +604,7 @@ function get_feed_link($feed = '') {
 	}
 
 	/**
-	 * Filter the feed type permalink.
+	 * Filters the feed type permalink.
 	 *
 	 * @since 1.5.0
 	 *
@@ -615,7 +615,7 @@ function get_feed_link($feed = '') {
 }
 
 /**
- * Retrieve the permalink for the post comments feed.
+ * Retrieves the permalink for the post comments feed.
  *
  * @since 2.2.0
  *
@@ -664,7 +664,7 @@ function get_post_comments_feed_link($post_id = 0, $feed = '') {
 	}
 
 	/**
-	 * Filter the post comments feed permalink.
+	 * Filters the post comments feed permalink.
 	 *
 	 * @since 1.5.1
 	 *
@@ -674,7 +674,7 @@ function get_post_comments_feed_link($post_id = 0, $feed = '') {
 }
 
 /**
- * Display the comment feed link for a post.
+ * Displays the comment feed link for a post.
  *
  * Prints out the comment feed link for a post. Link text is placed in the
  * anchor. If no link text is specified, default text is used. If no post ID is
@@ -694,7 +694,7 @@ function post_comments_feed_link( $link_text = '', $post_id = '', $feed = '' ) {
 
 	$link = '<a href="' . esc_url( $url ) . '">' . $link_text . '</a>';
 	/**
-	 * Filter the post comment feed link anchor tag.
+	 * Filters the post comment feed link anchor tag.
 	 *
 	 * @since 2.8.0
 	 *
@@ -706,7 +706,7 @@ function post_comments_feed_link( $link_text = '', $post_id = '', $feed = '' ) {
 }
 
 /**
- * Retrieve the feed link for a given author.
+ * Retrieves the feed link for a given author.
  *
  * Returns a link to the feed for all posts by a given author. A specific feed
  * can be requested or left blank to get the default feed.
@@ -737,7 +737,7 @@ function get_author_feed_link( $author_id, $feed = '' ) {
 	}
 
 	/**
-	 * Filter the feed link for a given author.
+	 * Filters the feed link for a given author.
 	 *
 	 * @since 1.5.1
 	 *
@@ -750,7 +750,7 @@ function get_author_feed_link( $author_id, $feed = '' ) {
 }
 
 /**
- * Retrieve the feed link for a category.
+ * Retrieves the feed link for a category.
  *
  * Returns a link to the feed for all posts in a given category. A specific feed
  * can be requested or left blank to get the default feed.
@@ -766,7 +766,7 @@ function get_category_feed_link( $cat_id, $feed = '' ) {
 }
 
 /**
- * Retrieve the feed link for a term.
+ * Retrieves the feed link for a term.
  *
  * Returns a link to the feed for all posts in a given term. A specific feed
  * can be requested or left blank to get the default feed.
@@ -848,7 +848,7 @@ function get_term_feed_link( $term_id, $taxonomy = 'category', $feed = '' ) {
 }
 
 /**
- * Retrieve permalink for feed of tag.
+ * Retrieves the permalink for a tag feed.
  *
  * @since 2.3.0
  *
@@ -861,7 +861,7 @@ function get_tag_feed_link( $tag_id, $feed = '' ) {
 }
 
 /**
- * Retrieve edit tag link.
+ * Retrieves the edit link for a tag.
  *
  * @since 2.7.0
  *
@@ -881,7 +881,7 @@ function get_edit_tag_link( $tag_id, $taxonomy = 'post_tag' ) {
 }
 
 /**
- * Display or retrieve edit tag link with formatting.
+ * Displays or retrieves the edit link for a tag with formatting.
  *
  * @since 2.7.0
  *
@@ -894,7 +894,7 @@ function edit_tag_link( $link = '', $before = '', $after = '', $tag = null ) {
 	$link = edit_term_link( $link, '', '', $tag, false );
 
 	/**
-	 * Filter the anchor tag for the edit link for a tag (or term in another taxonomy).
+	 * Filters the anchor tag for the edit link for a tag (or term in another taxonomy).
 	 *
 	 * @since 2.7.0
 	 *
@@ -944,7 +944,7 @@ function get_edit_term_link( $term_id, $taxonomy = '', $object_type = '' ) {
 	}
 
 	/**
-	 * Filter the edit link for a term.
+	 * Filters the edit link for a term.
 	 *
 	 * @since 3.1.0
 	 *
@@ -957,7 +957,7 @@ function get_edit_term_link( $term_id, $taxonomy = '', $object_type = '' ) {
 }
 
 /**
- * Display or retrieve edit term link with formatting.
+ * Displays or retrieves the edit term link with formatting.
  *
  * @since 3.1.0
  *
@@ -985,7 +985,7 @@ function edit_term_link( $link = '', $before = '', $after = '', $term = null, $e
 	$link = '<a href="' . get_edit_term_link( $term->term_id, $term->taxonomy ) . '">' . $link . '</a>';
 
 	/**
-	 * Filter the anchor tag for the edit link of a term.
+	 * Filters the anchor tag for the edit link of a term.
 	 *
 	 * @since 3.1.0
 	 *
@@ -1001,7 +1001,7 @@ function edit_term_link( $link = '', $before = '', $after = '', $term = null, $e
 }
 
 /**
- * Retrieve permalink for search.
+ * Retrieves the permalink for a search.
  *
  * @since  3.0.0
  *
@@ -1030,7 +1030,7 @@ function get_search_link( $query = '' ) {
 	}
 
 	/**
-	 * Filter the search permalink.
+	 * Filters the search permalink.
 	 *
 	 * @since 3.0.0
 	 *
@@ -1041,7 +1041,7 @@ function get_search_link( $query = '' ) {
 }
 
 /**
- * Retrieve the permalink for the feed of the search results.
+ * Retrieves the permalink for the search results feed.
  *
  * @since 2.5.0
  *
@@ -1068,7 +1068,7 @@ function get_search_feed_link($search_query = '', $feed = '') {
 	}
 
 	/**
-	 * Filter the search feed link.
+	 * Filters the search feed link.
 	 *
 	 * @since 2.5.0
 	 *
@@ -1080,7 +1080,7 @@ function get_search_feed_link($search_query = '', $feed = '') {
 }
 
 /**
- * Retrieve the permalink for the comments feed of the search results.
+ * Retrieves the permalink for the search results comments feed.
  *
  * @since 2.5.0
  *
@@ -1153,7 +1153,7 @@ function get_post_type_archive_link( $post_type ) {
 	}
 
 	/**
-	 * Filter the post type archive permalink.
+	 * Filters the post type archive permalink.
 	 *
 	 * @since 3.1.0
 	 *
@@ -1164,7 +1164,7 @@ function get_post_type_archive_link( $post_type ) {
 }
 
 /**
- * Retrieve the permalink for a post type archive feed.
+ * Retrieves the permalink for a post type archive feed.
  *
  * @since 3.1.0
  *
@@ -1191,7 +1191,7 @@ function get_post_type_archive_feed_link( $post_type, $feed = '' ) {
 	}
 
 	/**
-	 * Filter the post type archive feed link.
+	 * Filters the post type archive feed link.
 	 *
 	 * @since 3.1.0
 	 *
@@ -1202,7 +1202,7 @@ function get_post_type_archive_feed_link( $post_type, $feed = '' ) {
 }
 
 /**
- * Retrieve URL used for the post preview.
+ * Retrieves the URL used for the post preview.
  *
  * Get the preview post URL. Allows additional query args to be appended.
  *
@@ -1230,7 +1230,7 @@ function get_preview_post_link( $post = null, $query_args = array(), $preview_li
 	}
 
 	/**
-	 * Filter the URL used for a post preview.
+	 * Filters the URL used for a post preview.
 	 *
 	 * @since 2.0.5
 	 * @since 4.0.0 Added the `$post` parameter.
@@ -1242,7 +1242,7 @@ function get_preview_post_link( $post = null, $query_args = array(), $preview_li
 }
 
 /**
- * Retrieve edit posts link for post.
+ * Retrieves the edit post link for post.
  *
  * Can be used within the WordPress loop or outside of it. Can be used with
  * pages, posts, attachments, and revisions.
@@ -1279,7 +1279,7 @@ function get_edit_post_link( $id = 0, $context = 'display' ) {
 	}
 
 	/**
-	 * Filter the post edit link.
+	 * Filters the post edit link.
 	 *
 	 * @since 2.3.0
 	 *
@@ -1292,7 +1292,7 @@ function get_edit_post_link( $id = 0, $context = 'display' ) {
 }
 
 /**
- * Display edit post link for post.
+ * Displays the edit post link for post.
  *
  * @since 1.0.0
  * @since 4.4.0 The `$class` argument was added.
@@ -1319,7 +1319,7 @@ function edit_post_link( $text = null, $before = '', $after = '', $id = 0, $clas
 	$link = '<a class="' . esc_attr( $class ) . '" href="' . esc_url( $url ) . '">' . $text . '</a>';
 
 	/**
-	 * Filter the post edit link anchor tag.
+	 * Filters the post edit link anchor tag.
 	 *
 	 * @since 2.3.0
 	 *
@@ -1331,7 +1331,7 @@ function edit_post_link( $text = null, $before = '', $after = '', $id = 0, $clas
 }
 
 /**
- * Retrieve delete posts link for post.
+ * Retrieves the delete posts link for post.
  *
  * Can be used within the WordPress loop or outside of it, with any post type.
  *
@@ -1361,7 +1361,7 @@ function get_delete_post_link( $id = 0, $deprecated = '', $force_delete = false 
 	$delete_link = add_query_arg( 'action', $action, admin_url( sprintf( $post_type_object->_edit_link, $post->ID ) ) );
 
 	/**
-	 * Filter the post delete link.
+	 * Filters the post delete link.
 	 *
 	 * @since 2.9.0
 	 *
@@ -1373,7 +1373,7 @@ function get_delete_post_link( $id = 0, $deprecated = '', $force_delete = false 
 }
 
 /**
- * Retrieve edit comment link.
+ * Retrieves the edit comment link.
  *
  * @since 2.3.0
  *
@@ -1399,7 +1399,7 @@ function get_edit_comment_link( $comment_id = 0 ) {
 }
 
 /**
- * Display edit comment link with formatting.
+ * Displays the edit comment link with formatting.
  *
  * @since 1.0.0
  *
@@ -1421,7 +1421,7 @@ function edit_comment_link( $text = null, $before = '', $after = '' ) {
 	$link = '<a class="comment-edit-link" href="' . esc_url( get_edit_comment_link( $comment ) ) . '">' . $text . '</a>';
 
 	/**
-	 * Filter the comment edit link anchor tag.
+	 * Filters the comment edit link anchor tag.
 	 *
 	 * @since 2.3.0
 	 *
@@ -1433,7 +1433,7 @@ function edit_comment_link( $text = null, $before = '', $after = '' ) {
 }
 
 /**
- * Display edit bookmark link.
+ * Displays the edit bookmark link.
  *
  * @since 2.7.0
  *
@@ -1460,7 +1460,7 @@ function get_edit_bookmark_link( $link = 0 ) {
 }
 
 /**
- * Display edit bookmark link anchor content.
+ * Displays the edit bookmark link anchor content.
  *
  * @since 2.7.0
  *
@@ -1481,7 +1481,7 @@ function edit_bookmark_link( $link = '', $before = '', $after = '', $bookmark = 
 	$link = '<a href="' . esc_url( get_edit_bookmark_link( $bookmark ) ) . '">' . $link . '</a>';
 
 	/**
-	 * Filter the bookmark edit link anchor tag.
+	 * Filters the bookmark edit link anchor tag.
 	 *
 	 * @since 2.7.0
 	 *
@@ -1492,7 +1492,7 @@ function edit_bookmark_link( $link = '', $before = '', $after = '', $bookmark = 
 }
 
 /**
- * Retrieve edit user link
+ * Retrieves the edit user link.
  *
  * @since 3.5.0
  *
@@ -1530,7 +1530,7 @@ function get_edit_user_link( $user_id = null ) {
 // Navigation links
 
 /**
- * Retrieve previous post that is adjacent to current post.
+ * Retrieves the previous post that is adjacent to the current post.
  *
  * @since 1.5.0
  *
@@ -1544,7 +1544,7 @@ function get_previous_post( $in_same_term = false, $excluded_terms = '', $taxono
 }
 
 /**
- * Retrieve next post that is adjacent to current post.
+ * Retrieves the next post that is adjacent to the current post.
  *
  * @since 1.5.0
  *
@@ -1558,7 +1558,7 @@ function get_next_post( $in_same_term = false, $excluded_terms = '', $taxonomy =
 }
 
 /**
- * Retrieve adjacent post.
+ * Retrieves the adjacent post.
  *
  * Can either be next or previous post.
  *
@@ -1616,7 +1616,7 @@ function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previo
 		}
 
 		/**
-		 * Filter the IDs of terms excluded from adjacent post queries.
+		 * Filters the IDs of terms excluded from adjacent post queries.
 		 *
 		 * The dynamic portion of the hook name, `$adjacent`, refers to the type
 		 * of adjacency, 'next' or 'previous'.
@@ -1666,7 +1666,7 @@ function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previo
 	$order = $previous ? 'DESC' : 'ASC';
 
 	/**
-	 * Filter the JOIN clause in the SQL for an adjacent post query.
+	 * Filters the JOIN clause in the SQL for an adjacent post query.
 	 *
 	 * The dynamic portion of the hook name, `$adjacent`, refers to the type
 	 * of adjacency, 'next' or 'previous'.
@@ -1683,7 +1683,7 @@ function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previo
 	$join = apply_filters( "get_{$adjacent}_post_join", $join, $in_same_term, $excluded_terms, $taxonomy, $post );
 
 	/**
-	 * Filter the WHERE clause in the SQL for an adjacent post query.
+	 * Filters the WHERE clause in the SQL for an adjacent post query.
 	 *
 	 * The dynamic portion of the hook name, `$adjacent`, refers to the type
 	 * of adjacency, 'next' or 'previous'.
@@ -1700,7 +1700,7 @@ function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previo
 	$where = apply_filters( "get_{$adjacent}_post_where", $wpdb->prepare( "WHERE p.post_date $op %s AND p.post_type = %s $where", $current_post_date, $post->post_type ), $in_same_term, $excluded_terms, $taxonomy, $post );
 
 	/**
-	 * Filter the ORDER BY clause in the SQL for an adjacent post query.
+	 * Filters the ORDER BY clause in the SQL for an adjacent post query.
 	 *
 	 * The dynamic portion of the hook name, `$adjacent`, refers to the type
 	 * of adjacency, 'next' or 'previous'.
@@ -1733,7 +1733,7 @@ function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previo
 }
 
 /**
- * Get adjacent post relational link.
+ * Retrieves the adjacent post relational link.
  *
  * Can either be next or previous post relational link.
  *
@@ -1772,7 +1772,7 @@ function get_adjacent_post_rel_link( $title = '%title', $in_same_term = false, $
 	$adjacent = $previous ? 'previous' : 'next';
 
 	/**
-	 * Filter the adjacent post relational link.
+	 * Filters the adjacent post relational link.
 	 *
 	 * The dynamic portion of the hook name, `$adjacent`, refers to the type
 	 * of adjacency, 'next' or 'previous'.
@@ -1785,7 +1785,7 @@ function get_adjacent_post_rel_link( $title = '%title', $in_same_term = false, $
 }
 
 /**
- * Display relational links for the posts adjacent to the current post.
+ * Displays the relational links for the posts adjacent to the current post.
  *
  * @since 2.8.0
  *
@@ -1800,7 +1800,7 @@ function adjacent_posts_rel_link( $title = '%title', $in_same_term = false, $exc
 }
 
 /**
- * Display relational links for the posts adjacent to the current post for single post pages.
+ * Displays relational links for the posts adjacent to the current post for single post pages.
  *
  * This is meant to be attached to actions like 'wp_head'. Do not call this directly in plugins or theme templates.
  * @since 3.0.0
@@ -1814,7 +1814,7 @@ function adjacent_posts_rel_link_wp_head() {
 }
 
 /**
- * Display relational link for the next post adjacent to the current post.
+ * Displays the relational link for the next post adjacent to the current post.
  *
  * @since 2.8.0
  *
@@ -1828,7 +1828,7 @@ function next_post_rel_link( $title = '%title', $in_same_term = false, $excluded
 }
 
 /**
- * Display relational link for the previous post adjacent to the current post.
+ * Displays the relational link for the previous post adjacent to the current post.
  *
  * @since 2.8.0
  *
@@ -1842,7 +1842,7 @@ function prev_post_rel_link( $title = '%title', $in_same_term = false, $excluded
 }
 
 /**
- * Retrieve boundary post.
+ * Retrieves the boundary post.
  *
  * Boundary being either the first or last post by publish date within the constraints specified
  * by $in_same_term or $excluded_terms.
@@ -1900,7 +1900,7 @@ function get_boundary_post( $in_same_term = false, $excluded_terms = '', $start 
 }
 
 /**
- * Get previous post link that is adjacent to the current post.
+ * Retrieves the previous post link that is adjacent to the current post.
  *
  * @since 3.7.0
  *
@@ -1916,9 +1916,10 @@ function get_previous_post_link( $format = '&laquo; %link', $link = '%title', $i
 }
 
 /**
- * Display previous post link that is adjacent to the current post.
+ * Displays the previous post link that is adjacent to the current post.
  *
  * @since 1.5.0
+ *
  * @see get_previous_post_link()
  *
  * @param string       $format         Optional. Link anchor format.
@@ -1932,7 +1933,7 @@ function previous_post_link( $format = '&laquo; %link', $link = '%title', $in_sa
 }
 
 /**
- * Get next post link that is adjacent to the current post.
+ * Retrieves the next post link that is adjacent to the current post.
  *
  * @since 3.7.0
  *
@@ -1948,7 +1949,7 @@ function get_next_post_link( $format = '%link &raquo;', $link = '%title', $in_sa
 }
 
 /**
- * Display next post link that is adjacent to the current post.
+ * Displays the next post link that is adjacent to the current post.
  *
  * @since 1.5.0
  * @see get_next_post_link()
@@ -1964,7 +1965,7 @@ function next_post_link( $format = '%link &raquo;', $link = '%title', $in_same_t
 }
 
 /**
- * Get adjacent post link.
+ * Retrieves the adjacent post link.
  *
  * Can be either next post link or previous.
  *
@@ -2009,7 +2010,7 @@ function get_adjacent_post_link( $format, $link, $in_same_term = false, $exclude
 	$adjacent = $previous ? 'previous' : 'next';
 
 	/**
-	 * Filter the adjacent post link.
+	 * Filters the adjacent post link.
 	 *
 	 * The dynamic portion of the hook name, `$adjacent`, refers to the type
 	 * of adjacency, 'next' or 'previous'.
@@ -2027,7 +2028,7 @@ function get_adjacent_post_link( $format, $link, $in_same_term = false, $exclude
 }
 
 /**
- * Display adjacent post link.
+ * Displays the adjacent post link.
  *
  * Can be either next post link or previous.
  *
@@ -2045,7 +2046,7 @@ function adjacent_post_link( $format, $link, $in_same_term = false, $excluded_te
 }
 
 /**
- * Retrieve links for page numbers.
+ * Retrieves the link for a page number.
  *
  * @since 1.5.0
  *
@@ -2106,7 +2107,7 @@ function get_pagenum_link($pagenum = 1, $escape = true ) {
 	}
 
 	/**
-	 * Filter the page number link for the current request.
+	 * Filters the page number link for the current request.
 	 *
 	 * @since 2.5.0
 	 *
@@ -2121,7 +2122,7 @@ function get_pagenum_link($pagenum = 1, $escape = true ) {
 }
 
 /**
- * Retrieve next posts page link.
+ * Retrieves the next posts page link.
  *
  * Backported from 2.1.3 to 2.0.10.
  *
@@ -2145,7 +2146,7 @@ function get_next_posts_page_link($max_page = 0) {
 }
 
 /**
- * Display or return the next posts page link.
+ * Displays or retrieves the next posts page link.
  *
  * @since 0.71
  *
@@ -2163,7 +2164,7 @@ function next_posts( $max_page = 0, $echo = true ) {
 }
 
 /**
- * Return the next posts page link.
+ * Retrieves the next posts page link.
  *
  * @since 2.7.0
  *
@@ -2203,7 +2204,7 @@ function get_next_posts_link( $label = null, $max_page = 0 ) {
 }
 
 /**
- * Display the next posts page link.
+ * Displays the next posts page link.
  *
  * @since 0.71
  *
@@ -2215,7 +2216,7 @@ function next_posts_link( $label = null, $max_page = 0 ) {
 }
 
 /**
- * Retrieve previous posts page link.
+ * Retrieves the previous posts page link.
  *
  * Will only return string, if not on a single page or post.
  *
@@ -2239,7 +2240,7 @@ function get_previous_posts_page_link() {
 }
 
 /**
- * Display or return the previous posts page link.
+ * Displays or retrieves the previous posts page link.
  *
  * @since 0.71
  *
@@ -2256,7 +2257,7 @@ function previous_posts( $echo = true ) {
 }
 
 /**
- * Return the previous posts page link.
+ * Retrieves the previous posts page link.
  *
  * @since 2.7.0
  *
@@ -2285,7 +2286,7 @@ function get_previous_posts_link( $label = null ) {
 }
 
 /**
- * Display the previous posts page link.
+ * Displays the previous posts page link.
  *
  * @since 0.71
  *
@@ -2296,7 +2297,7 @@ function previous_posts_link( $label = null ) {
 }
 
 /**
- * Return post pages link navigation for previous and next pages.
+ * Retrieves the post pages link navigation for previous and next pages.
  *
  * @since 2.8.0
  *
@@ -2337,7 +2338,7 @@ function get_posts_nav_link( $args = array() ) {
 }
 
 /**
- * Display post pages link navigation for previous and next pages.
+ * Displays the post pages link navigation for previous and next pages.
  *
  * @since 0.71
  *
@@ -2351,7 +2352,7 @@ function posts_nav_link( $sep = '', $prelabel = '', $nxtlabel = '' ) {
 }
 
 /**
- * Return navigation to next/previous post when applicable.
+ * Retrieves the navigation to next/previous post, when applicable.
  *
  * @since 4.1.0
  * @since 4.4.0 Introduced the `in_same_term`, `excluded_terms`, and `taxonomy` arguments.
@@ -2405,7 +2406,7 @@ function get_the_post_navigation( $args = array() ) {
 }
 
 /**
- * Display navigation to next/previous post when applicable.
+ * Displays the navigation to next/previous post, when applicable.
  *
  * @since 4.1.0
  *
@@ -2417,7 +2418,7 @@ function the_post_navigation( $args = array() ) {
 }
 
 /**
- * Return navigation to next/previous set of posts when applicable.
+ * Returns the navigation to next/previous set of posts, when applicable.
  *
  * @since 4.1.0
  *
@@ -2464,7 +2465,7 @@ function get_the_posts_navigation( $args = array() ) {
 }
 
 /**
- * Display navigation to next/previous set of posts when applicable.
+ * Displays the navigation to next/previous set of posts, when applicable.
  *
  * @since 4.1.0
  *
@@ -2476,8 +2477,7 @@ function the_posts_navigation( $args = array() ) {
 }
 
 /**
- * Return a paginated navigation to next/previous set of posts,
- * when applicable.
+ * Retrieves a paginated navigation to next/previous set of posts, when applicable.
  *
  * @since 4.1.0
  *
@@ -2518,8 +2518,7 @@ function get_the_posts_pagination( $args = array() ) {
 }
 
 /**
- * Display a paginated navigation to next/previous set of posts,
- * when applicable.
+ * Displays a paginated navigation to next/previous set of posts, when applicable.
  *
  * @since 4.1.0
  *
@@ -2553,7 +2552,7 @@ function _navigation_markup( $links, $class = 'posts-navigation', $screen_reader
 	</nav>';
 
 	/**
-	 * Filter the navigation markup template.
+	 * Filters the navigation markup template.
 	 *
 	 * Note: The filtered template HTML must contain specifiers for the navigation
 	 * class (%1$s), the screen-reader-text value (%2$s), and placement of the
@@ -2576,7 +2575,7 @@ function _navigation_markup( $links, $class = 'posts-navigation', $screen_reader
 }
 
 /**
- * Retrieve comments page number link.
+ * Retrieves the comments page number link.
  *
  * @since 2.7.0
  *
@@ -2610,7 +2609,7 @@ function get_comments_pagenum_link( $pagenum = 1, $max_page = 0 ) {
 	$result .= '#comments';
 
 	/**
-	 * Filter the comments page number link for the current request.
+	 * Filters the comments page number link for the current request.
 	 *
 	 * @since 2.7.0
 	 *
@@ -2620,7 +2619,7 @@ function get_comments_pagenum_link( $pagenum = 1, $max_page = 0 ) {
 }
 
 /**
- * Return the link to next comments page.
+ * Retrieves the link to the next comments page.
  *
  * @since 2.7.1
  *
@@ -2657,7 +2656,7 @@ function get_next_comments_link( $label = '', $max_page = 0 ) {
 		$label = __('Newer Comments &raquo;');
 
 	/**
-	 * Filter the anchor tag attributes for the next comments page link.
+	 * Filters the anchor tag attributes for the next comments page link.
 	 *
 	 * @since 2.7.0
 	 *
@@ -2667,7 +2666,7 @@ function get_next_comments_link( $label = '', $max_page = 0 ) {
 }
 
 /**
- * Display the link to next comments page.
+ * Displays the link to the next comments page.
  *
  * @since 2.7.0
  *
@@ -2679,7 +2678,7 @@ function next_comments_link( $label = '', $max_page = 0 ) {
 }
 
 /**
- * Return the previous comments page link.
+ * Retrieves the link to the previous comments page.
  *
  * @since 2.7.1
  *
@@ -2711,7 +2710,7 @@ function get_previous_comments_link( $label = '' ) {
 }
 
 /**
- * Display the previous comments page link.
+ * Displays the link to the previous comments page.
  *
  * @since 2.7.0
  *
@@ -2722,7 +2721,7 @@ function previous_comments_link( $label = '' ) {
 }
 
 /**
- * Create pagination links for the comments on the current post.
+ * Displays or retrieves pagination links for the comments on the current post.
  *
  * @see paginate_links()
  * @since 2.7.0
@@ -2763,7 +2762,7 @@ function paginate_comments_links($args = array()) {
 }
 
 /**
- * Returns navigation to next/previous set of comments when applicable.
+ * Retrieves navigation to next/previous set of comments, when applicable.
  *
  * @since 4.4.0
  *
@@ -2805,7 +2804,7 @@ function get_the_comments_navigation( $args = array() ) {
 }
 
 /**
- * Displays navigation to next/previous set of comments when applicable.
+ * Displays navigation to next/previous set of comments, when applicable.
  *
  * @since 4.4.0
  *
@@ -2816,8 +2815,7 @@ function the_comments_navigation( $args = array() ) {
 }
 
 /**
- * Returns a paginated navigation to next/previous set of comments,
- * when applicable.
+ * Retrieves a paginated navigation to next/previous set of comments, when applicable.
  *
  * @since 4.4.0
  *
@@ -2850,8 +2848,7 @@ function get_the_comments_pagination( $args = array() ) {
 }
 
 /**
- * Displays a paginated navigation to next/previous set of comments,
- * when applicable.
+ * Displays a paginated navigation to next/previous set of comments, when applicable.
  *
  * @since 4.4.0
  *
@@ -2862,9 +2859,7 @@ function the_comments_pagination( $args = array() ) {
 }
 
 /**
- * Retrieve the Press This bookmarklet link.
- *
- * Use this in 'a' element 'href' attribute.
+ * Retrieves the Press This bookmarklet link.
  *
  * @since 2.6.0
  *
@@ -2882,7 +2877,7 @@ function get_shortcut_link() {
 	$link = '';
 
 	if ( $is_IE ) {
-		/**
+		/*
 		 * Return the old/shorter bookmarklet code for MSIE 8 and lower,
 		 * since they only support a max length of ~2000 characters for
 		 * bookmark[let] URLs, which is way to small for our smarter one.
@@ -2914,7 +2909,7 @@ function get_shortcut_link() {
 	$link = str_replace( array( "\r", "\n", "\t" ),  '', $link );
 
 	/**
-	 * Filter the Press This bookmarklet link.
+	 * Filters the Press This bookmarklet link.
 	 *
 	 * @since 2.6.0
 	 *
@@ -2924,7 +2919,7 @@ function get_shortcut_link() {
 }
 
 /**
- * Retrieve the URL for the current site where the front end is accessible.
+ * Retrieves the URL for the current site where the front end is accessible.
  *
  * Returns the 'home' option with the appropriate protocol, 'https' if
  * {@see is_ssl()} and 'http' otherwise. If `$scheme` is 'http' or 'https',
@@ -2942,7 +2937,7 @@ function home_url( $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieve the URL for a given site where the front end is accessible.
+ * Retrieves the URL for a given site where the front end is accessible.
  *
  * Returns the 'home' option with the appropriate protocol, 'https' if
  * {@see is_ssl()} and 'http' otherwise. If `$scheme` is 'http' or 'https',
@@ -2985,7 +2980,7 @@ function get_home_url( $blog_id = null, $path = '', $scheme = null ) {
 		$url .= '/' . ltrim( $path, '/' );
 
 	/**
-	 * Filter the home URL.
+	 * Filters the home URL.
 	 *
 	 * @since 3.0.0
 	 *
@@ -2999,7 +2994,7 @@ function get_home_url( $blog_id = null, $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieve the URL for the current site where WordPress application files
+ * Retrieves the URL for the current site where WordPress application files
  * (e.g. wp-blog-header.php or the wp-admin/ folder) are accessible.
  *
  * Returns the 'site_url' option with the appropriate protocol, 'https' if
@@ -3017,7 +3012,7 @@ function site_url( $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieve the URL for a given site where WordPress application files
+ * Retrieves the URL for a given site where WordPress application files
  * (e.g. wp-blog-header.php or the wp-admin/ folder) are accessible.
  *
  * Returns the 'site_url' option with the appropriate protocol, 'https' if
@@ -3048,7 +3043,7 @@ function get_site_url( $blog_id = null, $path = '', $scheme = null ) {
 		$url .= '/' . ltrim( $path, '/' );
 
 	/**
-	 * Filter the site URL.
+	 * Filters the site URL.
 	 *
 	 * @since 2.7.0
 	 *
@@ -3062,7 +3057,7 @@ function get_site_url( $blog_id = null, $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieve the url to the admin area for the current site.
+ * Retrieves the URL to the admin area for the current site.
  *
  * @since 2.6.0
  *
@@ -3075,7 +3070,7 @@ function admin_url( $path = '', $scheme = 'admin' ) {
 }
 
 /**
- * Retrieves the url to the admin area for a given site.
+ * Retrieves the URL to the admin area for a given site.
  *
  * @since 3.0.0
  *
@@ -3093,7 +3088,7 @@ function get_admin_url( $blog_id = null, $path = '', $scheme = 'admin' ) {
 		$url .= ltrim( $path, '/' );
 
 	/**
-	 * Filter the admin area URL.
+	 * Filters the admin area URL.
 	 *
 	 * @since 2.8.0
 	 *
@@ -3105,7 +3100,7 @@ function get_admin_url( $blog_id = null, $path = '', $scheme = 'admin' ) {
 }
 
 /**
- * Retrieve the url to the includes directory.
+ * Retrieves the URL to the includes directory.
  *
  * @since 2.6.0
  *
@@ -3120,7 +3115,7 @@ function includes_url( $path = '', $scheme = null ) {
 		$url .= ltrim($path, '/');
 
 	/**
-	 * Filter the URL to the includes directory.
+	 * Filters the URL to the includes directory.
 	 *
 	 * @since 2.8.0
 	 *
@@ -3132,7 +3127,7 @@ function includes_url( $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieve the url to the content directory.
+ * Retrieves the URL to the content directory.
  *
  * @since 2.6.0
  *
@@ -3146,7 +3141,7 @@ function content_url($path = '') {
 		$url .= '/' . ltrim($path, '/');
 
 	/**
-	 * Filter the URL to the content directory.
+	 * Filters the URL to the content directory.
 	 *
 	 * @since 2.8.0
 	 *
@@ -3158,7 +3153,7 @@ function content_url($path = '') {
 }
 
 /**
- * Retrieve a URL within the plugins or mu-plugins directory.
+ * Retrieves a URL within the plugins or mu-plugins directory.
  *
  * Defaults to the plugins directory URL if no arguments are supplied.
  *
@@ -3195,7 +3190,7 @@ function plugins_url( $path = '', $plugin = '' ) {
 		$url .= '/' . ltrim($path, '/');
 
 	/**
-	 * Filter the URL to the plugins directory.
+	 * Filters the URL to the plugins directory.
 	 *
 	 * @since 2.8.0
 	 *
@@ -3209,7 +3204,7 @@ function plugins_url( $path = '', $plugin = '' ) {
 }
 
 /**
- * Retrieve the site url for the current network.
+ * Retrieves the site URL for the current network.
  *
  * Returns the site url with the appropriate protocol, 'https' if
  * is_ssl() and 'http' otherwise. If $scheme is 'http' or 'https', is_ssl() is
@@ -3236,7 +3231,7 @@ function network_site_url( $path = '', $scheme = null ) {
 		$url .= ltrim( $path, '/' );
 
 	/**
-	 * Filter the network site URL.
+	 * Filters the network site URL.
 	 *
 	 * @since 3.0.0
 	 *
@@ -3250,7 +3245,7 @@ function network_site_url( $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieves the home url for the current network.
+ * Retrieves the home URL for the current network.
  *
  * Returns the home url with the appropriate protocol, 'https' {@see is_ssl()}
  * and 'http' otherwise. If `$scheme` is 'http' or 'https', `is_ssl()` is
@@ -3282,7 +3277,7 @@ function network_home_url( $path = '', $scheme = null ) {
 		$url .= ltrim( $path, '/' );
 
 	/**
-	 * Filter the network home URL.
+	 * Filters the network home URL.
 	 *
 	 * @since 3.0.0
 	 *
@@ -3296,7 +3291,7 @@ function network_home_url( $path = '', $scheme = null ) {
 }
 
 /**
- * Retrieve the url to the admin area for the network.
+ * Retrieves the URL to the admin area for the network.
  *
  * @since 3.0.0
  *
@@ -3314,7 +3309,7 @@ function network_admin_url( $path = '', $scheme = 'admin' ) {
 		$url .= ltrim($path, '/');
 
 	/**
-	 * Filter the network admin URL.
+	 * Filters the network admin URL.
 	 *
 	 * @since 3.0.0
 	 *
@@ -3326,7 +3321,7 @@ function network_admin_url( $path = '', $scheme = 'admin' ) {
 }
 
 /**
- * Retrieve the url to the admin area for the current user.
+ * Retrieves the URL to the admin area for the current user.
  *
  * @since 3.0.0
  *
@@ -3341,7 +3336,7 @@ function user_admin_url( $path = '', $scheme = 'admin' ) {
 		$url .= ltrim($path, '/');
 
 	/**
-	 * Filter the user admin URL for the current user.
+	 * Filters the user admin URL for the current user.
 	 *
 	 * @since 3.1.0
 	 *
@@ -3353,7 +3348,7 @@ function user_admin_url( $path = '', $scheme = 'admin' ) {
 }
 
 /**
- * Retrieve the url to the admin area for either the current site or the network depending on context.
+ * Retrieves the URL to the admin area for either the current site or the network depending on context.
  *
  * @since 3.1.0
  *
@@ -3405,7 +3400,7 @@ function set_url_scheme( $url, $scheme = null ) {
 	}
 
 	/**
-	 * Filter the resulting URL after setting the scheme.
+	 * Filters the resulting URL after setting the scheme.
 	 *
 	 * @since 3.4.0
 	 *
@@ -3418,7 +3413,7 @@ function set_url_scheme( $url, $scheme = null ) {
 }
 
 /**
- * Get the URL to the user's dashboard.
+ * Retrieves the URL to the user's dashboard.
  *
  * If a user does not belong to any site, the global user dashboard is used. If the user belongs to the current site,
  * the dashboard for the current site is returned. If the user cannot edit the current site, the dashboard to the user's
@@ -3453,7 +3448,7 @@ function get_dashboard_url( $user_id = 0, $path = '', $scheme = 'admin' ) {
 	}
 
 	/**
-	 * Filter the dashboard URL for a user.
+	 * Filters the dashboard URL for a user.
 	 *
 	 * @since 3.1.0
 	 *
@@ -3467,7 +3462,7 @@ function get_dashboard_url( $user_id = 0, $path = '', $scheme = 'admin' ) {
 }
 
 /**
- * Get the URL to the user's profile editor.
+ * Retrieves the URL to the user's profile editor.
  *
  * @since 3.1.0
  *
@@ -3487,7 +3482,7 @@ function get_edit_profile_url( $user_id = 0, $scheme = 'admin' ) {
 		$url = get_dashboard_url( $user_id, 'profile.php', $scheme );
 
 	/**
-	 * Filter the URL for a user's profile editor.
+	 * Filters the URL for a user's profile editor.
 	 *
 	 * @since 3.1.0
 	 *
@@ -3500,7 +3495,7 @@ function get_edit_profile_url( $user_id = 0, $scheme = 'admin' ) {
 }
 
 /**
- * Output rel=canonical for singular queries.
+ * Outputs rel=canonical for singular queries.
  *
  * @since 2.9.0
  */
@@ -3532,7 +3527,7 @@ function rel_canonical() {
 }
 
 /**
- * Return a shortlink for a post, page, attachment, or a site.
+ * Returns a shortlink for a post, page, attachment, or site.
  *
  * This function exists to provide a shortlink tag that all themes and plugins can target. A plugin must hook in to
  * provide the actual shortlinks. Default shortlink support is limited to providing ?p= style links for posts.
@@ -3551,7 +3546,7 @@ function rel_canonical() {
  */
 function wp_get_shortlink($id = 0, $context = 'post', $allow_slugs = true) {
 	/**
-	 * Filter whether to preempt generating a shortlink for the given post.
+	 * Filters whether to preempt generating a shortlink for the given post.
 	 *
 	 * Passing a truthy value to the filter will effectively short-circuit the
 	 * shortlink-generation process, returning that value instead.
@@ -3593,7 +3588,7 @@ function wp_get_shortlink($id = 0, $context = 'post', $allow_slugs = true) {
 	}
 
 	/**
-	 * Filter the shortlink for a post.
+	 * Filters the shortlink for a post.
 	 *
 	 * @since 3.0.0
 	 *
@@ -3606,9 +3601,9 @@ function wp_get_shortlink($id = 0, $context = 'post', $allow_slugs = true) {
 }
 
 /**
- *  Inject rel=shortlink into head if a shortlink is defined for the current page.
+ * Injects rel=shortlink into the head if a shortlink is defined for the current page.
  *
- *  Attached to the wp_head action.
+ * Attached to the wp_head action.
  *
  * @since 3.0.0
  */
@@ -3622,7 +3617,7 @@ function wp_shortlink_wp_head() {
 }
 
 /**
- * Send a Link: rel=shortlink header if a shortlink is defined for the current page.
+ * Sends a Link: rel=shortlink header if a shortlink is defined for the current page.
  *
  * Attached to the wp action.
  *
@@ -3641,7 +3636,7 @@ function wp_shortlink_header() {
 }
 
 /**
- * Display the Short Link for a Post
+ * Displays the shortlink for a post.
  *
  * Must be called from inside "The Loop"
  *
@@ -3669,7 +3664,7 @@ function the_shortlink( $text = '', $title = '', $before = '', $after = '' ) {
 		$link = '<a rel="shortlink" href="' . esc_url( $shortlink ) . '" title="' . $title . '">' . $text . '</a>';
 
 		/**
-		 * Filter the shortlink anchor tag for a post.
+		 * Filters the short link anchor tag for a post.
 		 *
 		 * @since 3.0.0
 		 *
@@ -3685,7 +3680,7 @@ function the_shortlink( $text = '', $title = '', $before = '', $after = '' ) {
 
 
 /**
- * Retrieve the avatar URL.
+ * Retrieves the avatar URL.
  *
  * @since 4.2.0
  *
@@ -3717,7 +3712,7 @@ function get_avatar_url( $id_or_email, $args = null ) {
 }
 
 /**
- * Retrieve default data about the avatar.
+ * Retrieves default data about the avatar.
  *
  * @since 4.2.0
  *
@@ -3814,7 +3809,7 @@ function get_avatar_data( $id_or_email, $args = null ) {
 	$args['found_avatar'] = false;
 
 	/**
-	 * Filter whether to retrieve the avatar URL early.
+	 * Filters whether to retrieve the avatar URL early.
 	 *
 	 * Passing a non-null value in the 'url' member of the return array will
 	 * effectively short circuit get_avatar_data(), passing the value through
@@ -3916,7 +3911,7 @@ function get_avatar_data( $id_or_email, $args = null ) {
 	);
 
 	/**
-	 * Filter the avatar URL.
+	 * Filters the avatar URL.
 	 *
 	 * @since 4.2.0
 	 *
@@ -3928,7 +3923,7 @@ function get_avatar_data( $id_or_email, $args = null ) {
 	$args['url'] = apply_filters( 'get_avatar_url', $url, $id_or_email, $args );
 
 	/**
-	 * Filter the avatar data.
+	 * Filters the avatar data.
 	 *
 	 * @since 4.2.0
 	 *
