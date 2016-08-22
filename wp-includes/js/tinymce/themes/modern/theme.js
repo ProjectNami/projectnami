@@ -438,6 +438,53 @@ tinymce.ThemeManager.add('modern', function(editor) {
 			panel.moveTo(pos.left, pos.top);
 		}
 
+		function togglePositionClass(panel, relPos, predicate) {
+			relPos = relPos ? relPos.substr(0, 2) : '';
+
+			each({
+				t: 'down',
+				b: 'up'
+			}, function(cls, pos) {
+				panel.classes.toggle('arrow-' + cls, predicate(pos, relPos.substr(0, 1)));
+			});
+
+			each({
+				l: 'left',
+				r: 'right'
+			}, function(cls, pos) {
+				panel.classes.toggle('arrow-' + cls, predicate(pos, relPos.substr(1, 1)));
+			});
+		}
+
+		function toClientRect(geomRect) {
+			return {
+				left: geomRect.x,
+				top: geomRect.y,
+				width: geomRect.w,
+				height: geomRect.h,
+				right: geomRect.x + geomRect.w,
+				bottom: geomRect.y + geomRect.h
+			};
+		}
+
+		function userConstrain(x, y, elementRect, contentAreaRect, panelRect) {
+				panelRect = toClientRect({x: x, y: y, w: panelRect.w, h: panelRect.h});
+
+				if (settings.inline_toolbar_position_handler) {
+					panelRect = settings.inline_toolbar_position_handler({
+						elementRect: toClientRect(elementRect),
+						contentAreaRect: toClientRect(contentAreaRect),
+						panelRect: panelRect
+					});
+				}
+
+				return panelRect;
+		}
+
+		function movePanelTo(panel, pos) {
+			panel.moveTo(pos.left, pos.top);
+		}
+
 		function reposition(match) {
 			var relPos, panelRect, elementRect, contentAreaRect, panel, relRect, testPositions;
 
@@ -503,6 +550,10 @@ tinymce.ThemeManager.add('modern', function(editor) {
 					panel.hide();
 				}
 			}
+
+			togglePositionClass(panel, relPos, function(pos1, pos2) {
+				return (!elementRect || elementRect.w > 40) && pos1 === pos2;
+			});
 
 			togglePositionClass(panel, relPos, function(pos1, pos2) {
 				return (!elementRect || elementRect.w > 40) && pos1 === pos2;
@@ -717,8 +768,9 @@ tinymce.ThemeManager.add('modern', function(editor) {
 			// Render a plain panel inside the inlineToolbarContainer if it's defined
 			panel = self.panel = Factory.create({
 				type: inlineToolbarContainer ? 'panel' : 'floatpanel',
-				role: 'application',
-				classes: 'tinymce tinymce-inline',
+				role: 'dialog',
+				classes: 'tinymce tinymce-inline arrow',
+				ariaLabel: 'Inline toolbar',
 				layout: 'flex',
 				direction: 'column',
 				align: 'stretch',
@@ -800,6 +852,13 @@ tinymce.ThemeManager.add('modern', function(editor) {
 				}
 			};
 		}
+		});
+
+		editor.shortcuts.add('ctrl+alt+e > ctrl+alt+p', '', function() {
+			var match = findFrontMostMatch(editor.selection.getNode());
+			if (match && match.toolbar.panel) {
+				match.toolbar.panel.items()[0].focus();
+			}
 
 		if (args.skinUiCss) {
 			tinymce.DOM.styleSheetLoader.load(args.skinUiCss, fireSkinLoaded(editor));
