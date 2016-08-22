@@ -1468,6 +1468,7 @@ class WP_Query {
 	 * @since 4.5.0 Removed the `$comments_popup` parameter.
 	 *              Introduced the `$comment_status` and `$ping_status` parameters.
 	 *              Introduced `RAND(x)` syntax for `$orderby`, which allows an integer seed value to random sorts.
+	 * @since 4.6.0 Added 'post_name__in' support for `$orderby`.
 	 * @access public
 	 *
 	 * @param string|array $query {
@@ -1523,7 +1524,8 @@ class WP_Query {
 	 *                                                 'title', 'modified', 'menu_order', 'parent', 'ID', 'rand',
 	 *                                                 'RAND(x)' (where 'x' is an integer seed value),
 	 *                                                 'comment_count', 'meta_value', 'meta_value_num', 'post__in',
-	 *                                                 and the array keys of `$meta_query`.
+	 *                                                 'post_name__in', 'post_parent__in', and the array keys
+	 *                                                 of `$meta_query`.
 	 *     @type int          $p                       Post ID.
 	 *     @type int          $page                    Show the number of posts that would show up on page X of a
 	 *                                                 static front page.
@@ -2744,7 +2746,8 @@ class WP_Query {
 			$where .= " AND $wpdb->posts.post_name = '" . $q['attachment'] . "'";
 		} elseif ( is_array( $q['post_name__in'] ) && ! empty( $q['post_name__in'] ) ) {
 			$q['post_name__in'] = array_map( 'sanitize_title_for_query', $q['post_name__in'] );
-			$where .= " AND $wpdb->posts.post_name IN ('" . implode( "' ,'", $q['post_name__in'] ) . "')";
+			$post_name__in = "'" . implode( "','", $q['post_name__in'] ) . "'";
+			$where .= " AND $wpdb->posts.post_name IN ($post_name__in)";
 		}
 
 		// If an attachment is requested by number, let it supersede any post number.
@@ -2962,6 +2965,8 @@ class WP_Query {
 		} elseif ( 'none' == $q['orderby'] ) {
 			$orderby = "$wpdb->posts.post_date " . $q['order'];
             $orderbyfields = $orderbyfields . ", $wpdb->posts.post_date";
+		} elseif ( $q['orderby'] == 'post_name__in' && ! empty( $post_name__in ) ) {
+			$orderby = "FIELD( {$wpdb->posts}.post_name, $post_name__in )";
 		} elseif ( $q['orderby'] == 'post__in' && ! empty( $post__in ) ) {
 			$orderby = "CASE( {$wpdb->posts}.ID )";
             foreach ( $q['post__in'] as $order_post_key=>$order_post_id ) {
