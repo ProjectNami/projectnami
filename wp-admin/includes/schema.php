@@ -1063,7 +1063,7 @@ We hope you enjoy your new site. Thanks!
 		$sitemeta['illegal_names'][] = 'blog';
 
 	/**
-	 * Filter meta for a network on creation.
+	 * Filters meta for a network on creation.
 	 *
 	 * @since 3.7.0
 	 *

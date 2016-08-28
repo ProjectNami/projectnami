@@ -32,7 +32,7 @@ function wp_ajax_nopriv_heartbeat() {
 		$data = wp_unslash( (array) $_POST['data'] );
 
 		/**
-		 * Filter Heartbeat AJAX response in no-privilege environments.
+		 * Filters Heartbeat AJAX response in no-privilege environments.
 		 *
 		 * @since 3.6.0
 		 *
@@ -44,7 +44,7 @@ function wp_ajax_nopriv_heartbeat() {
 	}
 
 	/**
-	 * Filter Heartbeat AJAX response when no data is passed.
+	 * Filters Heartbeat AJAX response when no data is passed.
 	 *
 	 * @since 3.6.0
 	 *
@@ -132,7 +132,7 @@ function wp_ajax_ajax_tag_search() {
 	$s = trim( $s );
 
 	/**
-	 * Filter the minimum number of characters required to fire a tag search via AJAX.
+	 * Filters the minimum number of characters required to fire a tag search via AJAX.
 	 *
 	 * @since 4.0.0
 	 *
@@ -2282,7 +2282,7 @@ function wp_ajax_wp_remove_post_lock() {
 		wp_die( 0 );
 
 	/**
-	 * Filter the post lock window duration.
+	 * Filters the post lock window duration.
 	 *
 	 * @since 3.3.0
 	 *
@@ -2379,7 +2379,7 @@ function wp_ajax_query_attachments() {
 		$query['post_status'] .= ',private';
 
 	/**
-	 * Filter the arguments passed to WP_Query during an AJAX
+	 * Filters the arguments passed to WP_Query during an AJAX
 	 * call for querying attachments.
 	 *
 	 * @since 3.7.0
@@ -2717,7 +2717,7 @@ function wp_ajax_heartbeat() {
 
 	if ( ! empty( $data ) ) {
 		/**
-		 * Filter the Heartbeat response received.
+		 * Filters the Heartbeat response received.
 		 *
 		 * @since 3.6.0
 		 *
@@ -2729,7 +2729,7 @@ function wp_ajax_heartbeat() {
 	}
 
 	/**
-	 * Filter the Heartbeat response sent.
+	 * Filters the Heartbeat response sent.
 	 *
 	 * @since 3.6.0
 	 *
@@ -3279,7 +3279,7 @@ function wp_ajax_crop_image() {
 			$metadata = wp_generate_attachment_metadata( $attachment_id, $cropped );
 
 			/**
-			 * Filter the cropped image attachment metadata.
+			 * Filters the cropped image attachment metadata.
 			 *
 			 * @since 4.3.0
 			 *
@@ -3291,7 +3291,7 @@ function wp_ajax_crop_image() {
 			wp_update_attachment_metadata( $attachment_id, $metadata );
 
 			/**
-			 * Filter the attachment ID for a cropped image.
+			 * Filters the attachment ID for a cropped image.
 			 *
 			 * @since 4.3.0
 			 *

@@ -929,7 +929,7 @@ function __get_option($setting) {
 }
 
 /**
- * Filters for content to remove unnecessary slashes.
+ * Filterss for content to remove unnecessary slashes.
  *
  * @ignore
  * @since 1.5.0
@@ -1406,7 +1406,7 @@ function wp_should_upgrade_global_tables() {
 	}
 
 	/**
-	 * Filter if upgrade routines should be run on global tables.
+	 * Filters if upgrade routines should be run on global tables.
 	 *
 	 * @param bool $should_upgrade Whether to run the upgrade routines on global tables.
 	 */
