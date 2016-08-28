@@ -2234,7 +2234,7 @@ class WP_Query {
 		}
 
 		/**
-		 * Filter stopwords used when parsing search terms.
+		 * Filters stopwords used when parsing search terms.
 		 *
 		 * @since 3.7.0
 		 *
@@ -2788,7 +2788,7 @@ class WP_Query {
 
 		if ( ! $q['suppress_filters'] ) {
 			/**
-			 * Filter the search SQL that is used in the WHERE clause of WP_Query.
+			 * Filters the search SQL that is used in the WHERE clause of WP_Query.
 			 *
 			 * @since 3.0.0
 			 *
@@ -3186,7 +3186,7 @@ class WP_Query {
 		 */
 		if ( !$q['suppress_filters'] ) {
 			/**
-			 * Filter the WHERE clause of the query.
+			 * Filters the WHERE clause of the query.
 			 *
 			 * @since 1.5.0
 			 *
@@ -3196,7 +3196,7 @@ class WP_Query {
 			$where = apply_filters_ref_array( 'posts_where', array( $where, &$this ) );
 
 			/**
-			 * Filter the JOIN clause of the query.
+			 * Filters the JOIN clause of the query.
 			 *
 			 * @since 1.5.0
 			 *
@@ -3236,7 +3236,7 @@ class WP_Query {
 
 			if ( !$q['suppress_filters'] ) {
 				/**
-				 * Filter the JOIN clause of the comments feed query before sending.
+				 * Filters the JOIN clause of the comments feed query before sending.
 				 *
 				 * @since 2.2.0
 				 *
@@ -3246,7 +3246,7 @@ class WP_Query {
 				$cjoin = apply_filters_ref_array( 'comment_feed_join', array( $cjoin, &$this ) );
 
 				/**
-				 * Filter the WHERE clause of the comments feed query before sending.
+				 * Filters the WHERE clause of the comments feed query before sending.
 				 *
 				 * @since 2.2.0
 				 *
@@ -3256,7 +3256,7 @@ class WP_Query {
 				$cwhere = apply_filters_ref_array( 'comment_feed_where', array( $cwhere, &$this ) );
 
 				/**
-				 * Filter the GROUP BY clause of the comments feed query before sending.
+				 * Filters the GROUP BY clause of the comments feed query before sending.
 				 *
 				 * @since 2.2.0
 				 *
@@ -3266,7 +3266,7 @@ class WP_Query {
 				$cgroupby = apply_filters_ref_array( 'comment_feed_groupby', array( $cgroupby, &$this ) );
 
 				/**
-				 * Filter the ORDER BY clause of the comments feed query before sending.
+				 * Filters the ORDER BY clause of the comments feed query before sending.
 				 *
 				 * @since 2.8.0
 				 *
@@ -3276,7 +3276,7 @@ class WP_Query {
 				$corderby = apply_filters_ref_array( 'comment_feed_orderby', array( 'comment_date_gmt DESC', &$this ) );
 
 				/**
-				 * Filter the LIMIT clause of the comments feed query before sending.
+				 * Filters the LIMIT clause of the comments feed query before sending.
 				 *
 				 * @since 2.8.0
 				 *
@@ -3312,7 +3312,7 @@ class WP_Query {
 		 */
 		if ( !$q['suppress_filters'] ) {
 			/**
-			 * Filter the WHERE clause of the query.
+			 * Filters the WHERE clause of the query.
 			 *
 			 * Specifically for manipulating paging queries.
 			 *
@@ -3324,7 +3324,7 @@ class WP_Query {
 			$where = apply_filters_ref_array( 'posts_where_paged', array( $where, &$this ) );
 
 			/**
-			 * Filter the GROUP BY clause of the query.
+			 * Filters the GROUP BY clause of the query.
 			 *
 			 * @since 2.0.0
 			 *
@@ -3334,7 +3334,7 @@ class WP_Query {
 			$groupby = apply_filters_ref_array( 'posts_groupby', array( $groupby, &$this ) );
 
 			/**
-			 * Filter the JOIN clause of the query.
+			 * Filters the JOIN clause of the query.
 			 *
 			 * Specifically for manipulating paging queries.
 			 *
@@ -3346,7 +3346,7 @@ class WP_Query {
 			$join = apply_filters_ref_array( 'posts_join_paged', array( $join, &$this ) );
 
 			/**
-			 * Filter the ORDER BY clause of the query.
+			 * Filters the ORDER BY clause of the query.
 			 *
 			 * @since 1.5.1
 			 *
@@ -3356,7 +3356,7 @@ class WP_Query {
 			$orderby = apply_filters_ref_array( 'posts_orderby', array( $orderby, &$this ) );
 
 			/**
-			 * Filter the DISTINCT clause of the query.
+			 * Filters the DISTINCT clause of the query.
 			 *
 			 * @since 2.1.0
 			 *
@@ -3366,7 +3366,7 @@ class WP_Query {
 			$distinct = apply_filters_ref_array( 'posts_distinct', array( $distinct, &$this ) );
 
 			/**
-			 * Filter the LIMIT clause of the query.
+			 * Filters the LIMIT clause of the query.
 			 *
 			 * @since 2.1.0
 			 *
@@ -3376,7 +3376,7 @@ class WP_Query {
 			$limits = apply_filters_ref_array( 'post_limits', array( $limits, &$this ) );
 
 			/**
-			 * Filter the SELECT clause of the query.
+			 * Filters the SELECT clause of the query.
 			 *
 			 * @since 2.1.0
 			 *
@@ -3386,7 +3386,7 @@ class WP_Query {
 			$fields = apply_filters_ref_array( 'posts_fields', array( $fields, &$this ) );
 
 			/**
-			 * Filter all query clauses at once, for convenience.
+			 * Filters all query clauses at once, for convenience.
 			 *
 			 * Covers the WHERE, GROUP BY, JOIN, ORDER BY, DISTINCT,
 			 * fields (SELECT), and LIMITS clauses.
@@ -3419,12 +3419,12 @@ class WP_Query {
 		do_action( 'posts_selection', $where . $groupby . $orderby . $limits . $join );
 
 		/*
-		 * Filter again for the benefit of caching plugins.
+		 * Filters again for the benefit of caching plugins.
 		 * Regular plugins should use the hooks above.
 		 */
 		if ( !$q['suppress_filters'] ) {
 			/**
-			 * Filter the WHERE clause of the query.
+			 * Filters the WHERE clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3436,7 +3436,7 @@ class WP_Query {
 			$where = apply_filters_ref_array( 'posts_where_request', array( $where, &$this ) );
 
 			/**
-			 * Filter the GROUP BY clause of the query.
+			 * Filters the GROUP BY clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3448,7 +3448,7 @@ class WP_Query {
 			$groupby = apply_filters_ref_array( 'posts_groupby_request', array( $groupby, &$this ) );
 
 			/**
-			 * Filter the JOIN clause of the query.
+			 * Filters the JOIN clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3460,7 +3460,7 @@ class WP_Query {
 			$join = apply_filters_ref_array( 'posts_join_request', array( $join, &$this ) );
 
 			/**
-			 * Filter the ORDER BY clause of the query.
+			 * Filters the ORDER BY clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3472,7 +3472,7 @@ class WP_Query {
 			$orderby = apply_filters_ref_array( 'posts_orderby_request', array( $orderby, &$this ) );
 
 			/**
-			 * Filter the DISTINCT clause of the query.
+			 * Filters the DISTINCT clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3484,7 +3484,7 @@ class WP_Query {
 			$distinct = apply_filters_ref_array( 'posts_distinct_request', array( $distinct, &$this ) );
 
 			/**
-			 * Filter the SELECT clause of the query.
+			 * Filters the SELECT clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3496,7 +3496,7 @@ class WP_Query {
 			$fields = apply_filters_ref_array( 'posts_fields_request', array( $fields, &$this ) );
 
 			/**
-			 * Filter the LIMIT clause of the query.
+			 * Filters the LIMIT clause of the query.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3508,7 +3508,7 @@ class WP_Query {
 			$limits = apply_filters_ref_array( 'post_limits_request', array( $limits, &$this ) );
 
 			/**
-			 * Filter all query clauses at once, for convenience.
+			 * Filters all query clauses at once, for convenience.
 			 *
 			 * For use by caching plugins.
 			 *
@@ -3549,7 +3549,7 @@ class WP_Query {
 
 		if ( !$q['suppress_filters'] ) {
 			/**
-			 * Filter the completed SQL query before sending.
+			 * Filters the completed SQL query before sending.
 			 *
 			 * @since 2.0.0
 			 *
@@ -3587,7 +3587,7 @@ class WP_Query {
 		$split_the_query = ( $old_request == $this->request && "$wpdb->posts.*" == $fields && !empty( $limits ) && $q['posts_per_page'] < 500 );
 
 		/**
-		 * Filter whether to split the query.
+		 * Filters whether to split the query.
 		 *
 		 * Splitting the query will cause it to fetch just the IDs of the found posts
 		 * (and then individually fetch each post by ID), rather than fetching every
@@ -3609,7 +3609,7 @@ class WP_Query {
 			$this->request = "SELECT $distinct $wpdb->posts.* $orderbyfields FROM $wpdb->posts $join WHERE 1=1 $where $groupby $orderby $limits";
 
 			/**
-			 * Filter the Post IDs SQL request before sending.
+			 * Filters the Post IDs SQL request before sending.
 			 *
 			 * @since 3.4.0
 			 *
@@ -3638,7 +3638,7 @@ class WP_Query {
 
 		if ( ! $q['suppress_filters'] ) {
 			/**
-			 * Filter the raw post results array, prior to status checks.
+			 * Filters the raw post results array, prior to status checks.
 			 *
 			 * @since 2.3.0
 			 *
@@ -3708,7 +3708,7 @@ class WP_Query {
 
 			if ( $this->is_preview && $this->posts && current_user_can( $edit_cap, $this->posts[0]->ID ) ) {
 				/**
-				 * Filter the single post for preview mode.
+				 * Filters the single post for preview mode.
 				 *
 				 * @since 2.7.0
 				 *
@@ -3767,7 +3767,7 @@ class WP_Query {
 
 		if ( ! $q['suppress_filters'] ) {
 			/**
-			 * Filter the array of retrieved posts after they've been fetched and
+			 * Filters the array of retrieved posts after they've been fetched and
 			 * internally processed.
 			 *
 			 * @since 1.5.0
@@ -3823,7 +3823,7 @@ class WP_Query {
 
 		if ( ! empty( $limits ) ) {
 			/**
-			 * Filter the query to run for retrieving the found posts.
+			 * Filters the query to run for retrieving the found posts.
 			 *
 			 * @since 2.1.0
 			 *
@@ -3838,7 +3838,7 @@ class WP_Query {
 		}
 
 		/**
-		 * Filter the number of found posts for the query.
+		 * Filters the number of found posts for the query.
 		 *
 		 * @since 2.1.0
 		 *
@@ -4811,7 +4811,7 @@ class WP_Query {
 		}
 
 		/**
-		 * Filter the "pages" derived from splitting the post content.
+		 * Filters the "pages" derived from splitting the post content.
 		 *
 		 * "Pages" are determined by splitting the post content based on the presence
 		 * of `<!-- nextpage -->` tags.
@@ -4956,7 +4956,7 @@ function wp_old_slug_redirect() {
 		}
 
 		/**
-		 * Filter the old slug redirect URL.
+		 * Filters the old slug redirect URL.
 		 *
 		 * @since 4.4.0
 		 *
