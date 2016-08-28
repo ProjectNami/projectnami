@@ -115,7 +115,7 @@ class WP_oEmbed {
 		self::$early_providers = array();
 
 		/**
-		 * Filter the list of whitelisted oEmbed providers.
+		 * Filters the list of whitelisted oEmbed providers.
 		 *
 		 * Since WordPress 4.4, oEmbed discovery is enabled for all users and allows embedding of sanitized
 		 * iframes. The providers in this list are whitelisted, meaning they are trusted and allowed to
@@ -343,7 +343,7 @@ class WP_oEmbed {
 		}
 
 		/**
-		 * Filter the HTML returned by the oEmbed provider.
+		 * Filters the HTML returned by the oEmbed provider.
 		 *
 		 * @since 2.9.0
 		 *
@@ -370,7 +370,7 @@ class WP_oEmbed {
 		);
 
 		/**
-		 * Filter oEmbed remote get arguments.
+		 * Filters oEmbed remote get arguments.
 		 *
 		 * @since 4.0.0
 		 *
@@ -386,7 +386,7 @@ class WP_oEmbed {
 		if ( $html = wp_remote_retrieve_body( $request ) ) {
 
 			/**
-			 * Filter the link types that contain oEmbed provider URLs.
+			 * Filters the link types that contain oEmbed provider URLs.
 			 *
 			 * @since 2.9.0
 			 *
@@ -457,7 +457,7 @@ class WP_oEmbed {
 		$provider = add_query_arg( 'url', urlencode($url), $provider );
 
 		/**
-		 * Filter the oEmbed URL to be fetched.
+		 * Filters the oEmbed URL to be fetched.
 		 *
 		 * @since 2.9.0
 		 *
@@ -620,7 +620,7 @@ class WP_oEmbed {
 		}
 
 		/**
-		 * Filter the returned oEmbed HTML.
+		 * Filters the returned oEmbed HTML.
 		 *
 		 * Use this filter to add support for custom data types, or to filter the result.
 		 *
