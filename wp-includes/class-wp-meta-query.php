@@ -348,7 +348,7 @@ class WP_Meta_Query {
 		}
 
 		/**
-		 * Filter the meta query's generated SQL.
+		 * Filters the meta query's generated SQL.
 		 *
 		 * @since 3.1.0
 		 *
@@ -721,7 +721,7 @@ class WP_Meta_Query {
 		}
 
 		/**
-		 * Filter the table alias identified as compatible with the current clause.
+		 * Filters the table alias identified as compatible with the current clause.
 		 *
 		 * @since 4.1.0
 		 *
