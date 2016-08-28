@@ -4137,7 +4137,7 @@ class WP_Query {
 	}
 
 	/**
-	 * Make private properties readable for backwards compatibility.
+	 * Make private properties readable for backward compatibility.
 	 *
 	 * @since 4.0.0
 	 * @access public
@@ -4152,7 +4152,7 @@ class WP_Query {
 	}
 
 	/**
-	 * Make private properties checkable for backwards compatibility.
+	 * Make private properties checkable for backward compatibility.
 	 *
 	 * @since 4.0.0
 	 * @access public
@@ -4167,7 +4167,7 @@ class WP_Query {
 	}
 
 	/**
-	 * Make private/protected methods readable for backwards compatibility.
+	 * Make private/protected methods readable for backward compatibility.
 	 *
 	 * @since 4.0.0
 	 * @access public
