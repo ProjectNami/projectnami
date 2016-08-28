@@ -1,17 +1,43 @@
 <?php
 /**
- * Upgrade API: WP_Upgrader, Plugin_Upgrader, Theme_Upgrader, Language_Pack_Upgrader,
- * Core_Upgrader, File_Upload_Upgrader, and WP_Automatic_Updater classes
+ * Upgrade API: WP_Upgrader class
  *
- * This set of classes are designed to be used to upgrade/install a local set of files
- * on the filesystem via the Filesystem Abstraction classes.
+ * Requires skin classes and WP_Upgrader subclasses for backward compatibility.
  *
  * @package WordPress
  * @subpackage Upgrader
  * @since 2.8.0
  */
 
-require ABSPATH . 'wp-admin/includes/class-wp-upgrader-skins.php';
+/** WP_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader-skin.php';
+
+/** Plugin_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-plugin-upgrader-skin.php';
+
+/** Theme_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-theme-upgrader-skin.php';
+
+/** Bulk_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-bulk-upgrader-skin.php';
+
+/** Bulk_Plugin_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-bulk-plugin-upgrader-skin.php';
+
+/** Bulk_Theme_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-bulk-theme-upgrader-skin.php';
+
+/** Plugin_Installer_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-plugin-installer-skin.php';
+
+/** Theme_Installer_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-theme-installer-skin.php';
+
+/** Language_Pack_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-language-pack-upgrader-skin.php';
+
+/** Automatic_Upgrader_Skin class */
+require_once ABSPATH . 'wp-admin/includes/class-automatic-upgrader-skin.php';
 
 /**
  * Core class used for upgrading/installing a local set of files via
@@ -245,6 +271,7 @@ class WP_Upgrader {
 
 		$this->skin->feedback('downloading_package', $package);
 
+		$package = '';
 		$download_file = download_url($package);
 
 		if ( is_wp_error($download_file) )
