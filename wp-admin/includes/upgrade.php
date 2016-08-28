@@ -1437,3 +1437,6 @@ function upgrade_450() {
 	// Remove unused user setting for wpLink.
 	delete_user_setting( 'wplink' );
 }
+	$text_fields = array( 'tinytext', 'text', 'mediumtext', 'longtext' );
+	$blob_fields = array( 'tinyblob', 'blob', 'mediumblob', 'longblob' );
+
