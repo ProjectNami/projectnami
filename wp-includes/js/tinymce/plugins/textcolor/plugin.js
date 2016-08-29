@@ -85,9 +85,6 @@ tinymce.PluginManager.add('textcolor', function(editor) {
 		colorMap = editor.settings.textcolor_map || colorMap;
 		colorMap = editor.settings[type + '_map'] || colorMap;
 
-		colorMap = editor.settings.textcolor_map || colorMap;
-		colorMap = editor.settings[type + '_map'] || colorMap;
-
 		for (i = 0; i < colorMap.length; i += 2) {
 			colors.push({
 				text: colorMap[i + 1],
@@ -271,7 +268,6 @@ tinymce.PluginManager.add('textcolor', function(editor) {
 	}
 
 	editor.addButton('forecolor', {
-			origin: 'forecolor',
 		type: 'colorbutton',
 		tooltip: 'Text color',
 		format: 'forecolor',
@@ -285,7 +281,6 @@ tinymce.PluginManager.add('textcolor', function(editor) {
 		onclick: onButtonClick
 	});
 
-			origin: 'backcolor',
 	editor.addButton('backcolor', {
 		type: 'colorbutton',
 		tooltip: 'Background color',
