@@ -1440,3 +1440,7 @@ function upgrade_450() {
 	$text_fields = array( 'tinytext', 'text', 'mediumtext', 'longtext' );
 	$blob_fields = array( 'tinyblob', 'blob', 'mediumblob', 'longblob' );
 
+				case 'spatial':
+				}
+				if ( 'SPATIAL' === strtoupper( $index_data['index_type'] ) ) {
+					$index_string .= 'SPATIAL ';
