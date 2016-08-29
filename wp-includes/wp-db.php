@@ -3323,6 +3323,7 @@ class wpdb {
 			case 'set_charset' :
 				return version_compare( $version, '5.0.7', '>=' );
 			case 'utf8mb4' :      // @since 4.1.0
+			case 'utf8mb4_520' : // @since 4.6.0
         		return false;
 		}
 
@@ -3342,8 +3343,6 @@ class wpdb {
 	public function get_caller() {
 		return wp_debug_backtrace_summary( __CLASS__ );
 	}
-			case 'utf8mb4_520' : // @since 4.6.0
-				return version_compare( $version, '5.6', '>=' );
 
 	/**
 	 * Retrieves the MySQL server version.
