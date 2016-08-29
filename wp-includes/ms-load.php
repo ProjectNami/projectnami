@@ -155,6 +155,7 @@ function wp_get_network( $network ) {
  * Retrieve a site object by its domain and path.
  *
  * @since 3.9.0
+ * @since 4.6.0 Converted to use get_sites()
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
@@ -164,8 +165,6 @@ function wp_get_network( $network ) {
  * @return object|false Site object if successful. False when no site is found.
  */
 function get_site_by_path( $domain, $path, $segments = null ) {
-	global $wpdb;
-
 	$path_segments = array_filter( explode( '/', trim( $path, '/' ) ) );
 
 	/**
@@ -232,26 +231,27 @@ function get_site_by_path( $domain, $path, $segments = null ) {
 	$domains = array( $domain );
 	if ( 'www.' === substr( $domain, 0, 4 ) ) {
 		$domains[] = substr( $domain, 4 );
-		$search_domains = "'" . implode( "', '", $wpdb->_escape( $domains ) ) . "'";
 	}
 
-	if ( count( $paths ) > 1 ) {
-		$search_paths = "'" . implode( "', '", $wpdb->_escape( $paths ) ) . "'";
-	}
+	$args = array(
+		'domain__in' => $domains,
+		'path__in' => $paths,
+		'number' => 1,
+	);
 
 	if ( count( $domains ) > 1 && count( $paths ) > 1 ) {
-		$site = $wpdb->get_row( "SELECT TOP 1 * FROM $wpdb->blogs WHERE domain IN ($search_domains) AND path IN ($search_paths) ORDER BY LEN(domain) DESC, LEN(path) DESC" );
+		$args['orderby'] = 'domain_length path_length';
+		$args['order'] = 'DESC DESC';
 	} elseif ( count( $domains ) > 1 ) {
-		$sql = $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->blogs WHERE path = %s", $paths[0] );
-		$sql .= " AND domain IN ($search_domains) ORDER BY LEN(domain) DESC";
-		$site = $wpdb->get_row( $sql );
+		$args['orderby'] = 'domain_length';
+		$args['order'] = 'DESC';
 	} elseif ( count( $paths ) > 1 ) {
-		$sql = $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->blogs WHERE domain = %s", $domains[0] );
-		$sql .= " AND path IN ($search_paths) ORDER BY LEN(path) DESC";
-		$site = $wpdb->get_row( $sql );
-	} else {
-		$site = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $wpdb->blogs WHERE domain = %s AND path = %s", $domains[0], $paths[0] ) );
+		$args['orderby'] = 'path_length';
+		$args['order'] = 'DESC';
 	}
+
+	$result = get_sites( $args );
+	$site = array_shift( $result );
 
 	if ( $site ) {
 		// @todo get_blog_details()
