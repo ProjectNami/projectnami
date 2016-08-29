@@ -1467,7 +1467,8 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  * | U+1EF8   | Ỹ     | Y           | Latin capital letter Y with tilde                     |
  * | U+1EF9   | ỹ     | y           | Latin small letter y with tilde                       |
  *
- * German (`de_DE`) and German formal (`de_DE_formal`) locales:
+ * German (`de_DE`), German formal (`de_DE_formal`), German (Switzerland) formal (`de_CH`),
+ * and German (Switzerland) informal (`de_CH_informal`) locales:
  *
  * |   Code   | Glyph | Replacement |               Description               |
  * | -------- | ----- | ----------- | --------------------------------------- |
@@ -1490,7 +1491,14 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  * | U+00C5   | Å     | Aa          | Latin capital letter A with ring above  |
  * | U+00E5   | å     | aa          | Latin small letter a with ring above    |
  *
+ * Catalan (`ca`) locale:
+ *
+ * |   Code   | Glyph | Replacement |               Description               |
+ * | -------- | ----- | ----------- | --------------------------------------- |
+ * | U+00B7   | l·l   | ll          | Flown dot (between two Ls)              |
+ *
  * @since 1.2.1
+ * @since 4.6.0 Added locale support for `de_CH`, `de_CH_informal`, and `ca`.
  *
  * @param string $string Text that might have accent characters
  * @return string Filtered string with replaced "nice" characters.
@@ -1679,7 +1687,7 @@ function remove_accents( $string ) {
 		// Used for locale-specific rules
 		$locale = get_locale();
 
-		if ( 'de_DE' == $locale || 'de_DE_formal' == $locale ) {
+		if ( 'de_DE' == $locale || 'de_DE_formal' == $locale || 'de_CH' == $locale || 'de_CH_informal' == $locale ) {
 			$chars[ chr(195).chr(132) ] = 'Ae';
 			$chars[ chr(195).chr(164) ] = 'ae';
 			$chars[ chr(195).chr(150) ] = 'Oe';
@@ -1694,6 +1702,8 @@ function remove_accents( $string ) {
 			$chars[ chr(195).chr(184) ] = 'oe';
 			$chars[ chr(195).chr(133) ] = 'Aa';
 			$chars[ chr(195).chr(165) ] = 'aa';
+		} elseif ( 'ca' === $locale ) {
+			$chars[ chr(108).chr(194).chr(183).chr(108) ] = 'll';
 		}
 
 		$string = strtr($string, $chars);
@@ -1755,6 +1765,14 @@ function sanitize_file_name( $filename ) {
 	$filename = str_replace( array( '%20', '+' ), '-', $filename );
 	$filename = preg_replace( '/[\r\n\t -]+/', '-', $filename );
 	$filename = trim( $filename, '.-_' );
+
+	if ( false === strpos( $filename, '.' ) ) {
+		$mime_types = wp_get_mime_types();
+		$filetype = wp_check_filetype( 'test.' . $filename, $mime_types );
+		if ( $filetype['ext'] === $filename ) {
+			$filename = 'unnamed-file.' . $filetype['ext'];
+		}
+	}
 
 	if ( false === strpos( $filename, '.' ) ) {
 		$mime_types = wp_get_mime_types();
@@ -2848,7 +2866,7 @@ function convert_smilies( $text ) {
  */
 function is_email( $email, $deprecated = false ) {
 	if ( ! empty( $deprecated ) )
-		_deprecated_argument( __FUNCTION__, '3.0' );
+		_deprecated_argument( __FUNCTION__, '3.0.0' );
 
 	// Test for the minimum length the email can be
 	if ( strlen( $email ) < 3 ) {
@@ -4218,6 +4236,14 @@ function sanitize_option( $option, $value ) {
 				$value = esc_url_raw( $value );
 				$value = str_replace( 'http://', '', $value );
 			}
+
+			if ( 'permalink_structure' === $option && '' !== $value && ! preg_match( '/%[^\/%]+%/', $value ) ) {
+				$error = sprintf(
+					/* translators: %s: Codex URL */
+					__( 'A structure tag is required when using custom permalinks. <a href="%s">Learn more</a>' ),
+					__( 'https://codex.wordpress.org/Using_Permalinks#Choosing_your_permalink_structure' )
+				);
+			}
 			break;
 
 		case 'default_role' :
@@ -4911,13 +4937,13 @@ function print_emoji_detection_script() {
 }
 
 /**
- * Print inline Emoji dection script
+ * Prints inline Emoji dection script
  *
  * @ignore
  * @since 4.6.0
  * @access private
  *
- * @global string $wp_version
+ * @global string $wp_version WordPress version string.
  */
 function _print_emoji_detection_script() {
 	global $wp_version;
@@ -4930,7 +4956,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @param string The emoji base URL for png images.
 		 */
-		'baseUrl' => apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/72x72/' ),
+		'baseUrl' => apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/2/72x72/' ),
 
 		/**
 		 * Filters the extension of the emoji png files.
@@ -4948,7 +4974,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @param string The emoji base URL for svg images.
 		 */
-		'svgUrl' => apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/svg/' ),
+		'svgUrl' => apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/2/svg/' ),
 
 		/**
 		 * Filters the extension of the emoji SVG files.
@@ -5060,7 +5086,7 @@ function wp_staticize_emoji( $text ) {
 	$text = wp_encode_emoji( $text );
 
 	/** This filter is documented in wp-includes/formatting.php */
-	$cdn_url = apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/72x72/' );
+	$cdn_url = apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/2/72x72/' );
 
 	/** This filter is documented in wp-includes/formatting.php */
 	$ext = apply_filters( 'emoji_ext', '.png' );

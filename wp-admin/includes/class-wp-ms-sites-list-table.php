@@ -59,6 +59,10 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 	}
 
 	/**
+	 * Prepares the list of sites for display.
+	 *
+	 * @since 3.1.0
+	 * @since 4.6.0 Converted to use get_sites()
 	 *
 	 * @global string $s
 	 * @global string $mode
@@ -66,8 +70,6 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 	 */
 	public function prepare_items() {
 		global $s, $mode, $wpdb;
-
-		$current_site = get_current_site();
 
 		if ( ! empty( $_REQUEST['mode'] ) ) {
 			$mode = $_REQUEST['mode'] === 'excerpt' ? 'excerpt' : 'list';
@@ -83,7 +85,7 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 		$s = isset( $_REQUEST['s'] ) ? wp_unslash( trim( $_REQUEST[ 's' ] ) ) : '';
 		$wild = '';
 		if ( false !== strpos($s, '*') ) {
-			$wild = '%';
+			$wild = '*';
 			$s = trim($s, '*');
 		}
 
@@ -98,7 +100,11 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 				$_GET['order'] = $_REQUEST['order'] = 'DESC';
 		}
 
-		$query = "SELECT * FROM {$wpdb->blogs} WHERE site_id = '{$wpdb->siteid}' ";
+		$args = array(
+			'number'     => intval( $per_page ),
+			'offset'     => intval( ( $pagenum - 1 ) * $per_page ),
+			'network_id' => get_current_network_id(),
+		);
 
 		if ( empty($s) ) {
 			// Nothing to do.
@@ -463,6 +469,7 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 	 */
 	public function display_rows() {
 		foreach ( $this->items as $blog ) {
+			$blog = $blog->to_array();
 			$class = '';
 			reset( $this->status_list );
 

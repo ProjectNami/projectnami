@@ -14,7 +14,7 @@ if ( ! is_multisite() )
 	wp_die( __( 'Multisite support is not enabled.' ) );
 
 if ( !current_user_can('manage_network_themes') )
-	wp_die( __( 'You do not have sufficient permissions to manage network themes.' ) );
+	wp_die( __( 'Sorry, you are not allowed to manage network themes.' ) );
 
 $wp_list_table = _get_list_table('WP_MS_Themes_List_Table');
 $pagenum = $wp_list_table->get_pagenum();
@@ -90,7 +90,7 @@ if ( $action ) {
 			exit;
 		case 'delete-selected':
 			if ( ! current_user_can( 'delete_themes' ) ) {
-				wp_die( __('You do not have sufficient permissions to delete themes for this site.') );
+				wp_die( __('Sorry, you are not allowed to delete themes for this site.') );
 			}
 
 			check_admin_referer( 'bulk-themes' );
@@ -228,6 +228,7 @@ get_current_screen()->set_screen_reader_content( array(
 $title = __('Themes');
 $parent_file = 'themes.php';
 
+wp_enqueue_script( 'updates' );
 wp_enqueue_script( 'theme-preview' );
 
 require_once(ABSPATH . 'wp-admin/admin-header.php');
@@ -287,7 +288,7 @@ if ( 'broken' == $status )
 	echo '<p class="clear">' . __( 'The following themes are installed but incomplete.' ) . '</p>';
 ?>
 
-<form method="post">
+<form id="bulk-action-form" method="post">
 <input type="hidden" name="theme_status" value="<?php echo esc_attr($status) ?>" />
 <input type="hidden" name="paged" value="<?php echo esc_attr($page) ?>" />
 
@@ -297,4 +298,8 @@ if ( 'broken' == $status )
 </div>
 
 <?php
+wp_print_request_filesystem_credentials_modal();
+wp_print_admin_notice_templates();
+wp_print_update_row_templates();
+
 include(ABSPATH . 'wp-admin/admin-footer.php');

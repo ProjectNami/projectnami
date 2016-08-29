@@ -289,14 +289,14 @@ function wp_loginout($redirect = '', $echo = true) {
 }
 
 /**
- * Returns the Log Out URL.
+ * Retrieves the logout URL.
  *
  * Returns the URL that allows the user to log out of the site.
  *
  * @since 2.7.0
  *
  * @param string $redirect Path to redirect to on logout.
- * @return string A log out URL.
+ * @return string The logout URL. Note: HTML-encoded via esc_html() in wp_nonce_url().
  */
 function wp_logout_url($redirect = '') {
 	$args = array( 'action' => 'logout' );
@@ -312,20 +312,21 @@ function wp_logout_url($redirect = '') {
 	 *
 	 * @since 2.8.0
 	 *
-	 * @param string $logout_url The Log Out URL.
+	 * @param string $logout_url The HTML-encoded logout URL.
 	 * @param string $redirect   Path to redirect to on logout.
 	 */
 	return apply_filters( 'logout_url', $logout_url, $redirect );
 }
 
 /**
- * Returns the URL that allows the user to log in to the site.
+ * Retrieves the login URL.
  *
  * @since 2.7.0
  *
- * @param string $redirect     Path to redirect to on login.
- * @param bool   $force_reauth Whether to force reauthorization, even if a cookie is present. Default is false.
- * @return string A log in URL.
+ * @param string $redirect     Path to redirect to on log in.
+ * @param bool   $force_reauth Whether to force reauthorization, even if a cookie is present.
+ *                             Default false.
+ * @return string The login URL. Not HTML-encoded.
  */
 function wp_login_url($redirect = '', $force_reauth = false) {
 	$login_url = site_url('wp-login.php', 'login');
@@ -342,7 +343,7 @@ function wp_login_url($redirect = '', $force_reauth = false) {
 	 * @since 2.8.0
 	 * @since 4.2.0 The `$force_reauth` parameter was added.
 	 *
-	 * @param string $login_url    The login URL.
+	 * @param string $login_url    The login URL. Not HTML-encoded.
 	 * @param string $redirect     The path to redirect to on login, if supplied.
 	 * @param bool   $force_reauth Whether to force reauthorization, even if a cookie is present.
 	 */
@@ -652,7 +653,7 @@ function get_bloginfo( $show = '', $filter = 'raw' ) {
 	switch( $show ) {
 		case 'home' : // DEPRECATED
 		case 'siteurl' : // DEPRECATED
-			_deprecated_argument( __FUNCTION__, '2.2', sprintf(
+			_deprecated_argument( __FUNCTION__, '2.2.0', sprintf(
 				/* translators: 1: 'siteurl'/'home' argument, 2: bloginfo() function name, 3: 'url' argument */
 				__( 'The %1$s option is deprecated for the family of %2$s functions. Use the %3$s option instead.' ),
 				'<code>' . $show . '</code>',
@@ -725,7 +726,7 @@ function get_bloginfo( $show = '', $filter = 'raw' ) {
 			}
 			break;
 		case 'text_direction':
-			_deprecated_argument( __FUNCTION__, '2.2', sprintf(
+			_deprecated_argument( __FUNCTION__, '2.2.0', sprintf(
 				/* translators: 1: 'text_direction' argument, 2: bloginfo() function name, 3: is_rtl() function name */
 				__( 'The %1$s option is deprecated for the family of %2$s functions. Use the %3$s function instead.' ),
 				'<code>' . $show . '</code>',
@@ -1079,7 +1080,7 @@ function _wp_render_title_tag() {
  * important, which is the page that the user is looking at.
  *
  * There are also SEO benefits to having the blog title after or to the 'right'
- * or the page title. However, it is mostly common sense to have the blog title
+ * of the page title. However, it is mostly common sense to have the blog title
  * to the right with most browsers supporting tabs. You can achieve this by
  * using the seplocation parameter and setting the value to 'right'. This change
  * was introduced around 2.5.0, in case backward compatibility of themes is
@@ -2258,26 +2259,36 @@ function the_modified_date( $d = '', $before = '', $after = '', $echo = true ) {
  * Retrieve the date on which the post was last modified.
  *
  * @since 2.1.0
+ * @since 4.6.0 Added the `$post` parameter.
  *
- * @param string $d Optional. PHP date format. Defaults to the "date_format" option
- * @return string
+ * @param string      $d    Optional. PHP date format defaults to the date_format option if not specified.
+ * @param int|WP_Post $post Optional. Post ID or WP_Post object. Default current post.
+ * @return false|string Date the current post was modified. False on failure.
  */
-function get_the_modified_date($d = '') {
-	if ( '' == $d )
-		$the_time = get_post_modified_time(get_option('date_format'), null, null, true);
-	else
-		$the_time = get_post_modified_time($d, null, null, true);
+function get_the_modified_date( $d = '', $post = null ) {
+	$post = get_post( $post );
+
+	if ( ! $post ) {
+		// For backward compatibility, failures go through the filter below.
+		$the_time = false;
+	} elseif ( empty( $d ) ) {
+		$the_time = get_post_modified_time( get_option( 'date_format' ), false, $post, true );
+	} else {
+		$the_time = get_post_modified_time( $d, false, $post, true );
+	}
 
 	/**
 	 * Filters the date a post was last modified.
 	 *
 	 * @since 2.1.0
+	 * @since 4.6.0 Added the `$post` parameter.
 	 *
-	 * @param string $the_time The formatted date.
-	 * @param string $d        PHP date format. Defaults to value specified in
-	 *                         'date_format' option.
+	 * @param string  $the_time The formatted date.
+	 * @param string  $d        PHP date format. Defaults to value specified in
+	 *                          'date_format' option.
+	 * @param WP_Post $post     WP_Post object.
 	 */
-	return apply_filters( 'get_the_modified_date', $the_time, $d );
+	return apply_filters( 'get_the_modified_date', $the_time, $d, $post );
 }
 
 /**
@@ -2401,27 +2412,39 @@ function the_modified_time($d = '') {
  * Retrieve the time at which the post was last modified.
  *
  * @since 2.0.0
+ * @since 4.6.0 Added the `$post` parameter.
  *
- * @param string $d Optional Either 'G', 'U', or php date format defaults to the value specified in the time_format option.
- * @return string
+ * @param string      $d     Optional. Format to use for retrieving the time the post
+ *                           was modified. Either 'G', 'U', or php date format defaults
+ *                           to the value specified in the time_format option. Default empty.
+ * @param int|WP_Post $post  Optional. Post ID or WP_Post object. Default current post.
+ * @return false|string Formatted date string or Unix timestamp. False on failure.
  */
-function get_the_modified_time($d = '') {
-	if ( '' == $d )
-		$the_time = get_post_modified_time(get_option('time_format'), null, null, true);
-	else
-		$the_time = get_post_modified_time($d, null, null, true);
+function get_the_modified_time( $d = '', $post = null ) {
+	$post = get_post( $post );
+
+	if ( ! $post ) {
+		// For backward compatibility, failures go through the filter below.
+		$the_time = false;
+	} elseif ( empty( $d ) ) {
+		$the_time = get_post_modified_time( get_option( 'time_format' ), false, $post, true );
+	} else {
+		$the_time = get_post_modified_time( $d, false, $post, true );
+	}
 
 	/**
 	 * Filters the localized time a post was last modified.
 	 *
 	 * @since 2.0.0
+	 * @since 4.6.0 Added the `$post` parameter.
 	 *
 	 * @param string $the_time The formatted time.
 	 * @param string $d        Format to use for retrieving the time the post was
 	 *                         written. Accepts 'G', 'U', or php date format. Defaults
 	 *                         to value specified in 'time_format' option.
+	 * @param WP_Post $post    WP_Post object.
 	 */
-	return apply_filters( 'get_the_modified_time', $the_time, $d );
+	return apply_filters( 'get_the_modified_time', $the_time, $d, $post );
 }
 
 /**
@@ -2769,6 +2792,111 @@ function wp_site_icon() {
 }
 
 /**
+ * Prints resource hints to browsers for pre-fetching, pre-rendering
+ * and pre-connecting to web sites.
+ *
+ * Gives hints to browsers to prefetch specific pages or render them
+ * in the background, to perform DNS lookups or to begin the connection
+ * handshake (DNS, TCP, TLS) in the background.
+ *
+ * These performance improving indicators work by using `<link rel"…">`.
+ *
+ * @since 4.6.0
+ */
+function wp_resource_hints() {
+	$hints = array(
+		'dns-prefetch' => wp_dependencies_unique_hosts(),
+		'preconnect'   => array(),
+		'prefetch'     => array(),
+		'prerender'    => array(),
+	);
+
+	/*
+	 * Add DNS prefetch for the Emoji CDN.
+	 * The path is removed in the foreach loop below.
+	 */
+	/** This filter is documented in wp-includes/formatting.php */
+	$hints['dns-prefetch'][] = apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/2/svg/' );
+
+	foreach ( $hints as $relation_type => $urls ) {
+		/**
+		 * Filters domains and URLs for resource hints of relation type.
+		 *
+		 * @since 4.6.0
+		 *
+		 * @param array  $urls          URLs to print for resource hints.
+		 * @param string $relation_type The relation type the URLs are printed for, e.g. 'preconnect' or 'prerender'.
+		 */
+		$urls = apply_filters( 'wp_resource_hints', $urls, $relation_type );
+
+		foreach ( $urls as $key => $url ) {
+			$url = esc_url( $url, array( 'http', 'https' ) );
+			if ( ! $url ) {
+				unset( $urls[ $key ] );
+				continue;
+			}
+
+			if ( in_array( $relation_type, array( 'preconnect', 'dns-prefetch' ) ) ) {
+				$parsed = wp_parse_url( $url );
+				if ( empty( $parsed['host'] ) ) {
+					unset( $urls[ $key ] );
+					continue;
+				}
+
+				if ( 'dns-prefetch' === $relation_type ) {
+					$url = '//' . $parsed['host'];
+				} else if ( ! empty( $parsed['scheme'] ) ) {
+					$url = $parsed['scheme'] . '://' . $parsed['host'];
+				} else {
+					$url = $parsed['host'];
+				}
+			}
+
+			$urls[ $key ] = $url;
+		}
+
+		$urls = array_unique( $urls );
+
+		foreach ( $urls as $url ) {
+			printf( "<link rel='%s' href='%s'>\n", $relation_type, $url );
+		}
+	}
+}
+
+/**
+ * Retrieves a list of unique hosts of all enqueued scripts and styles.
+ *
+ * @since 4.6.0
+ *
+ * @return array A list of unique hosts of enqueued scripts and styles.
+ */
+function wp_dependencies_unique_hosts() {
+	global $wp_scripts, $wp_styles;
+
+	$unique_hosts = array();
+
+	foreach ( array( $wp_scripts, $wp_styles ) as $dependencies ) {
+		if ( $dependencies instanceof WP_Dependencies && ! empty( $dependencies->queue ) ) {
+			foreach ( $dependencies->queue as $handle ) {
+				if ( ! isset( $dependencies->registered[ $handle ] ) ) {
+					continue;
+				}
+
+				/* @var _WP_Dependency $dependency */
+				$dependency = $dependencies->registered[ $handle ];
+				$parsed     = wp_parse_url( $dependency->src );
+
+				if ( ! empty( $parsed['host'] ) && ! in_array( $parsed['host'], $unique_hosts ) && $parsed['host'] !== $_SERVER['SERVER_NAME'] ) {
+					$unique_hosts[] = $parsed['host'];
+				}
+			}
+		}
+	}
+
+	return $unique_hosts;
+}
+
+/**
  * Whether the user should have a WYSIWIG editor.
  *
  * Checks that the user requires a WYSIWIG editor and that the editor is
@@ -2844,7 +2972,7 @@ function wp_default_editor() {
  * _WP_Editors should not be used directly. See https://core.trac.wordpress.org/ticket/17144.
  *
  * NOTE: Once initialized the TinyMCE editor cannot be safely moved in the DOM. For that reason
- * running wp_editor() inside of a metabox is not a good idea unless only Quicktags is used.
+ * running wp_editor() inside of a meta box is not a good idea unless only Quicktags is used.
  * On the post edit screen several actions can be used to include additional editors
  * containing TinyMCE: 'edit_page_form', 'edit_form_advanced' and 'dbx_post_sidebar'.
  * See https://core.trac.wordpress.org/ticket/19173 for more information.

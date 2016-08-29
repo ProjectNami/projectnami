@@ -10,7 +10,7 @@
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! current_user_can('activate_plugins') )
-	wp_die( __( 'You do not have sufficient permissions to manage plugins for this site.' ) );
+	wp_die( __( 'Sorry, you are not allowed to manage plugins for this site.' ) );
 
 $wp_list_table = _get_list_table('WP_Plugins_List_Table');
 $pagenum = $wp_list_table->get_pagenum();
@@ -30,7 +30,7 @@ if ( $action ) {
 	switch ( $action ) {
 		case 'activate':
 			if ( ! current_user_can('activate_plugins') )
-				wp_die(__('You do not have sufficient permissions to activate plugins for this site.'));
+				wp_die(__('Sorry, you are not allowed to activate plugins for this site.'));
 
 			if ( is_multisite() && ! is_network_admin() && is_network_only_plugin( $plugin ) ) {
 				wp_redirect( self_admin_url("plugins.php?plugin_status=$status&paged=$page&s=$s") );
@@ -69,7 +69,7 @@ if ( $action ) {
 
 		case 'activate-selected':
 			if ( ! current_user_can('activate_plugins') )
-				wp_die(__('You do not have sufficient permissions to activate plugins for this site.'));
+				wp_die(__('Sorry, you are not allowed to activate plugins for this site.'));
 
 			check_admin_referer('bulk-plugins');
 
@@ -147,7 +147,7 @@ if ( $action ) {
 
 		case 'error_scrape':
 			if ( ! current_user_can('activate_plugins') )
-				wp_die(__('You do not have sufficient permissions to activate plugins for this site.'));
+				wp_die(__('Sorry, you are not allowed to activate plugins for this site.'));
 
 			check_admin_referer('plugin-activation-error_' . $plugin);
 
@@ -168,7 +168,7 @@ if ( $action ) {
 
 		case 'deactivate':
 			if ( ! current_user_can('activate_plugins') )
-				wp_die(__('You do not have sufficient permissions to deactivate plugins for this site.'));
+				wp_die(__('Sorry, you are not allowed to deactivate plugins for this site.'));
 
 			check_admin_referer('deactivate-plugin_' . $plugin);
 
@@ -193,7 +193,7 @@ if ( $action ) {
 
 		case 'deactivate-selected':
 			if ( ! current_user_can('activate_plugins') )
-				wp_die(__('You do not have sufficient permissions to deactivate plugins for this site.'));
+				wp_die(__('Sorry, you are not allowed to deactivate plugins for this site.'));
 
 			check_admin_referer('bulk-plugins');
 
@@ -228,7 +228,7 @@ if ( $action ) {
 
 		case 'delete-selected':
 			if ( ! current_user_can('delete_plugins') ) {
-				wp_die(__('You do not have sufficient permissions to delete plugins for this site.'));
+				wp_die(__('Sorry, you are not allowed to delete plugins for this site.'));
 			}
 
 			check_admin_referer('bulk-plugins');
@@ -371,9 +371,10 @@ get_current_screen()->add_help_tab( array(
 'title'		=> __('Overview'),
 'content'	=>
 	'<p>' . __('Plugins extend and expand the functionality of WordPress. Once a plugin is installed, you may activate it or deactivate it here.') . '</p>' .
+	'<p>' . __( 'The search for installed plugins will search for terms in their name, description, or author.' ) . ' <span id="live-search-desc" class="hide-if-no-js">' . __( 'The search results will be updated as you type.' ) . '</span></p>' .
 	'<p>' . sprintf(
 		/* translators: %s: WordPress Plugin Directory URL */
-		__( 'If you would like to see more plugins to choose from, click on the &#8220;Add New&#8221; button and you will be able to browse or search for additional plugins from the <a href="%s" target="_blank">WordPress.org Plugin Directory</a>. Plugins in the WordPress.org Plugin Directory are designed and developed by third parties, and are compatible with the license WordPress uses. Oh, and they&#8217;re free!' ),
+		__( 'If you would like to see more plugins to choose from, click on the &#8220;Add New&#8221; button and you will be able to browse or search for additional plugins from the <a href="%s" target="_blank">WordPress Plugin Directory</a>. Plugins in the WordPress Plugin Directory are designed and developed by third parties, and are compatible with the license WordPress uses. Oh, and they&#8217;re free!' ),
 		'https://wordpress.org/plugins/'
 	) . '</p>'
 ) );
@@ -507,7 +508,7 @@ do_action( 'pre_current_active_plugins', $plugins['all'] );
 
 <?php $wp_list_table->views(); ?>
 
-<form method="get">
+<form class="search-form search-plugins" method="get">
 <?php $wp_list_table->search_box( __( 'Search Installed Plugins' ), 'plugin' ); ?>
 </form>
 
@@ -519,9 +520,12 @@ do_action( 'pre_current_active_plugins', $plugins['all'] );
 <?php $wp_list_table->display(); ?>
 </form>
 
+	<span class="spinner"></span>
 </div>
 
 <?php
 wp_print_request_filesystem_credentials_modal();
+wp_print_admin_notice_templates();
+wp_print_update_row_templates();
 
 include(ABSPATH . 'wp-admin/admin-footer.php');

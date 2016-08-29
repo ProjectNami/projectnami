@@ -110,8 +110,8 @@ class WP_Site_Query {
 	 *                                           Default false.
 	 *     @type array        $date_query        Date query clauses to limit sites by. See WP_Date_Query.
 	 *                                           Default null.
-	 *     @type string       $fields            Site fields to return. Accepts 'ids' for site IDs only or empty
-	 *                                           for all fields. Default empty.
+	 *     @type string       $fields            Site fields to return. Accepts 'ids' (returns an array of site IDs)
+	 *                                           or empty (returns an array of complete site objects). Default empty.
 	 *     @type int          $ID                A site ID to only return that site. Default empty.
 	 *     @type int          $number            Maximum number of sites to retrieve. Default null (no limit).
 	 *     @type int          $offset            Number of sites to offset the query. Used to build LIMIT clause.
@@ -123,8 +123,8 @@ class WP_Site_Query {
 	 *                                           an empty array, or 'none' to disable `ORDER BY` clause.
 	 *                                           Default 'id'.
 	 *     @type string       $order             How to order retrieved sites. Accepts 'ASC', 'DESC'. Default 'ASC'.
-	 *     @type int          $network_id        Limit results to those affiliated with a given network ID.
-	 *                                           Default current network ID.
+	 *     @type int          $network_id        Limit results to those affiliated with a given network ID. If 0,
+	 *                                           include all networks. Default 0.
 	 *     @type array        $network__in       Array of network IDs to include affiliated sites for. Default empty.
 	 *     @type array        $network__not_in   Array of network IDs to exclude affiliated sites for. Default empty.
 	 *     @type string       $domain            Limit results to those affiliated with a given domain.
@@ -141,6 +141,8 @@ class WP_Site_Query {
 	 *     @type int          $spam              Limit results to spam sites. Accepts '1' or '0'. Default empty.
 	 *     @type int          $deleted           Limit results to deleted sites. Accepts '1' or '0'. Default empty.
 	 *     @type string       $search            Search term(s) to retrieve matching sites for. Default empty.
+	 *     @type array        $search_columns    Array of column names to be searched. Accepts 'domain' and 'path'.
+	 *                                           Default empty array.
 	 *     @type bool         $update_site_cache Whether to prime the cache for found sites. Default false.
 	 * }
 	 */
@@ -153,8 +155,8 @@ class WP_Site_Query {
 			'number'            => 100,
 			'offset'            => '',
 			'no_found_rows'     => true,
-			'orderby'           => 'ids',
-			'order'             => 'DESC',
+			'orderby'           => 'id',
+			'order'             => 'ASC',
 			'network_id'        => 0,
 			'network__in'       => '',
 			'network__not_in'   => '',
@@ -170,6 +172,7 @@ class WP_Site_Query {
 			'spam'              => null,
 			'deleted'           => null,
 			'search'            => '',
+			'search_columns'    => array(),
 			'count'             => false,
 			'date_query'        => null, // See WP_Date_Query
 			'update_site_cache' => true,
@@ -228,13 +231,9 @@ class WP_Site_Query {
 	 * @since 4.6.0
 	 * @access public
 	 *
-	 * @global wpdb $wpdb WordPress database abstraction object.
-	 *
 	 * @return array|int List of sites, or number of sites when 'count' is passed as a query var.
 	 */
 	public function get_sites() {
-		global $wpdb;
-
 		$this->parse_query();
 
 		/**
@@ -253,12 +252,28 @@ class WP_Site_Query {
 			$last_changed = microtime();
 			wp_cache_set( 'last_changed', $last_changed, 'sites' );
 		}
-		$cache_key = "get_site_ids:$key:$last_changed";
 
-		$site_ids = wp_cache_get( $cache_key, 'sites' );
-		if ( false === $site_ids ) {
+		$cache_key = "get_sites:$key:$last_changed";
+		$cache_value = wp_cache_get( $cache_key, 'sites' );
+
+		if ( false === $cache_value ) {
 			$site_ids = $this->get_site_ids();
-			wp_cache_add( $cache_key, $site_ids, 'sites' );
+			if ( $site_ids ) {
+				$this->set_found_sites();
+			}
+
+			$cache_value = array(
+				'site_ids' => $site_ids,
+				'found_sites' => $this->found_sites,
+			);
+			wp_cache_add( $cache_key, $cache_value, 'sites' );
+		} else {
+			$site_ids = $cache_value['site_ids'];
+			$this->found_sites = $cache_value['found_sites'];
+		}
+
+		if ( $this->found_sites && $this->query_vars['number'] ) {
+			$this->max_num_pages = ceil( $this->found_sites / $this->query_vars['number'] );
 		}
 
 		// If querying for a count only, there's nothing more to do.
@@ -268,23 +283,6 @@ class WP_Site_Query {
 		}
 
 		$site_ids = array_map( 'intval', $site_ids );
-
-		$this->site_count = count( $this->sites );
-
-		if ( $site_ids && $this->query_vars['number'] && ! $this->query_vars['no_found_rows'] ) {
-			/**
-			 * Filters the query used to retrieve found site count.
-			 *
-			 * @since 4.6.0
-			 *
-			 * @param string        $found_sites_query SQL query. Default 'SELECT FOUND_ROWS()'.
-			 * @param WP_Site_Query $site_query        The `WP_Site_Query` instance.
-			 */
-			$found_sites_query = apply_filters( 'found_sites_query', 'SELECT FOUND_ROWS()', $this );
-
-			$this->found_sites = (int) $wpdb->get_var( $found_sites_query );
-			$this->max_num_pages = ceil( $this->found_sites / $this->query_vars['number'] );
-		}
 
 		if ( 'ids' == $this->query_vars['fields'] ) {
 			$this->sites = $site_ids;
@@ -481,10 +479,30 @@ class WP_Site_Query {
 
 		// Falsey search strings are ignored.
 		if ( strlen( $this->query_vars['search'] ) ) {
-			$this->sql_clauses['where']['search'] = $this->get_search_sql(
-				$this->query_vars['search'],
-				array( 'domain', 'path' )
-			);
+			$search_columns = array();
+
+			if ( $this->query_vars['search_columns'] ) {
+				$search_columns = array_intersect( $this->query_vars['search_columns'], array( 'domain', 'path' ) );
+			}
+
+			if ( ! $search_columns ) {
+				$search_columns = array( 'domain', 'path' );
+			}
+
+			/**
+			 * Filters the columns to search in a WP_Site_Query search.
+			 *
+			 * The default columns include 'domain' and 'path.
+			 *
+			 * @since 4.6.0
+			 *
+			 * @param array         $search_columns Array of column names to be searched.
+			 * @param string        $search         Text being searched.
+			 * @param WP_Site_Query $this           The current WP_Site_Query instance.
+			 */
+			$search_columns = apply_filters( 'site_search_columns', $search_columns, $this->query_vars['search'], $this );
+
+			$this->sql_clauses['where']['search'] = $this->get_search_sql( $this->query_vars['search'], $search_columns );
 		}
 
 		$date_query = $this->query_vars['date_query'];
@@ -549,6 +567,33 @@ class WP_Site_Query {
 	}
 
 	/**
+	 * Populates found_sites and max_num_pages properties for the current query
+	 * if the limit clause was used.
+	 *
+	 * @since 4.6.0
+	 * @access private
+	 *
+	 * @global wpdb $wpdb WordPress database abstraction object.
+	 */
+	private function set_found_sites() {
+		global $wpdb;
+
+		if ( $this->query_vars['number'] && ! $this->query_vars['no_found_rows'] ) {
+			/**
+			 * Filters the query used to retrieve found site count.
+			 *
+			 * @since 4.6.0
+			 *
+			 * @param string        $found_sites_query SQL query. Default 'SELECT FOUND_ROWS()'.
+			 * @param WP_Site_Query $site_query        The `WP_Site_Query` instance.
+			 */
+			$found_sites_query = apply_filters( 'found_sites_query', 'SELECT FOUND_ROWS()', $this );
+
+			$this->found_sites = (int) $wpdb->get_var( $found_sites_query );
+		}
+	}
+
+	/**
 	 * Used internally to generate an SQL string for searching across multiple columns.
 	 *
 	 * @since 4.6.0
@@ -563,7 +608,11 @@ class WP_Site_Query {
 	protected function get_search_sql( $string, $columns ) {
 		global $wpdb;
 
-		$like = '%' . $wpdb->esc_like( $string ) . '%';
+		if ( false !== strpos( $string, '*' ) ) {
+			$like = '%' . implode( '%', array_map( array( $wpdb, 'esc_like' ), explode( '*', $string ) ) ) . '%';
+		} else {
+			$like = '%' . $wpdb->esc_like( $string ) . '%';
+		}
 
 		$searches = array();
 		foreach ( $columns as $column ) {

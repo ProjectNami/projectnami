@@ -2,8 +2,8 @@ var wpLink;
 
 ( function( $, wpLinkL10n, wp ) {
 	var editor, searchTimer, River, Query, correctedURL, linkNode,
-		emailRegexp = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
-		urlRegexp = /^(https?|ftp):\/\/[A-Z0-9.-]+\.[A-Z]{2,4}[^ "]*$/i,
+		emailRegexp = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,63}$/i,
+		urlRegexp = /^(https?|ftp):\/\/[A-Z0-9.-]+\.[A-Z]{2,63}[^ "]*$/i,
 		inputs = {},
 		rivers = {},
 		isTouch = ( 'ontouchend' in document );
@@ -433,6 +433,10 @@ var wpLink;
 			wpLink.close( 'noReset' );
 			editor.focus();
 			editor.nodeChanged();
+
+			if ( link && editor.plugins.wplink ) {
+				editor.plugins.wplink.checkLink( link );
+			}
 
 			// Audible confirmation message when a link has been inserted in the Editor.
 			wp.a11y.speak( wpLinkL10n.linkInserted );

@@ -216,6 +216,8 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 	}
 
 	// Headers
+	$cc = $bcc = $reply_to = array();
+
 	if ( empty( $headers ) ) {
 		$headers = array();
 	} else {
@@ -227,8 +229,6 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 			$tempheaders = $headers;
 		}
 		$headers = array();
-		$cc = array();
-		$bcc = array();
 
 		// If it's actually got contents
 		if ( !empty( $tempheaders ) ) {
@@ -291,6 +291,9 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 					case 'bcc':
 						$bcc = array_merge( (array) $bcc, explode( ',', $content ) );
 						break;
+					case 'reply-to':
+						$reply_to = array_merge( (array) $reply_to, explode( ',', $content ) );
+						break;
 					default:
 						// Add it to our grand headers array
 						$headers[trim( $name )] = trim( $content );
@@ -335,7 +338,7 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 	 *
 	 * @param string $from_email Email address to send from.
 	 */
-	$phpmailer->From = apply_filters( 'wp_mail_from', $from_email );
+	$from_email = apply_filters( 'wp_mail_from', $from_email );
 
 	/**
 	 * Filters the name to associate with the "from" email address.
@@ -344,63 +347,52 @@ function wp_mail( $to, $subject, $message, $headers = '', $attachments = array()
 	 *
 	 * @param string $from_name Name associated with the "from" email address.
 	 */
-	$phpmailer->FromName = apply_filters( 'wp_mail_from_name', $from_name );
+	$from_name = apply_filters( 'wp_mail_from_name', $from_name );
+
+	$phpmailer->setFrom( $from_email, $from_name );
 
 	// Set destination addresses
 	if ( !is_array( $to ) )
 		$to = explode( ',', $to );
 
-	foreach ( (array) $to as $recipient ) {
-		try {
-			// Break $recipient into name and address parts if in the format "Foo <bar@baz.com>"
-			$recipient_name = '';
-			if ( preg_match( '/(.*)<(.+)>/', $recipient, $matches ) ) {
-				if ( count( $matches ) == 3 ) {
-					$recipient_name = $matches[1];
-					$recipient = $matches[2];
-				}
-			}
-			$phpmailer->AddAddress( $recipient, $recipient_name);
-		} catch ( phpmailerException $e ) {
-			continue;
-		}
-	}
-
 	// Set mail's subject and body
 	$phpmailer->Subject = $subject;
 	$phpmailer->Body    = $message;
 
-	// Add any CC and BCC recipients
-	if ( !empty( $cc ) ) {
-		foreach ( (array) $cc as $recipient ) {
-			try {
-				// Break $recipient into name and address parts if in the format "Foo <bar@baz.com>"
-				$recipient_name = '';
-				if ( preg_match( '/(.*)<(.+)>/', $recipient, $matches ) ) {
-					if ( count( $matches ) == 3 ) {
-						$recipient_name = $matches[1];
-						$recipient = $matches[2];
-					}
-				}
-				$phpmailer->AddCc( $recipient, $recipient_name );
-			} catch ( phpmailerException $e ) {
-				continue;
-			}
-		}
-	}
+	// Use appropriate methods for handling addresses, rather than treating them as generic headers
+	$address_headers = compact( 'to', 'cc', 'bcc', 'reply_to' );
 
-	if ( !empty( $bcc ) ) {
-		foreach ( (array) $bcc as $recipient) {
+	foreach ( $address_headers as $address_header => $addresses ) {
+		if ( empty( $addresses ) ) {
+			continue;
+		}
+
+		foreach ( (array) $addresses as $address ) {
 			try {
 				// Break $recipient into name and address parts if in the format "Foo <bar@baz.com>"
 				$recipient_name = '';
-				if ( preg_match( '/(.*)<(.+)>/', $recipient, $matches ) ) {
+
+				if ( preg_match( '/(.*)<(.+)>/', $address, $matches ) ) {
 					if ( count( $matches ) == 3 ) {
 						$recipient_name = $matches[1];
-						$recipient = $matches[2];
+						$address        = $matches[2];
 					}
 				}
-				$phpmailer->AddBcc( $recipient, $recipient_name );
+
+				switch ( $address_header ) {
+					case 'to':
+						$phpmailer->addAddress( $address, $recipient_name );
+						break;
+					case 'cc':
+						$phpmailer->addCc( $address, $recipient_name );
+						break;
+					case 'bcc':
+						$phpmailer->addBcc( $address, $recipient_name );
+						break;
+					case 'reply_to':
+						$phpmailer->addReplyTo( $address, $recipient_name );
+						break;
+				}
 			} catch ( phpmailerException $e ) {
 				continue;
 			}
@@ -610,7 +602,7 @@ function wp_validate_auth_cookie($cookie = '', $scheme = '') {
 	$token = $cookie_elements['token'];
 	$expired = $expiration = $cookie_elements['expiration'];
 
-	// Allow a grace period for POST and AJAX requests
+	// Allow a grace period for POST and Ajax requests
 	if ( defined('DOING_AJAX') || 'POST' == $_SERVER['REQUEST_METHOD'] ) {
 		$expired += HOUR_IN_SECONDS;
 	}
@@ -667,7 +659,7 @@ function wp_validate_auth_cookie($cookie = '', $scheme = '') {
 		return false;
 	}
 
-	// AJAX/POST grace period set above
+	// Ajax/POST grace period set above
 	if ( $expiration < time() ) {
 		$GLOBALS['login_grace_period'] = 1;
 	}
@@ -1047,7 +1039,7 @@ if ( !function_exists('check_admin_referer') ) :
  */
 function check_admin_referer( $action = -1, $query_arg = '_wpnonce' ) {
 	if ( -1 == $action )
-		_doing_it_wrong( __FUNCTION__, __( 'You should specify a nonce action to be verified by using the first parameter.' ), '3.2' );
+		_doing_it_wrong( __FUNCTION__, __( 'You should specify a nonce action to be verified by using the first parameter.' ), '3.2.0' );
 
 	$adminurl = strtolower(admin_url());
 	$referer = strtolower(wp_get_referer());
@@ -1075,7 +1067,7 @@ endif;
 
 if ( !function_exists('check_ajax_referer') ) :
 /**
- * Verifies the AJAX request to prevent processing requests external of the blog.
+ * Verifies the Ajax request to prevent processing requests external of the blog.
  *
  * @since 2.0.3
  *
@@ -1101,11 +1093,11 @@ function check_ajax_referer( $action = -1, $query_arg = false, $die = true ) {
 	$result = wp_verify_nonce( $nonce, $action );
 
 	/**
-	 * Fires once the AJAX request has been validated or not.
+	 * Fires once the Ajax request has been validated or not.
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param string    $action The AJAX nonce action.
+	 * @param string    $action The Ajax nonce action.
 	 * @param false|int $result False if the nonce is invalid, 1 if the nonce is valid and generated between
 	 *                          0-12 hours ago, 2 if the nonce is valid and generated between 12-24 hours ago.
 	 */
@@ -1126,6 +1118,19 @@ endif;
 if ( !function_exists('wp_redirect') ) :
 /**
  * Redirects to another page.
+ *
+ * Note: wp_redirect() does not exit automatically, and should almost always be
+ * followed by a call to `exit;`:
+ *
+ *     wp_redirect( $url );
+ *     exit;
+ *
+ * Exiting can also be selectively manipulated by using wp_redirect() as a conditional
+ * in conjunction with the {@see 'wp_redirect'} and {@see 'wp_redirect_location'} hooks:
+ *
+ *     if ( wp_redirect( $url ) {
+ *         exit;
+ *     }
  *
  * @since 1.5.1
  *
@@ -1335,7 +1340,7 @@ if ( ! function_exists('wp_notify_postauthor') ) :
  */
 function wp_notify_postauthor( $comment_id, $deprecated = null ) {
 	if ( null !== $deprecated ) {
-		_deprecated_argument( __FUNCTION__, '3.8' );
+		_deprecated_argument( __FUNCTION__, '3.8.0' );
 	}
 
 	$comment = get_comment( $comment_id );
@@ -1671,11 +1676,13 @@ function wp_password_change_notification( $user ) {
 	// send a copy of password change notification to the admin
 	// but check to see if it's the admin whose password we're changing, and skip this
 	if ( 0 !== strcasecmp( $user->user_email, get_option( 'admin_email' ) ) ) {
-		$message = sprintf(__('Password Lost and Changed for user: %s'), $user->user_login) . "\r\n";
+		/* translators: %s: user name */
+		$message = sprintf( __( 'Password changed for user: %s' ), $user->user_login ) . "\r\n";
 		// The blogname option is escaped with esc_html on the way into the database in sanitize_option
 		// we want to reverse this for the plain text arena of emails.
 		$blogname = wp_specialchars_decode(get_option('blogname'), ENT_QUOTES);
-		wp_mail(get_option('admin_email'), sprintf(__('[%s] Password Lost/Changed'), $blogname), $message);
+		/* translators: %s: site title */
+		wp_mail( get_option( 'admin_email' ), sprintf( __( '[%s] Password Changed' ), $blogname ), $message );
 	}
 }
 endif;

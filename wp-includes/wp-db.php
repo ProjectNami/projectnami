@@ -762,15 +762,15 @@ class wpdb {
 	}
 
 	/**
-	 * Given a charset and collation, determine the best charset and collation to use.
+	 * Determines the best charset and collation to use given a charset and collation.
 	 *
 	 * For example, when able, utf8mb4 should be used instead of utf8.
 	 *
 	 * @since 4.6.0
+	 * @access public
 	 *
-	 * @param  string $charset The character set to check.
-	 * @param  string $collate The collation to check.
-	 *
+	 * @param string $charset The character set to check.
+	 * @param string $collate The collation to check.
 	 * @return array The most appropriate character set and collation to use.
 	 */
 	public function determine_charset( $charset, $collate ) {
@@ -1134,7 +1134,7 @@ class wpdb {
 	 */
 	function _weak_escape( $string ) {
 		if ( func_num_args() === 1 && function_exists( '_deprecated_function' ) )
-			_deprecated_function( __METHOD__, '3.6', 'wpdb::prepare() or esc_sql()' );
+			_deprecated_function( __METHOD__, '3.6.0', 'wpdb::prepare() or esc_sql()' );
 		return addslashes( $string );
 	}
 
@@ -1157,9 +1157,9 @@ class wpdb {
 		$class = get_class( $this );
 		if ( function_exists( '__' ) ) {
 			/* translators: %s: database access abstraction class, usually wpdb or a class extending wpdb */
-			_doing_it_wrong( $class, sprintf( __( '%s must set a database connection for use with escaping.' ), $class ), E_USER_NOTICE );
+			_doing_it_wrong( $class, sprintf( __( '%s must set a database connection for use with escaping.' ), $class ), '3.6.0' );
 		} else {
-			_doing_it_wrong( $class, sprintf( '%s must set a database connection for use with escaping.', $class ), E_USER_NOTICE );
+			_doing_it_wrong( $class, sprintf( '%s must set a database connection for use with escaping.', $class ), '3.6.0' );
 		}
 		return addslashes( $string );
 	}
@@ -1204,7 +1204,7 @@ class wpdb {
 	 */
 	public function escape( $data ) {
 		if ( func_num_args() === 1 && function_exists( '_deprecated_function' ) )
-			_deprecated_function( __METHOD__, '3.6', 'wpdb::prepare() or esc_sql()' );
+			_deprecated_function( __METHOD__, '3.6.0', 'wpdb::prepare() or esc_sql()' );
 		if ( is_array( $data ) ) {
 			foreach ( (array) $data as $k => $v ) {
 				if ( is_array( $v ) )
@@ -1273,7 +1273,7 @@ class wpdb {
 
 		// This is not meant to be foolproof -- but it will catch obviously incorrect usage.
 		if ( strpos( $query, '%' ) === false ) {
-			_doing_it_wrong( 'wpdb::prepare', sprintf( __( 'The query argument of %s must have a placeholder.' ), 'wpdb::prepare()' ), '3.9' );
+			_doing_it_wrong( 'wpdb::prepare', sprintf( __( 'The query argument of %s must have a placeholder.' ), 'wpdb::prepare()' ), '3.9.0' );
 		}
 
 		$args = func_get_args();
@@ -3276,7 +3276,7 @@ class wpdb {
 	 * @return bool True if collation is supported, false if version does not
 	 */
 	public function supports_collation() {
-		_deprecated_function( __FUNCTION__, '3.5', 'wpdb::has_cap( \'collation\' )' );
+		_deprecated_function( __FUNCTION__, '3.5.0', 'wpdb::has_cap( \'collation\' )' );
 		return $this->has_cap( 'collation' );
 	}
 
@@ -3302,8 +3302,8 @@ class wpdb {
 	 * Determine if a database supports a particular feature.
 	 *
 	 * @since 2.7.0
-	 * @since 4.1.0 Support was added for the 'utf8mb4' feature.
-	 * @since 4.6.0 Support was added for the 'utf8mb4_520' feature.
+	 * @since 4.1.0 Added support for the 'utf8mb4' feature.
+	 * @since 4.6.0 Added support for the 'utf8mb4_520' feature.
 	 *
 	 * @see wpdb::db_version()
 	 *
@@ -3342,7 +3342,7 @@ class wpdb {
 	public function get_caller() {
 		return wp_debug_backtrace_summary( __CLASS__ );
 	}
-			case 'utf8mb4_520' :  // @since 4.6.0
+			case 'utf8mb4_520' : // @since 4.6.0
 				return version_compare( $version, '5.6', '>=' );
 
 	/**

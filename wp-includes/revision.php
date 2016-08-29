@@ -378,14 +378,6 @@ function wp_restore_post_revision( $revision_id, $fields = null ) {
 	if ( ! $post_id || is_wp_error( $post_id ) )
 		return $post_id;
 
-	// Add restore from details
-	$restore_details = array(
-		'restored_revision_id' => $revision_id,
-		'restored_by_user'     => get_current_user_id(),
-		'restored_time'        => time()
-	);
-	update_post_meta( $post_id, '_post_restored_from', $restore_details );
-
 	// Update last edit user
 	update_post_meta( $post_id, '_edit_last', get_current_user_id() );
 
@@ -538,6 +530,7 @@ function _set_preview( $post ) {
 	$post->post_excerpt = $preview->post_excerpt;
 
 	add_filter( 'get_the_terms', '_wp_preview_terms_filter', 10, 3 );
+	add_filter( 'get_post_metadata', '_wp_preview_post_thumbnail_filter', 10, 3 );
 
 	return $post;
 }
@@ -553,7 +546,7 @@ function _show_post_preview() {
 		$id = (int) $_GET['preview_id'];
 
 		if ( false === wp_verify_nonce( $_GET['preview_nonce'], 'post_preview_' . $id ) )
-			wp_die( __('You do not have permission to preview drafts.') );
+			wp_die( __('Sorry, you are not allowed to preview drafts.') );
 
 		add_filter('the_preview', '_set_preview');
 	}
@@ -583,6 +576,34 @@ function _wp_preview_terms_filter( $terms, $post_id, $taxonomy ) {
 		$terms = array( $term ); // Can only have one post format
 
 	return $terms;
+}
+
+/**
+ * Filters post thumbnail lookup to set the post thumbnail.
+ *
+ * @since 4.6.0
+ * @access private
+ *
+ * @param null|array|string $value    The value to return - a single metadata value, or an array of values.
+ * @param int               $post_id  Post ID.
+ * @param string            $meta_key Meta key.
+ * @return null|array The default return value or the post thumbnail meta array.
+ */
+function _wp_preview_post_thumbnail_filter( $value, $post_id, $meta_key ) {
+	if ( ! $post = get_post() ) {
+		return $value;
+	}
+
+	if ( empty( $_REQUEST['_thumbnail_id'] ) || $post->ID != $post_id || '_thumbnail_id' != $meta_key || 'revision' == $post->post_type ) {
+		return $value;
+	}
+
+	$thumbnail_id = intval( $_REQUEST['_thumbnail_id'] );
+	if ( $thumbnail_id <= 0 ) {
+		return '';
+	}
+
+	return strval( $thumbnail_id );
 }
 
 /**

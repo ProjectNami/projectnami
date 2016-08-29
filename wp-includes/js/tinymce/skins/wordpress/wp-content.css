@@ -205,6 +205,25 @@ audio {
 	visibility: hidden;
 }
 
+a[data-wplink-url-error],
+a[data-wplink-url-error]:hover,
+a[data-wplink-url-error]:focus {
+	outline: 2px dotted #dc3232;
+	position: relative;
+}
+
+a[data-wplink-url-error]:before {
+	content: '';
+	display: block;
+	position: absolute;
+	top: -2px;
+	right: -2px;
+	bottom: -2px;
+	left: -2px;
+	outline: 2px dotted #fff;
+	z-index: -1;
+}
+
 /**
  * WP Views
  */
@@ -303,7 +322,7 @@ audio {
 .wpview-error p {
 	margin: 0;
 	text-align: center;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen-Sans", "Ubuntu", "Cantarell", "Helvetica Neue", sans-serif;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 .wpview-type-gallery:after {

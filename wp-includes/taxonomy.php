@@ -389,7 +389,7 @@ function register_taxonomy( $taxonomy, $object_type, $args = array() ) {
 	$args = array_merge( $defaults, $args );
 
 	if ( empty( $taxonomy ) || strlen( $taxonomy ) > 32 ) {
-		_doing_it_wrong( __FUNCTION__, __( 'Taxonomy names must be between 1 and 32 characters in length.' ), '4.2' );
+		_doing_it_wrong( __FUNCTION__, __( 'Taxonomy names must be between 1 and 32 characters in length.' ), '4.2.0' );
 		return new WP_Error( 'taxonomy_length_invalid', __( 'Taxonomy names must be between 1 and 32 characters in length.' ) );
 	}
 
@@ -475,7 +475,7 @@ function register_taxonomy( $taxonomy, $object_type, $args = array() ) {
 
 	$wp_taxonomies[ $taxonomy ] = (object) $args;
 
-	// register callback handling for metabox
+	// Register callback handling for meta box.
  	add_filter( 'wp_ajax_add-' . $taxonomy, '_wp_ajax_add_hierarchical_term' );
 
 	/**
@@ -505,7 +505,7 @@ function register_taxonomy( $taxonomy, $object_type, $args = array() ) {
  */
 function unregister_taxonomy( $taxonomy ) {
 	if ( ! taxonomy_exists( $taxonomy ) ) {
-		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy' ) );
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 	}
 
 	$taxonomy_args = get_taxonomy( $taxonomy );
@@ -528,7 +528,7 @@ function unregister_taxonomy( $taxonomy ) {
 		remove_permastruct( $taxonomy );
 	}
 
-	// Unregister callback handling for metabox.
+	// Unregister callback handling for meta box.
 	remove_filter( 'wp_ajax_add-' . $taxonomy, '_wp_ajax_add_hierarchical_term' );
 
 	// Remove the taxonomy.
@@ -736,7 +736,7 @@ function get_objects_in_term( $term_ids, $taxonomies, $args = array() ) {
 	}
 	foreach ( (array) $taxonomies as $taxonomy ) {
 		if ( ! taxonomy_exists( $taxonomy ) ) {
-			return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy' ) );
+			return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 		}
 	}
 
@@ -826,7 +826,7 @@ function get_term( $term, $taxonomy = '', $output = OBJECT, $filter = 'raw' ) {
 	}
 
 	if ( $taxonomy && ! taxonomy_exists( $taxonomy ) ) {
-		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy' ) );
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 	}
 
 	if ( $term instanceof WP_Term ) {
@@ -988,8 +988,9 @@ function get_term_by( $field, $value, $taxonomy = '', $output = OBJECT, $filter 
  * @return array|WP_Error List of Term IDs. WP_Error returned if `$taxonomy` does not exist.
  */
 function get_term_children( $term_id, $taxonomy ) {
-	if ( ! taxonomy_exists($taxonomy) )
-		return new WP_Error('invalid_taxonomy', __('Invalid taxonomy'));
+	if ( ! taxonomy_exists( $taxonomy ) ) {
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
+	}
 
 	$term_id = intval( $term_id );
 
@@ -1208,7 +1209,7 @@ function get_terms( $args = array(), $deprecated = '' ) {
 	if ( ! empty( $args['taxonomy'] ) ) {
 		foreach ( $args['taxonomy'] as $taxonomy ) {
 			if ( ! taxonomy_exists( $taxonomy ) ) {
-				return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy' ) );
+				return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 			}
 		}
 	}
@@ -1224,7 +1225,7 @@ function get_terms( $args = array(), $deprecated = '' ) {
 	 * Filters the found terms.
 	 *
 	 * @since 2.3.0
-	 * @since 4.6.0 Added `$term_query`.
+	 * @since 4.6.0 Added the `$term_query` parameter.
 	 *
 	 * @param array         $terms      Array of found terms.
 	 * @param array         $taxonomies An array of taxonomies.
@@ -1975,7 +1976,7 @@ function wp_get_object_terms($object_ids, $taxonomies, $args = array()) {
 
 	foreach ( $taxonomies as $taxonomy ) {
 		if ( ! taxonomy_exists($taxonomy) )
-			return new WP_Error('invalid_taxonomy', __('Invalid taxonomy'));
+			return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 	}
 
 	if ( !is_array($object_ids) )
@@ -2226,7 +2227,7 @@ function wp_insert_term( $term, $taxonomy, $args = array() ) {
 	global $wpdb;
 
 	if ( ! taxonomy_exists($taxonomy) ) {
-		return new WP_Error('invalid_taxonomy', __('Invalid taxonomy'));
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 	}
 	/**
 	 * Filters a term before it is sanitized and inserted into the database.
@@ -2240,11 +2241,11 @@ function wp_insert_term( $term, $taxonomy, $args = array() ) {
 	if ( is_wp_error( $term ) ) {
 		return $term;
 	}
-	if ( is_int($term) && 0 == $term ) {
-		return new WP_Error('invalid_term_id', __('Invalid term ID'));
+	if ( is_int( $term ) && 0 == $term ) {
+		return new WP_Error( 'invalid_term_id', __( 'Invalid term ID.' ) );
 	}
-	if ( '' == trim($term) ) {
-		return new WP_Error('empty_term_name', __('A name is required for this term'));
+	if ( '' == trim( $term ) ) {
+		return new WP_Error( 'empty_term_name', __( 'A name is required for this term.' ) );
 	}
 	$defaults = array( 'alias_of' => '', 'description' => '', 'parent' => 0, 'slug' => '');
 	$args = wp_parse_args( $args, $defaults );
@@ -2473,8 +2474,9 @@ function wp_set_object_terms( $object_id, $terms, $taxonomy, $append = false ) {
 
 	$object_id = (int) $object_id;
 
-	if ( ! taxonomy_exists($taxonomy) )
-		return new WP_Error('invalid_taxonomy', __('Invalid taxonomy'));
+	if ( ! taxonomy_exists( $taxonomy ) ) {
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
+	}
 
 	if ( !is_array($terms) )
 		$terms = array($terms);
@@ -2611,7 +2613,7 @@ function wp_remove_object_terms( $object_id, $terms, $taxonomy ) {
 	$object_id = (int) $object_id;
 
 	if ( ! taxonomy_exists( $taxonomy ) ) {
-		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy' ) );
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 	}
 
 	if ( ! is_array( $terms ) ) {
@@ -2807,7 +2809,7 @@ function wp_update_term( $term_id, $taxonomy, $args = array() ) {
 	global $wpdb;
 
 	if ( ! taxonomy_exists( $taxonomy ) ) {
-		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy' ) );
+		return new WP_Error( 'invalid_taxonomy', __( 'Invalid taxonomy.' ) );
 	}
 
 	$term_id = (int) $term_id;
@@ -2843,8 +2845,9 @@ function wp_update_term( $term_id, $taxonomy, $args = array() ) {
 	$parsed_args['name'] = $name;
 	$parsed_args['description'] = $description;
 
-	if ( '' == trim($name) )
-		return new WP_Error('empty_term_name', __('A name is required for this term'));
+	if ( '' == trim( $name ) ) {
+		return new WP_Error( 'empty_term_name', __( 'A name is required for this term.' ) );
+	}
 
 	if ( $parsed_args['parent'] > 0 && ! term_exists( (int) $parsed_args['parent'] ) ) {
 		return new WP_Error( 'missing_parent', __( 'Parent term does not exist.' ) );

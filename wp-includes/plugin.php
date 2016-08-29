@@ -655,6 +655,60 @@ function remove_all_actions($tag, $priority = false) {
 	return remove_all_filters($tag, $priority);
 }
 
+/**
+ * Fires functions attached to a deprecated filter hook.
+ *
+ * When a filter hook is deprecated, the apply_filters() call is replaced with
+ * apply_filters_deprecated(), which triggers a deprecation notice and then fires
+ * the original filter hook.
+ *
+ * @since 4.6.0
+ *
+ * @see _deprecated_hook()
+ *
+ * @param string $tag         The name of the filter hook.
+ * @param array  $args        Array of additional function arguments to be passed to apply_filters().
+ * @param string $version     The version of WordPress that deprecated the hook.
+ * @param string $replacement Optional. The hook that should have been used. Default false.
+ * @param string $message     Optional. A message regarding the change. Default null.
+ */
+function apply_filters_deprecated( $tag, $args, $version, $replacement = false, $message = null ) {
+	if ( ! has_filter( $tag ) ) {
+		return $args[0];
+	}
+
+	_deprecated_hook( $tag, $version, $replacement, $message );
+
+	return apply_filters_ref_array( $tag, $args );
+}
+
+/**
+ * Fires functions attached to a deprecated action hook.
+ *
+ * When an action hook is deprecated, the do_action() call is replaced with
+ * do_action_deprecated(), which triggers a deprecation notice and then fires
+ * the original hook.
+ *
+ * @since 4.6.0
+ *
+ * @see _deprecated_hook()
+ *
+ * @param string $tag         The name of the action hook.
+ * @param array  $args        Array of additional function arguments to be passed to do_action().
+ * @param string $version     The version of WordPress that deprecated the hook.
+ * @param string $replacement Optional. The hook that should have been used.
+ * @param string $message     Optional. A message regarding the change.
+ */
+function do_action_deprecated( $tag, $args, $version, $replacement = false, $message = null ) {
+	if ( ! has_action( $tag ) ) {
+		return;
+	}
+
+	_deprecated_hook( $tag, $version, $replacement, $message );
+
+	do_action_ref_array( $tag, $args );
+}
+
 //
 // Functions for handling plugins.
 //
@@ -677,6 +731,7 @@ function plugin_basename( $file ) {
 	// $wp_plugin_paths contains normalized paths.
 	$file = wp_normalize_path( $file );
 
+	arsort( $wp_plugin_paths );
 	foreach ( $wp_plugin_paths as $dir => $realdir ) {
 		if ( strpos( $file, $realdir ) === 0 ) {
 			$file = $dir . substr( $file, strlen( $realdir ) );
@@ -698,7 +753,7 @@ function plugin_basename( $file ) {
  *
  * @since 3.9.0
  *
- * @see plugin_basename()
+ * @see wp_normalize_path()
  *
  * @global array $wp_plugin_paths
  *
@@ -830,7 +885,7 @@ function register_deactivation_hook($file, $function) {
  */
 function register_uninstall_hook( $file, $callback ) {
 	if ( is_array( $callback ) && is_object( $callback[0] ) ) {
-		_doing_it_wrong( __FUNCTION__, __( 'Only a static class method or function can be used in an uninstall hook.' ), '3.1' );
+		_doing_it_wrong( __FUNCTION__, __( 'Only a static class method or function can be used in an uninstall hook.' ), '3.1.0' );
 		return;
 	}
 
@@ -948,7 +1003,7 @@ function _wp_filter_build_unique_id($tag, $function, $priority) {
 }
 
 /**
- * Back up global variables used for actions and filters.
+ * Backs up global variables used for actions and filters.
  *
  * Prevents redefinition of these globals in advanced-cache.php from accidentally
  * destroying existing data.
@@ -961,11 +1016,14 @@ function _wp_filter_build_unique_id($tag, $function, $priority) {
  * @global array $merged_filters    Merges the filter hooks using this function.
  * @global array $wp_current_filter Stores the list of current filters with the current one last.
  * @staticvar array $backup_globals Backed up globals.
+ *
  * @return array the staticvar from the first time it is set.
  */
 function _backup_plugin_globals(){
 	global $wp_filter, $wp_actions, $merged_filters, $wp_current_filter;
+
 	static $backup_globals = array();
+
 	if ( empty( $backup_globals ) ) {
 		$backup_globals = array(
 			'backup_wp_filter'         => $wp_filter,
@@ -978,7 +1036,7 @@ function _backup_plugin_globals(){
 }
 
 /**
- * Safely restore backed up global variables used for actions and filters.
+ * Safely restores backed up global variables used for actions and filters.
  *
  * @since 4.6.0
  * @access private
@@ -991,7 +1049,9 @@ function _backup_plugin_globals(){
  */
 function _restore_plugin_globals(){
 	global $wp_filter, $wp_actions, $merged_filters, $wp_current_filter;
+
 	$backup_globals = _backup_plugin_globals();
+
 	if ( $wp_filter !== $backup_globals['backup_wp_filter'] ){
 		$wp_filter = array_merge_recursive( $wp_filter, $backup_globals['backup_wp_filter'] );
 	}

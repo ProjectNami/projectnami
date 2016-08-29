@@ -15,7 +15,7 @@ if ( !defined( 'IFRAME_REQUEST' ) && isset( $_GET['tab'] ) && ( 'plugin-informat
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! current_user_can('install_plugins') )
-	wp_die(__('You do not have sufficient permissions to install plugins on this site.'));
+	wp_die(__('Sorry, you are not allowed to install plugins on this site.'));
 
 if ( is_multisite() && ! is_network_admin() ) {
 	wp_redirect( network_admin_url( 'plugin-install.php' ) );
@@ -66,11 +66,22 @@ wp_enqueue_script( 'updates' );
  */
 do_action( "install_plugins_pre_$tab" );
 
+/*
+ * Call the pre upload action on every non-upload plugin install screen
+ * because the form is always displayed on these screens.
+ */
+if ( 'upload' !== $tab ) {
+	/** This action is documented in wp-admin/plugin-install.php */
+	do_action( 'install_plugins_pre_upload' );
+}
+
 get_current_screen()->add_help_tab( array(
 'id'		=> 'overview',
 'title'		=> __('Overview'),
 'content'	=>
-	'<p>' . sprintf(__('Plugins hook into WordPress to extend its functionality with custom features. Plugins are developed independently from the core WordPress application by thousands of developers all over the world. All plugins in the official <a href="%s" target="_blank">WordPress Plugin Directory</a> are compatible with the license WordPress uses. You can find new plugins to install by searching or browsing the Directory right here in your own Plugins section.'), 'https://wordpress.org/plugins/') . '</p>'
+	'<p>' . sprintf( __('Plugins hook into WordPress to extend its functionality with custom features. Plugins are developed independently from the core WordPress application by thousands of developers all over the world. All plugins in the official <a href="%s" target="_blank">WordPress Plugin Directory</a> are compatible with the license WordPress uses.' ), 'https://wordpress.org/plugins/' ) . '</p>' .
+	'<p>' . __( 'You can find new plugins to install by searching or browsing the directory right here in your own Plugins section.' ) . ' <span id="live-search-desc" class="hide-if-no-js">' . __( 'The search results will be updated as you type.' ) . '</span></p>'
+
 ) );
 get_current_screen()->add_help_tab( array(
 'id'		=> 'adding-plugins',
@@ -99,22 +110,13 @@ get_current_screen()->set_screen_reader_content( array(
  */
 include(ABSPATH . 'wp-admin/admin-header.php');
 ?>
-<div class="wrap">
+<div class="wrap <?php echo esc_attr( "plugin-install-tab-$tab" ); ?>">
 <h1>
 	<?php
 	echo esc_html( $title );
 	if ( ! empty( $tabs['upload'] ) && current_user_can( 'upload_plugins' ) ) {
-		if ( $tab === 'upload' ) {
-			$href = self_admin_url( 'plugin-install.php' );
-			$upload_tab_class = ' upload-tab';
-		} else {
-			$href = self_admin_url( 'plugin-install.php?tab=upload' );
-			$upload_tab_class = '';
-		}
-
-		printf( ' <a href="%s" class="upload-view-toggle page-title-action%s"><span class="upload">%s</span><span class="browse">%s</span></a>',
-			$href,
-			$upload_tab_class,
+		printf( ' <a href="%s" class="upload-view-toggle page-title-action"><span class="upload">%s</span><span class="browse">%s</span></a>',
+			( 'upload' === $tab ) ? self_admin_url( 'plugin-install.php' ) : self_admin_url( 'plugin-install.php?tab=upload' ),
 			__( 'Upload Plugin' ),
 			__( 'Browse Plugins' )
 		);
@@ -122,16 +124,22 @@ include(ABSPATH . 'wp-admin/admin-header.php');
 	?>
 </h1>
 
-<div class="upload-plugin-wrap<?php echo $upload_tab_class; ?>">
 <?php
 /*
- * Output the upload plugin form on every plugin install screen, so it can be
+ * Output the upload plugin form on every non-upload plugin install screen, so it can be
  * displayed via JavaScript rather then opening up the devoted upload plugin page.
  */
-install_plugins_upload(); ?>
-</div>
+if ( $tab !== 'upload' ) {
+	?>
+	<div class="upload-plugin-wrap">
+		<?php
+		/** This action is documented in wp-admin/plugin-install.php */
+		do_action( 'install_plugins_upload' );
+		?>
+	</div>
+	<?php
+}
 
-<?php
 if ( $tab !== 'upload' ) {
 	$wp_list_table->views();
 	echo '<br class="clear" />';
@@ -148,10 +156,13 @@ if ( $tab !== 'upload' ) {
  * @param int $paged The current page number of the plugins list table.
  */
 do_action( "install_plugins_$tab", $paged ); ?>
+
+	<span class="spinner"></span>
 </div>
 
 <?php
 wp_print_request_filesystem_credentials_modal();
+wp_print_admin_notice_templates();
 
 /**
  * WordPress Administration Template Footer.

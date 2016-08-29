@@ -26,10 +26,10 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access private
+	 * @access public
 	 * @var string
 	 */
-	private $blog_id;
+	public $blog_id;
 
 	/**
 	 * Domain of the site.
@@ -58,10 +58,10 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access private
+	 * @access public
 	 * @var string
 	 */
-	private $site_id = '0';
+	public $site_id = '0';
 
 	/**
 	 * The date on which the site was created or registered.
@@ -232,6 +232,7 @@ final class WP_Site {
 	 * Getter.
 	 *
 	 * Allows current multisite naming conventions when getting properties.
+	 * Allows access to extended site properties.
 	 *
 	 * @since 4.6.0
 	 * @access public
@@ -243,12 +244,17 @@ final class WP_Site {
 		switch ( $key ) {
 			case 'id':
 				return (int) $this->blog_id;
-			case 'blog_id':
-				return $this->blog_id;
-			case 'site_id':
-				return $this->site_id;
 			case 'network_id':
 				return (int) $this->site_id;
+			case 'blogname':
+			case 'siteurl':
+			case 'post_count':
+			case 'home':
+				if ( ! did_action( 'ms_loaded' ) ) {
+					return null;
+				}
+				$details = $this->get_details();
+				return $details->$key;
 		}
 
 		return null;
@@ -258,6 +264,7 @@ final class WP_Site {
 	 * Isset-er.
 	 *
 	 * Allows current multisite naming conventions when checking for properties.
+	 * Checks for extended site properties.
 	 *
 	 * @since 4.6.0
 	 * @access public
@@ -268,9 +275,15 @@ final class WP_Site {
 	public function __isset( $key ) {
 		switch ( $key ) {
 			case 'id':
-			case 'blog_id':
-			case 'site_id':
 			case 'network_id':
+				return true;
+			case 'blogname':
+			case 'siteurl':
+			case 'post_count':
+			case 'home':
+				if ( ! did_action( 'ms_loaded' ) ) {
+					return false;
+				}
 				return true;
 		}
 
@@ -291,15 +304,67 @@ final class WP_Site {
 	public function __set( $key, $value ) {
 		switch ( $key ) {
 			case 'id':
-			case 'blog_id':
 				$this->blog_id = (string) $value;
 				break;
-			case 'site_id':
 			case 'network_id':
 				$this->site_id = (string) $value;
 				break;
 			default:
 				$this->$key = $value;
 		}
+	}
+
+	/**
+	 * Retrieves the details for this site.
+	 *
+	 * This method is used internally to lazy-load the extended properties of a site.
+	 *
+	 * @since 4.6.0
+	 * @access private
+	 *
+	 * @see WP_Site::__get()
+	 *
+	 * @return object A raw site object with all details included.
+	 */
+	private function get_details() {
+		$details = wp_cache_get( $this->blog_id, 'site-details' );
+
+		if ( false === $details ) {
+
+			switch_to_blog( $this->blog_id );
+			// Create a raw copy of the object for backwards compatibility with the filter below.
+			$details = new stdClass();
+			foreach ( get_object_vars( $this ) as $key => $value ) {
+				$details->$key = $value;
+			}
+			$details->blogname   = get_option( 'blogname' );
+			$details->siteurl    = get_option( 'siteurl' );
+			$details->post_count = get_option( 'post_count' );
+			$details->home       = get_option( 'home' );
+			restore_current_blog();
+
+			$cache_details = true;
+			foreach ( array( 'blogname', 'siteurl', 'post_count', 'home' ) as $field ) {
+				if ( false === $details->$field ) {
+					$cache_details = false;
+					break;
+				}
+			}
+
+			if ( $cache_details ) {
+				wp_cache_set( $this->blog_id, $details, 'site-details' );
+			}
+		}
+
+		/**
+		 * Filters a site's extended properties.
+		 *
+		 * @since 4.6.0
+		 *
+		 * @param object $details The site details.
+		 */
+		$details = apply_filters( 'site_details', $details );
+
+		return $details;
 	}
 }

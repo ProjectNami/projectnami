@@ -1905,6 +1905,10 @@ function _remove_theme_support( $feature ) {
  * Checks a theme's support for a given feature
  *
  * @since 2.9.0
+ * @since 3.6.0 The `html5` feature was added
+ * @since 3.9.0 The `html5` feature now also accepts 'gallery' and 'caption'
+ * @since 4.1.0 The `title-tag` feature was added
+ * @since 4.5.0 The `customize-selective-refresh-widgets` feature was added
  *
  * @global array $_wp_theme_features
  *

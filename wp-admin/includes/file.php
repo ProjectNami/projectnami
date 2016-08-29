@@ -168,7 +168,7 @@ function wp_tempnam( $filename = '', $dir = '' ) {
 		$dir = get_temp_dir();
 	}
 
-	if ( empty( $filename ) || '.' == $filename || '/' == $filename ) {
+	if ( empty( $filename ) || '.' == $filename || '/' == $filename || '\\' == $filename ) {
 		$filename = time();
 	}
 
@@ -569,9 +569,8 @@ function unzip_file($file, $to) {
 	if ( ! $wp_filesystem || !is_object($wp_filesystem) )
 		return new WP_Error('fs_unavailable', __('Could not access filesystem.'));
 
-	// Unzip can use a lot of memory, but not this much hopefully
-	/** This filter is documented in wp-admin/admin.php */
-	@ini_set( 'memory_limit', apply_filters( 'admin_memory_limit', WP_MAX_MEMORY_LIMIT ) );
+	// Unzip can use a lot of memory, but not this much hopefully.
+	wp_raise_memory_limit( 'admin' );
 
 	$needed_dirs = array();
 	$to = trailingslashit($to);
@@ -958,12 +957,12 @@ function WP_Filesystem( $args = false, $context = false, $allow_relaxed_file_own
  *
  * @param array  $args                         Optional. Connection details. Default empty array.
  * @param string $context                      Optional. Full path to the directory that is tested
- *                                             for being writable. Default false.
+ *                                             for being writable. Default empty.
  * @param bool   $allow_relaxed_file_ownership Optional. Whether to allow Group/World writable.
  *                                             Default false.
  * @return string The transport to use, see description for valid return values.
  */
-function get_filesystem_method( $args = array(), $context = false, $allow_relaxed_file_ownership = false ) {
+function get_filesystem_method( $args = array(), $context = '', $allow_relaxed_file_ownership = false ) {
 	$method = defined('FS_METHOD') ? FS_METHOD : false; // Please ensure that this is either 'direct', 'ssh2', 'ftpext' or 'ftpsockets'
 
 	if ( ! $context ) {
@@ -1028,15 +1027,15 @@ function get_filesystem_method( $args = array(), $context = false, $allow_relaxe
  * Displays a form to the user to request for their FTP/SSH details in order
  * to connect to the filesystem.
  *
- * All chosen/entered details are saved, Excluding the Password.
+ * All chosen/entered details are saved, excluding the password.
  *
  * Hostnames may be in the form of hostname:portnumber (eg: wordpress.org:2467)
  * to specify an alternate FTP/SSH port.
  *
- * Plugins may override this form by returning true|false via the
- * {@see 'request_filesystem_credentials'} filter.
+ * Plugins may override this form by returning true|false via the {@see 'request_filesystem_credentials'} filter.
  *
- * @since 2.5.
+ * @since 2.5.0
+ * @since 4.6.0 The `$context` parameter default changed from `false` to an empty string.
  *
  * @global string $pagenow
  *
@@ -1044,16 +1043,15 @@ function get_filesystem_method( $args = array(), $context = false, $allow_relaxe
  * @param string $type                         Optional. Chosen type of filesystem. Default empty.
  * @param bool   $error                        Optional. Whether the current request has failed to connect.
  *                                             Default false.
- * @param string $context                      Optional. Full path to the directory that is tested
- *                                             for being writable. Default false.
- * @param array  $extra_fields                 Optional. Extra POST fields which should be checked for
- *                                             to be included in the post. Default null.
- * @param bool   $allow_relaxed_file_ownership Optional. Whether to allow Group/World writable.
- *                                             Default false.
+ * @param string $context                      Optional. Full path to the directory that is tested for being
+ *                                             writable. Default empty.
+ * @param array  $extra_fields                 Optional. Extra `POST` fields to be checked for inclusion in
+ *                                             the post. Default null.
+ * @param bool   $allow_relaxed_file_ownership Optional. Whether to allow Group/World writable. Default false.
  *
  * @return bool False on failure, true on success.
  */
-function request_filesystem_credentials( $form_post, $type = '', $error = false, $context = false, $extra_fields = null, $allow_relaxed_file_ownership = false ) {
+function request_filesystem_credentials( $form_post, $type = '', $error = false, $context = '', $extra_fields = null, $allow_relaxed_file_ownership = false ) {
 	global $pagenow;
 
 	/**
@@ -1063,6 +1061,7 @@ function request_filesystem_credentials( $form_post, $type = '', $error = false,
 	 * output of the filesystem credentials form, returning that value instead.
 	 *
 	 * @since 2.5.0
+	 * @since 4.6.0 The `$context` parameter default changed from `false` to an empty string.
 	 *
 	 * @param mixed  $output                       Form output to return instead. Default empty.
 	 * @param string $form_post                    The URL to post the form to.
@@ -1161,6 +1160,7 @@ function request_filesystem_credentials( $form_post, $type = '', $error = false,
 	 * Filters the connection types to output to the filesystem credentials form.
 	 *
 	 * @since 2.9.0
+	 * @since 4.6.0 The `$context` parameter default changed from `false` to an empty string.
 	 *
 	 * @param array  $types       Types of connections.
 	 * @param array  $credentials Credentials to connect with.

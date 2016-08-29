@@ -221,6 +221,7 @@ class WP_oEmbed {
 	 * @return false|string False on failure, otherwise the oEmbed provider URL.
 	 */
 	public function get_provider( $url, $args = '' ) {
+		$args = wp_parse_args( $args );
 
 		$provider = false;
 

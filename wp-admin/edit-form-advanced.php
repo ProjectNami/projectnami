@@ -11,9 +11,9 @@ if ( !defined('ABSPATH') )
 	die('-1');
 
 /**
- * @global string  $post_type
- * @global object  $post_type_object
- * @global WP_Post $post
+ * @global string       $post_type
+ * @global WP_Post_Type $post_type_object
+ * @global WP_Post      $post
  */
 global $post_type, $post_type_object, $post;
 
@@ -219,7 +219,7 @@ $publish_callback_args = null;
 if ( post_type_supports($post_type, 'revisions') && 'auto-draft' != $post->post_status ) {
 	$revisions = wp_get_post_revisions( $post_ID );
 
-	// We should aim to show the revisions metabox only when there are revisions.
+	// We should aim to show the revisions meta box only when there are revisions.
 	if ( count( $revisions ) > 1 ) {
 		reset( $revisions ); // Reset pointer for key()
 		$publish_callback_args = array( 'revisions_count' => count( $revisions ), 'revision_id' => key( $revisions ) );

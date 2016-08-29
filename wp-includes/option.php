@@ -7,7 +7,7 @@
  */
 
 /**
- * Retrieve option value based on name of option.
+ * Retrieves an option value based on an option name.
  *
  * If the option does not exist or does not have a value, then the return value
  * will be false. This is useful to check whether you need to install an option
@@ -399,7 +399,7 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = 'yes' )
 	global $wpdb;
 
 	if ( !empty( $deprecated ) )
-		_deprecated_argument( __FUNCTION__, '2.3' );
+		_deprecated_argument( __FUNCTION__, '2.3.0' );
 
 	$option = trim($option);
 	if ( empty($option) )

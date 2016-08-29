@@ -447,6 +447,7 @@ function clean_blog_cache( $blog ) {
 	$domain_path_key = md5( $blog->domain . $blog->path );
 
 	wp_cache_delete( $blog_id, 'sites' );
+	wp_cache_delete( $blog_id, 'site-details' );
 	wp_cache_delete( $blog_id , 'blog-details' );
 	wp_cache_delete( $blog_id . 'short' , 'blog-details' );
 	wp_cache_delete(  $domain_path_key, 'blog-lookup' );
@@ -460,8 +461,8 @@ function clean_blog_cache( $blog ) {
 	 *
 	 * @since 4.6.0
 	 *
-	 * @param int     $id Blog ID.
-	 * @param WP_Site $blog
+	 * @param int     $id              Blog ID.
+	 * @param WP_Site $blog            Site object.
 	 * @param string  $domain_path_key md5 hash of domain and path.
 	 */
 	do_action( 'clean_site_cache', $blog_id, $blog, $domain_path_key );
@@ -479,8 +480,8 @@ function clean_blog_cache( $blog ) {
  *
  * @global WP_Site $current_blog The current site.
  *
- * @param WP_Site|int $site Site to retrieve.
- * @return WP_Site|array|null Depends on $output value.
+ * @param WP_Site|int|null $site Optional. Site to retrieve. Default is the current site.
+ * @return WP_Site|null The site object or null if not found.
  */
 function get_site( &$site = null ) {
 	global $current_blog;
@@ -505,7 +506,7 @@ function get_site( &$site = null ) {
 	 *
 	 * @since 4.6.0
 	 *
-	 * @param mixed $_site Site data.
+	 * @param WP_Site $_site Site data.
 	 */
 	$_site = apply_filters( 'get_site', $_site );
 
@@ -519,7 +520,6 @@ function get_site( &$site = null ) {
  * @access private
  *
  * @see update_site_cache()
- *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param array $ids ID list.
@@ -728,7 +728,7 @@ function update_blog_option( $id, $option, $value, $deprecated = null ) {
 	$id = (int) $id;
 
 	if ( null !== $deprecated  )
-		_deprecated_argument( __FUNCTION__, '3.1' );
+		_deprecated_argument( __FUNCTION__, '3.1.0' );
 
 	if ( get_current_blog_id() == $id )
 		return update_option( $option, $value );
@@ -814,7 +814,7 @@ function switch_to_blog( $new_blog, $deprecated = null ) {
 			if ( is_array( $global_groups ) ) {
 				wp_cache_add_global_groups( $global_groups );
 			} else {
-				wp_cache_add_global_groups( array( 'users', 'userlogins', 'usermeta', 'user_meta', 'useremail', 'userslugs', 'site-transient', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'rss', 'global-posts', 'blog-id-cache', 'networks', 'sites' ) );
+				wp_cache_add_global_groups( array( 'users', 'userlogins', 'usermeta', 'user_meta', 'useremail', 'userslugs', 'site-transient', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'rss', 'global-posts', 'blog-id-cache', 'networks', 'sites', 'site-details' ) );
 			}
 			wp_cache_add_non_persistent_groups( array( 'counts', 'plugins' ) );
 		}
@@ -885,7 +885,7 @@ function restore_current_blog() {
 			if ( is_array( $global_groups ) ) {
 				wp_cache_add_global_groups( $global_groups );
 			} else {
-				wp_cache_add_global_groups( array( 'users', 'userlogins', 'usermeta', 'user_meta', 'useremail', 'userslugs', 'site-transient', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'rss', 'global-posts', 'blog-id-cache', 'networks', 'sites' ) );
+				wp_cache_add_global_groups( array( 'users', 'userlogins', 'usermeta', 'user_meta', 'useremail', 'userslugs', 'site-transient', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'rss', 'global-posts', 'blog-id-cache', 'networks', 'sites', 'site-details' ) );
 			}
 			wp_cache_add_non_persistent_groups( array( 'counts', 'plugins' ) );
 		}
@@ -962,7 +962,7 @@ function update_blog_status( $blog_id, $pref, $value, $deprecated = null ) {
 	global $wpdb;
 
 	if ( null !== $deprecated  )
-		_deprecated_argument( __FUNCTION__, '3.1' );
+		_deprecated_argument( __FUNCTION__, '3.1.0' );
 
 	if ( ! in_array( $pref, array( 'site_id', 'domain', 'path', 'registered', 'last_updated', 'public', 'archived', 'mature', 'spam', 'deleted', 'lang_id') ) )
 		return $value;
@@ -1061,6 +1061,127 @@ function get_last_updated( $deprecated = '', $start = 0, $quantity = 40 ) {
 		_deprecated_argument( __FUNCTION__, 'MU' ); // never used
 
 	return $wpdb->get_results( $wpdb->prepare("SELECT blog_id, domain, path FROM $wpdb->blogs WHERE site_id = %d AND public = '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' AND last_updated != '0001-01-01 00:00:00' ORDER BY last_updated DESC OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $wpdb->siteid, $start, $quantity ) , ARRAY_A );
+}
+
+/**
+ * Retrieves a list of networks.
+ *
+ * @since 4.6.0
+ *
+ * @param string|array $args Optional. Array or string of arguments. See WP_Network_Query::parse_query()
+ *                           for information on accepted arguments. Default empty array.
+ * @return int|array List of networks or number of found networks if `$count` argument is true.
+ */
+function get_networks( $args = array() ) {
+	$query = new WP_Network_Query();
+
+	return $query->query( $args );
+}
+
+/**
+ * Retrieves network data given a network ID or network object.
+ *
+ * Network data will be cached and returned after being passed through a filter.
+ * If the provided network is empty, the current network global will be used.
+ *
+ * @since 4.6.0
+ *
+ * @global WP_Network $current_site
+ *
+ * @param WP_Network|int|null $network Network to retrieve, passed by reference.
+ * @return WP_Network|null The network object or null if not found.
+ */
+function get_network( &$network = null ) {
+	global $current_site;
+	if ( empty( $network ) && isset( $current_site ) ) {
+		$network = $current_site;
+	}
+
+	if ( $network instanceof WP_Network ) {
+		$_network = $network;
+	} elseif ( is_object( $network ) ) {
+		$_network = new WP_Network( $network );
+	} else {
+		$_network = WP_Network::get_instance( $network );
+	}
+
+	if ( ! $_network ) {
+		return null;
+	}
+
+	/**
+	 * Fires after a network is retrieved.
+	 *
+	 * @since 4.6.0
+	 *
+	 * @param WP_Network $_network Network data.
+	 */
+	$_network = apply_filters( 'get_network', $_network );
+
+	return $_network;
+}
+
+/**
+ * Removes a network from the object cache.
+ *
+ * @since 4.6.0
+ *
+ * @param int|array $ids Network ID or an array of network IDs to remove from cache.
+ */
+function clean_network_cache( $ids ) {
+	foreach ( (array) $ids as $id ) {
+		wp_cache_delete( $id, 'networks' );
+
+		/**
+		 * Fires immediately after a network has been removed from the object cache.
+		 *
+		 * @since 4.6.0
+		 *
+		 * @param int $id Network ID.
+		 */
+		do_action( 'clean_network_cache', $id );
+	}
+
+	wp_cache_set( 'last_changed', microtime(), 'networks' );
+}
+
+/**
+ * Updates the network cache of given networks.
+ *
+ * Will add the networks in $networks to the cache. If network ID already exists
+ * in the network cache then it will not be updated. The network is added to the
+ * cache using the network group with the key using the ID of the networks.
+ *
+ * @since 4.6.0
+ *
+ * @param array $networks Array of network row objects.
+ */
+function update_network_cache( $networks ) {
+	foreach ( (array) $networks as $network ) {
+		wp_cache_add( $network->id, $network, 'networks' );
+	}
+}
+
+/**
+ * Adds any networks from the given IDs to the cache that do not already exist in cache.
+ *
+ * @since 4.6.0
+ * @access private
+ *
+ * @see update_network_cache()
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
+ * @param array $network_ids Array of network IDs.
+ */
+function _prime_network_caches( $network_ids ) {
+	global $wpdb;
+
+	$non_cached_ids = _get_non_cached_ids( $network_ids, 'networks' );
+	if ( !empty( $non_cached_ids ) ) {
+		$fresh_networks = $wpdb->get_results( sprintf( "SELECT $wpdb->site.* FROM $wpdb->site WHERE id IN (%s)", join( ",", array_map( 'intval', $non_cached_ids ) ) ) );
+
+		update_network_cache( $fresh_networks );
+	}
 }
 
 /**

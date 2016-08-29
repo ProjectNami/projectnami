@@ -10,21 +10,21 @@
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! $taxnow )
-	wp_die( __( 'Invalid taxonomy' ) );
+	wp_die( __( 'Invalid taxonomy.' ) );
 
 $tax = get_taxonomy( $taxnow );
 
 if ( ! $tax )
-	wp_die( __( 'Invalid taxonomy' ) );
+	wp_die( __( 'Invalid taxonomy.' ) );
 
 if ( ! in_array( $tax->name, get_taxonomies( array( 'show_ui' => true ) ) ) ) {
-   wp_die( __( 'You are not allowed to manage these items.' ) );
+   wp_die( __( 'Sorry, you are not allowed to manage these items.' ) );
 }
 
 if ( ! current_user_can( $tax->cap->manage_terms ) ) {
 	wp_die(
 		'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-		'<p>' . __( 'You are not allowed to manage these items.' ) . '</p>',
+		'<p>' . __( 'Sorry, you are not allowed to manage these items.' ) . '</p>',
 		403
 	);
 }
@@ -71,7 +71,7 @@ case 'add-tag':
 	if ( ! current_user_can( $tax->cap->edit_terms ) ) {
 		wp_die(
 			'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-			'<p>' . __( 'You are not allowed to add this item.' ) . '</p>',
+			'<p>' . __( 'Sorry, you are not allowed to add this item.' ) . '</p>',
 			403
 		);
 	}
@@ -111,7 +111,7 @@ case 'delete':
 	if ( ! current_user_can( $tax->cap->delete_terms ) ) {
 		wp_die(
 			'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-			'<p>' . __( 'You are not allowed to delete this item.' ) . '</p>',
+			'<p>' . __( 'Sorry, you are not allowed to delete this item.' ) . '</p>',
 			403
 		);
 	}
@@ -128,7 +128,7 @@ case 'bulk-delete':
 	if ( ! current_user_can( $tax->cap->delete_terms ) ) {
 		wp_die(
 			'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-			'<p>' . __( 'You are not allowed to delete these items.' ) . '</p>',
+			'<p>' . __( 'Sorry, you are not allowed to delete these items.' ) . '</p>',
 			403
 		);
 	}
@@ -171,7 +171,7 @@ case 'editedtag':
 	if ( ! current_user_can( $tax->cap->edit_terms ) ) {
 		wp_die(
 			'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-			'<p>' . __( 'You are not allowed to edit this item.' ) . '</p>',
+			'<p>' . __( 'Sorry, you are not allowed to edit this item.' ) . '</p>',
 			403
 		);
 	}
@@ -205,7 +205,16 @@ if ( $location ) {
 	if ( ! empty( $_REQUEST['paged'] ) ) {
 		$location = add_query_arg( 'paged', (int) $_REQUEST['paged'], $location );
 	}
-	wp_redirect( $location );
+
+	/**
+	 * Filters the taxonomy redirect destination URL.
+	 *
+	 * @since 4.6.0
+	 * 
+	 * @param string $location The destination URL.
+	 * @param object $tax      The taxonomy object.
+	 */
+	wp_redirect( apply_filters( 'redirect_term_location', $location, $tax ) );
 	exit;
 }
 
@@ -288,7 +297,7 @@ require_once( ABSPATH . 'wp-admin/admin-header.php' );
 if ( ! current_user_can( $tax->cap->edit_terms ) ) {
 	wp_die(
 		'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-		'<p>' . __( 'You are not allowed to edit this item.' ) . '</p>',
+		'<p>' . __( 'Sorry, you are not allowed to edit this item.' ) . '</p>',
 		403
 	);
 }

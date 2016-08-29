@@ -12,7 +12,7 @@ require_once( dirname( __FILE__ ) . '/admin.php' );
 if ( ! current_user_can( 'switch_themes' ) && ! current_user_can( 'edit_theme_options' ) ) {
 	wp_die(
 		'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-		'<p>' . __( 'You are not allowed to edit theme options on this site.' ) . '</p>',
+		'<p>' . __( 'Sorry, you are not allowed to edit theme options on this site.' ) . '</p>',
 		403
 	);
 }
@@ -40,7 +40,7 @@ if ( current_user_can( 'switch_themes' ) && isset($_GET['action'] ) ) {
 		if ( ! current_user_can( 'delete_themes' ) ) {
 			wp_die(
 				'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
-				'<p>' . __( 'You are not allowed to delete this item.' ) . '</p>',
+				'<p>' . __( 'Sorry, you are not allowed to delete this item.' ) . '</p>',
 				403
 			);
 		}
@@ -145,6 +145,7 @@ wp_localize_script( 'theme', '_wpThemeSettings', array(
 
 add_thickbox();
 wp_enqueue_script( 'theme' );
+wp_enqueue_script( 'updates' );
 wp_enqueue_script( 'customize-loader' );
 
 require_once( ABSPATH . 'wp-admin/admin-header.php' );
@@ -248,6 +249,13 @@ foreach ( $themes as $theme ) :
 	<?php } else { ?>
 		<div class="theme-screenshot blank"></div>
 	<?php } ?>
+
+	<?php if ( $theme['hasUpdate'] ) : ?>
+		<div class="update-message notice inline notice-warning notice-alt">
+			<p><?php _e( 'New version available. <button class="button-link" type="button">Update now</button>' ); ?></p>
+		</div>
+	<?php endif; ?>
+
 	<span class="more-details" id="<?php echo $aria_action; ?>"><?php _e( 'Theme Details' ); ?></span>
 	<div class="theme-author"><?php printf( __( 'By %s' ), $theme['author'] ); ?></div>
 
@@ -269,17 +277,17 @@ foreach ( $themes as $theme ) :
 			<a class="button button-primary customize load-customize hide-if-no-customize" href="<?php echo $theme['actions']['customize']; ?>"><?php _e( 'Customize' ); ?></a>
 		<?php } ?>
 	<?php } else { ?>
-		<a class="button button-secondary activate" href="<?php echo $theme['actions']['activate']; ?>"><?php _e( 'Activate' ); ?></a>
+		<?php
+		/* translators: %s: Theme name */
+		$aria_label = sprintf( _x( 'Activate %s', 'theme' ), '{{ data.name }}' );
+		?>
+		<a class="button button-secondary activate" href="<?php echo $theme['actions']['activate']; ?>" aria-label="<?php echo esc_attr( $aria_label ); ?>"><?php _e( 'Activate' ); ?></a>
 		<?php if ( current_user_can( 'edit_theme_options' ) && current_user_can( 'customize' ) ) { ?>
 			<a class="button button-primary load-customize hide-if-no-customize" href="<?php echo $theme['actions']['customize']; ?>"><?php _e( 'Live Preview' ); ?></a>
 		<?php } ?>
 	<?php } ?>
 
 	</div>
-
-	<?php if ( $theme['hasUpdate'] ) { ?>
-		<div class="theme-update"><?php _e( 'Update Available' ); ?></div>
-	<?php } ?>
 </div>
 <?php endforeach; ?>
 	</div>
@@ -368,13 +376,23 @@ $can_install = current_user_can( 'install_themes' );
 	<# } else { #>
 		<div class="theme-screenshot blank"></div>
 	<# } #>
+
+	<# if ( data.hasUpdate ) { #>
+		<div class="update-message notice inline notice-warning notice-alt"><p><?php _e( 'New version available. <button class="button-link" type="button">Update now</button>' ); ?></p></div>
+	<# } #>
+
 	<span class="more-details" id="{{ data.id }}-action"><?php _e( 'Theme Details' ); ?></span>
-	<div class="theme-author"><?php printf( __( 'By %s' ), '{{{ data.author }}}' ); ?></div>
+	<div class="theme-author">
+		<?php
+		/* translators: %s: Theme author name */
+		printf( __( 'By %s' ), '{{{ data.author }}}' );
+		?>
+	</div>
 
 	<# if ( data.active ) { #>
 		<h2 class="theme-name" id="{{ data.id }}-name">
 			<?php
-			/* translators: %s: theme name */
+			/* translators: %s: Theme name */
 			printf( __( '<span>Active:</span> %s' ), '{{{ data.name }}}' );
 			?>
 		</h2>
@@ -383,21 +401,19 @@ $can_install = current_user_can( 'install_themes' );
 	<# } #>
 
 	<div class="theme-actions">
-
-	<# if ( data.active ) { #>
-		<# if ( data.actions.customize ) { #>
-			<a class="button button-primary customize load-customize hide-if-no-customize" href="{{{ data.actions.customize }}}"><?php _e( 'Customize' ); ?></a>
+		<# if ( data.active ) { #>
+			<# if ( data.actions.customize ) { #>
+				<a class="button button-primary customize load-customize hide-if-no-customize" href="{{{ data.actions.customize }}}"><?php _e( 'Customize' ); ?></a>
+			<# } #>
+		<# } else { #>
+			<?php
+			/* translators: %s: Theme name */
+			$aria_label = sprintf( _x( 'Activate %s', 'theme' ), '{{ data.name }}' );
+			?>
+			<a class="button button-secondary activate" href="{{{ data.actions.activate }}}" aria-label="<?php echo $aria_label; ?>"><?php _e( 'Activate' ); ?></a>
+			<a class="button button-primary load-customize hide-if-no-customize" href="{{{ data.actions.customize }}}"><?php _e( 'Live Preview' ); ?></a>
 		<# } #>
-	<# } else { #>
-		<a class="button button-secondary activate" href="{{{ data.actions.activate }}}"><?php _e( 'Activate' ); ?></a>
-		<a class="button button-primary load-customize hide-if-no-customize" href="{{{ data.actions.customize }}}"><?php _e( 'Live Preview' ); ?></a>
-	<# } #>
-
 	</div>
-
-	<# if ( data.hasUpdate ) { #>
-		<div class="theme-update"><?php _e( 'Update Available' ); ?></div>
-	<# } #>
 </script>
 
 <script id="tmpl-theme-single" type="text/template">
@@ -448,8 +464,12 @@ $can_install = current_user_can( 'install_themes' );
 				<?php echo implode( ' ', $current_theme_actions ); ?>
 			</div>
 			<div class="inactive-theme">
+				<?php
+				/* translators: %s: Theme name */
+				$aria_label = sprintf( _x( 'Activate %s', 'theme' ), '{{ data.name }}' );
+				?>
 				<# if ( data.actions.activate ) { #>
-					<a href="{{{ data.actions.activate }}}" class="button button-secondary activate"><?php _e( 'Activate' ); ?></a>
+					<a href="{{{ data.actions.activate }}}" class="button button-secondary activate" aria-label="<?php echo $aria_label; ?>"><?php _e( 'Activate' ); ?></a>
 				<# } #>
 				<a href="{{{ data.actions.customize }}}" class="button button-primary load-customize hide-if-no-customize"><?php _e( 'Live Preview' ); ?></a>
 			</div>
@@ -461,4 +481,9 @@ $can_install = current_user_can( 'install_themes' );
 	</div>
 </script>
 
-<?php require( ABSPATH . 'wp-admin/admin-footer.php' );
+<?php
+wp_print_request_filesystem_credentials_modal();
+wp_print_admin_notice_templates();
+wp_print_update_row_templates();
+
+require( ABSPATH . 'wp-admin/admin-footer.php' );

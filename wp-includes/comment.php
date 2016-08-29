@@ -51,11 +51,11 @@ function check_comment($author, $email, $url, $comment, $user_ip, $user_agent, $
 		$num_links = preg_match_all( '/<a [^>]*href/i', $comment, $out );
 
 		/**
-		 * Filters the maximum number of links allowed in a comment.
+		 * Filters the number of links found in a comment.
 		 *
 		 * @since 3.0.0
 		 *
-		 * @param int    $num_links The number of links allowed.
+		 * @param int    $num_links The number of links found.
 		 * @param string $url       Comment author's URL. Included in allowed links total.
 		 */
 		$num_links = apply_filters( 'comment_max_links_url', $num_links, $url );
@@ -600,7 +600,7 @@ function wp_allow_comment( $commentdata ) {
 	);
 	if ( $commentdata['comment_author_email'] ) {
 		$dupe .= $wpdb->prepare(
-			"OR comment_author_email = %s ",
+			"AND comment_author_email = %s ",
 			wp_unslash( $commentdata['comment_author_email'] )
 		);
 	}
@@ -1055,6 +1055,10 @@ function wp_blacklist_check($author, $email, $url, $comment, $user_ip, $user_age
 	$mod_keys = trim( get_option('blacklist_keys') );
 	if ( '' == $mod_keys )
 		return false; // If moderation keys are empty
+
+	// Ensure HTML tags are not being used to bypass the blacklist.
+	$comment_without_html = wp_strip_all_tags( $comment );
+
 	$words = explode("\n", $mod_keys );
 
 	foreach ( (array) $words as $word ) {
@@ -1073,6 +1077,7 @@ function wp_blacklist_check($author, $email, $url, $comment, $user_ip, $user_age
 			|| preg_match($pattern, $email)
 			|| preg_match($pattern, $url)
 			|| preg_match($pattern, $comment)
+			|| preg_match($pattern, $comment_without_html)
 			|| preg_match($pattern, $user_ip)
 			|| preg_match($pattern, $user_agent)
 		 )
@@ -2030,7 +2035,7 @@ function wp_update_comment($commentarr) {
 	 * The hook also fires immediately before comment status transition hooks are fired.
 	 *
 	 * @since 1.2.0
-	 * @since 4.6.0 The `$data` parameter was added.
+	 * @since 4.6.0 Added the `$data` parameter.
 	 *
 	 * @param int   $comment_ID The comment ID.
 	 * @param array $data       Comment data.
@@ -2195,7 +2200,7 @@ function wp_update_comment_count_now($post_id) {
  */
 function discover_pingback_server_uri( $url, $deprecated = '' ) {
 	if ( !empty( $deprecated ) )
-		_deprecated_argument( __FUNCTION__, '2.7' );
+		_deprecated_argument( __FUNCTION__, '2.7.0' );
 
 	$pingback_str_dquote = 'rel="pingback"';
 	$pingback_str_squote = 'rel=\'pingback\'';

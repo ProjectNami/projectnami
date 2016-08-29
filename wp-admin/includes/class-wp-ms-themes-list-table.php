@@ -149,6 +149,10 @@ class WP_MS_Themes_List_Table extends WP_List_Table {
 		$this->has_items = ! empty( $themes['all'] );
 		$total_this_page = $totals[ $status ];
 
+		wp_localize_script( 'updates', '_wpUpdatesItemCounts', array(
+			'totals' => $totals,
+		) );
+
 		if ( $orderby ) {
 			$orderby = ucfirst( $orderby );
 			$order = strtoupper( $order );
@@ -468,7 +472,7 @@ class WP_MS_Themes_List_Table extends WP_List_Table {
 			), 'themes.php' );
 
 			/* translators: %s: theme name */
-			$aria_label = sprintf( __( 'Delete %s' ), $theme->display( 'Name' ) );
+			$aria_label = sprintf( _x( 'Delete %s', 'theme' ), $theme->display( 'Name' ) );
 
 			$actions['delete'] = sprintf( '<a href="%s" class="delete" aria-label="%s">%s</a>',
 				esc_url( wp_nonce_url( $url, 'bulk-themes' ) ),

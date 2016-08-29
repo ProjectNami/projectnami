@@ -503,7 +503,7 @@ function wp_start_object_cache() {
 		wp_cache_init();
 
 	if ( function_exists( 'wp_cache_add_global_groups' ) ) {
-		wp_cache_add_global_groups( array( 'users', 'userlogins', 'usermeta', 'user_meta', 'useremail', 'userslugs', 'site-transient', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'rss', 'global-posts', 'blog-id-cache', 'networks', 'sites' ) );
+		wp_cache_add_global_groups( array( 'users', 'userlogins', 'usermeta', 'user_meta', 'useremail', 'userslugs', 'site-transient', 'site-options', 'site-lookup', 'blog-lookup', 'blog-details', 'site-details', 'rss', 'global-posts', 'blog-id-cache', 'networks', 'sites' ) );
 		wp_cache_add_non_persistent_groups( array( 'counts', 'plugins' ) );
 	}
 }
@@ -585,7 +585,7 @@ function wp_get_active_and_valid_plugins() {
 
 	// Check for hacks file if the option is enabled
 	if ( get_option( 'hack_file' ) && file_exists( ABSPATH . 'my-hacks.php' ) ) {
-		_deprecated_file( 'my-hacks.php', '1.5' );
+		_deprecated_file( 'my-hacks.php', '1.5.0' );
 		array_unshift( $plugins, ABSPATH . 'my-hacks.php' );
 	}
 
@@ -950,7 +950,7 @@ function wp_installing( $is_installing = null ) {
  * Determines if SSL is used.
  *
  * @since 2.6.0
- * @since 4.6.0 Moved from functions.php to load.php
+ * @since 4.6.0 Moved from functions.php to load.php.
  *
  * @return bool True if SSL, otherwise false.
  */
@@ -966,5 +966,58 @@ function is_ssl() {
 	} elseif ( isset($_SERVER['SERVER_PORT'] ) && ( '443' == $_SERVER['SERVER_PORT'] ) ) {
 		return true;
 	}
+	return false;
+}
+
+/**
+ * Converts a shorthand byte value to an integer byte value.
+ *
+ * @since 2.3.0
+ * @since 4.6.0 Moved from media.php to load.php.
+ *
+ * @link http://php.net/manual/en/function.ini-get.php
+ * @link http://php.net/manual/en/faq.using.php#faq.using.shorthandbytes
+ *
+ * @param string $value A (PHP ini) byte value, either shorthand or ordinary.
+ * @return int An integer byte value.
+ */
+function wp_convert_hr_to_bytes( $value ) {
+	$value = strtolower( trim( $value ) );
+	$bytes = (int) $value;
+
+	if ( false !== strpos( $value, 'g' ) ) {
+		$bytes *= GB_IN_BYTES;
+	} elseif ( false !== strpos( $value, 'm' ) ) {
+		$bytes *= MB_IN_BYTES;
+	} elseif ( false !== strpos( $value, 'k' ) ) {
+		$bytes *= KB_IN_BYTES;
+	}
+
+	// Deal with large (float) values which run into the maximum integer size.
+	return min( $bytes, PHP_INT_MAX );
+}
+
+/**
+ * Determines whether a PHP ini value is changeable at runtime.
+ *
+ * @since 4.6.0
+ *
+ * @link http://php.net/manual/en/function.ini-get-all.php
+ *
+ * @param string $setting The name of the ini setting to check.
+ * @return bool True if the value is changeable at runtime. False otherwise.
+ */
+function wp_is_ini_value_changeable( $setting ) {
+	static $ini_all;
+
+	if ( ! isset( $ini_all ) ) {
+		$ini_all = ini_get_all();
+	}
+
+	// Bit operator to workaround https://bugs.php.net/bug.php?id=44936 which changes access level to 63 in PHP 5.2.6 - 5.2.17.
+	if ( isset( $ini_all[ $setting ]['access'] ) && ( INI_ALL === ( $ini_all[ $setting ]['access'] & 7 ) || INI_USER === ( $ini_all[ $setting ]['access'] & 7 ) ) ) {
+		return true;
+	}
+
 	return false;
 }

@@ -11,14 +11,14 @@ $wp_version = '4.5.3';
  *
  * @global int $wp_db_version
  */
-$wp_db_version = 36686;
+$wp_db_version = 37965;
 
 /**
  * Holds the TinyMCE version
  *
  * @global string $tinymce_version
  */
-$tinymce_version = '4310-20160418';
+$tinymce_version = '4401-20160726';
 
 /**
  * Holds the required PHP version

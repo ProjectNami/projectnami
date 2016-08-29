@@ -191,7 +191,9 @@ function get_permalink( $post = 0, $leavename = false ) {
 			// having to assign it explicitly
 			if ( empty($category) ) {
 				$default_category = get_term( get_option( 'default_category' ), 'category' );
-				$category = is_wp_error( $default_category ) ? '' : $default_category->slug;
+				if ( $default_category && ! is_wp_error( $default_category ) ) {
+					$category = $default_category->slug;
+				}
 			}
 		}
 
@@ -1352,7 +1354,7 @@ function edit_post_link( $text = null, $before = '', $after = '', $id = 0, $clas
  */
 function get_delete_post_link( $id = 0, $deprecated = '', $force_delete = false ) {
 	if ( ! empty( $deprecated ) )
-		_deprecated_argument( __FUNCTION__, '3.0' );
+		_deprecated_argument( __FUNCTION__, '3.0.0' );
 
 	if ( !$post = get_post( $id ) )
 		return;
@@ -1599,7 +1601,7 @@ function get_adjacent_post( $in_same_term = false, $excluded_terms = '', $previo
 		if ( ! empty( $excluded_terms ) && ! is_array( $excluded_terms ) ) {
 			// back-compat, $excluded_terms used to be $excluded_terms with IDs separated by " and "
 			if ( false !== strpos( $excluded_terms, ' and ' ) ) {
-				_deprecated_argument( __FUNCTION__, '3.3', sprintf( __( 'Use commas instead of %s to separate excluded terms.' ), "'and'" ) );
+				_deprecated_argument( __FUNCTION__, '3.3.0', sprintf( __( 'Use commas instead of %s to separate excluded terms.' ), "'and'" ) );
 				$excluded_terms = explode( ' and ', $excluded_terms );
 			} else {
 				$excluded_terms = explode( ',', $excluded_terms );
@@ -3593,7 +3595,7 @@ function wp_get_canonical_url( $post = null ) {
  * Outputs rel=canonical for singular queries.
  *
  * @since 2.9.0
- * @since 4.6.0 Adjusted to use `wp_get_canonical_url()`.
+ * @since 4.6.0 Adjusted to use wp_get_canonical_url().
  */
 function rel_canonical() {
 	if ( ! is_singular() ) {

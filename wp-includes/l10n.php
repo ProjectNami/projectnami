@@ -509,14 +509,17 @@ function translate_nooped_plural( $nooped_plural, $count, $domain = 'default' ) 
  *
  * @since 1.5.0
  *
- * @global array $l10n
+ * @global array $l10n          An array of all currently loaded text domains.
+ * @global array $l10n_unloaded An array of all text domains that have been unloaded again.
  *
  * @param string $domain Text domain. Unique identifier for retrieving translated strings.
  * @param string $mofile Path to the .mo file.
  * @return bool True on success, false on failure.
  */
 function load_textdomain( $domain, $mofile ) {
-	global $l10n;
+	global $l10n, $l10n_unloaded;
+
+	$l10n_unloaded = (array) $l10n_unloaded;
 
 	/**
 	 * Filters whether to override the .mo file loading.
@@ -530,6 +533,8 @@ function load_textdomain( $domain, $mofile ) {
 	$plugin_override = apply_filters( 'override_load_textdomain', false, $domain, $mofile );
 
 	if ( true == $plugin_override ) {
+		unset( $l10n_unloaded[ $domain ] );
+
 		return true;
 	}
 
@@ -561,6 +566,8 @@ function load_textdomain( $domain, $mofile ) {
 	if ( isset( $l10n[$domain] ) )
 		$mo->merge_with( $l10n[$domain] );
 
+	unset( $l10n_unloaded[ $domain ] );
+
 	$l10n[$domain] = &$mo;
 
 	return true;
@@ -571,13 +578,16 @@ function load_textdomain( $domain, $mofile ) {
  *
  * @since 3.0.0
  *
- * @global array $l10n
+ * @global array $l10n          An array of all currently loaded text domains.
+ * @global array $l10n_unloaded An array of all text domains that have been unloaded again.
  *
  * @param string $domain Text domain. Unique identifier for retrieving translated strings.
  * @return bool Whether textdomain was unloaded.
  */
 function unload_textdomain( $domain ) {
-	global $l10n;
+	global $l10n, $l10n_unloaded;
+
+	$l10n_unloaded = (array) $l10n_unloaded;
 
 	/**
 	 * Filters whether to override the text domain unloading.
@@ -589,8 +599,11 @@ function unload_textdomain( $domain ) {
 	 */
 	$plugin_override = apply_filters( 'override_unload_textdomain', false, $domain );
 
-	if ( $plugin_override )
+	if ( $plugin_override ) {
+		$l10n_unloaded[ $domain ] = true;
+
 		return true;
+	}
 
 	/**
 	 * Fires before the text domain is unloaded.
@@ -603,6 +616,9 @@ function unload_textdomain( $domain ) {
 
 	if ( isset( $l10n[$domain] ) ) {
 		unset( $l10n[$domain] );
+
+		$l10n_unloaded[ $domain ] = true;
+
 		return true;
 	}
 
@@ -648,7 +664,7 @@ function load_default_textdomain( $locale = null ) {
 }
 
 /**
- * Load a plugin's translated strings.
+ * Loads a plugin's translated strings.
  *
  * If the path is not given then it will be the root of the plugin directory.
  *
@@ -658,7 +674,7 @@ function load_default_textdomain( $locale = null ) {
  * @since 4.6.0 The function now tries to load the .mo file from the languages directory first.
  *
  * @param string $domain          Unique identifier for retrieving translated strings
- * @param string $deprecated      Use the $plugin_rel_path parameter instead.
+ * @param string $deprecated      Optional. Use the $plugin_rel_path parameter instead. Defaukt false.
  * @param string $plugin_rel_path Optional. Relative path to WP_PLUGIN_DIR where the .mo file resides.
  *                                Default false.
  * @return bool True when textdomain is successfully loaded, false otherwise.
@@ -684,7 +700,7 @@ function load_plugin_textdomain( $domain, $deprecated = false, $plugin_rel_path 
 	if ( false !== $plugin_rel_path ) {
 		$path = WP_PLUGIN_DIR . '/' . trim( $plugin_rel_path, '/' );
 	} elseif ( false !== $deprecated ) {
-		_deprecated_argument( __FUNCTION__, '2.7' );
+		_deprecated_argument( __FUNCTION__, '2.7.0' );
 		$path = ABSPATH . trim( $deprecated, '/' );
 	} else {
 		$path = WP_PLUGIN_DIR;
@@ -700,8 +716,8 @@ function load_plugin_textdomain( $domain, $deprecated = false, $plugin_rel_path 
  * @since 4.6.0 The function now tries to load the .mo file from the languages directory first.
  *
  * @param string $domain             Text domain. Unique identifier for retrieving translated strings.
- * @param string $mu_plugin_rel_path Relative to WPMU_PLUGIN_DIR directory in which the .mo file resides.
- *                                   Default empty string.
+ * @param string $mu_plugin_rel_path Optional. Relative to `WPMU_PLUGIN_DIR` directory in which the .mo
+ *                                   file resides. Default empty string.
  * @return bool True when textdomain is successfully loaded, false otherwise.
  */
 function load_muplugin_textdomain( $domain, $mu_plugin_rel_path = '' ) {
@@ -783,25 +799,32 @@ function load_child_theme_textdomain( $domain, $path = false ) {
 }
 
 /**
- * Just in time loading of plugin and theme textdomains.
+ * Loads plugin and theme textdomains just-in-time.
  *
- * When a textdomain is encountered for the first time, we try to load the translation file
- * from wp-content/languages, removing the need to call `load_plugin_texdomain()` or
- * `load_theme_texdomain()`. Holds a cached list of available .mo files to improve performance.
+ * When a textdomain is encountered for the first time, we try to load
+ * the translation file from `wp-content/languages`, removing the need
+ * to call load_plugin_texdomain() or load_theme_texdomain().
+ *
+ * Holds a cached list of available .mo files to improve performance.
  *
  * @since 4.6.0
  * @access private
  *
  * @see get_translations_for_domain()
+ * @global array $l10n_unloaded An array of all text domains that have been unloaded again.
  *
  * @param string $domain Text domain. Unique identifier for retrieving translated strings.
  * @return bool True when the textdomain is successfully loaded, false otherwise.
  */
 function _load_textdomain_just_in_time( $domain ) {
+	global $l10n_unloaded;
+
+	$l10n_unloaded = (array) $l10n_unloaded;
+
 	static $cached_mofiles = null;
 
 	// Short-circuit if domain is 'default' which is reserved for core.
-	if ( 'default' === $domain ) {
+	if ( 'default' === $domain || isset( $l10n_unloaded[ $domain ] ) ) {
 		return false;
 	}
 
