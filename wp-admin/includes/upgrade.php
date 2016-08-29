@@ -1476,10 +1476,3 @@ function upgrade_450() {
 	// Remove unused user setting for wpLink.
 	delete_user_setting( 'wplink' );
 }
-	$text_fields = array( 'tinytext', 'text', 'mediumtext', 'longtext' );
-	$blob_fields = array( 'tinyblob', 'blob', 'mediumblob', 'longblob' );
-
-				case 'spatial':
-				}
-				if ( 'SPATIAL' === strtoupper( $index_data['index_type'] ) ) {
-					$index_string .= 'SPATIAL ';
