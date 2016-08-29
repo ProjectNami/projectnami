@@ -380,9 +380,9 @@ class WP_Site_Query {
 
 		if ( ! empty( $number ) ) {
 			if ( $offset ) {
-				$limits = 'LIMIT ' . $offset . ',' . $number;
+				$limits = 'OFFSET ' . $offset . ' ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			} else {
-				$limits = 'LIMIT ' . $number;
+				$limits = 'OFFSET 0 ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			}
 		}
 
@@ -546,10 +546,10 @@ class WP_Site_Query {
 
 		$found_rows = '';
 		if ( ! $this->query_vars['no_found_rows'] ) {
-			$found_rows = 'SQL_CALC_FOUND_ROWS';
+			$found_rows = ', count(*) as [found_rows]';
 		}
 
-		$this->sql_clauses['select']  = "SELECT $found_rows $fields";
+		$this->sql_clauses['select']  = "SELECT $fields $found_rows";
 		$this->sql_clauses['from']    = "FROM $wpdb->blogs $join";
 		$this->sql_clauses['groupby'] = $groupby;
 		$this->sql_clauses['orderby'] = $orderby;
@@ -589,7 +589,8 @@ class WP_Site_Query {
 			 */
 			$found_sites_query = apply_filters( 'found_sites_query', 'SELECT FOUND_ROWS()', $this );
 
-			$this->found_sites = (int) $wpdb->get_var( $found_sites_query );
+			//$this->found_sites = (int) $wpdb->get_var( $found_sites_query );
+            $this->found_sites = $wpdb->last_query_total_rows;
 		}
 	}
 
@@ -657,10 +658,10 @@ class WP_Site_Query {
 				$parsed = 'site_id';
 				break;
 			case 'domain_length':
-				$parsed = 'CHAR_LENGTH(domain)';
+				$parsed = 'LEN(domain)';
 				break;
 			case 'path_length':
-				$parsed = 'CHAR_LENGTH(path)';
+				$parsed = 'LEN(path)';
 				break;
 			case 'id':
 				$parsed = 'blog_id';
