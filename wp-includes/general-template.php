@@ -2693,7 +2693,7 @@ function rsd_link() {
 /**
  * Display the link to the Windows Live Writer manifest file.
  *
- * @link http://msdn.microsoft.com/en-us/library/bb463265.aspx
+ * @link https://msdn.microsoft.com/en-us/library/bb463265.aspx
  * @since 2.3.1
  */
 function wlwmanifest_link() {
@@ -2739,7 +2739,7 @@ function wp_no_robots() {
  *
  * @since 4.3.0
  *
- * @link http://www.whatwg.org/specs/web-apps/current-work/multipage/links.html#rel-icon HTML5 specification link icon.
+ * @link https://www.whatwg.org/specs/web-apps/current-work/multipage/links.html#rel-icon HTML5 specification link icon.
  */
 function wp_site_icon() {
 	if ( ! has_site_icon() && ! is_customize_preview() ) {

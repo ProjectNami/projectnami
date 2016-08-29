@@ -1802,7 +1802,7 @@ function wp_ajax_find_posts() {
 		if ( '0001-01-01 00:00:00' == $post->post_date ) {
 			$time = '';
 		} else {
-			/* translators: date format in table columns, see http://php.net/date */
+			/* translators: date format in table columns, see https://secure.php.net/date */
 			$time = mysql2date(__('Y/m/d'), $post->post_date);
 		}
 		// PN Mod: End
