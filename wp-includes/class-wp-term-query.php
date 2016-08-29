@@ -517,9 +517,9 @@ class WP_Term_Query {
 		// Don't limit the query results when we have to descend the family tree.
 		if ( $number && ! $hierarchical && ! $child_of && '' === $parent ) {
 			if ( $offset ) {
-				$limits = 'LIMIT ' . $offset . ',' . $number;
+				$limits = 'OFFSET ' . $offset . ' ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			} else {
-				$limits = 'LIMIT ' . $number;
+				$limits = 'OFFSET 0 ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			}
 		} else {
 			$limits = '';
