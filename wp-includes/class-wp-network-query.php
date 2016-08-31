@@ -348,6 +348,9 @@ class WP_Network_Query {
 
 		if ( $this->query_vars['count'] ) {
 			$fields = 'COUNT(*) as qty';
+			$orderby = ''; // ORDER BY breaks in MSSQL here since comment_date_gmt won't be in the query statement.
+			$order = '';
+			$limits = '';
 		} else {
 			$fields = "$wpdb->site.id";
 		}
