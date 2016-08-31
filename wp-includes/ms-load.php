@@ -137,15 +137,15 @@ function get_network_by_path( $domain, $path, $segments = null ) {
  *
  * @since 3.9.0
  * @since 4.4.0 Converted to leverage WP_Network
+ * @since 4.6.0 Converted to use get_network()
  *
  * @param object|int $network The network's database row or ID.
  * @return WP_Network|false Object containing network information if found, false if not.
  */
 function wp_get_network( $network ) {
-	if ( ! is_object( $network ) ) {
-		$network = WP_Network::get_instance( $network );
-	} else {
-		$network = new WP_Network( $network );
+	$network = get_network( $network );
+	if ( null === $network ) {
+		return false;
 	}
 
 	return $network;
@@ -239,15 +239,12 @@ function get_site_by_path( $domain, $path, $segments = null ) {
 		'number' => 1,
 	);
 
-	if ( count( $domains ) > 1 && count( $paths ) > 1 ) {
-		$args['orderby'] = 'domain_length path_length';
-		$args['order'] = 'DESC DESC';
-	} elseif ( count( $domains ) > 1 ) {
-		$args['orderby'] = 'domain_length';
-		$args['order'] = 'DESC';
-	} elseif ( count( $paths ) > 1 ) {
-		$args['orderby'] = 'path_length';
-		$args['order'] = 'DESC';
+	if ( count( $domains ) > 1 ) {
+		$args['orderby']['domain_length'] = 'DESC';
+	}
+
+	if ( count( $paths ) > 1 ) {
+		$args['orderby']['path_length'] = 'DESC';
 	}
 
 	$result = get_sites( $args );
@@ -286,7 +283,8 @@ function get_site_by_path( $domain, $path, $segments = null ) {
  *
  * @param string $domain    The requested domain.
  * @param string $path      The requested path.
- * @param bool   $subdomain Whether a subdomain (true) or subdirectory (false) configuration.
+ * @param bool   $subdomain Optional. Whether a subdomain (true) or subdirectory (false) configuration.
+ *                          Default false.
  * @return bool|string True if bootstrap successfully populated `$current_blog` and `$current_site`.
  *                     False if bootstrap could not be properly completed.
  *                     Redirect URL if parts exist, but the request as a whole can not be fulfilled.
@@ -521,7 +519,7 @@ function ms_not_installed( $domain, $path ) {
  * @return object
  */
 function get_current_site_name( $current_site ) {
-	_deprecated_function( __FUNCTION__, '3.9', 'get_current_site()' );
+	_deprecated_function( __FUNCTION__, '3.9.0', 'get_current_site()' );
 	return $current_site;
 }
 
@@ -541,6 +539,6 @@ function get_current_site_name( $current_site ) {
  */
 function wpmu_current_site() {
 	global $current_site;
-	_deprecated_function( __FUNCTION__, '3.9' );
+	_deprecated_function( __FUNCTION__, '3.9.0' );
 	return $current_site;
 }
