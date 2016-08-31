@@ -338,7 +338,10 @@ class WP_Network_Query {
 		$number = absint( $this->query_vars['number'] );
 		$offset = absint( $this->query_vars['offset'] );
 
-		if ( ! empty( $number ) ) {
+		// Disable LIMIT when no ORDER BY
+		if ( ! $orderby ) {
+			$limits = '';
+		} elseif ( ! empty( $number ) ) {
 			if ( $offset ) {
 				$limits = 'OFFSET ' . $offset . ' ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			} else {
@@ -436,12 +439,7 @@ class WP_Network_Query {
 			$orderby = "ORDER BY $orderby";
 		}
 
-		$found_rows = '';
-		if ( ! $this->query_vars['no_found_rows'] ) {
-			$found_rows = ', count(*) as [found_rows]';
-		}
-
-		$this->sql_clauses['select']  = "SELECT $fields $found_rows";
+		$this->sql_clauses['select']  = "SELECT $fields";
 		$this->sql_clauses['from']    = "FROM $wpdb->site $join";
 		$this->sql_clauses['groupby'] = $groupby;
 		$this->sql_clauses['orderby'] = $orderby;
@@ -454,6 +452,10 @@ class WP_Network_Query {
 		}
 
 		$network_ids = $wpdb->get_col( $this->request );
+
+		if ( ! $this->query_vars['no_found_rows'] ) {
+			$wpdb->query("select count(*) as [found_rows] {$this->sql_clauses['from']} {$where} {$this->sql_clauses['groupby']}");
+		}
 
 		return array_map( 'intval', $network_ids );
 	}
