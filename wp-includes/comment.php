@@ -734,7 +734,7 @@ function check_comment_flood_db( $ip, $email, $date ) {
 		$check_column = '`user_id`';
 	} else {
 		$user = $ip;
-		$check_column = '`comment_author_IP`';
+		$check_column = 'comment_author_IP';
 	}
 
 	$sql = $wpdb->prepare(
