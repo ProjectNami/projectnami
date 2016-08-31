@@ -378,7 +378,10 @@ class WP_Site_Query {
 		$number = absint( $this->query_vars['number'] );
 		$offset = absint( $this->query_vars['offset'] );
 
-		if ( ! empty( $number ) ) {
+		// Disable LIMIT when no ORDER BY
+		if ( ! $orderby ) {
+			$limits = '';
+		} elseif ( ! empty( $number ) ) {
 			if ( $offset ) {
 				$limits = 'OFFSET ' . $offset . ' ROWS FETCH NEXT ' . $number . ' ROWS ONLY';
 			} else {
