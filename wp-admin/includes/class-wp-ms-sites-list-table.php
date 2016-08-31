@@ -113,73 +113,75 @@ class WP_MS_Sites_List_Table extends WP_List_Table {
 					preg_match( '/^[0-9]{1,3}\.[0-9]{1,3}\.?$/', $s ) ||
 					preg_match( '/^[0-9]{1,3}\.$/', $s ) ) {
 			// IPv4 address
-			$sql = $wpdb->prepare( "SELECT blog_id FROM {$wpdb->registration_log} WHERE {$wpdb->registration_log}.IP LIKE %s", $wpdb->esc_like( $s ) . $wild );
+			$sql = $wpdb->prepare( "SELECT blog_id FROM {$wpdb->registration_log} WHERE {$wpdb->registration_log}.IP LIKE %s", $wpdb->esc_like( $s ) . ( ! empty( $wild ) ? '%' : '' ) );
 			$reg_blog_ids = $wpdb->get_col( $sql );
 
-			if ( !$reg_blog_ids )
-				$reg_blog_ids = array( 0 );
-
-			$query = "SELECT *
-				FROM {$wpdb->blogs}
-				WHERE site_id = '{$wpdb->siteid}'
-				AND {$wpdb->blogs}.blog_id IN (" . implode( ', ', $reg_blog_ids ) . ")";
+			if ( $reg_blog_ids ) {
+				$args['site__in'] = $reg_blog_ids;
+			}
+		} elseif ( is_numeric( $s ) && empty( $wild ) ) {
+			$args['ID'] = $s;
 		} else {
-			if ( is_numeric($s) && empty( $wild ) ) {
-				$query .= $wpdb->prepare( " AND ( {$wpdb->blogs}.blog_id = %s )", $s );
-			} elseif ( is_subdomain_install() ) {
-				$blog_s = str_replace( '.' . $current_site->domain, '', $s );
-				$blog_s = $wpdb->esc_like( $blog_s ) . $wild . $wpdb->esc_like( '.' . $current_site->domain );
-				$query .= $wpdb->prepare( " AND ( {$wpdb->blogs}.domain LIKE %s ) ", $blog_s );
-			} else {
-				if ( $s != trim('/', $current_site->path) ) {
-					$blog_s = $wpdb->esc_like( $current_site->path . $s ) . $wild . $wpdb->esc_like( '/' );
-				} else {
-					$blog_s = $wpdb->esc_like( $s );
-				}
-				$query .= $wpdb->prepare( " AND  ( {$wpdb->blogs}.path LIKE %s )", $blog_s );
+			$args['search'] = $s;
+
+			if ( ! is_subdomain_install() ) {
+				$args['search_columns'] = array( 'path' );
 			}
 		}
 
 		$order_by = isset( $_REQUEST['orderby'] ) ? $_REQUEST['orderby'] : '';
-		if ( $order_by === 'registered' ) {
-			$query .= ' ORDER BY registered ';
-		} elseif ( $order_by === 'lastupdated' ) {
-			$query .= ' ORDER BY last_updated ';
-		} elseif ( $order_by === 'blogname' ) {
+		if ( 'registered' === $order_by ) {
+			// registered is a valid field name.
+		} elseif ( 'lastupdated' === $order_by ) {
+			$order_by = 'last_updated';
+		} elseif ( 'blogname' === $order_by ) {
 			if ( is_subdomain_install() ) {
-				$query .= ' ORDER BY domain ';
+				$order_by = 'domain';
 			} else {
-				$query .= ' ORDER BY path ';
+				$order_by = 'path';
 			}
-		} elseif ( $order_by === 'blog_id' ) {
-			$query .= ' ORDER BY blog_id ';
+		} elseif ( 'blog_id' === $order_by ) {
+			$order_by = 'id';
+		} elseif ( ! $order_by ) {
+			$order_by = false;
+		}
+
+		$args['orderby'] = $order_by;
+
+		if ( $order_by ) {
+			$args['order'] = ( isset( $_REQUEST['order'] ) && 'DESC' === strtoupper( $_REQUEST['order'] ) ) ? "DESC" : "ASC";
+		}
+
+		if ( wp_is_large_network() ) {
+			$args['no_found_rows'] = true;
 		} else {
-			$order_by = 'blog_id';
-			$query .= ' ORDER BY blog_id ';
+			$args['no_found_rows'] = false;
 		}
 
-		if ( isset( $order_by ) ) {
-			$order = ( isset( $_REQUEST['order'] ) && 'DESC' === strtoupper( $_REQUEST['order'] ) ) ? "DESC" : "ASC";
-			$query .= $order;
-		}
-
-		// Don't do an unbounded count on large networks
-		if ( ! wp_is_large_network() )
-			$total = $wpdb->get_var( str_replace( 'SELECT *', 'SELECT COUNT( blog_id )', $query ) );
-
-		/*
-		 * PN Mod: Start
-		 * Replace MySQL LIMIT with MSSQL's OFFSET FETCH.
+		/**
+		 * Filters the arguments for the site query in the sites list table.
+		 *
+		 * @since 4.6.0
+		 *
+		 * @param array $args An array of get_sites() arguments.
 		 */
-		$query .= " OFFSET " . intval( ( $pagenum - 1 ) * $per_page ) . " ROWS FETCH NEXT " . intval( $per_page ) . " ROWS ONLY";
-		// PN Mod: End
-		$this->items = $wpdb->get_results( $query, ARRAY_A );
+		$args = apply_filters( 'ms_sites_list_table_query_args', $args );
 
-		if ( wp_is_large_network() )
-			$total = count($this->items);
+		$_sites = get_sites( $args );
+		if ( is_array( $_sites ) ) {
+			update_site_cache( $_sites );
+
+			$this->items = array_slice( $_sites, 0, $per_page );
+		}
+
+		$total_sites = get_sites( array_merge( $args, array(
+			'count' => true,
+			'offset' => 0,
+			'number' => 0,
+		) ) );
 
 		$this->set_pagination_args( array(
-			'total_items' => $total,
+			'total_items' => $total_sites,
 			'per_page' => $per_page,
 		) );
 	}
