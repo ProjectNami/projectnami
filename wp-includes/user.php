@@ -359,7 +359,7 @@ function count_user_posts( $userid, $post_type = 'post', $public_only = false ) 
 
 	$where = get_posts_by_author_sql( $post_type, true, $userid, $public_only );
 
-	$count = $wpdb->get_var( "SELECT COUNT(*) FROM $wpdb->posts $where" );
+	$count = $wpdb->get_var( "SELECT COUNT(*) as qty FROM $wpdb->posts $where" );
 
 	/**
 	 * Filters the number of posts a user has written.
@@ -848,9 +848,9 @@ function count_users($strategy = 'time') {
 		// Build a CPU-intensive query that will return concise information.
 		$select_count = array();
 		foreach ( $avail_roles as $this_role => $name ) {
-			$select_count[] = "(SELECT COUNT(*) FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] LIKE '%" . $wpdb->esc_like( $this_role ) . "%') as $this_role";
+			$select_count[] = "(SELECT COUNT(*) as qty FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] LIKE '%" . $wpdb->esc_like( $this_role ) . "%') as $this_role";
 		}
-		$select_count[] = "(SELECT COUNT(*) FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] = 'a:0:{}') as none";
+		$select_count[] = "(SELECT COUNT(*) as qty FROM $wpdb->usermeta WHERE [meta_key] = '{$blog_prefix}capabilities' AND [meta_value] = 'a:0:{}') as none";
 		$select_count = implode(', ', $select_count);
 
 		// Add the meta_value index to the selection list, then run the query.

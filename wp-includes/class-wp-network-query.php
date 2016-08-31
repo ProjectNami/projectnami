@@ -347,7 +347,7 @@ class WP_Network_Query {
 		}
 
 		if ( $this->query_vars['count'] ) {
-			$fields = 'COUNT(*)';
+			$fields = 'COUNT(*) as qty';
 		} else {
 			$fields = "$wpdb->site.id";
 		}

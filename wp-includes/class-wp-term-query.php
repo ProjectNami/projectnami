@@ -561,7 +561,7 @@ class WP_Term_Query {
 			case 'count':
 				$orderby = '';
 				$order = '';
-				$selects = array( 'COUNT(*)' );
+				$selects = array( 'COUNT(*) as qty' );
 				break;
 			case 'id=>name':
 				$selects = array( 't.term_id', 't.name', 'tt.count', 'tt.taxonomy' );

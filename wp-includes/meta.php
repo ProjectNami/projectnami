@@ -72,7 +72,7 @@ function add_metadata($meta_type, $object_id, $meta_key, $meta_value, $unique = 
 		return $check;
 
 	if ( $unique && $wpdb->get_var( $wpdb->prepare(
-		"SELECT COUNT(*) FROM $table WHERE meta_key = %s AND $column = %d",
+		"SELECT COUNT(*) as qty FROM $table WHERE meta_key = %s AND $column = %d",
 		$meta_key, $object_id ) ) )
 		return false;
 

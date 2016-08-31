@@ -387,7 +387,7 @@ class WP_Site_Query {
 		}
 
 		if ( $this->query_vars['count'] ) {
-			$fields = 'COUNT(*)';
+			$fields = 'COUNT(*) as qty';
 		} else {
 			$fields = 'blog_id';
 		}
