@@ -250,7 +250,7 @@ function wp_default_scripts( &$scripts ) {
 	// It sets jQuery as a dependency, as the theme may have been implicitly loading it this way.
 	$scripts->add( 'imagesloaded', "/wp-includes/js/imagesloaded.min.js", array(), '3.2.0', 1 );
 	$scripts->add( 'masonry', "/wp-includes/js/masonry.min.js", array( 'imagesloaded' ), '3.3.2', 1 );
-	$scripts->add( 'jquery-masonry', "/wp-includes/js/jquery/jquery.masonry$dev_suffix.js", array( 'jquery', 'masonry' ), '3.1.2', 1 );
+	$scripts->add( 'jquery-masonry', "/wp-includes/js/jquery/jquery.masonry$dev_suffix.js", array( 'jquery', 'masonry' ), '3.1.2a', 1 );
 
 	$scripts->add( 'thickbox', "/wp-includes/js/thickbox/thickbox.js", array('jquery'), '3.1-20121105', 1 );
 	did_action( 'init' ) && $scripts->localize( 'thickbox', 'thickboxL10n', array(
@@ -350,8 +350,6 @@ function wp_default_scripts( &$scripts ) {
 			'Captions/Subtitles'      => __( 'Captions/Subtitles' ),
 			'None'                    => __( 'None', 'no captions/subtitles' ),
 			'Time Slider'             => __( 'Time Slider' ),
-			/* translators: %1: number of seconds (30 by default) */
-			'Jump forward %1 seconds' => __( 'Jump forward %1 seconds' ),
 			/* translators: %1: number of seconds (30 by default) */
 			'Skip back %1 seconds'    => __( 'Skip back %1 seconds' ),
 			'Video Player'            => __( 'Video Player' ),
@@ -618,6 +616,8 @@ function wp_default_scripts( &$scripts ) {
 				'updated'                    => __( 'Updated!' ),
 				'update'                     => __( 'Update' ),
 				'updateNow'                  => __( 'Update Now' ),
+				/* translators: %s: Plugin name and version */
+				'updateNowLabel'             => __( 'Update %s now' ),
 				'updateFailedShort'          => __( 'Update Failed!' ),
 				/* translators: %s: Error string for a failed update */
 				'updateFailed'               => __( 'Update Failed: %s' ),
@@ -636,7 +636,7 @@ function wp_default_scripts( &$scripts ) {
 				'beforeunload'               => __( 'Updates may not complete if you navigate away from this page.' ),
 				'installNow'                 => __( 'Install Now' ),
 				/* translators: %s: Plugin name */
-				'installNowLabel'            => __( 'Install %s' ),
+				'installNowLabel'            => __( 'Install %s now' ),
 				'installing'                 => __( 'Installing...' ),
 				'installed'                  => __( 'Installed!' ),
 				'installFailedShort'         => __( 'Install Failed!' ),
@@ -679,6 +679,8 @@ function wp_default_scripts( &$scripts ) {
 				/* translators: %s: Importer name */
 				'activateImporterLabel'      => __( 'Run %s' ),
 				'unknownError'               => __( 'An unknown error occurred' ),
+				'connectionError'            => __( 'Connection lost or the server is busy. Please try again later.' ),
+				'nonceError'                 => __( 'An error has occurred. Please reload the page and try again.' ),
 				'pluginsFound'               => __( 'Number of plugins found: %d' ),
 				'noPluginsFound'             => __( 'No plugins found. Try a different search.' ),
 			),
