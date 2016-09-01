@@ -16,7 +16,7 @@ define( 'WP_INSTALLING_NETWORK', true );
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
 if ( ! is_super_admin() ) {
-	wp_die( __( 'You do not have sufficient permissions to manage options for this site.' ) );
+	wp_die( __( 'Sorry, you are not allowed to manage options for this site.' ) );
 }
 
 if ( is_multisite() ) {
@@ -28,7 +28,6 @@ if ( is_multisite() ) {
 	if ( ! defined( 'MULTISITE' ) ) {
 		wp_die( __( 'The Network creation panel is not for WordPress MU networks.' ) );
 	}
-	return false;
 }
 
 require_once( dirname( __FILE__ ) . '/includes/network.php' );

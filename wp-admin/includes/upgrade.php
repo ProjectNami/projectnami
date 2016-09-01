@@ -38,7 +38,7 @@ if ( !function_exists('wp_install') ) :
  */
 function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '', $language = '' ) {
 	if ( !empty( $deprecated ) )
-		_deprecated_argument( __FUNCTION__, '2.6' );
+		_deprecated_argument( __FUNCTION__, '2.6.0' );
 
 	wp_check_mysql_version();
 	wp_cache_flush();
@@ -192,19 +192,22 @@ function wp_install_defaults( $user_id ) {
 	$wpdb->insert( $wpdb->term_relationships, array('term_taxonomy_id' => $cat_tt_id, 'object_id' => 1) );
 
 	// Default comment
-	$first_comment_author = __('Mr WordPress');
+	$first_comment_author = __( 'A WordPress Commenter' );
+	$first_comment_email = 'wapuu@wordpress.example';
 	$first_comment_url = 'https://wordpress.org/';
-	$first_comment = __('Hi, this is a comment.
-To delete a comment, just log in and view the post&#039;s comments. There you will have the option to edit or delete them.');
+	$first_comment = __( 'Hi, this is a comment.
+To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.
+Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 	if ( is_multisite() ) {
 		$first_comment_author = get_site_option( 'first_comment_author', $first_comment_author );
+		$first_comment_email = get_site_option( 'first_comment_email', $first_comment_email );
 		$first_comment_url = get_site_option( 'first_comment_url', network_home_url() );
 		$first_comment = get_site_option( 'first_comment', $first_comment );
 	}
 	$wpdb->insert( $wpdb->comments, array(
 		'comment_post_ID' => 1,
 		'comment_author' => $first_comment_author,
-		'comment_author_email' => '',
+		'comment_author_email' => $first_comment_email,
 		'comment_author_url' => $first_comment_url,
 		'comment_date' => $now,
 		'comment_date_gmt' => $now_gmt,
@@ -318,11 +321,12 @@ function wp_install_maybe_enable_pretty_permalinks() {
 	 	 */
 		$wp_rewrite->flush_rules( true );
 
-		// Test against a real WordPress Post, or if none were created, a random 404 page.
-		$test_url = get_permalink( 1 );
+		$test_url = '';
 
-		if ( ! $test_url ) {
-			$test_url = home_url( '/wordpress-check-for-rewrites/' );
+		// Test against a real WordPress Post
+		$first_post = get_page_by_path( sanitize_title( _x( 'hello-world', 'Default post slug' ) ), OBJECT, 'post' );
+		if ( $first_post ) {
+			$test_url = get_permalink( $first_post->ID );
 		}
 
 		/*
@@ -493,6 +497,9 @@ function upgrade_all() {
 
 	if ( $wp_current_db_version < 36686 )
 		upgrade_450();
+
+	if ( $wp_current_db_version < 37965 )
+		upgrade_460();
 
 	maybe_disable_link_manager();
 
@@ -674,6 +681,38 @@ function upgrade_440() {
 	foreach ( $roles->role_objects as $role ) {
 		if ( $role->has_cap( 'add_users' ) ) {
 			$role->remove_cap( 'add_users' );
+		}
+	}
+}
+
+/**
+ * Executes changes made in WordPress 4.6.0.
+ *
+ * @ignore
+ * @since 4.6.0
+ *
+ * @global int $wp_current_db_version Current database version.
+ */
+function upgrade_460() {
+	global $wp_current_db_version;
+
+	// Remove unused post meta.
+	if ( $wp_current_db_version < 37854 ) {
+		delete_post_meta_by_key( '_post_restored_from' );
+	}
+
+	// Remove plugins with callback as an array object/method as the uninstall hook, see #13786.
+	if ( $wp_current_db_version < 37965 ) {
+		$uninstall_plugins = get_option( 'uninstall_plugins', array() );
+
+		if ( ! empty( $uninstall_plugins ) ) {
+			foreach ( $uninstall_plugins as $basename => $callback ) {
+				if ( is_array( $callback ) && is_object( $callback[0] ) ) {
+					unset( $uninstall_plugins[ $basename ] );
+				}
+			}
+
+			update_option( 'uninstall_plugins', $uninstall_plugins );
 		}
 	}
 }
@@ -1406,7 +1445,7 @@ function wp_should_upgrade_global_tables() {
 	}
 
 	/**
-	 * Filter if upgrade routines should be run on global tables.
+	 * Filters if upgrade routines should be run on global tables.
 	 *
 	 * @param bool $should_upgrade Whether to run the upgrade routines on global tables.
 	 */
