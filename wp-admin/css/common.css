@@ -1312,6 +1312,10 @@ div[class="update-message"] { /* back-compat for pre-4.6 */
 	padding: 0.5em 12px 0.5em 0;
 }
 
+div[class="update-message"] { /* back-compat for pre-4.6 */
+	padding: 0.5em 12px 0.5em 0;
+}
+
 .notice p,
 .notice-title,
 div.updated p,
@@ -3069,6 +3073,12 @@ img {
 
 .rtl.js .postbox .handlediv .toggle-indicator:before {
 	text-indent: 1px; /* account for the dashicon alignment */
+}
+
+.bulk-action-notice .toggle-indicator:before {
+	line-height: 16px;
+	vertical-align: top;
+	color: #72777c;
 }
 
 .bulk-action-notice .toggle-indicator:before {
