@@ -28,7 +28,6 @@ if ( is_multisite() ) {
 	if ( ! defined( 'MULTISITE' ) ) {
 		wp_die( __( 'The Network creation panel is not for WordPress MU networks.' ) );
 	}
-	return false;
 }
 
 require_once( dirname( __FILE__ ) . '/includes/network.php' );
