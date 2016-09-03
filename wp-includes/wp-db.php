@@ -3354,4 +3354,15 @@ class wpdb {
 	public function db_version() {
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('productversion')) as 'version'" );
 	}
+
+	/**
+	 * Retrieves the SQL Server Edition.
+	 *
+	 * @since PN 1.4.1
+	 *
+	 * @return null|string Null on failure, edition name on success.
+	 */
+	public function db_edition() {
+		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('edition')) as 'edition'" );
+	}
 }
