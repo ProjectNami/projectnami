@@ -39,13 +39,10 @@ include( ABSPATH . 'wp-admin/admin-header.php' );
 		</h2>
 
 		<div class="changelog point-releases">
-			<h3><?php _e( 'Maintenance and Security Releases' ); ?></h3>
-			<p><?php printf( __( '<strong>Version %s</strong> addressed some security issues.' ), '4.5.2' ); ?>
-				<?php printf( __( 'For more information, see <a href="%s">the release notes</a>.' ), 'https://codex.wordpress.org/Version_4.5.2' ); ?>
-			</p>
-			<p><?php printf( _n( '<strong>Version %1$s</strong> addressed %2$s bug.',
-				'<strong>Version %1$s</strong> addressed %2$s bugs.', 12 ), '4.5.1', number_format_i18n( 12 ) ); ?>
-				<?php printf( __( 'For more information, see <a href="%s">the release notes</a>.' ), 'https://codex.wordpress.org/Version_4.5.1' ); ?>
+			<h3><?php _e( 'Maintenance and Security Release' ); ?></h3>
+			<p><?php printf( _n( '<strong>Version %1$s</strong> addressed some security issues and fixed %2$s bug.',
+				'<strong>Version %1$s</strong> addressed some security issues and fixed %2$s bugs.', 15 ), '4.6.1', number_format_i18n( 15 ) ); ?>
+				<?php printf( __( 'For more information, see <a href="%s">the release notes</a>.' ), 'https://codex.wordpress.org/Version_4.6.1' ); ?>
 			</p>
 		</div>
 

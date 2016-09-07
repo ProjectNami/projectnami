@@ -740,6 +740,9 @@ class wpdb {
 	 * @since 3.1.0
 	 */
 	public function init_charset() {
+		$charset = '';
+		$collate = '';
+
 		if ( function_exists('is_multisite') && is_multisite() ) {
 			$charset = 'utf8';
 			if ( defined( 'DB_COLLATE' ) && DB_COLLATE ) {
@@ -814,14 +817,17 @@ class wpdb {
 		if ( ! isset( $collate ) )
 			$collate = $this->collate;
 		if ( $this->has_cap( 'collation', $dbh ) && !empty( $charset ) && false ) {
+			$set_charset_succeeded = true;
+
 			if ( function_exists( 'mysql_set_charset' ) && $this->has_cap( 'set_charset', $dbh ) ) {
- 				mysql_set_charset( $charset, $dbh );
-				$this->real_escape = true;
-			} else {
+				$set_charset_succeeded = mysql_set_charset( $charset, $dbh );
+			}
+			if ( $set_charset_succeeded ) {
 				$query = $this->prepare( 'SET NAMES %s', $charset );
 				if ( ! empty( $collate ) )
 					$query .= $this->prepare( ' COLLATE %s', $collate );
 				mysql_query( $query, $dbh );
+				$this->real_escape = true;
 			}
 		}
 	}
@@ -3353,5 +3359,16 @@ class wpdb {
 	 */
 	public function db_version() {
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('productversion')) as 'version'" );
+	}
+
+	/**
+	 * Retrieves the SQL Server Edition.
+	 *
+	 * @since PN 1.4.1
+	 *
+	 * @return null|string Null on failure, edition name on success.
+	 */
+	public function db_edition() {
+		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('edition')) as 'edition'" );
 	}
 }
