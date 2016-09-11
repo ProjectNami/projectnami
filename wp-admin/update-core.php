@@ -163,7 +163,7 @@ function core_upgrade_preamble() {
 	if ( !isset($updates[0]->response) || 'latest' == $updates[0]->response ) {
 		echo '<h3>';
 		_e('You have Project Nami ' . get_projectnami_version() . ' which contains the latest version of WordPress.');
-
+        /*
 		if ( wp_http_supports( array( 'ssl' ) ) ) {
 			require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
 			$upgrader = new WP_Automatic_Updater;
@@ -176,7 +176,7 @@ function core_upgrade_preamble() {
 			$should_auto_update = $upgrader->should_update( 'core', $future_minor_update, ABSPATH );
 			if ( $should_auto_update )
 				echo ' ' . __( 'Future security updates will be applied automatically.' );
-		}
+		} */
 		echo '</h2>';
 	} else {
 		echo '<div class="notice notice-warning"><p>';
