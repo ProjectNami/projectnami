@@ -3373,4 +3373,89 @@ class wpdb {
 	public function db_edition() {
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('edition')) as 'edition'" );
 	}
+
+	/**
+	 * Perform SQL query with parameters
+	 *
+	 * @since PN 1.5.0
+	 *
+	 * @param string $query Database query, array $params Query parameters
+	 * @return int|false Number of rows affected/selected or false on error
+	 */
+	public function query_with_params( $query, $params = array() ) {
+		if ( ! $this->ready ) {
+			$this->check_current_query = true;
+			return false;
+		}
+
+		$this->flush();
+
+		// Log how the function was called
+		$this->func_call = "\$db->query(\"$query\")";
+
+		$this->check_current_query = true;
+
+		// Keep track of the last query for debug.
+		$this->last_query = $query;
+
+		// Do Query
+		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+			$this->timer_start();
+		}
+
+		$this->result = sqlsrv_query( $this->dbh, $query, $params );
+ 
+		$this->query_statement_resource = $this->result;
+		
+		$this->num_queries++;
+
+		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+			$this->queries[] = array( $query, $this->timer_stop(), $this->get_caller() );
+		}
+
+        $errors = sqlsrv_errors();
+		
+		if( ! empty( $errors ) && is_array( $errors ) ) {
+			$this->last_error = $errors[ 0 ][ 'message' ];
+
+			// Clear insert_id on a subsequent failed insert. 
+			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) ) 
+				$this->insert_id = 0; 
+
+			$this->print_error();
+			return false;
+		}
+
+		if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
+			$return_val = $this->result;
+		} elseif ( preg_match( '/^\s*(insert|delete|update|replace)\s/i', $query ) && $this->query_statement_resource != false ) {
+			$this->rows_affected = sqlsrv_rows_affected( $this->query_statement_resource );
+			// Take note of the insert_id
+			if ( preg_match( '/^\s*(insert|replace)\s/i', $query ) ) {
+				$this->insert_id = sqlsrv_query($this->dbh, 'SELECT isnull(scope_identity(), 0)');
+
+				$row = sqlsrv_fetch_array( $this->insert_id );
+					
+				$this->insert_id = $row[0];
+			}
+			// Return number of rows affected
+			$return_val = $this->rows_affected;
+		} else {
+			$num_rows = 0;
+			while ( $row = @sqlsrv_fetch_object( $this->query_statement_resource ) ) {
+				$this->last_result[$num_rows] = $row;
+				$num_rows++;
+			}
+
+			// Log number of rows the query returned
+			// and return number of rows selected
+			$this->num_rows = $num_rows;
+			$return_val     = $num_rows;
+		}
+
+		if( isset( $this->last_result[0] ) && is_object( $this->last_result[0] ) && isset( $this->last_result[0]->found_rows ) )
+			$this->last_query_total_rows = $this->last_result[0]->found_rows;
+
+		return $return_val;
+	}
 }
