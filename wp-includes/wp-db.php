@@ -1719,6 +1719,7 @@ class wpdb {
 		if( ! empty( $errors ) && is_array( $errors ) ) {
             switch ( $errors[ 0 ][ 'code' ] ){
                 case 102:
+                case 105:
                 case 145:
                 case 156:
                 case 195:
@@ -2253,6 +2254,7 @@ class wpdb {
 		    if( ! empty( $errors ) && is_array( $errors ) ) {
                 switch ( $errors[ 0 ][ 'code' ] ){
                     case 102:
+                    case 105:
                     case 145:
                     case 156:
                     case 195:
