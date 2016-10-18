@@ -700,7 +700,7 @@ class WP_User_Query {
 		} elseif ( 'meta_value' == $orderby || $this->get( 'meta_key' ) == $orderby ) {
 			$_orderby = "$wpdb->usermeta.meta_value";
 		} elseif ( 'meta_value_num' == $orderby ) {
-			$_orderby = "$wpdb->usermeta.meta_value+0";
+			$_orderby = "CAST($wpdb->usermeta.meta_value as numeric)";
 		} elseif ( 'include' === $orderby && ! empty( $this->query_vars['include'] ) ) {
 			$include = wp_parse_id_list( $this->query_vars['include'] );
 			$include_sql = implode( ',', $include );

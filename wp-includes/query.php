@@ -2378,7 +2378,7 @@ class WP_Query {
 				break;
 			case 'meta_value_num':
 				$orderby_clause = "meta_value";
-				$orderbyfields = $orderbyfields . ", {$primary_meta_query['alias']}.meta_value+0 as meta_value";
+				$orderbyfields = $orderbyfields . ", CAST({$primary_meta_query['alias']}.meta_value as numeric) as meta_value";
 				break;
 			default:
 				if ( array_key_exists( $orderby, $meta_clauses ) ) {

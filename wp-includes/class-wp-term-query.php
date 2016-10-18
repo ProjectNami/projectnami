@@ -855,7 +855,7 @@ class WP_Term_Query {
 				break;
 
 			case 'meta_value_num':
-				$orderby = "{$primary_meta_query['alias']}.meta_value+0";
+				$orderby = "CAST({$primary_meta_query['alias']}.meta_value as numeric)";
 				break;
 
 			default:
