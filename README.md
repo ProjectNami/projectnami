@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-###Version: `1.4.2`###
+###Version: `1.4.3`###
 
 ###Description:###
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://deploy.azure.com/?repository=https://github.com/ProjectNami/projectnami/tree/latest)
@@ -26,7 +26,7 @@ While I would agree with all of this, writing ( or using ) a custom `wp-db.php` 
 
 So, what about using only a translation plugin? This can work, but it's hardly optimal. Every query that comes in needs to be parsed and converted to SQL Server style syntax before it's executed. **Yikes!**
 
-We needed a version of WordPress powered by SQL Server in the cloud on Windows Azure. So, we rewrote WP Core to do this very thing. Porting WordPress may seem extreme, but the software simply isn't to the point where true database abstraction is feasible. Maybe someday it will be. In the meantime, Project Nami is an alternative. :)
+We needed a version of WordPress powered by SQL Server in the cloud on Microsoft Azure. So, we rewrote WP Core to do this very thing. Porting WordPress may seem extreme, but the software simply isn't to the point where true database abstraction is feasible. Maybe someday it will be. In the meantime, Project Nami is an alternative. :)
 
 ###A few things to note:###
 * Project Nami will work with any WordPress plugins/themes that utilize WordPress specific APIs. However, custom SQL queries will most likely fail if they use MySQL-specific syntax. In most cases, these issues can be easily resolved by using a WordPress API. If you absolutely have to use custom SQL, make sure it's MSSQL Server 2012 compliant. **We highly recommend using WordPress APIs everywhere you can.** Among other things, it makes your code portable across Project Nami and WordPress.

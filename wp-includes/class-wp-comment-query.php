@@ -1137,7 +1137,7 @@ class WP_Comment_Query {
 		if ( $orderby == $this->query_vars['meta_key'] || $orderby == 'meta_value' ) {
 			$parsed = "$wpdb->commentmeta.meta_value";
 		} elseif ( $orderby == 'meta_value_num' ) {
-			$parsed = "$wpdb->commentmeta.meta_value+0";
+			$parsed = "CAST($wpdb->commentmeta.meta_value as numeric)";
 		} elseif ( $orderby == 'comment__in' ) {
 			$comment__in = implode( ',', array_map( 'absint', $this->query_vars['comment__in'] ) );
 			$parsed = "FIELD( {$wpdb->comments}.comment_ID, $comment__in )";
