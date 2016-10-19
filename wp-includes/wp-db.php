@@ -3377,7 +3377,7 @@ class wpdb {
 	/**
 	 * Perform SQL query with parameters
 	 *
-	 * @since PN 1.5.0
+	 * @since PN 1.4.3
 	 *
 	 * @param string $query Database query, array $params Query parameters
 	 * @return int|false Number of rows affected/selected or false on error
