@@ -188,6 +188,7 @@ function twentysixteen_excerpt_more() {
 add_filter( 'excerpt_more', 'twentysixteen_excerpt_more' );
 endif;
 
+if ( ! function_exists( 'twentysixteen_categorized_blog' ) ) :
 /**
  * Determines whether blog/site has more than one category.
  *
@@ -220,6 +221,7 @@ function twentysixteen_categorized_blog() {
 		return false;
 	}
 }
+endif;
 
 /**
  * Flushes out the transients used in twentysixteen_categorized_blog().
@@ -235,3 +237,18 @@ function twentysixteen_category_transient_flusher() {
 }
 add_action( 'edit_category', 'twentysixteen_category_transient_flusher' );
 add_action( 'save_post',     'twentysixteen_category_transient_flusher' );
+
+if ( ! function_exists( 'twentysixteen_the_custom_logo' ) ) :
+/**
+ * Displays the optional custom logo.
+ *
+ * Does nothing if the custom logo is not available.
+ *
+ * @since Twenty Sixteen 1.2
+ */
+function twentysixteen_the_custom_logo() {
+	if ( function_exists( 'the_custom_logo' ) ) {
+		the_custom_logo();
+	}
+}
+endif;
