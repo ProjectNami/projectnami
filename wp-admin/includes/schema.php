@@ -200,7 +200,7 @@ CREATE TABLE $wpdb->posts (
   post_status nvarchar(20) NOT NULL default 'publish',
   comment_status nvarchar(20) NOT NULL default 'open',
   ping_status nvarchar(20) NOT NULL default 'open',
-  post_password nvarchar(20) NOT NULL default '',
+  post_password nvarchar(255) NOT NULL default '',
   post_name nvarchar(200) NOT NULL default '',
   to_ping nvarchar(max) NOT NULL,
   pinged nvarchar(max) NOT NULL,
@@ -564,7 +564,7 @@ function populate_options() {
 	// 3.0 multisite
 	if ( is_multisite() ) {
 		/* translators: site tagline */
-		$options[ 'blogdescription' ] = sprintf(__('Just another %s site'), get_current_site()->site_name );
+		$options[ 'blogdescription' ] = sprintf(__('Just another %s site'), get_network()->site_name );
 		$options[ 'permalink_structure' ] = '/%year%/%monthnum%/%day%/%postname%/';
 	}
 
