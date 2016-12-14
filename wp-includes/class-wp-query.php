@@ -2750,7 +2750,7 @@ class WP_Query {
 		}
 	
 		if( ! empty( $found_rows ) )
-			$wpdb->query( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts{ $join WHERE 1=1 $where $groupby" );
+			$wpdb->query( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby" );
  
 		$this->request = $old_request = "SELECT $distinct $fields $orderbyfields FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby $orderby $limits";
 
