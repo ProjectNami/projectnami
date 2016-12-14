@@ -1153,7 +1153,7 @@ function wp_check_comment_data_max_lengths( $comment_data ) {
 	return true;
 }
 
-+/**
+/**
  * Does comment contain blacklisted characters or words.
  *
  * @since 1.5.0
