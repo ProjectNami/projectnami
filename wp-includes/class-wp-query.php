@@ -1829,7 +1829,7 @@ class WP_Query {
 			}
 			if ( strlen($q['m']) > 13 ) {
 				$where .= " AND SECOND({$wpdb->posts}.post_date)=" . substr($q['m'], 12, 2);
-+			}
+			}
 		}
 
 		// Handle the other individual date parameters
