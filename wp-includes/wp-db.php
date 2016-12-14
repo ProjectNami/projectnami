@@ -3101,6 +3101,7 @@ class wpdb {
 		// which drop-ins can use for routing these SQL statements.
 		if ( preg_match( '/^\s*SHOW\s+(?:TABLE\s+STATUS|(?:FULL\s+)?TABLES)\s+(?:WHERE\s+Name\s+)?LIKE\s*("|\')((?:[\\\\0-9a-zA-Z$_.-]|[\xC2-\xDF][\x80-\xBF])+)%?\\1/is', $query, $maybe ) ) {
 			return str_replace( '\\_', '_', $maybe[2] );
+        }
 
 		// Big pattern for the rest of the table-related queries.
 		if ( preg_match( '/^\s*(?:'
