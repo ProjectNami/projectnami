@@ -785,6 +785,11 @@ class wpdb {
 			$charset = 'utf8mb4';
 		}
 
+		if ( 'utf8mb4' === $charset && ! $this->has_cap( 'utf8mb4' ) ) {
+			$charset = 'utf8';
+			$collate = str_replace( 'utf8mb4_', 'utf8_', $collate );
+		}
+
 		if ( 'utf8mb4' === $charset ) {
 			// _general_ is outdated, so we can upgrade it to _unicode_, instead.
 			if ( ! $collate || 'utf8_general_ci' === $collate ) {
@@ -1175,18 +1180,19 @@ class wpdb {
 	 *
 	 * @uses wpdb::_real_escape()
 	 * @since  2.8.0
-	 * @access private
+	 * @access public
 	 *
 	 * @param  string|array $data
 	 * @return string|array escaped
 	 */
-	function _escape( $data ) {
+	public function _escape( $data ) {
 		if ( is_array( $data ) ) {
 			foreach ( (array) $data as $k => $v ) {
-				if ( is_array($v) )
+				if ( is_array( $v ) ) {
 					$data[$k] = $this->_escape( $v );
-				else
+				} else {
 					$data[$k] = $this->_real_escape( $v );
+				}
 			}
 		} else {
 			$data = $this->_real_escape( $data );
@@ -1259,8 +1265,8 @@ class wpdb {
 	 *
 	 * Both %d and %s should be left unquoted in the query string.
 	 *
-	 *     wpdb::prepare( "SELECT * FROM `table` WHERE `column` = %s AND `field` = %d", 'foo', 1337 )
-	 *     wpdb::prepare( "SELECT DATE_FORMAT(`field`, '%%c') FROM `table` WHERE `column` = %s", 'foo' );
+	 *     $wpdb->prepare( "SELECT * FROM `table` WHERE `column` = %s AND `field` = %d", 'foo', 1337 );
+	 *     $wpdb->prepare( "SELECT DATE_FORMAT(`field`, '%%c') FROM `table` WHERE `column` = %s", 'foo' );
 	 *
 	 * @link https://secure.php.net/sprintf Description of syntax.
 	 * @since 2.3.0
@@ -1350,10 +1356,13 @@ class wpdb {
 
 		wp_load_translations_early();
 
-		if ( $caller = $this->get_caller() )
+		if ( $caller = $this->get_caller() ) {
+			/* translators: 1: Database error message, 2: SQL query, 3: Name of the calling function */
 			$error_str = sprintf( __( 'WordPress database error %1$s for query %2$s made by %3$s' ), $str, $this->last_query, $caller );
-		else
+		} else {
+			/* translators: 1: Database error message, 2: SQL query */
 			$error_str = sprintf( __( 'WordPress database error %1$s for query %2$s' ), $str, $this->last_query );
+		}
 
 		error_log( $error_str );
 
@@ -1719,6 +1728,7 @@ class wpdb {
 		if( ! empty( $errors ) && is_array( $errors ) ) {
             switch ( $errors[ 0 ][ 'code' ] ){
                 case 102:
+                case 105:
                 case 145:
                 case 156:
                 case 195:
@@ -1752,7 +1762,7 @@ class wpdb {
 					break;
 				default:
 					$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-					error_log( $begintransmsg, 3, ERRORLOGFILE );				
+					error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' );				
             }
 		}
 		
@@ -2253,6 +2263,7 @@ class wpdb {
 		    if( ! empty( $errors ) && is_array( $errors ) ) {
                 switch ( $errors[ 0 ][ 'code' ] ){
                     case 102:
+                    case 105:
                     case 145:
                     case 156:
                     case 195:
@@ -2283,7 +2294,7 @@ class wpdb {
 						break;
 					default:
 						$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-						error_log( $begintransmsg, 3, ERRORLOGFILE );
+						error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . '\translate.log' );
 				}
 		    }
 
@@ -2320,10 +2331,8 @@ class wpdb {
 	 * @since 0.71
 	 *
 	 * @param string|null $query  SQL query.
-	 * @param string      $output Optional. one of ARRAY_A | ARRAY_N | OBJECT constants.
-	 *                            Return an associative array (column => value, ...),
-	 *                            a numerically indexed array (0 => value, ...) or
-	 *                            an object ( ->column = value ), respectively.
+	 * @param string      $output Optional. The required return type. One of OBJECT, ARRAY_A, or ARRAY_N, which correspond to
+	 *                            an stdClass object, an associative array, or a numeric array, respectively. Default OBJECT.
 	 * @param int         $y      Optional. Row to return. Indexed from 0.
 	 * @return array|object|null|void Database query result in format specified by $output or null on failure
 	 */
@@ -3075,18 +3084,24 @@ class wpdb {
 				. '|INSERT(?:\s+LOW_PRIORITY|\s+DELAYED|\s+HIGH_PRIORITY)?(?:\s+IGNORE)?(?:\s+INTO)?'
 				. '|REPLACE(?:\s+LOW_PRIORITY|\s+DELAYED)?(?:\s+INTO)?'
 				. '|UPDATE(?:\s+LOW_PRIORITY)?(?:\s+IGNORE)?'
-				. '|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:\s+FROM)?'
+				. '|DELETE(?:\s+LOW_PRIORITY|\s+QUICK|\s+IGNORE)*(?:.+?FROM)?'
 				. ')\s+((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)/is', $query, $maybe ) ) {
 			return str_replace( '`', '', $maybe[1] );
 		}
 
-		// SHOW TABLE STATUS and SHOW TABLES
-		if ( preg_match( '/^\s*(?:'
-				. 'SHOW\s+TABLE\s+STATUS.+(?:LIKE\s+|WHERE\s+Name\s*=\s*)'
-				. '|SHOW\s+(?:FULL\s+)?TABLES.+(?:LIKE\s+|WHERE\s+Name\s*=\s*)'
-				. ')\W((?:[0-9a-zA-Z$_.`-]|[\xC2-\xDF][\x80-\xBF])+)\W/is', $query, $maybe ) ) {
-			return str_replace( '`', '', $maybe[1] );
+		// SHOW TABLE STATUS and SHOW TABLES WHERE Name = 'wp_posts'
+		if ( preg_match( '/^\s*SHOW\s+(?:TABLE\s+STATUS|(?:FULL\s+)?TABLES).+WHERE\s+Name\s*=\s*("|\')((?:[0-9a-zA-Z$_.-]|[\xC2-\xDF][\x80-\xBF])+)\\1/is', $query, $maybe ) ) {
+			return $maybe[2];
 		}
+
+		// SHOW TABLE STATUS LIKE and SHOW TABLES LIKE 'wp\_123\_%'
+		// This quoted LIKE operand seldom holds a full table name.
+		// It is usually a pattern for matching a prefix so we just
+		// strip the trailing % and unescape the _ to get 'wp_123_'
+		// which drop-ins can use for routing these SQL statements.
+		if ( preg_match( '/^\s*SHOW\s+(?:TABLE\s+STATUS|(?:FULL\s+)?TABLES)\s+(?:WHERE\s+Name\s+)?LIKE\s*("|\')((?:[\\\\0-9a-zA-Z$_.-]|[\xC2-\xDF][\x80-\xBF])+)%?\\1/is', $query, $maybe ) ) {
+			return str_replace( '\\_', '_', $maybe[2] );
+        }
 
 		// Big pattern for the rest of the table-related queries.
 		if ( preg_match( '/^\s*(?:'
@@ -3265,8 +3280,10 @@ class wpdb {
 	public function check_database_version() {
 		global $wp_version, $required_mysql_version;
 		// Make sure the server has the required MySQL version
-		if ( version_compare($this->db_version(), $required_mysql_version, '<') )
+		if ( version_compare($this->db_version(), $required_mysql_version, '<') ) {
+			/* translators: 1: WordPress version number, 2: Minimum required MySQL version number */
 			return new WP_Error('database_version', sprintf( __( '<strong>ERROR</strong>: WordPress %1$s requires MySQL %2$s or higher' ), $wp_version, $required_mysql_version ));
+		}
 	}
 
 	/**
@@ -3370,5 +3387,90 @@ class wpdb {
 	 */
 	public function db_edition() {
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('edition')) as 'edition'" );
+	}
+
+	/**
+	 * Perform SQL query with parameters
+	 *
+	 * @since PN 1.4.3
+	 *
+	 * @param string $query Database query, array $params Query parameters
+	 * @return int|false Number of rows affected/selected or false on error
+	 */
+	public function query_with_params( $query, $params = array() ) {
+		if ( ! $this->ready ) {
+			$this->check_current_query = true;
+			return false;
+		}
+
+		$this->flush();
+
+		// Log how the function was called
+		$this->func_call = "\$db->query(\"$query\")";
+
+		$this->check_current_query = true;
+
+		// Keep track of the last query for debug.
+		$this->last_query = $query;
+
+		// Do Query
+		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+			$this->timer_start();
+		}
+
+		$this->result = sqlsrv_query( $this->dbh, $query, $params );
+ 
+		$this->query_statement_resource = $this->result;
+		
+		$this->num_queries++;
+
+		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
+			$this->queries[] = array( $query, $this->timer_stop(), $this->get_caller() );
+		}
+
+        $errors = sqlsrv_errors();
+		
+		if( ! empty( $errors ) && is_array( $errors ) ) {
+			$this->last_error = $errors[ 0 ][ 'message' ];
+
+			// Clear insert_id on a subsequent failed insert. 
+			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) ) 
+				$this->insert_id = 0; 
+
+			$this->print_error();
+			return false;
+		}
+
+		if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
+			$return_val = $this->result;
+		} elseif ( preg_match( '/^\s*(insert|delete|update|replace)\s/i', $query ) && $this->query_statement_resource != false ) {
+			$this->rows_affected = sqlsrv_rows_affected( $this->query_statement_resource );
+			// Take note of the insert_id
+			if ( preg_match( '/^\s*(insert|replace)\s/i', $query ) ) {
+				$this->insert_id = sqlsrv_query($this->dbh, 'SELECT isnull(scope_identity(), 0)');
+
+				$row = sqlsrv_fetch_array( $this->insert_id );
+					
+				$this->insert_id = $row[0];
+			}
+			// Return number of rows affected
+			$return_val = $this->rows_affected;
+		} else {
+			$num_rows = 0;
+			while ( $row = @sqlsrv_fetch_object( $this->query_statement_resource ) ) {
+				$this->last_result[$num_rows] = $row;
+				$num_rows++;
+			}
+
+			// Log number of rows the query returned
+			// and return number of rows selected
+			$this->num_rows = $num_rows;
+			$return_val     = $num_rows;
+		}
+
+		if( isset( $this->last_result[0] ) && is_object( $this->last_result[0] ) && isset( $this->last_result[0]->found_rows ) )
+			$this->last_query_total_rows = $this->last_result[0]->found_rows;
+
+		return $return_val;
 	}
 }
