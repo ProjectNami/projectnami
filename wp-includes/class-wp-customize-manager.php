@@ -2474,8 +2474,8 @@ final class WP_Customize_Manager {
 
 		// Reset post date to now if we are publishing, otherwise pass post_date_gmt and translate for post_date.
 		if ( 'publish' === $args['status'] ) {
-			$post_array['post_date_gmt'] = '0000-00-00 00:00:00';
-			$post_array['post_date'] = '0000-00-00 00:00:00';
+			$post_array['post_date_gmt'] = '0001-01-01 00:00:00';
+			$post_array['post_date'] = '0001-01-01 00:00:00';
 		} elseif ( $args['date_gmt'] ) {
 			$post_array['post_date_gmt'] = $args['date_gmt'];
 			$post_array['post_date'] = get_date_from_gmt( $args['date_gmt'] );
