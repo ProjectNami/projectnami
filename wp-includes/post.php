@@ -6214,7 +6214,7 @@ function _filter_query_attachment_filenames( $clauses ) {
 	// Add a LEFT JOIN of the postmeta table so we don't trample existing JOINs.
 	$clauses['join'] .= " LEFT JOIN {$wpdb->postmeta} AS sq1 ON ( {$wpdb->posts}.ID = sq1.post_id AND sq1.meta_key = '_wp_attached_file' )";
 
-	$clauses['groupby'] = "{$wpdb->posts}.ID";
+	//$clauses['groupby'] = "{$wpdb->posts}.ID";
 
 	$clauses['where'] = preg_replace(
 		"/\({$wpdb->posts}.post_content (NOT LIKE|LIKE) (\'[^']+\')\)/",
