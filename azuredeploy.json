@@ -4035,10 +4035,6 @@
                     "value": "[parameters('sqlAdministratorPassword')]"
                 },
                 { 
-                    "name": "ProjectNami.UTF8",
-                    "value": 1
-                }
-                { 
                     "name": "ProjectNamiLogTranslate",
                     "value": 1
                 }
