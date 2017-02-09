@@ -6211,9 +6211,11 @@ function _filter_query_attachment_filenames( $clauses ) {
 	global $wpdb;
 	remove_filter( 'posts_clauses', __FUNCTION__ );
 
+
 	$clauses['where'] = preg_replace(
 		"/\({$wpdb->posts}.post_content (NOT LIKE|LIKE) (\'[^']+\')\)/",
 		"$0 OR exists ( select * from {$wpdb->postmeta} where {$wpdb->posts}.ID = post_id AND meta_key = '_wp_attached_file' and meta_value $1 $2 )",
+
 		$clauses['where'] );
 
 	return $clauses;
