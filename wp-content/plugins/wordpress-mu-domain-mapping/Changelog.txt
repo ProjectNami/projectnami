@@ -1,0 +1,624 @@
+2013-03-22 10:54  donncha
+
+	* readme.txt: Bump stable tag and version tested
+
+2013-03-22 10:00  donncha
+
+	* domain_mapping.php: * Replace HTTPS checks with is_ssl() checks
+	  * Fix typo in Javascript login loader
+
+2013-02-25 22:42  wpmuguru
+
+	* domain_mapping.php, readme.txt: remove support for pre 3.1,
+	  update for 3.5 WP install in own folder
+
+2013-01-30 23:16  wpmuguru
+
+	* domain_mapping.php: fix warnings & mixed protocols warning
+
+2012-09-06 17:07  wpmuguru
+
+	* domain_mapping.php: fix warning, props simonhayre
+
+2012-05-11 23:10  wpmuguru
+
+	* domain_mapping.php: disable domain redirect for theme customizer
+	  in 3.4
+
+2012-01-21 16:44  wpmuguru
+
+	* readme.txt: update tested to version
+
+2012-01-21 16:43  wpmuguru
+
+	* readme.txt, sunrise.php: tag & release 0.5.4.2
+
+2012-01-07 17:43  wpmuguru
+
+	* domain_mapping.php: don\'t redirect on post preview
+
+2011-12-18 23:56  wpmuguru
+
+	* domain_mapping.php: another add_site_option
+
+2011-12-15 03:01  wpmuguru
+
+	* domain_mapping.php: s/add_site_option/update_site_option/
+
+2011-10-08 14:18  wpmuguru
+
+	* domain_mapping.php: strtolower domain, bug fixes
+
+2011-08-17 02:17  wpmuguru
+
+	* domain_mapping.php: attempt no redirect on admin-ajax.php
+
+2011-07-21 02:13  wpmuguru
+
+	* domain_mapping.php: s/==/=/
+
+2011-07-19 21:48  wpmuguru
+
+	* readme.txt: bump repo
+
+2011-07-03 19:25  wpmuguru
+
+	* Changelog.txt, readme.txt: bump 0.5.4.1, tested 3.2 compatibility
+
+2011-05-27 16:40  wpmuguru
+
+	* domain_mapping.php: fix notice, props Chip B
+
+2011-03-13 15:00  wpmuguru
+
+	* domain_mapping.php: custom content dir, always check for dm table
+
+2011-03-01 11:00  donncha
+
+	* Changelog.txt: Updated changelog
+
+2011-03-01 10:59  donncha
+
+	* domain_mapping.php: Define dmtable to avoid sql problems when
+	  siteurl is used outside of admin, props johnjamesjacoby
+
+2011-02-23 17:33  donncha
+
+	* Changelog.txt: Updated changelog
+
+2011-02-23 17:32  donncha
+
+	* domain_mapping.php, readme.txt: Bump to version 0.5.4
+
+2011-01-17 17:51  wpmuguru
+
+	* domain_mapping.php: add sites column hook for 3.1
+
+2011-01-17 15:41  wpmuguru
+
+	* domain_mapping.php: menu cleanup for 3.1
+
+2011-01-17 15:00  donncha
+
+	* domain_mapping.php, readme.txt: localization fixes, props Peter
+	  Holme, http://holme.se
+
+2011-01-17 12:28  donncha
+
+	* domain_mapping.php: Minor typo, props wpmuguru
+
+2011-01-15 23:52  wpmuguru
+
+	* domain_mapping.php: fix invalid markup
+
+2011-01-15 21:06  wpmuguru
+
+	* domain_mapping.php: allow comma separated IP list, minor function
+	  & path cleanup
+
+2010-12-21 18:13  donncha
+
+	* domain_mapping.php: Fixes for menus in 3.0 and 3.1, see
+	  http://wordpress.org/support/topic/plugin-wordpress-mu-domain-mapping-broken-link?replies=1#post-1838482
+
+2010-11-29 17:26  donncha
+
+	* domain_mapping.php: Fixed delete domain redirect, see
+	  http://wordpress.org/support/topic/plugin-wordpress-mu-domain-mapping-cosmetic-issue-bounces-to-main-tools-page?replies=1
+
+2010-11-29 17:01  donncha
+
+	* domain_mapping.php: Added IDN warning, See
+	  http://wordpress.org/support/topic/plugin-wordpress-mu-domain-mapping-mapping-domains-with-international-characters-idn?replies=3#post-1808113,
+	  props Esteban Bianchi
+
+2010-11-29 16:30  donncha
+
+	* domain_mapping.php: Add menu items in WordPress 3.1's network
+	  admin menu
+
+2010-11-04 17:14  donncha
+
+	* domain_mapping.php: Better markup for the settings page, props
+	  Matt Wiebe, http://somadesign.ca/
+
+2010-11-03 12:06  donncha
+
+	* domain_mapping.php: Get rid of DEBUG mode warnings
+
+2010-11-03 11:57  donncha
+
+	* domain_mapping.php: Added "dm_site_admin()" to support
+	  is_site_admin() and is_super_admin()
+
+2010-11-02 13:39  donncha
+
+	* readme.txt: Plugin can be installed in plugins, updated docs.
+
+2010-11-02 12:58  donncha
+
+	* domain_mapping.php: Make sure the admin_url is SSL if switched to
+	  that. Props Adam Backstrom
+	  (http://twitter.com/#!/abackstrom/statuses/29451159737)
+
+2010-10-29 12:01  donncha
+
+	* Changelog.txt: Updated changelog
+
+2010-10-29 11:57  donncha
+
+	* wordpress-mu-domain-mapping.pot: Updated translation file
+
+2010-10-29 11:54  donncha
+
+	* readme.txt: Link to Otto's installation docs
+
+2010-10-29 09:31  donncha
+
+	* domain_mapping.php, readme.txt: Minor edits to make installation
+	  and upgrading easier
+
+2010-10-28 13:36  donncha
+
+	* domain_mapping.php: Bump version to 0.5.3
+
+2010-10-28 13:35  donncha
+
+	* readme.txt: Bumped version to 0.5.3
+
+2010-10-28 13:33  donncha
+
+	* Changelog.txt, readme.txt: Updated changelog
+
+2010-10-28 13:07  donncha
+
+	* readme.txt: Updated docs, changeog
+
+2010-10-28 13:03  donncha
+
+	* domain_mapping.php: Minor change to text on site admin options
+	  page
+
+2010-10-27 22:41  donncha
+
+	* domain_mapping.php: Allow "primary domain" option to be disabled
+
+2010-10-20 09:13  donncha
+
+	* domain_mapping.php: Use WP_CONTENT_DIR when looking for
+	  sunrise.php, props Ryan Bilesky
+
+2010-08-25 10:48  donncha
+
+	* domain_mapping.php: Check if remote login is enabled before
+	  sending remote login js or doing remote login duties
+
+2010-08-03 01:28  wpmuguru
+
+	* domain_mapping.php: more security improvements
+
+2010-08-02 00:08  wpmuguru
+
+	* domain_mapping.php: security improvements, more to come
+
+2010-07-01 15:22  donncha
+
+	* readme.txt: Removed donate link and added automattic as a
+	  contributor
+
+2010-07-01 10:03  donncha
+
+	* domain_mapping.php, sunrise.php: Added "SUNRISE_LOADED" constant
+	  to detect if SUNRISE constant declared correctly
+
+2010-07-01 09:53  donncha
+
+	* domain_mapping.php: Only redirect the logout url if admin pages
+	  are redirected. Props Thomas M Steenholdt
+
+2010-06-22 22:54  wpmuguru
+
+	* readme.txt: update readme & changelog
+
+2010-06-22 20:49  donncha
+
+	* Changelog.txt: Added changelog
+
+2010-06-22 20:48  donncha
+
+	* domain_mapping.php, readme.txt: Bump version to 0.5.2
+
+2010-06-22 20:45  donncha
+
+	* domain_mapping.php, wordpress-mu-domain-mapping.pot: Added
+	  translation file and loader code
+
+2010-06-21 17:15  donncha
+
+	* domain_mapping.php: Major gettext update to make translation
+	  possible
+
+2010-06-18 17:49  wpmuguru
+
+	* domain_mapping.php, readme.txt, sunrise.php: update readme, props
+	  andrea_r, add www support
+
+2010-06-18 16:04  donncha
+
+	* domain_mapping.php: * Add a warning for WP3.0 users that they
+	  need to create a network first.
+	  * Check for VHOST or SUBDOMAIN_INSTALL
+
+2010-04-30 13:18  donncha
+
+	* domain_mapping.php: The admin_url filter now takes a blog_id.
+	  This fixes a problem in ms-blogs.php where the Backend link went
+	  to the main blog.
+
+2010-04-22 16:47  donncha
+
+	* domain_mapping.php: Fix the logout key too
+
+2010-04-22 16:33  donncha
+
+	* domain_mapping.php: Rearrange default options and fixed creating
+	  the login entries. Thanks Frumph for the help.
+
+2010-04-22 14:08  donncha
+
+	* domain_mapping.php, readme.txt: Rearrange "original domain" a
+	  little
+
+2010-04-22 13:45  donncha
+
+	* readme.txt: Updated docs to reflect new functionality
+
+2010-04-15 14:15  donncha
+
+	* domain_mapping.php: * Add options to disable user settings page
+	  and disable remote login.
+	  * Restore optional "redirect to original blog domain" code but
+	  disable remote login if it's disabled.
+
+2010-04-15 12:58  donncha
+
+	* domain_mapping.php: Disable domain mapping if site is installed
+	  anwhere but /
+
+2010-04-15 10:49  donncha
+
+	* domain_mapping.php: Added domains listing admin page.
+
+2010-04-14 15:01  donncha
+
+	* domain_mapping.php: Always redirect admin backend to original
+	  url.
+
+2010-04-14 14:59  donncha
+
+	* domain_mapping.php: * Show site admin page for folder based
+	  installs too but site must be installed in /
+	  * Abstract out sunrise settings check
+
+2010-03-24 18:09  donncha
+
+	* domain_mapping.php: Better support for SSL
+
+2010-02-15 12:50  donncha
+
+	* domain_mapping.php: Escape the &, props Nikhil Dabas
+	  (http://www.nikhildabas.com/)
+
+2010-02-10 11:08  donncha
+
+	* domain_mapping.php, readme.txt: Bumped the version to 0.5.1 and
+	  the version tested to 2.9.1
+
+2010-02-09 14:44  donncha
+
+	* domain_mapping.php: Fix some warnings about variables
+
+2010-01-29 16:49  donncha
+
+	* readme.txt: Updated changelog
+
+2010-01-29 16:43  donncha
+
+	* readme.txt: Added Cpanel instructions, props Marty Martin
+	  (http://mearis.com)
+
+2010-01-22 11:42  donncha
+
+	* domain_mapping.php: Filter more urls, props Ryan Waggoner
+	  (http://ryanwaggoner.com)
+
+2010-01-19 15:18  donncha
+
+	* domain_mapping.php, readme.txt: Better docs related to CNAMEs
+
+2010-01-19 13:57  donncha
+
+	* domain_mapping.php, readme.txt: Added CNAME support, props Martin
+
+2010-01-19 11:36  donncha
+
+	* sunrise.php: Added check for COOKIE_DOMAIN, props Scott,
+	  http://ocaoimh.ie/wordpress-mu-domain-mapping-05/comment-page-1/#comment-671821
+
+2009-11-26 12:06  donncha
+
+	* domain_mapping.php, readme.txt: Bump version to 0.5 and misc docs
+	  updates
+
+2009-11-25 17:41  donncha
+
+	* domain_mapping.php: Disable plugin if MU is installed anywhere
+	  but "/"
+
+2009-11-24 18:29  wpmuguru
+
+	* domain_mapping.php: prevent mapping domains on main blog in non
+	  VHOST install
+
+2009-11-23 04:55  wpmuguru
+
+	* domain_mapping.php: replace reference to /wp-content with
+	  relative reference
+
+2009-11-22 21:06  wpmuguru
+
+	* domain_mapping.php: fix ajaxurl only on redirect to original
+	  domain
+
+2009-11-22 20:40  wpmuguru
+
+	* domain_mapping.php, readme.txt: fix ajaxurl + add multi domain
+	  map display
+
+2009-11-20 14:33  donncha
+
+	* domain_mapping.php: Separate out code to handle admin page
+	  updates so we can redirect to warning messages (and redirect to
+	  new domains on delete or primary actions)
+	  Tweak admin page.
+
+2009-11-20 13:36  donncha
+
+	* domain_mapping.php: Redirect dashboard to same page, and redirect
+	  to primary domain unless "Redirect to original url" checked
+
+2009-11-20 11:06  donncha
+
+	* domain_mapping.php: Remove extra tick (this seems familiar!)
+
+2009-11-19 16:53  donncha
+
+	* domain_mapping.php: Exit afte redirect only. Props kgraeme
+	  http://mu.wordpress.org/forums/topic/15451/page/3?replies=67#post-88874
+	  Added failure messages.
+
+2009-11-18 09:56  donncha
+
+	* domain_mapping.php: Remove extra quote, props kgraeme,
+	  http://mu.wordpress.org/forums/topic/15451/page/2?replies=20#post-88795
+
+2009-11-17 22:40  donncha
+
+	* domain_mapping.php: Always exit after redirection
+
+2009-11-17 18:10  donncha
+
+	* domain_mapping.php: When redirecting from dashboard on original
+	  url go to ?dm_gotoadmin=1. If logged in on that url then go to
+	  wp-admin/
+
+2009-11-17 14:58  donncha
+
+	* domain_mapping.php: Always redirect admin - to original url or
+	  domain mapped one
+
+2009-11-17 10:41  donncha
+
+	* readme.txt: Added changelog
+
+2009-11-17 10:38  donncha
+
+	* domain_mapping.php: Use a random key for the remote login key
+	  rather than an auto increment integer
+
+2009-11-17 09:34  donncha
+
+	* domain_mapping.php: remote logins only valid for 2 minutes
+
+2009-11-17 09:31  donncha
+
+	* readme.txt: Updated documentation
+
+2009-11-16 18:25  donncha
+
+	* domain_mapping.php: Allow site admin to choose whether admin
+	  redirects to main domain or not.
+	  Revamped admin page for users.
+
+2009-11-13 12:13  donncha
+
+	* domain_mapping.php: Redirect login to original domain.
+	  Logout by redirect to original domain too and then back again to
+	  domain mapped blog
+
+2009-11-13 11:40  donncha
+
+	* domain_mapping.php: Logout of the main site when logging out of
+	  domain mapped blog
+
+2009-11-13 11:38  donncha
+
+	* sunrise.php: Set the blog_id of the current site's main blog
+
+2009-11-12 12:21  donncha
+
+	* domain_mapping.php: Added remote logins
+
+2009-11-12 09:34  donncha
+
+	* domain_mapping.php, sunrise.php: Allow domains to redirect on non
+	  VHOST installs
+
+2009-11-05 10:40  donncha
+
+	* domain_mapping.php: Updated contributions text
+
+2009-11-04 18:13  donncha
+
+	* domain_mapping.php: Added site_admin page.
+	  Added permanent redirection.
+	  Added primary domain.
+
+2009-09-15 13:17  donncha
+
+	* domain_mapping.php: Oops, only want to rewrite these if domain
+	  mapping is enabled
+
+2009-09-15 13:15  donncha
+
+	* domain_mapping.php: Fix plugin and theme URIs. Props Enej
+	  Bajgoric
+
+2009-07-30 09:55  donncha
+
+	* domain_mapping.php, readme.txt: Updated to 0.4.3, Updated
+	  changelog, thanks Ron!
+
+2009-07-30 03:39  wpmuguru
+
+	* domain_mapping.php, sunrise.php: Fixed bug in content filtering,
+	  changed so sunrise does not take down a non vhost install
+
+2009-07-29 19:24  donncha
+
+	* domain_mapping.php, readme.txt: Updated version to 0.4.2
+	  Added Changelog
+	  Updated test version
+
+2009-06-17 13:51  donncha
+
+	* domain_mapping.php: "pre_" actions are actually filters.
+	  Added filter on the_content to replace MU url with domain mapped
+	  url.
+	  Don't redirect admin to domain mapped url
+
+2009-06-17 12:52  donncha
+
+	* domain_mapping.php: Select current hostname from domain mapping
+	  table in case more than one is defined for current blog, props
+	  Jason Judge,
+	  http://wordpress.org/support/topic/271030?replies=4#post-1105034
+
+2009-06-02 12:25  donncha
+
+	* domain_mapping.php: Don't allow an existing mu blog to be domain
+	  mapped.
+
+2009-06-02 12:03  donncha
+
+	* domain_mapping.php: Whitespace changes
+
+2009-06-02 11:59  donncha
+
+	* domain_mapping.php: Patch from Ron (http://ronandandrea.com/):
+	  1. Only redirect siteurl and home if DOMAIN MAPPING set.
+	  2. Delete domain mapping record if blog deleted.
+	  3. Show mapping on blog's admin page.
+
+2009-04-16 07:37  donncha
+
+	* domain_mapping.php, readme.txt: Bump version number to 0.4.1
+	  Added "Recent Changes" to readme.txt
+
+2009-04-16 07:19  donncha
+
+	* domain_mapping.php: Don't redirect admin pages when not domain
+	  mapped!
+
+2009-04-15 22:27  donncha
+
+	* domain_mapping.php, readme.txt: Bump version number to 0.4
+
+2009-04-15 22:25  donncha
+
+	* domain_mapping.php: Redirect the admin backend to the domain
+	  mapped hostname
+
+2009-03-31 11:24  donncha
+
+	* readme.txt: Updated docs on IP addresses
+
+2009-03-30 17:14  donncha
+
+	* readme.txt: Updated docs on IP addresses, A and CNAME records
+
+2009-03-30 07:49  donncha
+
+	* domain_mapping.php: Updated instructions to handle servers with
+	  more than one IP.
+	  Redirect with REQUEST_URI, see
+	  http://wordpress.org/support/topic/244964?replies=3
+
+2009-03-30 07:48  donncha
+
+	* readme.txt: Minor doc update - "Tools" menu
+
+2009-01-28 13:34  donncha
+
+	* domain_mapping.php: Redirect to mapped domain
+
+2009-01-28 10:45  donncha
+
+	* domain_mapping.php: Show mapped domains in backend too.
+
+2008-08-11 19:33  donncha
+
+	* domain_mapping.php, readme.txt: Bump to 0.3
+
+2008-08-11 19:24  donncha
+
+	* sunrise.php: Use wp_blogs to create the $current_blog object
+	  Use $current_blog->site_id to get the correct $current_site
+
+2008-08-11 17:27  donncha
+
+	* domain_mapping.php, readme.txt: Bump the version number. Oops.
+	  Hope this changes the download link
+
+2008-08-11 17:01  donncha
+
+	* sunrise.php: Remember to set $blog_id, props Ron and Andrea_r
+
+2008-08-11 15:53  donncha
+
+	* domain_mapping.php, readme.txt, sunrise.php: Initial import
+
+2008-08-11 14:09  plugin-master
+
+	* .: adding wordpress-mu-domain-mapping by donncha
+
