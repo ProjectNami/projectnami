@@ -157,7 +157,7 @@ class WP_REST_Revisions_Controller extends WP_REST_Controller {
 		$parent = $this->get_parent( $request['parent'] );
 		if ( is_wp_error( $parent ) ) {
 			return $parent;
- 		}
+		}
 
 		$parent_post_type_obj = get_post_type_object( $parent->post_type );
 		if ( ! current_user_can( $parent_post_type_obj->cap->edit_post, $parent->ID ) ) {
@@ -344,7 +344,7 @@ class WP_REST_Revisions_Controller extends WP_REST_Controller {
 		$data = array();
 
 		if ( ! empty( $schema['properties']['author'] ) ) {
-			$data['author'] = $post->post_author;
+			$data['author'] = (int) $post->post_author;
 		}
 
 		if ( ! empty( $schema['properties']['date'] ) ) {
