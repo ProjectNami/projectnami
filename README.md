@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-###Version: `1.5.4`###
+###Version: `1.5.5`###
 
 ###Description:###
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://deploy.azure.com/?repository=https://github.com/ProjectNami/projectnami/tree/latest)
