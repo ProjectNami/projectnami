@@ -1738,6 +1738,7 @@ class wpdb {
                 case 321:
                 case 1018:
                 case 2627:
+                case 2812:
 				case 4145:
                 case 8120:
 				case 8155:
@@ -2273,6 +2274,7 @@ class wpdb {
                     case 321:
                     case 1018:
                     case 2627:
+                    case 2812:
 					case 4145:
                     case 8120:
 					case 8155:

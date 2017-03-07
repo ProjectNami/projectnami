@@ -571,6 +571,15 @@ class SQL_Translations extends wpdb
         }
 
         /**
+         * WooCommerce
+         */
+		if (stristr($query, "ORDER BY tm.meta_value+0") !== FALSE) {
+			$query = str_ireplace(
+				'tm.meta_value+0', 
+				'CAST(tm.meta_value as numeric)', $query);
+		}
+
+        /**
          * Comments
          */
         $query = str_ireplace("WHERE ( post_status = 'publish' OR ( post_status = 'inherit' && post_type = 'attachment' ) )", 
@@ -628,7 +637,7 @@ class SQL_Translations extends wpdb
             $query = substr_replace($query, '@@IDENTITY', $start_pos, 16);
         }
         // SHOW TABLES
-        if ( strtolower($query) === 'show tables;' ) {
+        if ( strtolower($query) === 'show tables;' or strtolower($query) === 'show tables' ) {
             $query = str_ireplace('show tables',"select name from SYSOBJECTS where TYPE = 'U' order by NAME",$query);
         }
         if ( stripos($query, 'show tables like ') === 0 ) {
