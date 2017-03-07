@@ -571,6 +571,15 @@ class SQL_Translations extends wpdb
         }
 
         /**
+         * WooCommerce
+         */
+		if (stristr($query, "ORDER BY tm.meta_value+0") !== FALSE) {
+			$query = str_ireplace(
+				'tm.meta_value+0', 
+				'CAST(tm.meta_value as numeric)', $query);
+		}
+
+        /**
          * Comments
          */
         $query = str_ireplace("WHERE ( post_status = 'publish' OR ( post_status = 'inherit' && post_type = 'attachment' ) )", 
