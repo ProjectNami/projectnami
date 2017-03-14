@@ -1969,7 +1969,11 @@ class wpdb {
 			//exa: $on == "sourceTable.keyCol1 = targetTable.keyCol1 AND sourceTable.keyCol2 = targetTable.keyCol2"
 			//exa: $set == "[field1] = %s, [field2] = %d"
 			$sql = "MERGE INTO $table WITH (HOLDLOCK) AS targetTable USING (SELECT $keyFormat) AS sourceTable ($keyName) ";
-			$sql .= "ON ($on) WHEN MATCHED THEN UPDATE SET $set WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
+			$sql .= "ON ($on)";
+            if ( trim( $set ) != '' ){
+    			$sql .= " WHEN MATCHED THEN UPDATE SET $set ";
+            }
+			$sql .= " WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
 			//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
 			//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up		
 			$values = array_merge($keyValues, $values, $values);
