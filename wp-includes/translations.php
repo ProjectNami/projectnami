@@ -2021,7 +2021,7 @@ class SQL_Translations extends wpdb
 		}
 		
 		$on = ' ON (' . $on . ')';
-		$newsql .= $on . ' WHEN MATCHED THEN UPDATE SET ';
+		$newsql .= $on;
 	
 		
 		/* Create UPDATE part of command. */
@@ -2052,7 +2052,10 @@ class SQL_Translations extends wpdb
 			}
 			
 		}
-		$newsql .= $update . ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
+        if ( trim( $update ) != '' ){
+    		$newsql .= ' WHEN MATCHED THEN UPDATE SET ' . $update;
+        }
+		$newsql .= ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
 		return $newsql;
 	}
 	
