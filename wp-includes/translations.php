@@ -476,6 +476,16 @@ class SQL_Translations extends wpdb
 					'WHERE 1=1  AND (((wp_posts.post_title', 
 					'WHERE 1=1  AND (wp_posts.post_title', $query);
 			}
+            if (stristr($query, 'SELECT comment_approved, COUNT( * ) AS num_comments FROM {$this->prefix}comments WHERE comment_type != "tribe-ea-error" GROUP BY comment_approved') !== FALSE) { 
+                $query = str_ireplace( 
+                '"', 
+                "'", $query); 
+            } 
+            if (stristr($query, 'ORDER BY CASE') !== FALSE) { 
+                $query = str_ireplace( 
+                'ORDER BY CASE', 
+                "--", $query); 
+            } 
 		}
 		
         /**
