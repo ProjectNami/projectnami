@@ -476,6 +476,16 @@ class SQL_Translations extends wpdb
 					'WHERE 1=1  AND (((wp_posts.post_title', 
 					'WHERE 1=1  AND (wp_posts.post_title', $query);
 			}
+            if (stristr($query, 'SELECT comment_approved, COUNT( * ) AS num_comments FROM {$this->prefix}comments WHERE comment_type != "tribe-ea-error" GROUP BY comment_approved') !== FALSE) { 
+                $query = str_ireplace( 
+                '"', 
+                "'", $query); 
+            } 
+            if (stristr($query, 'ORDER BY CASE') !== FALSE) { 
+                $query = str_ireplace( 
+                'ORDER BY CASE', 
+                "--", $query); 
+            } 
 		}
 		
         /**
@@ -2021,7 +2031,7 @@ class SQL_Translations extends wpdb
 		}
 		
 		$on = ' ON (' . $on . ')';
-		$newsql .= $on . ' WHEN MATCHED THEN UPDATE SET ';
+		$newsql .= $on;
 	
 		
 		/* Create UPDATE part of command. */
@@ -2052,7 +2062,10 @@ class SQL_Translations extends wpdb
 			}
 			
 		}
-		$newsql .= $update . ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
+        if ( trim( $update ) != '' ){
+    		$newsql .= ' WHEN MATCHED THEN UPDATE SET ' . $update;
+        }
+		$newsql .= ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
 		return $newsql;
 	}
 	
