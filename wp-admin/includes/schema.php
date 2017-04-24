@@ -167,7 +167,7 @@ GO
 
 CREATE TABLE $wpdb->options (
   option_id int NOT NULL identity(1,1),
-  option_name nvarchar(64) NOT NULL default '',
+  option_name nvarchar(191) NOT NULL default '',
   option_value nvarchar(max) NOT NULL,
   autoload nvarchar(20) NOT NULL default 'yes',
   constraint $wpdb->options" . "_PK PRIMARY KEY  (option_id)
