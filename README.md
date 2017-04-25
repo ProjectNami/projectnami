@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-### Version: `1.5.6` ###
+### Version: `1.5.7` ###
 
 ### Description: ###
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://deploy.azure.com/?repository=https://github.com/ProjectNami/projectnami/tree/latest)
@@ -33,6 +33,8 @@ We needed a version of WordPress powered by SQL Server in the cloud on Microsoft
 
 * As of version 0.10.0, a fallback translation layer has been added to help with MySQL-specific syntax used by plugins.
 
+* See our post on Plugin Compatibility for more information http://projectnami.org/plugin-compatibility/
+
 * Project Nami requires ***SQL Server 2012 or later*** in order to function properly. Until this version was released, there wasn't really a SQL Server native method of handling the MySQL `LIMIT` when using an offset. However, `OFFSET FETCH` can now be used in conjunction with `ORDER BY` to achieve the equivalent of a MySQL `LIMIT` with an offset.
 
-* Compatible with SQL Server vNext on Linux platforms
+* Compatible with SQL Server 2017 on Linux platforms
