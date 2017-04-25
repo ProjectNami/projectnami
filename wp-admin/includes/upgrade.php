@@ -507,7 +507,7 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 38590 )
 		upgrade_470();
 
-	if ( $wp_current_db_version < 38591 )
+	if ( $wp_current_db_version < 38592 )
 		upgrade_474a();
 
 	maybe_disable_link_manager();
@@ -751,10 +751,12 @@ function upgrade_470() {
 function upgrade_474a() {
 	global $wp_current_db_version, $wpdb;
 
-	if ( $wp_current_db_version < 38591 ) {
+	if ( $wp_current_db_version < 38592 ) {
 		$wpdb->query( "DROP INDEX $wpdb->options" . "_UK1 ON $wpdb->options" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} DROP CONSTRAINT $wpdb->options" . "_PK" );
 		$wpdb->query( "ALTER TABLE {$wpdb->options} ALTER COLUMN option_name NVARCHAR(191) NOT NULL" );
-		$wpdb->query( "CREATE UNIQUE INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} ADD CONSTRAINT $wpdb->options" . "_PK PRIMARY KEY NONCLUSTERED (option_id ASC)" );
+		$wpdb->query( "CREATE UNIQUE CLUSTERED INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)" );
 	}
 }
 
