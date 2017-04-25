@@ -167,13 +167,13 @@ GO
 
 CREATE TABLE $wpdb->options (
   option_id int NOT NULL identity(1,1),
-  option_name nvarchar(64) NOT NULL default '',
+  option_name nvarchar(191) NOT NULL default '',
   option_value nvarchar(max) NOT NULL,
   autoload nvarchar(20) NOT NULL default 'yes',
-  constraint $wpdb->options" . "_PK PRIMARY KEY  (option_id)
+  constraint $wpdb->options" . "_PK PRIMARY KEY NONCLUSTERED (option_id)
 )
 GO
-CREATE UNIQUE INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)
+CREATE UNIQUE CLUSTERED INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)
 GO
 
 CREATE TABLE $wpdb->postmeta (

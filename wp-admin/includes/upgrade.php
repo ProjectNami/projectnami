@@ -507,6 +507,9 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 38590 )
 		upgrade_470();
 
+	if ( $wp_current_db_version < 38592 )
+		upgrade_474a();
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -736,6 +739,24 @@ function upgrade_470() {
 
 	if ( $wp_current_db_version < 38590 ) {
 		$wpdb->query( "ALTER TABLE {$wpdb->posts} ALTER COLUMN post_password NVARCHAR(255)" );
+	}
+}
+
+/**
+ * Execute changes as required by PN post WP 4.7.4.
+ *
+ * @global int   $wp_current_db_version
+ * @global wpdb  $wpdb
+ */
+function upgrade_474a() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version < 38592 ) {
+		$wpdb->query( "DROP INDEX $wpdb->options" . "_UK1 ON $wpdb->options" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} DROP CONSTRAINT $wpdb->options" . "_PK" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} ALTER COLUMN option_name NVARCHAR(191) NOT NULL" );
+		$wpdb->query( "ALTER TABLE {$wpdb->options} ADD CONSTRAINT $wpdb->options" . "_PK PRIMARY KEY NONCLUSTERED (option_id ASC)" );
+		$wpdb->query( "CREATE UNIQUE CLUSTERED INDEX $wpdb->options" . "_UK1 on $wpdb->options (option_name)" );
 	}
 }
 
