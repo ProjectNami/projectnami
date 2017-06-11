@@ -258,6 +258,9 @@ class WP_Community_Events {
 				 */
 				$address_chain = explode( ',', $_SERVER[ $header ] );
 				$client_ip     = trim( $address_chain[0] );
+                if ( (strlen($client_ip) < 25) && (stristr($client_ip, ":") !== FALSE) ) {
+                    $client_ip = substr($client_ip, 0, strpos($client_ip, ":"));
+                }
 
 				break;
 			}
