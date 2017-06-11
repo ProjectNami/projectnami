@@ -254,11 +254,15 @@ final class WP_Site {
 			case 'siteurl':
 			case 'post_count':
 			case 'home':
+			default: // Custom properties added by 'site_details' filter.
 				if ( ! did_action( 'ms_loaded' ) ) {
 					return null;
 				}
+
 				$details = $this->get_details();
-				return $details->$key;
+				if ( isset( $details->$key ) ) {
+					return $details->$key;
+				}
 		}
 
 		return null;
@@ -289,6 +293,15 @@ final class WP_Site {
 					return false;
 				}
 				return true;
+			default: // Custom properties added by 'site_details' filter.
+				if ( ! did_action( 'ms_loaded' ) ) {
+					return false;
+				}
+
+				$details = $this->get_details();
+				if ( isset( $details->$key ) ) {
+					return true;
+				}
 		}
 
 		return false;
@@ -347,17 +360,7 @@ final class WP_Site {
 			$details->home       = get_option( 'home' );
 			restore_current_blog();
 
-			$cache_details = true;
-			foreach ( array( 'blogname', 'siteurl', 'post_count', 'home' ) as $field ) {
-				if ( false === $details->$field ) {
-					$cache_details = false;
-					break;
-				}
-			}
-
-			if ( $cache_details ) {
-				wp_cache_set( $this->blog_id, $details, 'site-details' );
-			}
+			wp_cache_set( $this->blog_id, $details, 'site-details' );
 		}
 
 		/** This filter is documented in wp-includes/ms-blogs.php */
