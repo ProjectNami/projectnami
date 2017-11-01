@@ -648,7 +648,7 @@ class SQL_Translations extends wpdb
         }
         // SHOW TABLES
         if ( strtolower($query) === 'show tables;' or strtolower($query) === 'show tables' ) {
-            $query = str_ireplace('show tables',"select name from SYSOBJECTS where TYPE = 'U' order by NAME",$query);
+            $query = str_ireplace('show tables', "select name from SYSOBJECTS where TYPE = 'U' order by NAME", $query);
         }
         if ( stripos($query, 'show tables like ') === 0 ) {
             $end_pos = strlen($query);
@@ -662,6 +662,16 @@ class SQL_Translations extends wpdb
             }
             */
             $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE ' . $param;
+        }
+        if ( stripos($query, 'show tables where ') === 0 ) {
+          $end_pos = strlen($query);
+          $param = substr($query, 18, $end_pos - 18);
+          // quoted with double quotes instead of single?
+          $param = str_ireplace('"', "'", $param);
+          // Used by plugins like WP Statistics
+          // Replace `Tables_in_THEDATABASE` parameter syntax with INFORMATION_SCHEMA.TABLES a compatible one.
+          $param = preg_replace('/.?Tables_in_.*?(=|LIKE|NOT\\ LIKE)\s?(.*?)/i', 'TABLE_NAME ${1} ${2}', $param);
+          $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE ' . $param;
         }
         // DESCRIBE - this is pretty darn close to mysql equiv, however it will need to have a flag to modify the result set
         // this and SHOW INDEX FROM are used in WP upgrading. The problem is that WP will see the different data types and try
