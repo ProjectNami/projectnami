@@ -1285,9 +1285,9 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  * | U+0146  | ņ     | n           | Latin small letter n with cedilla                 |
  * | U+0147  | Ň     | N           | Latin capital letter N with caron                 |
  * | U+0148  | ň     | n           | Latin small letter n with caron                   |
- * | U+0149  | ┼ë     | n           | Latin small letter n preceded by apostrophe       |
- * | U+014A  | ┼è     | N           | Latin capital letter Eng                          |
- * | U+014B  | ┼ï     | n           | Latin small letter Eng                            |
+ * | U+0149  | ŉ     | n           | Latin small letter n preceded by apostrophe       |
+ * | U+014A  | Ŋ     | N           | Latin capital letter Eng                          |
+ * | U+014B  | ŋ     | n           | Latin small letter Eng                            |
  * | U+014C  | Ō     | O           | Latin capital letter O with macron                |
  * | U+014D  | ō     | o           | Latin small letter o with macron                  |
  * | U+014E  | Ŏ     | O           | Latin capital letter O with breve                 |
@@ -1500,8 +1500,8 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  *
  * |   Code   | Glyph | Replacement |               Description               |
  * | -------- | ----- | ----------- | --------------------------------------- |
- * | U+0110   | ─É     | DJ          | Latin capital letter D with stroke      |
- * | U+0111   | ─æ     | dj          | Latin small letter d with stroke        |
+ * | U+0110   | Đ     | DJ          | Latin capital letter D with stroke      |
+ * | U+0111   | đ     | dj          | Latin small letter d with stroke        |
  *
  * @since 1.2.1
  * @since 4.6.0 Added locale support for `de_CH`, `de_CH_informal`, and `ca`.
