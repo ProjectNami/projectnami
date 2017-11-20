@@ -8,7 +8,7 @@
  * @subpackage Administration
  */
 
-/** Include user install customize script. */
+/** Include user installation customization script. */
 if ( file_exists(WP_CONTENT_DIR . '/install.php') )
 	require (WP_CONTENT_DIR . '/install.php');
 
@@ -95,7 +95,7 @@ function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated 
 
 	flush_rewrite_rules();
 
-	wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during the install.') ) );
+	wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during installation.') ) );
 
 	wp_cache_flush();
 
@@ -286,7 +286,7 @@ As a new WordPress user, you should go to <a href=\"%s\">your dashboard</a> to d
 endif;
 
 /**
- * Maybe enable pretty permalinks on install.
+ * Maybe enable pretty permalinks on installation.
  *
  * If after enabling pretty permalinks don't work, fallback to query-string permalinks.
  *
@@ -431,10 +431,13 @@ function wp_upgrade() {
 	wp_cache_flush();
 
 	if ( is_multisite() ) {
-		if ( $wpdb->get_row( "SELECT blog_id FROM {$wpdb->blog_versions} WHERE blog_id = '{$wpdb->blogid}'" ) )
-			$wpdb->query( "UPDATE {$wpdb->blog_versions} SET db_version = '{$wp_db_version}' WHERE blog_id = '{$wpdb->blogid}'" );
-		else
-			$wpdb->query( "INSERT INTO {$wpdb->blog_versions} ( [blog_id] , [db_version] , [last_updated] ) VALUES ( '{$wpdb->blogid}', '{$wp_db_version}', GETDATE());" );
+		$site_id = get_current_blog_id();
+
+		if ( $wpdb->get_row( $wpdb->prepare( 'SELECT blog_id FROM %s WHERE blog_id = %d', $wpdb->blog_versions, $site_id ) ) ) {
+			$wpdb->query( $wpdb->prepare( 'UPDATE %s SET db_version = %d WHERE blog_id = %d', $wpdb->blog_versions, $wp_db_version, $site_id ) );
+ 	    } else {
+			$wpdb->query( $wpdb->prepare( 'INSERT INTO %s ( [blog_id] , [db_version] , [last_updated] ) VALUES ( %d, %d, %s);', $wpdb->blog_versions, $site_id, $wp_db_version, 'GETDATE()' ) );
+ 	    }
 	}
 
 	/**
@@ -450,7 +453,7 @@ function wp_upgrade() {
 endif;
 
 /**
- * Functions to be called in install and upgrade scripts.
+ * Functions to be called in installation and upgrade scripts.
  *
  * Contains conditional checks to determine which upgrade scripts to run,
  * based on database version and WP version being updated-to.
@@ -774,24 +777,8 @@ function upgrade_474a() {
 function upgrade_network() {
 	global $wp_current_db_version, $wpdb;
 
-	// Always.
-	if ( is_main_network() ) {
-		/*
-		 * Deletes all expired transients. The multi-table delete syntax is used
-		 * to delete the transient record from table a, and the corresponding
-		 * transient_timeout record from table b.
-		 */
-
-		/* PN - Disable multi-table delete until we can work through the SQL
-		$time = time();
-		$sql = "DELETE a, b FROM $wpdb->sitemeta a, $wpdb->sitemeta b
-			WHERE a.meta_key LIKE %s
-			AND a.meta_key NOT LIKE %s
-			AND b.meta_key = CONCAT( '_site_transient_timeout_', SUBSTRING( a.meta_key, 17 ) )
-			AND b.meta_value < %d";
-		$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like ( '_site_transient_timeout_' ) . '%', $time ) );
-        */
-	}
+	// Always clear expired transients
+	delete_expired_transients( true );
 
 	// 2.8.
 	if ( $wp_current_db_version < 11549 ) {
@@ -982,7 +969,7 @@ function maybe_add_column($table_name, $column_name, $create_ddl) {
 }
 
 /**
- * Utility version of get_option that is private to install/upgrade.
+ * Utility version of get_option that is private to installation/upgrade.
  *
  * @ignore
  * @since 1.5.1
