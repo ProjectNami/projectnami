@@ -613,7 +613,7 @@ function populate_options() {
 		'can_compress_scripts', 'page_uris', 'update_core', 'update_plugins', 'update_themes', 'doing_cron',
 		'random_seed', 'rss_excerpt_length', 'secret', 'use_linksupdate', 'default_comment_status_page',
 		'wporg_popular_tags', 'what_to_show', 'rss_language', 'language', 'enable_xmlrpc', 'enable_app',
-		'embed_autourls', 'default_post_edit_rows',
+		'embed_autourls', 'default_post_edit_rows', 'gzipcompression', 'advanced_edit'
 	);
 	foreach ( $unusedoptions as $option )
 		delete_option($option);
@@ -626,29 +626,10 @@ function populate_options() {
 	// Delete obsolete magpie stuff.
 	// $wpdb->query("DELETE FROM $wpdb->options WHERE option_name REGEXP '^rss_[0-9a-f]{32}(_ts)?$'");
 
-	/*
-	 * Deletes all expired transients. The multi-table delete syntax is used
-	 * to delete the transient record from table a, and the corresponding
-	 * transient_timeout record from table b.
-	 */
+	// Clear expired transients
 
     /* PN -- Disable multi-table delete until we can work through the SQL
-	$time = time();
-	$sql = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
-		WHERE a.option_name LIKE %s
-		AND a.option_name NOT LIKE %s
-		AND b.option_name = CONCAT( '_transient_timeout_', SUBSTRING( a.option_name, 12 ) )
-		AND b.option_value < %d";
-	$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_transient_' ) . '%', $wpdb->esc_like( '_transient_timeout_' ) . '%', $time ) );
-
-	if ( is_main_site() && is_main_network() ) {
-		$sql = "DELETE a, b FROM $wpdb->options a, $wpdb->options b
-			WHERE a.option_name LIKE %s
-			AND a.option_name NOT LIKE %s
-			AND b.option_name = CONCAT( '_site_transient_timeout_', SUBSTRING( a.option_name, 17 ) )
-			AND b.option_value < %d";
-		$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like( '_site_transient_timeout_' ) . '%', $time ) );
-	}
+	delete_expired_transients( true );
     */
 }
 
@@ -942,9 +923,9 @@ endif;
  * @param string $email             Email address for the network administrator.
  * @param string $site_name         The name of the network.
  * @param string $path              Optional. The path to append to the network's domain name. Default '/'.
- * @param bool   $subdomain_install Optional. Whether the network is a subdomain install or a subdirectory install.
- *                                  Default false, meaning the network is a subdirectory install.
- * @return bool|WP_Error True on success, or WP_Error on warning (with the install otherwise successful,
+ * @param bool   $subdomain_install Optional. Whether the network is a subdomain installation or a subdirectory installation.
+ *                                  Default false, meaning the network is a subdirectory installation.
+ * @return bool|WP_Error True on success, or WP_Error on warning (with the installation otherwise successful,
  *                       so the error code must be checked) or failure.
  */
 function populate_network( $network_id = 1, $domain = '', $email = '', $site_name = '', $path = '/', $subdomain_install = false ) {
@@ -957,24 +938,48 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 		$errors->add( 'empty_sitename', __( 'You must provide a name for your network of sites.' ) );
 
 	// Check for network collision.
-	if ( $network_id == $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $wpdb->site WHERE id = %d", $network_id ) ) )
-		$errors->add( 'siteid_exists', __( 'The network already exists.' ) );
+	$network_exists = false;
+	if ( is_multisite() ) {
+		if ( get_network( (int) $network_id ) ) {
+			$errors->add( 'siteid_exists', __( 'The network already exists.' ) );
+		}
+	} else {
+		if ( $network_id == $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $wpdb->site WHERE id = %d", $network_id ) ) ) {
+			$errors->add( 'siteid_exists', __( 'The network already exists.' ) );
+		}
+	}
 
-	$site_user = get_user_by( 'email', $email );
 	if ( ! is_email( $email ) )
-		$errors->add( 'invalid_email', __( 'You must provide a valid e-mail address.' ) );
+		$errors->add( 'invalid_email', __( 'You must provide a valid email address.' ) );
 
 	if ( $errors->get_error_code() )
 		return $errors;
+
+	// If a user with the provided email does not exist, default to the current user as the new network admin.
+	$site_user = get_user_by( 'email', $email );
+	if ( false === $site_user ) {
+		$site_user = wp_get_current_user();
+	}
 
 	// Set up site tables.
 	$template = get_option( 'template' );
 	$stylesheet = get_option( 'stylesheet' );
 	$allowed_themes = array( $stylesheet => true );
-	if ( $template != $stylesheet )
+
+	if ( $template != $stylesheet ) {
 		$allowed_themes[ $template ] = true;
-	if ( WP_DEFAULT_THEME != $stylesheet && WP_DEFAULT_THEME != $template )
+	}
+
+	if ( WP_DEFAULT_THEME != $stylesheet && WP_DEFAULT_THEME != $template ) {
 		$allowed_themes[ WP_DEFAULT_THEME ] = true;
+	}
+
+	// If WP_DEFAULT_THEME doesn't exist, also whitelist the latest core default theme.
+	if ( ! wp_get_theme( WP_DEFAULT_THEME )->exists() ) {
+		if ( $core_default = WP_Theme::get_core_default_theme() ) {
+			$allowed_themes[ $core_default->get_stylesheet() ] = true;
+		}
+	}
 
 	if ( 1 == $network_id ) {
 		$wpdb->insert( $wpdb->site, array( 'domain' => $domain, 'path' => $path ) );
