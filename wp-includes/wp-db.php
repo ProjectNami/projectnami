@@ -584,12 +584,7 @@ class wpdb {
 		if ( WP_DEBUG && WP_DEBUG_DISPLAY )
 			$this->show_errors();
 
-		/* Use ext/mysqli if it exists and:
-		 *  - WP_USE_EXT_MYSQL is defined as false, or
-		 *  - We are a development version of WordPress, or
-		 *  - We are running PHP 5.5 or greater, or
-		 *  - ext/mysql is not loaded.
-		 */
+		// Use ext/mysqli if it exists unless WP_USE_EXT_MYSQL is defined as true
         $this->use_mysqli = false;
 
 		$this->dbuser = $dbuser;
