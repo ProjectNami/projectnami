@@ -3048,7 +3048,15 @@ class WP_Query {
 				$this->found_posts = (int) $wpdb->last_query_total_rows;
 			}
 		else {
- 			$this->found_posts = count( $this->posts );
+			if ( is_array( $this->posts ) ) {
+				$this->found_posts = count( $this->posts );
+			} else {
+				if ( null === $this->posts ) {  
+					$this->found_posts = 0;
+				} else {
+					$this->found_posts = 1;
+				}
+			}
 		}
 
 		/**
