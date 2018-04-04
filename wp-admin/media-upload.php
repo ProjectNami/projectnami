@@ -34,7 +34,7 @@ $post_id = isset($post_id)? (int) $post_id : 0;
 // Require an ID for the edit screen.
 if ( isset( $action ) && $action == 'edit' && !$ID ) {
 	wp_die(
-		'<h1>' . __( 'Cheatin&#8217; uh?' ) . '</h1>' .
+		'<h1>' . __( 'Something went wrong.' ) . '</h1>' .
 		'<p>' . __( 'Invalid item ID.' ) . '</p>',
 		403
 	);
