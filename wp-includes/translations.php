@@ -1623,7 +1623,7 @@ class SQL_Translations extends wpdb
             $start_positions = array_reverse($this->stripos_all($query, $ac_type));
             foreach ($start_positions as $start_pos) {
                 if ($ac_type == 'varchar') {
-                    if (substr($query, $start_pos - 1, 8) == 'NVARCHAR') {
+                    if (strcasecmp(substr($query, $start_pos - 1, 8), 'nvarchar') == 'NVARCHAR') {
                         continue;
                     }
                     $query = substr_replace($query, 'NVARCHAR', $start_pos, strlen($ac_type));
