@@ -7,4 +7,6 @@
 /*
  * Stop Jetpack from writing to options with direct DB calls.
  */
-define( 'JETPACK_DISABLE_RAW_OPTIONS', true );
+if ( ! defined( 'JETPACK_DISABLE_RAW_OPTIONS' ) ) {
+	define( 'JETPACK_DISABLE_RAW_OPTIONS', true );
+}
