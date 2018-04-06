@@ -1254,7 +1254,7 @@ class SQL_Translations extends wpdb
     function translate_sort_casting($query)
     {
         if ( stripos($query, 'ORDER') > 0 ) {
-            $ord = 0;
+            $ord = '';
             $order_pos = stripos($query, 'ORDER');
             if ( stripos($query, 'BY', $order_pos) == ($order_pos + 6) && stripos($query, 'OVER(', $order_pos - 5) != ($order_pos - 5)) {
                 $ob = stripos($query, 'BY', $order_pos);
