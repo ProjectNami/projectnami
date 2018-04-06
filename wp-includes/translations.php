@@ -1867,6 +1867,9 @@ class SQL_Translations extends wpdb
             if ( strtolower($tok[$i]) === 'as' ) {
                 $arr[] = $tok[($i + 1)];
             }
+			if ( strtolower($tok[$i]) === 'from' ) {
+				break;
+			}
         }
         return $arr;
     }
