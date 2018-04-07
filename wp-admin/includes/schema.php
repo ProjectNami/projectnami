@@ -628,9 +628,7 @@ function populate_options() {
 
 	// Clear expired transients
 
-    /* PN -- Disable multi-table delete until we can work through the SQL
 	delete_expired_transients( true );
-    */
 }
 
 /**
