@@ -1265,7 +1265,7 @@ class SQL_Translations extends wpdb
                     $ord = stripos($query, ' DESC', $ob);
                 }
 
-                $params = substr($query, ($ob + 3), ($ord - ($ob + 3)));
+                $params = substr($query, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
                 $params = preg_split('/[\s,]+/', $params);
                 $p = array();
                 foreach ( $params as $value ) {
@@ -1296,7 +1296,7 @@ class SQL_Translations extends wpdb
                     }
                 }
                 $str = rtrim($str, ', ');
-                $query = substr_replace($query, $str, ($ob + 3), ($ord - ($ob + 3)));
+                $query = substr_replace($query, $str, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
             }
         }
         return $query;
