@@ -1254,7 +1254,7 @@ class SQL_Translations extends wpdb
     function translate_sort_casting($query)
     {
         if ( stripos($query, 'ORDER') > 0 ) {
-            $ord = '';
+            $ord = strlen($query);
             $order_pos = stripos($query, 'ORDER');
             if ( stripos($query, 'BY', $order_pos) == ($order_pos + 6) && stripos($query, 'OVER(', $order_pos - 5) != ($order_pos - 5)) {
                 $ob = stripos($query, 'BY', $order_pos);
@@ -1265,7 +1265,7 @@ class SQL_Translations extends wpdb
                     $ord = stripos($query, ' DESC', $ob);
                 }
 
-                $params = substr($query, ($ob + 3), ($ord - ($ob + 3)));
+                $params = substr($query, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
                 $params = preg_split('/[\s,]+/', $params);
                 $p = array();
                 foreach ( $params as $value ) {
@@ -1296,7 +1296,7 @@ class SQL_Translations extends wpdb
                     }
                 }
                 $str = rtrim($str, ', ');
-                $query = substr_replace($query, $str, ($ob + 3), ($ord - ($ob + 3)));
+                $query = substr_replace($query, $str, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
             }
         }
         return $query;
@@ -1867,6 +1867,9 @@ class SQL_Translations extends wpdb
             if ( strtolower($tok[$i]) === 'as' ) {
                 $arr[] = $tok[($i + 1)];
             }
+			if ( strtolower($tok[$i]) === 'from' ) {
+				break;
+			}
         }
         return $arr;
     }
