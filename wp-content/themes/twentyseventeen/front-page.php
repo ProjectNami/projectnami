@@ -22,7 +22,7 @@ get_header(); ?>
 			while ( have_posts() ) : the_post();
 				get_template_part( 'template-parts/page/content', 'front-page' );
 			endwhile;
-		else : // I'm not sure it's possible to have no posts when this page is shown, but WTH.
+		else :
 			get_template_part( 'template-parts/post/content', 'none' );
 		endif; ?>
 
@@ -35,7 +35,7 @@ get_header(); ?>
 			 *
 			 * @since Twenty Seventeen 1.0
 			 *
-			 * @param $num_sections integer
+			 * @param int $num_sections Number of front page sections.
 			 */
 			$num_sections = apply_filters( 'twentyseventeen_front_page_sections', 4 );
 			global $twentyseventeencounter;

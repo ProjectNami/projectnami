@@ -85,10 +85,11 @@
 		 * and creates a new instance for every match.
 		 *
 		 * @param {String} content The string to scan.
+		 * @param {tinymce.Editor} editor The editor.
 		 *
 		 * @return {String} The string with markers.
 		 */
-		setMarkers: function( content ) {
+		setMarkers: function( content, editor ) {
 			var pieces = [ { content: content } ],
 				self = this,
 				instance, current;
@@ -115,6 +116,7 @@
 							pieces.push( { content: remaining.substring( 0, result.index ) } );
 						}
 
+						result.options.editor = editor;
 						instance = self.createInstance( type, result.content, result.options );
 						text = instance.loader ? '.' : instance.text;
 
@@ -154,8 +156,6 @@
 			var View = this.get( type ),
 				encodedText,
 				instance;
-
-			text = tinymce.DOM.decode( text );
 
 			if ( text.indexOf( '[' ) !== -1 && text.indexOf( ']' ) !== -1 ) {
 				// Looks like a shortcode? Remove any line breaks from inside of shortcodes
@@ -280,7 +280,7 @@
 
 	wp.mce.View.extend = Backbone.View.extend;
 
-	_.extend( wp.mce.View.prototype, {
+	_.extend( wp.mce.View.prototype, /** @lends wp.mce.View.prototype */{
 
 		/**
 		 * The content.
@@ -428,9 +428,10 @@
 		 */
 		replaceMarkers: function() {
 			this.getMarkers( function( editor, node ) {
+				var selected = node === editor.selection.getNode();
 				var $viewNode;
 
-				if ( ! this.loader && $( node ).text() !== this.text ) {
+				if ( ! this.loader && $( node ).text() !== tinymce.DOM.decode( this.text ) ) {
 					editor.dom.setAttrib( node, 'data-wpview-marker', null );
 					return;
 				}
@@ -440,6 +441,13 @@
 				);
 
 				editor.$( node ).replaceWith( $viewNode );
+
+				if ( selected ) {
+					setTimeout( function() {
+						editor.selection.select( $viewNode[0] );
+						editor.selection.collapse();
+					} );
+				}
 			} );
 		},
 
@@ -460,7 +468,7 @@
 		 * @param {Boolean}  rendered Only set for (un)rendered nodes. Optional.
 		 */
 		setContent: function( content, callback, rendered ) {
-			if ( _.isObject( content ) && content.body.indexOf( '<script' ) !== -1 ) {
+			if ( _.isObject( content ) && ( content.sandbox || content.head || content.body.indexOf( '<script' ) !== -1 ) ) {
 				this.setIframes( content.head || '', content.body, callback, rendered );
 			} else if ( _.isString( content ) && content.indexOf( '<script' ) !== -1 ) {
 				this.setIframes( '', content, callback, rendered );
@@ -493,6 +501,14 @@
 		 */
 		setIframes: function( head, body, callback, rendered ) {
 			var self = this;
+
+			if ( body.indexOf( '[' ) !== -1 && body.indexOf( ']' ) !== -1 ) {
+				var shortcodesRegExp = new RegExp( '\\[\\/?(?:' + window.mceViewL10n.shortcodes.join( '|' ) + ')[^\\]]*?\\]', 'g' );
+				// Escape tags inside shortcode previews.
+				body = body.replace( shortcodesRegExp, function( match ) {
+					return match.replace( /</g, '&lt;' ).replace( />/g, '&gt;' );
+				} );
+			}
 
 			this.getNodes( function( editor, node ) {
 				var dom = editor.dom,
@@ -576,6 +592,9 @@
 									'display: none;' +
 									'content: "";' +
 								'}' +
+								'iframe {' +
+									'max-width: 100%;' +
+								'}' +
 							'</style>' +
 						'</head>' +
 						'<body id="wpview-iframe-sandbox" class="' + bodyClasses + '">' +
@@ -615,10 +634,22 @@
 				}
 
 				function reload() {
-					$( node ).data( 'rendered', null );
+					if ( ! editor.isHidden() ) {
+						$( node ).data( 'rendered', null );
 
-					setTimeout( function() {
-						wp.mce.views.render();
+						setTimeout( function() {
+							wp.mce.views.render();
+						} );
+					}
+				}
+
+				function addObserver() {
+					observer = new MutationObserver( _.debounce( resize, 100 ) );
+
+					observer.observe( iframeDoc.body, {
+						attributes: true,
+						childList: true,
+						subtree: true
 					} );
 				}
 
@@ -627,13 +658,11 @@
 				MutationObserver = iframeWin.MutationObserver || iframeWin.WebKitMutationObserver || iframeWin.MozMutationObserver;
 
 				if ( MutationObserver ) {
-					observer = new MutationObserver( _.debounce( resize, 100 ) );
-
-					observer.observe( iframeDoc.body, {
-						attributes: true,
-						childList: true,
-						subtree: true
-					} );
+					if ( ! iframeDoc.body ) {
+						iframeDoc.addEventListener( 'DOMContentLoaded', addObserver, false );
+					} else {
+						addObserver();
+					}
 				} else {
 					for ( i = 1; i < 6; i++ ) {
 						setTimeout( resize, i * 700 );
@@ -823,7 +852,7 @@
 		action: 'parse-media-shortcode',
 
 		initialize: function() {
-			var self = this;
+			var self = this, maxwidth = null;
 
 			if ( this.url ) {
 				this.loader = false;
@@ -832,10 +861,16 @@
 				} );
 			}
 
+			// Obtain the target width for the embed.
+			if ( self.editor ) {
+				maxwidth = self.editor.getBody().clientWidth;
+			}
+
 			wp.ajax.post( this.action, {
 				post_ID: media.view.settings.post.id,
 				type: this.shortcode.tag,
-				shortcode: this.shortcode.string()
+				shortcode: this.shortcode.string(),
+				maxwidth: maxwidth
 			} )
 			.done( function( response ) {
 				self.render( response );

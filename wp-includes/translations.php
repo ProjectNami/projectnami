@@ -648,7 +648,7 @@ class SQL_Translations extends wpdb
         }
         // SHOW TABLES
         if ( strtolower($query) === 'show tables;' or strtolower($query) === 'show tables' ) {
-            $query = str_ireplace('show tables',"select name from SYSOBJECTS where TYPE = 'U' order by NAME",$query);
+            $query = str_ireplace('show tables', "select name from SYSOBJECTS where TYPE = 'U' order by NAME", $query);
         }
         if ( stripos($query, 'show tables like ') === 0 ) {
             $end_pos = strlen($query);
@@ -662,6 +662,16 @@ class SQL_Translations extends wpdb
             }
             */
             $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE ' . $param;
+        }
+        if ( stripos($query, 'show tables where ') === 0 ) {
+          $end_pos = strlen($query);
+          $param = substr($query, 18, $end_pos - 18);
+          // quoted with double quotes instead of single?
+          $param = str_ireplace('"', "'", $param);
+          // Used by plugins like WP Statistics
+          // Replace `Tables_in_THEDATABASE` parameter syntax with INFORMATION_SCHEMA.TABLES a compatible one.
+          $param = preg_replace('/.?Tables_in_.*?(=|LIKE|NOT\\ LIKE)\s?(.*?)/i', 'TABLE_NAME ${1} ${2}', $param);
+          $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE ' . $param;
         }
         // DESCRIBE - this is pretty darn close to mysql equiv, however it will need to have a flag to modify the result set
         // this and SHOW INDEX FROM are used in WP upgrading. The problem is that WP will see the different data types and try
@@ -1244,7 +1254,7 @@ class SQL_Translations extends wpdb
     function translate_sort_casting($query)
     {
         if ( stripos($query, 'ORDER') > 0 ) {
-            $ord = '';
+            $ord = strlen($query);
             $order_pos = stripos($query, 'ORDER');
             if ( stripos($query, 'BY', $order_pos) == ($order_pos + 6) && stripos($query, 'OVER(', $order_pos - 5) != ($order_pos - 5)) {
                 $ob = stripos($query, 'BY', $order_pos);
@@ -1255,7 +1265,7 @@ class SQL_Translations extends wpdb
                     $ord = stripos($query, ' DESC', $ob);
                 }
 
-                $params = substr($query, ($ob + 3), ($ord - ($ob + 3)));
+                $params = substr($query, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
                 $params = preg_split('/[\s,]+/', $params);
                 $p = array();
                 foreach ( $params as $value ) {
@@ -1286,7 +1296,7 @@ class SQL_Translations extends wpdb
                     }
                 }
                 $str = rtrim($str, ', ');
-                $query = substr_replace($query, $str, ($ob + 3), ($ord - ($ob + 3)));
+                $query = substr_replace($query, $str, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
             }
         }
         return $query;
@@ -1613,7 +1623,7 @@ class SQL_Translations extends wpdb
             $start_positions = array_reverse($this->stripos_all($query, $ac_type));
             foreach ($start_positions as $start_pos) {
                 if ($ac_type == 'varchar') {
-                    if (substr($query, $start_pos - 1, 8) == 'NVARCHAR') {
+                    if (strcasecmp(substr($query, $start_pos - 1, 8), 'nvarchar') == 'NVARCHAR') {
                         continue;
                     }
                     $query = substr_replace($query, 'NVARCHAR', $start_pos, strlen($ac_type));
@@ -1857,6 +1867,9 @@ class SQL_Translations extends wpdb
             if ( strtolower($tok[$i]) === 'as' ) {
                 $arr[] = $tok[($i + 1)];
             }
+			if ( strtolower($tok[$i]) === 'from' ) {
+				break;
+			}
         }
         return $arr;
     }

@@ -125,6 +125,8 @@ class PN_Fulltext_Search
 
 		$matches = array();
 
+        $search = $wpdb->remove_placeholder_escape( $search );
+
 		$search_freetext = preg_replace( "/[^A-Za-z0-9_%'\[\]\/ ]/", ' ', $search );
 
 		$search_terms = preg_match_all( "/'\%(.*?)\%'/", $search_freetext, $matches );

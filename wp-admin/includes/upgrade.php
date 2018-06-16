@@ -8,7 +8,7 @@
  * @subpackage Administration
  */
 
-/** Include user install customize script. */
+/** Include user installation customization script. */
 if ( file_exists(WP_CONTENT_DIR . '/install.php') )
 	require (WP_CONTENT_DIR . '/install.php');
 
@@ -95,7 +95,7 @@ function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated 
 
 	flush_rewrite_rules();
 
-	wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during the install.') ) );
+	wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during installation.') ) );
 
 	wp_cache_flush();
 
@@ -195,18 +195,19 @@ function wp_install_defaults( $user_id ) {
 	$wpdb->insert( $wpdb->term_relationships, array('term_taxonomy_id' => $cat_tt_id, 'object_id' => 1) );
 
 	// Default comment
-	$first_comment_author = __( 'A WordPress Commenter' );
-	$first_comment_email = 'wapuu@wordpress.example';
-	$first_comment_url = 'https://wordpress.org/';
-	$first_comment = __( 'Hi, this is a comment.
+	if ( is_multisite() ) {
+		$first_comment_author = get_site_option( 'first_comment_author' );
+		$first_comment_email = get_site_option( 'first_comment_email' );
+		$first_comment_url = get_site_option( 'first_comment_url', network_home_url() );
+		$first_comment = get_site_option( 'first_comment' );
+	}
+
+	$first_comment_author = ! empty( $first_comment_author ) ? $first_comment_author : __( 'A WordPress Commenter' );
+	$first_comment_email = ! empty( $first_comment_email ) ? $first_comment_email : 'wapuu@wordpress.example';
+	$first_comment_url = ! empty( $first_comment_url ) ? $first_comment_url : 'https://wordpress.org/';
+	$first_comment = ! empty( $first_comment ) ? $first_comment :  __( 'Hi, this is a comment.
 To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.
 Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
-	if ( is_multisite() ) {
-		$first_comment_author = get_site_option( 'first_comment_author', $first_comment_author );
-		$first_comment_email = get_site_option( 'first_comment_email', $first_comment_email );
-		$first_comment_url = get_site_option( 'first_comment_url', network_home_url() );
-		$first_comment = get_site_option( 'first_comment', $first_comment );
-	}
 	$wpdb->insert( $wpdb->comments, array(
 		'comment_post_ID' => 1,
 		'comment_author' => $first_comment_author,
@@ -218,7 +219,10 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 	));
 
 	// First Page
-	$first_page = sprintf( __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:
+	if ( is_multisite() )
+		$first_page = get_site_option( 'first_page' );
+
+	$first_page = ! empty( $first_page ) ? $first_page : sprintf( __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:
 
 <blockquote>Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my website. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)</blockquote>
 
@@ -227,8 +231,7 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 <blockquote>The XYZ Doohickey Company was founded in 1971, and has been providing quality doohickeys to the public ever since. Located in Gotham City, XYZ employs over 2,000 people and does all kinds of awesome things for the Gotham community.</blockquote>
 
 As a new WordPress user, you should go to <a href=\"%s\">your dashboard</a> to delete this page and create new pages for your content. Have fun!" ), admin_url() );
-	if ( is_multisite() )
-		$first_page = get_site_option( 'first_page', $first_page );
+
 	$first_post_guid = get_option('home') . '/?page_id=2';
 	$wpdb->insert( $wpdb->posts, array(
 		'post_author' => $user_id,
@@ -249,6 +252,52 @@ As a new WordPress user, you should go to <a href=\"%s\">your dashboard</a> to d
 		'post_content_filtered' => ''
 	));
 	$wpdb->insert( $wpdb->postmeta, array( 'post_id' => 2, 'meta_key' => '_wp_page_template', 'meta_value' => 'default' ) );
+
+	// Privacy Policy page
+	if ( is_multisite() ) {
+		// Disable by default unless the suggested content is provided.
+		$privacy_policy_content = get_site_option( 'default_privacy_policy_content' );
+	} else {
+		if ( ! class_exists( 'WP_Privacy_Policy_Content' ) ) {
+			include_once( ABSPATH . 'wp-admin/includes/misc.php' );
+		}
+
+		$privacy_policy_content = WP_Privacy_Policy_Content::get_default_content();
+	}
+
+	if ( ! empty( $privacy_policy_content ) ) {
+		$privacy_policy_guid = get_option( 'home' ) . '/?page_id=3';
+
+		$wpdb->insert(
+			$wpdb->posts, array(
+				'post_author'           => $user_id,
+				'post_date'             => $now,
+				'post_date_gmt'         => $now_gmt,
+				'post_content'          => $privacy_policy_content,
+				'post_excerpt'          => '',
+				'comment_status'        => 'closed',
+				'post_title'            => __( 'Privacy Policy' ),
+				/* translators: Privacy Policy page slug */
+				'post_name'             => __( 'privacy-policy' ),
+				'post_modified'         => $now,
+				'post_modified_gmt'     => $now_gmt,
+				'guid'                  => $privacy_policy_guid,
+				'post_type'             => 'page',
+				'post_status'           => 'draft',
+				'to_ping'               => '',
+				'pinged'                => '',
+				'post_content_filtered' => '',
+			)
+		);
+		$wpdb->insert(
+			$wpdb->postmeta, array(
+				'post_id'    => 3,
+				'meta_key'   => '_wp_page_template',
+				'meta_value' => 'default',
+			)
+		);
+		update_option( 'wp_page_for_privacy_policy', 3 );
+	}
 
 	// Set up default widgets for default theme.
 	update_option( 'widget_search', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
@@ -283,7 +332,7 @@ As a new WordPress user, you should go to <a href=\"%s\">your dashboard</a> to d
 endif;
 
 /**
- * Maybe enable pretty permalinks on install.
+ * Maybe enable pretty permalinks on installation.
  *
  * If after enabling pretty permalinks don't work, fallback to query-string permalinks.
  *
@@ -428,10 +477,13 @@ function wp_upgrade() {
 	wp_cache_flush();
 
 	if ( is_multisite() ) {
-		if ( $wpdb->get_row( "SELECT blog_id FROM {$wpdb->blog_versions} WHERE blog_id = '{$wpdb->blogid}'" ) )
-			$wpdb->query( "UPDATE {$wpdb->blog_versions} SET db_version = '{$wp_db_version}' WHERE blog_id = '{$wpdb->blogid}'" );
-		else
-			$wpdb->query( "INSERT INTO {$wpdb->blog_versions} ( [blog_id] , [db_version] , [last_updated] ) VALUES ( '{$wpdb->blogid}', '{$wp_db_version}', GETDATE());" );
+		$site_id = get_current_blog_id();
+
+		if ( $wpdb->get_row( $wpdb->prepare( "SELECT blog_id FROM {$wpdb->blog_versions} WHERE blog_id = %d", $site_id ) ) ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->blog_versions} SET db_version = %d WHERE blog_id = %d", $wp_db_version, $site_id ) );
+		} else {
+			$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->blog_versions} ( [blog_id] , [db_version] , [last_updated] ) VALUES ( %d, %d, GETDATE() );", $site_id, $wp_db_version ) );
+		}
 	}
 
 	/**
@@ -447,7 +499,7 @@ function wp_upgrade() {
 endif;
 
 /**
- * Functions to be called in install and upgrade scripts.
+ * Functions to be called in installation and upgrade scripts.
  *
  * Contains conditional checks to determine which upgrade scripts to run,
  * based on database version and WP version being updated-to.
@@ -771,24 +823,8 @@ function upgrade_474a() {
 function upgrade_network() {
 	global $wp_current_db_version, $wpdb;
 
-	// Always.
-	if ( is_main_network() ) {
-		/*
-		 * Deletes all expired transients. The multi-table delete syntax is used
-		 * to delete the transient record from table a, and the corresponding
-		 * transient_timeout record from table b.
-		 */
-
-		/* PN - Disable multi-table delete until we can work through the SQL
-		$time = time();
-		$sql = "DELETE a, b FROM $wpdb->sitemeta a, $wpdb->sitemeta b
-			WHERE a.meta_key LIKE %s
-			AND a.meta_key NOT LIKE %s
-			AND b.meta_key = CONCAT( '_site_transient_timeout_', SUBSTRING( a.meta_key, 17 ) )
-			AND b.meta_value < %d";
-		$wpdb->query( $wpdb->prepare( $sql, $wpdb->esc_like( '_site_transient_' ) . '%', $wpdb->esc_like ( '_site_transient_timeout_' ) . '%', $time ) );
-        */
-	}
+	// Always clear expired transients
+	delete_expired_transients( true );
 
 	// 2.8.
 	if ( $wp_current_db_version < 11549 ) {
@@ -979,7 +1015,7 @@ function maybe_add_column($table_name, $column_name, $create_ddl) {
 }
 
 /**
- * Utility version of get_option that is private to install/upgrade.
+ * Utility version of get_option that is private to installation/upgrade.
  *
  * @ignore
  * @since 1.5.1
@@ -1422,6 +1458,7 @@ function pre_schema_upgrade() {
 	}
 }
 
+if ( !function_exists( 'install_global_terms' ) ) :
 /**
  * Install global terms.
  *
@@ -1430,7 +1467,6 @@ function pre_schema_upgrade() {
  * @global wpdb   $wpdb
  * @global string $charset_collate
  */
-if ( !function_exists( 'install_global_terms' ) ) :
 function install_global_terms() {
 	global $wpdb, $charset_collate;
 	$ms_queries = "

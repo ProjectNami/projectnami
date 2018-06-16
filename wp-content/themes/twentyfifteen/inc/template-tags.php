@@ -97,7 +97,7 @@ function twentyfifteen_entry_meta() {
 		}
 
 		$tags_list = get_the_tag_list( '', _x( ', ', 'Used between list items, there is a space after the comma.', 'twentyfifteen' ) );
-		if ( $tags_list ) {
+		if ( $tags_list && ! is_wp_error( $tags_list ) ) {
 			printf( '<span class="tags-links"><span class="screen-reader-text">%1$s </span>%2$s</span>',
 				_x( 'Tags', 'Used before tag names.', 'twentyfifteen' ),
 				$tags_list
@@ -150,7 +150,7 @@ function twentyfifteen_categorized_blog() {
 		set_transient( 'twentyfifteen_categories', $all_the_cool_cats );
 	}
 
-	if ( $all_the_cool_cats > 1 ) {
+	if ( $all_the_cool_cats > 1 || is_preview() ) {
 		// This blog has more than 1 category so twentyfifteen_categorized_blog should return true.
 		return true;
 	} else {

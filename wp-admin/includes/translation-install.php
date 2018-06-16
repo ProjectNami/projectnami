@@ -1,6 +1,6 @@
 <?php
 /**
- * WordPress Translation Install Administration API
+ * WordPress Translation Installation Administration API
  *
  * @package WordPress
  * @subpackage Administration
@@ -24,7 +24,7 @@ function translations_api( $type, $args = null ) {
 	}
 
 	/**
-	 * Allows a plugin to override the WordPress.org Translation Install API entirely.
+	 * Allows a plugin to override the WordPress.org Translation Installation API entirely.
 	 *
 	 * @since 4.0.0
 	 *
@@ -93,7 +93,7 @@ function translations_api( $type, $args = null ) {
 	}
 
 	/**
-	 * Filters the Translation Install API response results.
+	 * Filters the Translation Installation API response results.
 	 *
 	 * @since 4.0.0
 	 *
@@ -202,7 +202,7 @@ function wp_download_language_pack( $download ) {
 		return $download;
 	}
 
-	if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) {
+	if ( ! wp_is_file_mod_allowed( 'download_language_pack' ) ) {
 		return false;
 	}
 
@@ -245,7 +245,7 @@ function wp_download_language_pack( $download ) {
  * @return bool Returns true on success, false on failure.
  */
 function wp_can_install_language_pack() {
-	if ( defined( 'DISALLOW_FILE_MODS' ) && DISALLOW_FILE_MODS ) {
+	if ( ! wp_is_file_mod_allowed( 'can_install_language_pack' ) ) {
 		return false;
 	}
 

@@ -4,7 +4,7 @@ Theme URI: https://wordpress.org/themes/twentyseventeen/
 Author: the WordPress team
 Author URI: https://wordpress.org/
 Description: Twenty Seventeen brings your site to life with header video and immersive featured images. With a focus on business sites, it features multiple sections on the front page as well as widgets, navigation and social menus, a logo, and more. Personalize its asymmetrical grid with a custom color scheme and showcase your multimedia content with post formats. Our default theme for 2017 works great in many languages, for any abilities, and on any device.
-Version: 1.2
+Version: 1.6
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: twentyseventeen
@@ -672,6 +672,14 @@ html[lang^="zh-"] textarea {
 	font-family: "PingFang TC", "Helvetica Neue", Helvetica, STHeitiTC-Light, Arial, sans-serif;
 }
 
+html[lang="zh-CN"] body,
+html[lang="zh-CN"] button,
+html[lang="zh-CN"] input,
+html[lang="zh-CN"] select,
+html[lang="zh-CN"] textarea {
+	font-family: "PingFang SC", "Helvetica Neue", Helvetica, STHeitiSC-Light, Arial, sans-serif;
+}
+
 html[lang^="zh-"] h1,
 html[lang^="zh-"] h2,
 html[lang^="zh-"] h3,
@@ -1170,6 +1178,7 @@ a:active {
 
 .entry-content a,
 .entry-summary a,
+.comment-content a,
 .widget a,
 .site-footer .widget-area a,
 .posts-navigation a,
@@ -1217,6 +1226,8 @@ a .nav-title,
 .entry-content a:hover,
 .entry-summary a:focus,
 .entry-summary a:hover,
+.comment-content a:focus,
+.comment-content a:hover,
 .widget a:focus,
 .widget a:hover,
 .site-footer .widget-area a:focus,
@@ -1268,6 +1279,7 @@ a:hover .nav-title,
 
 /* Fixes linked images */
 .entry-content a img,
+.comment-content a img,
 .widget a img {
 	-webkit-box-shadow: 0 0 0 8px #fff;
 	box-shadow: 0 0 0 8px #fff;
@@ -2366,6 +2378,14 @@ body:not(.twentyseventeen-front-page) .entry-header {
 	width: 100%;
 }
 
+.site-info span[role=separator] {
+	padding: 0 0.2em 0 0.4em;
+}
+
+.site-info span[role=separator]::before {
+	content: '\002f';
+}
+
 /*--------------------------------------------------------------
 14.0 Comments
 --------------------------------------------------------------*/
@@ -2485,6 +2505,14 @@ body:not(.twentyseventeen-front-page) .entry-header {
 	text-align: right;
 }
 
+.comment-form #wp-comment-cookies-consent {
+	margin: 0 10px 0 0;
+}
+
+.comment-form .comment-form-cookies-consent label {
+	display: inline;
+}
+
 /*--------------------------------------------------------------
 15.0 Widgets
 --------------------------------------------------------------*/
@@ -2525,13 +2553,14 @@ h2.widget-title {
 	margin: 0;
 }
 
-.widget ul li {
+.widget ul li,
+.widget ol li {
 	border-bottom: 1px solid #ddd;
 	border-top: 1px solid #ddd;
 	padding: 0.5em 0;
 }
 
-.widget ul li + li {
+.widget:not(.widget_tag_cloud) ul li + li {
 	margin-top: -1px;
 }
 
@@ -2573,7 +2602,7 @@ h2.widget-title {
 	padding-top: 1em;
 }
 
-/* widget markup */
+/* Widget markup */
 
 .widget .post-date,
 .widget .rss-date {
@@ -2584,6 +2613,42 @@ h2.widget-title {
 
 .widget_text {
 	word-wrap: break-word;
+}
+
+.widget_text ul {
+	list-style: disc;
+	margin: 0 0 1.5em 1.5em;
+}
+
+.widget_text ol {
+	list-style: decimal;
+}
+
+.widget_text ul li,
+.widget_text ol li {
+	border: none;
+}
+
+.widget_text ul li:last-child,
+.widget_text ol li:last-child {
+	padding-bottom: 0;
+}
+
+.widget_text ul li ul {
+	margin: 0 0 0 1.5em;
+}
+
+.widget_text ul li li {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.widget_text ol li {
+	list-style-position: inside;
+}
+
+.widget_text ol li + li {
+	margin-top: -1px;
 }
 
 /* RSS Widget */
@@ -2688,6 +2753,14 @@ h2.widget-title {
 
 /* Tag cloud widget */
 
+.tagcloud ul li {
+	float: left;
+	border-top: 0;
+	border-bottom: 0;
+	padding: 0;
+	margin: 4px 4px 0 0;
+}
+
 .tagcloud,
 .widget_tag_cloud,
 .wp_widget_tag_cloud {
@@ -2700,12 +2773,8 @@ h2.widget-title {
 	border: 1px solid #ddd;
 	-webkit-box-shadow: none;
 	box-shadow: none;
-	display: inline-block;
-	float: left;
-	font-size: 14px !important; /* !important to overwrite inline styles */
-	font-size: 0.875rem !important;
-	margin: 4px 4px 0 0 !important;
-	padding: 4px 10px 5px !important;
+	display: block;
+	padding: 4px 10px 5px;
 	position: relative;
 	-webkit-transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.3s ease-in-out;
 	transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.3s ease-in-out;
@@ -2735,6 +2804,16 @@ h2.widget-title {
 
 .widget_calendar tfoot td {
 	border: 0;
+}
+
+/* Gallery widget */
+
+.gallery-columns-5 .gallery-caption,
+.gallery-columns-6 .gallery-caption,
+.gallery-columns-7 .gallery-caption,
+.gallery-columns-8 .gallery-caption,
+.gallery-columns-9 .gallery-caption {
+	display: none;
 }
 
 /*--------------------------------------------------------------
@@ -2769,6 +2848,14 @@ iframe,
 object {
 	margin-bottom: 1.5em;
 	max-width: 100%;
+}
+
+/* Remove bottom on embeds that wrapped in paragraphs via wpautop. */
+
+p > embed:only-child,
+p > iframe:only-child,
+p > object:only-child {
+	margin-bottom: 0;
 }
 
 .wp-caption,
@@ -2969,7 +3056,10 @@ object {
 
 .gallery-item a,
 .gallery-item a:hover,
-.gallery-item a:focus {
+.gallery-item a:focus,
+.widget-area .gallery-item a,
+.widget-area .gallery-item a:hover,
+.widget-area .gallery-item a:focus {
 	-webkit-box-shadow: none;
 	box-shadow: none;
 	background: none;
@@ -3042,7 +3132,7 @@ object {
 }
 
 /* Add some space around the visual edit shortcut buttons. */
-.twentyseventeen-panel .customize-partial-edit-shortcut button {
+.twentyseventeen-panel > .customize-partial-edit-shortcut > button {
 	top: 30px;
 	left: 30px;
 }
