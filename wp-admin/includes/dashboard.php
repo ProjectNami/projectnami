@@ -1747,11 +1747,11 @@ function wp_try_gutenberg_panel() {
 					<h3><?php _e( 'Not quite ready?' ); ?></h3>
 
 					<p>
-						<?php _e( 'The new editor will be enabled by default in the next major release of WordPress. If you're not sure how compatible your current themes and plugins are, we've got you covered.' ); ?>
+						<?php _e( "The new editor will be enabled by default in the next major release of WordPress. If you're not sure how compatible your current themes and plugins are, we've got you covered." ); ?>
 						<?php
 							printf(
 								/* translators: Link to the Classic Editor plugin page */
-								__( 'Install the <a href="%s">Classic Editor plugin</a> to keep using the current editor until you're ready to make the switch.' ),
+								__( 'Install the <a href="%s">Classic Editor plugin</a> to keep using the current editor until you are ready to make the switch.' ),
 								__( 'https://wordpress.org/plugins/classic-editor' )
 							);
 						?>
