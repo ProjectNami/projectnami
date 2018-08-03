@@ -1698,7 +1698,7 @@ function wp_try_gutenberg_panel() {
 					<h3><?php _e( 'Test the new editor today.' ); ?></h3>
 
 					<p>
-						<?php _e( "You can take Gutenberg for a spin (and share your feedback, if youΓÇÖd like) before we officially release it, by installing it as a plugin." ); ?>
+						<?php _e( "You can take Gutenberg for a spin (and share your feedback, if you'd like) before we officially release it, by installing it as a plugin." ); ?>
 						<?php
 							printf(
 								/* translators: 1: Gutenberg call for testing handbook link, 2: Gutenberg GitHub repository issues link, 3: Gutenberg GitHub repository CONTRIBUTING.md link */
@@ -1747,11 +1747,11 @@ function wp_try_gutenberg_panel() {
 					<h3><?php _e( 'Not quite ready?' ); ?></h3>
 
 					<p>
-						<?php _e( 'The new editor will be enabled by default in the next major release of WordPress. If youΓÇÖre not sure how compatible your current themes and plugins are, weΓÇÖve got you covered.' ); ?>
+						<?php _e( 'The new editor will be enabled by default in the next major release of WordPress. If you're not sure how compatible your current themes and plugins are, we've got you covered.' ); ?>
 						<?php
 							printf(
 								/* translators: Link to the Classic Editor plugin page */
-								__( 'Install the <a href="%s">Classic Editor plugin</a> to keep using the current editor until youΓÇÖre ready to make the switch.' ),
+								__( 'Install the <a href="%s">Classic Editor plugin</a> to keep using the current editor until you're ready to make the switch.' ),
 								__( 'https://wordpress.org/plugins/classic-editor' )
 							);
 						?>
