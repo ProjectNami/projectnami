@@ -437,6 +437,9 @@ setcookie( TEST_COOKIE, 'WP Cookie check', 0, COOKIEPATH, COOKIE_DOMAIN, $secure
 if ( SITECOOKIEPATH != COOKIEPATH )
 	setcookie( TEST_COOKIE, 'WP Cookie check', 0, SITECOOKIEPATH, COOKIE_DOMAIN, $secure );
 
+$lang            = ! empty( $_GET['wp_lang'] ) ? sanitize_text_field( $_GET['wp_lang'] ) : '';
+$switched_locale = switch_to_locale( $lang );
+
 /**
  * Fires when the login form is initialized.
  *
@@ -497,6 +500,10 @@ case 'postpass' :
 	}
 	setcookie( 'wp-postpass_' . COOKIEHASH, $hasher->HashPassword( wp_unslash( $_POST['post_password'] ) ), $expire, COOKIEPATH, COOKIE_DOMAIN, $secure );
 
+	if ( $switched_locale ) {
+	    restore_previous_locale();
+	}
+
 	wp_safe_redirect( wp_get_referer() );
 	exit();
 
@@ -512,6 +519,10 @@ case 'logout' :
 	} else {
 		$redirect_to = 'wp-login.php?loggedout=true';
 		$requested_redirect_to = '';
+	}
+
+	if ( $switched_locale ) {
+	    restore_previous_locale();
 	}
 
 	/**
@@ -606,6 +617,10 @@ endif;
 
 <?php
 login_footer('user_login');
+
+if ( $switched_locale ) {
+    restore_previous_locale();
+}
 
 break;
 
@@ -732,6 +747,10 @@ endif;
 <?php
 login_footer('user_pass');
 
+if ( $switched_locale ) {
+    restore_previous_locale();
+}
+
 break;
 
 case 'register' :
@@ -814,6 +833,10 @@ case 'register' :
 
 <?php
 login_footer('user_login');
+
+if ( $switched_locale ) {
+    restore_previous_locale();
+}
 
 break;
 
@@ -1095,6 +1118,10 @@ try {
 
 <?php
 login_footer();
+
+if ( $switched_locale ) {
+    restore_previous_locale();
+}
 
 break;
 } // end action switch

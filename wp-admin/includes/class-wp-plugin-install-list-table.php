@@ -190,11 +190,7 @@ class WP_Plugin_Install_List_Table extends WP_List_Table {
 				$action = 'save_wporg_username_' . get_current_user_id();
 				if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( wp_unslash( $_GET['_wpnonce'] ), $action ) ) {
 					$user = isset( $_GET['user'] ) ? wp_unslash( $_GET['user'] ) : get_user_option( 'wporg_favorites' );
-
-					// If the save url parameter is passed with a falsey value, don't save the favorite user.
-					if ( ! isset( $_GET['save'] ) || $_GET['save'] ) {
-						update_user_meta( get_current_user_id(), 'wporg_favorites', $user );
-					}
+					update_user_meta( get_current_user_id(), 'wporg_favorites', $user );
 				} else {
 					$user = get_user_option( 'wporg_favorites' );
 				}
