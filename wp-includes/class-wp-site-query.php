@@ -372,6 +372,7 @@ class WP_Site_Query {
 
 		$number = absint( $this->query_vars['number'] );
 		$offset = absint( $this->query_vars['offset'] );
+		$limits = '';
 
 		// Disable LIMIT when no ORDER BY
 		if ( ! $orderby ) {
@@ -530,6 +531,8 @@ class WP_Site_Query {
 		$join = '';
 
 		$where = implode( ' AND ', $this->sql_clauses['where'] );
+
+		$groupby = '';
 
 		$pieces = array( 'fields', 'join', 'where', 'orderby', 'limits', 'groupby' );
 
