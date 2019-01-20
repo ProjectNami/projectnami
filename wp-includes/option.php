@@ -473,7 +473,7 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = 'yes' )
 	 */
 	do_action( 'add_option', $option, $value );
 
-	$result = $wpdb->query_with_params( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] WHERE [option_name] = ?) INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES (?, ?, ?) else UPDATE [$wpdb->options] set [option_value] = ?, [autoload] = ? where [option_name] = ?", array( array($option, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN) ) );
+	$result = $wpdb->query_with_params( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] with (nolock) WHERE [option_name] = ?) INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES (?, ?, ?) else UPDATE [$wpdb->options] set [option_value] = ?, [autoload] = ? where [option_name] = ?", array( array($option, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN) ) );
 	if ( $result === false )
 		return false;
 
