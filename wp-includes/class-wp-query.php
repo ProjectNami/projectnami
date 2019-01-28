@@ -1508,8 +1508,8 @@ class WP_Query {
 				break;
 			case $primary_meta_key:
 			case 'meta_value':
+				$orderby_clause = "meta_value";
 				if ( ! empty( $primary_meta_query['type'] ) ) {
-					$orderby_clause = "meta_value";
 					$orderbyfields = $orderbyfields . ", CAST({$primary_meta_query['alias']}.meta_value AS {$sql_type}) as meta_value";
 				} else {
                     $orderbyfields = $orderbyfields . ", {$primary_meta_query['alias']}.meta_value";
