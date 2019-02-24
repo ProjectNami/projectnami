@@ -5109,7 +5109,7 @@ function is_site_meta_supported() {
 
 	$supported = get_network_option( $network_id, 'site_meta_supported', false );
 	if ( false === $supported ) {
-		$supported = $wpdb->get_var( "SHOW TABLES LIKE '{$wpdb->blogmeta}'" ) ? 1 : 0;
+		$supported = $wpdb->get_var( "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE '{$wpdb->blogmeta}'" ) ? 1 : 0;
 
 		update_network_option( $network_id, 'site_meta_supported', $supported );
 	}
