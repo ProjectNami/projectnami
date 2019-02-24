@@ -19,7 +19,7 @@
 function network_domain_check() {
 	global $wpdb;
 
-	$sql = $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $wpdb->site ) );
+	$sql = $wpdb->prepare( 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE %s', $wpdb->esc_like( $wpdb->site ) );
 	if ( $wpdb->get_var( $sql ) ) {
 		return $wpdb->get_var( "SELECT TOP 1 domain FROM $wpdb->site ORDER BY id ASC" );
 	}
@@ -662,4 +662,4 @@ EOF;
 		<p><?php _e( 'Once you complete these steps, your network is enabled and configured. You will have to log in again.' ); ?> <a href="<?php echo esc_url( wp_login_url() ); ?>"><?php _e( 'Log In' ); ?></a></p>
 		<?php
 	}
-}
+}
