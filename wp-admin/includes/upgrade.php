@@ -165,7 +165,7 @@ function wp_install_defaults( $user_id ) {
 	$wpdb->insert(
 		$wpdb->terms,
 		array(
-			'term_id'    => $cat_id,
+			//'term_id'    => $cat_id,
 			'name'       => $cat_name,
 			'slug'       => $cat_slug,
 			'term_group' => 0,
