@@ -469,7 +469,7 @@ function ms_not_installed( $domain, $path ) {
 	$msg  = '<h1>' . $title . '</h1>';
 	$msg .= '<p>' . __( 'If your site does not display, please contact the owner of this network.' ) . '';
 	$msg .= ' ' . __( 'If you are the owner of this network please check that MySQL is running properly and all tables are error free.' ) . '</p>';
-	$query = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->site'" );
+	$query = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name like %s", $wpdb->esc_like( $wpdb->site ) );
 	if ( false && ! $wpdb->get_var( $query ) ) {
 		$msg .= '<p>' . sprintf(
 			/* translators: %s: table name */
