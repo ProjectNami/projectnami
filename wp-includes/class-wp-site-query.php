@@ -415,7 +415,7 @@ class WP_Site_Query {
 
 			$orderby = implode( ', ', $orderby_array );
 		} else {
-			$orderby = "{$wpdb->blogs}.blog_id $order";
+			$orderby = $wpdb->blogs . ".blog_id $order";
 		}
 
 		$number = absint( $this->query_vars['number'] );
@@ -439,7 +439,7 @@ class WP_Site_Query {
 			$order = '';
 			$limits = '';
 		} else {
-			$fields = '{$wpdb->blogs}.blog_id';
+			$fields = $wpdb->blogs . '.blog_id';
 		}
 
 		// Parse site IDs for an IN clause.
