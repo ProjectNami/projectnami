@@ -297,6 +297,19 @@ GO
 CREATE INDEX $wpdb->blog_versions" . "_IDX1 on $wpdb->blog_versions (db_version)
 GO
 
+CREATE TABLE $wpdb->blogmeta (
+	meta_id int NOT NULL identity(1,1),
+	blog_id int NOT NULL default 0,
+	meta_key nvarchar(255) default NULL,
+	meta_value nvarchar(max),
+	constraint $wpdb->blogmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id)
+)
+GO
+CREATE CLUSTERED INDEX $wpdb->blogmeta" . "_CLU1 on $wpdb->blogmeta (blog_id)
+GO
+CREATE INDEX $wpdb->blogmeta" . "_IDX2 on $wpdb->blogmeta (meta_key)
+GO
+
 CREATE TABLE $wpdb->registration_log (
   ID int NOT NULL identity(1,1),
   email nvarchar(255) NOT NULL default '',
