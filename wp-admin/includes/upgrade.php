@@ -175,7 +175,7 @@ function wp_install_defaults( $user_id ) {
 	$wpdb->insert(
 		$wpdb->term_taxonomy,
 		array(
-			'term_id'     => $cat_id,
+			'term_id'     => $term_id,
 			'taxonomy'    => 'category',
 			'description' => '',
 			'parent'      => 0,
