@@ -739,7 +739,7 @@ class WP_Site_Query {
 				$parsed = 'LEN(path)';
 				break;
 			case 'id':
-				$parsed = '{$wpdb->blogs}.blog_id';
+				$parsed = {$wpdb->blogs} . '.blog_id';
 				break;
 		}
 
