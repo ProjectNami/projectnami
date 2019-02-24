@@ -903,6 +903,8 @@ function upgrade_500() {
  * @since 5.1.0
  */
 function upgrade_510() {
+	global $wpdb;
+
 	delete_site_option( 'upgrade_500_was_gutenberg_active' );
 	$wpdb->query( "CREATE TABLE $wpdb->blogmeta (meta_id int NOT NULL identity(1,1), blog_id int NOT NULL default 0, meta_key nvarchar(255) default NULL, meta_value nvarchar(max), constraint $wpdb->blogmeta" . "_PK PRIMARY KEY NONCLUSTERED (meta_id))" );
 	$wpdb->query( "CREATE CLUSTERED INDEX $wpdb->blogmeta" . "_CLU1 on $wpdb->blogmeta (blog_id)" );
