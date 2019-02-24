@@ -79,7 +79,7 @@ class WP_REST_Blocks_Controller extends WP_REST_Posts_Controller {
 		$schema['properties']['content']['properties']['raw']['context'] = array( 'view', 'edit' );
 
 		/*
-		 * Remove `title.rendered` and `content.rendered` from the schema. It doesnΓÇÖt
+		 * Remove `title.rendered` and `content.rendered` from the schema. It doesn’t
 		 * make sense for a reusable block to have rendered content on its own, since
 		 * rendering a block requires it to be inside a post or a page.
 		 */
