@@ -321,17 +321,17 @@ class SQL_Translations extends wpdb
             }
         }
 
+        if ( $this->insert_query ) {
+            // $query = $this->on_duplicate_key($query);
+            // $query = $this->split_insert_values($query);
+            /* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
+            $query = $this->on_update_to_merge($query);
+        }
+        
         if (!empty($this->preg_data)) {
             $query = vsprintf($query, $this->preg_data);
         }
         $this->preg_data = array();
-
-        if ( $this->insert_query ) {
-            // $query = $this->on_duplicate_key($query);
-            // $query = $this->split_insert_values($query);
-			/* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
-			$query = $this->on_update_to_merge($query);
-        }
 
         return $query;
     }
