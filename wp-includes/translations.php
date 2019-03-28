@@ -1142,7 +1142,7 @@ class SQL_Translations extends wpdb
             && (stripos($query,'UPDATE') !== 0  && stripos($query,'UPDATE') !== FALSE) ) {
             return $query;
         }
-        $pattern = "/FIND_IN_SET\((.*),(.*)\)/";
+        $pattern = "/FIND_IN_SET\\s*\((.*),(.*)\)/";
         $matched = preg_match($pattern, $query, $matches);
         if ( $matched == 0 ) {
             return $query;
