@@ -1147,8 +1147,13 @@ class SQL_Translations extends wpdb
         if ( $matched == 0 ) {
             return $query;
         }
+        
         // Replace the FIND_IN_SET
-        $query = preg_replace($pattern, "PATINDEX('%,'+" . $matches[1] . "+',%', ','+" . $matches[2] . "+',')", $query);
+
+        // Note: the double percents here are because the result is going to go back via vsprintf,
+        // and we need it to not look like a replacement token there. Assumption: !empty($this->preg_data)
+        // holds true, which it should because FIND_IN_SET should originally have taken a string pattern.
+        $query = preg_replace($pattern, "PATINDEX('%%,'+" . $matches[1] . "+',%%', ','+" . $matches[2] . "+',')", $query);
 
         return $query;
     }
