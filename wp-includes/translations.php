@@ -1148,7 +1148,7 @@ class SQL_Translations extends wpdb
             return $query;
         }
         // Replace the FIND_IN_SET
-        $query = preg_replace($pattern, "PATINDEX(','+" . $matches[1] . "+',', ','+" . $matches[2] . "+',')", $query);
+        $query = preg_replace($pattern, "PATINDEX('%,'+" . $matches[1] . "+',%', ','+" . $matches[2] . "+',')", $query);
 
         return $query;
     }
