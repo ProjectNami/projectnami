@@ -1112,6 +1112,7 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 		$current_site->domain    = $domain;
 		$current_site->path      = $path;
 		$current_site->site_name = ucfirst( $domain );
+		sqlsrv_query( $wpdb->dbh, "SET IDENTITY_INSERT $wpdb->blogs ON" );
 		$wpdb->insert(
 			$wpdb->blogs,
 			array(
@@ -1123,6 +1124,7 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 			)
 		);
 		$current_site->blog_id = $wpdb->insert_id;
+		sqlsrv_query( $wpdb->dbh, "SET IDENTITY_INSERT $wpdb->blogs OFF" );
 		update_user_meta( $site_user->ID, 'source_domain', $domain );
 		update_user_meta( $site_user->ID, 'primary_blog', $current_site->blog_id );
 
