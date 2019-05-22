@@ -237,12 +237,20 @@ $mysql_version  = $wpdb->db_version();
 $php_compat     = version_compare( $php_version, $required_php_version, '>=' );
 $mysql_compat   = version_compare( $mysql_version, $required_mysql_version, '>=' ) || file_exists( WP_CONTENT_DIR . '/db.php' );
 
+/* translators: %s: Update PHP page URL */
+$php_update_message = '</p><p>' . sprintf( __( '<a href="%s">Learn more about updating PHP</a>.' ), esc_url( wp_get_update_php_url() ) );
+
+$annotation = wp_get_update_php_annotation();
+if ( $annotation ) {
+	$php_update_message .= '</p><p><em>' . $annotation . '</em>';
+}
+
 if ( !$mysql_compat && !$php_compat ) {
 	/* translators: 1: PN version number, 2: Minimum required PHP version number, 3: Minimum required MSSQL version number, 4: Current PHP version number, 5: Current MSSQL version number */
-	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher and MSSQL version %2$s or higher. You are running PHP version %3$s and MSSQL version %4$s.' ), $required_php_version, $required_mysql_version, $php_version, $mysql_version );
+	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher and MSSQL version %2$s or higher. You are running PHP version %3$s and MSSQL version %4$s.' ), $required_php_version, $required_mysql_version, $php_version, $mysql_version ) . $php_update_message;
 } elseif ( !$php_compat ) {
 	/* translators: 1: PN version number, 2: Minimum required PHP version number, 3: Current PHP version number */
-	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher. You are running version %2$s.' ), $required_php_version, $php_version );
+	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher. You are running version %2$s.' ), $required_php_version, $php_version ) . $php_update_message;
 } elseif ( !$mysql_compat ) {
 	/* translators: 1: PN version number, 2: Minimum required MSSQL version number, 3: Current MSSQL version number */
 	$compat = sprintf( __( 'You cannot install because Project Nami requires MSSQL version %1$s or higher. You are running version %2$s.' ), $required_mysql_version, $mysql_version );
