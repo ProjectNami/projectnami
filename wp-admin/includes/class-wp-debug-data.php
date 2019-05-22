@@ -701,6 +701,7 @@ class WP_Debug_Data {
 		 * warnings from PHP compatibility testers, but `mysql_*` is
 		 * still valid in PHP 5.6, so we need to account for that.
 		 */
+		 /*
 		if ( method_exists( $wpdb, 'db_version' ) ) {
 			if ( $wpdb->use_mysqli ) {
 				// phpcs:ignore WordPress.DB.RestrictedFunctions.mysql_mysqli_get_server_info
@@ -723,7 +724,7 @@ class WP_Debug_Data {
 				$client_version = null;
 			}
 		}
-
+		*/
 		$info['wp-database']['fields']['extension'] = array(
 			'label' => __( 'Extension' ),
 			'value' => $extension,
