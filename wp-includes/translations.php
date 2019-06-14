@@ -810,8 +810,9 @@ class SQL_Translations extends wpdb
 
         // Computed
         // This is done as the SQLSRV driver doesn't seem to set a property value for computed
-        // selected columns, thus WP doesn't have anything to work with.
-        if (!preg_match('/COUNT\((.*?)\) as/i', $query)) {
+        // selected columns, thus WP doesn't have anything to work with. (Exception: if it's
+        // part of a HAVING clause, it cannot have an alias.)
+        if (!preg_match('/COUNT\((.*?)\) as/i', $query) && !preg_match('/HAVING COUNT\((.*?)\)/i', $query)) {
             $query = preg_replace('/COUNT\((.*?)\)/i', 'COUNT(\1) as Computed ', $query);
         }
 
