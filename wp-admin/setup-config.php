@@ -207,26 +207,26 @@ switch ( $step ) {
 <h1 class="screen-reader-text"><?php _e( 'Set up your database connection' ); ?></h1>
 <form method="post" action="setup-config.php?step=2">
 	<p><?php _e( "Below you should enter your database connection details. If you&#8217;re not sure about these, contact your host." ); ?></p>
-	<table class="form-table">
+	<table class="form-table" role="presentation">
 		<tr>
 			<th scope="row"><label for="dbname"><?php _e( 'Database Name' ); ?></label></th>
-			<td><input name="dbname" id="dbname" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBName") ? getenv("ProjectNami.DBName") : "wordpress" ); ?>" <?php echo $autofocus; ?>/></td>
-			<td><?php _e( 'The name of the database you want to use with WordPress.' ); ?></td>
+			<td><input name="dbname" id="dbname" type="text" aria-describedby="dbname-desc" size="25" value="<?php echo ( getenv("ProjectNami.DBName") ? getenv("ProjectNami.DBName") : "wordpress" ); ?>" <?php echo $autofocus; ?>/></td>
+			<td id="dbname-desc"><?php _e( 'The name of the database you want to use with WordPress.' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="uname"><?php _e( 'User Name' ); ?></label></th>
-			<td><input name="uname" id="uname" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBUser") ? htmlspecialchars( getenv("ProjectNami.DBUser") ) : htmlspecialchars( _x( 'username', 'example username' ), ENT_QUOTES ) ); ?>" /></td>
-			<td><?php _e( 'Your MSSQL username. <span style="font-weight: bold; font-size: 12px; display: block;">Note: If using SQL Azure, username is of the form username@servername.</span>' ); ?></td>
+			<td><input name="uname" id="uname" type="text" aria-describedby="uname-desc" size="25" value="<?php echo ( getenv("ProjectNami.DBUser") ? htmlspecialchars( getenv("ProjectNami.DBUser") ) : htmlspecialchars( _x( 'username', 'example username' ), ENT_QUOTES ) ); ?>" /></td>
+			<td id="uname-desc"><?php _e( 'Your MSSQL username. <span style="font-weight: bold; font-size: 12px; display: block;">Note: If using SQL Azure, username is of the form username@servername.</span>' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="pwd"><?php _e( 'Password' ); ?></label></th>
-			<td><input name="pwd" id="pwd" type="password" size="25" value="<?php echo ( getenv("ProjectNami.DBPass") ? htmlspecialchars( getenv("ProjectNami.DBPass"), ENT_QUOTES ) : htmlspecialchars( _x( 'password', 'example password' ), ENT_QUOTES ) ); ?>" autocomplete="off" /></td>
-			<td><?php _e( '&hellip;and your MSSQL password.' ); ?></td>
+			<td><input name="pwd" id="pwd" type="password" aria-describedby="pwd-desc" size="25" value="<?php echo ( getenv("ProjectNami.DBPass") ? htmlspecialchars( getenv("ProjectNami.DBPass"), ENT_QUOTES ) : htmlspecialchars( _x( 'password', 'example password' ), ENT_QUOTES ) ); ?>" autocomplete="off" /></td>
+			<td id="pwd-desc"><?php _e( '&hellip;and your MSSQL password.' ); ?></td>
 		</tr>
 		<tr>
 			<th scope="row"><label for="dbhost"><?php _e( 'Database Host' ); ?></label></th>
-			<td><input name="dbhost" id="dbhost" type="text" size="25" value="<?php echo ( getenv("ProjectNami.DBHost") ? getenv("ProjectNami.DBHost") : "localhost" ); ?>" /></td>
-			<td>
+			<td><input name="dbhost" id="dbhost" type="text" aria-describedby="dbhost-desc" size="25" value="<?php echo ( getenv("ProjectNami.DBHost") ? getenv("ProjectNami.DBHost") : "localhost" ); ?>" /></td>
+			<td id="dbhost-desc">
 			<?php
  				/* translators: %s: localhost */
 				printf( __( 'You should be able to get this info from your web host, if %s doesn&#8217;t work.' ), '<code>localhost</code>' );
@@ -235,8 +235,8 @@ switch ( $step ) {
 		</tr>
 		<tr>
 			<th scope="row"><label for="prefix"><?php _e( 'Table Prefix' ); ?></label></th>
-			<td><input name="prefix" id="prefix" type="text" value="wp_" size="25" /></td>
-			<td><?php _e( 'If you want to run multiple WordPress installations in a single database, change this.' ); ?></td>
+			<td><input name="prefix" id="prefix" type="text" aria-describedby="prefix-desc" value="wp_" size="25" /></td>
+			<td id="prefix-desc"><?php _e( 'If you want to run multiple WordPress installations in a single database, change this.' ); ?></td>
 		</tr>
 	</table>
 		<?php
