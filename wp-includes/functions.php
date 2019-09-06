@@ -455,7 +455,7 @@ function get_weekstartend( $mysqlstring, $start_of_week = '' ) {
  */
 function maybe_unserialize( $original ) {
 	if ( is_serialized( $original ) ) { // don't attempt to unserialize data that wasn't serialized going in
-		return @unserialize( $original );
+		return @unserialize( str_replace("~[NULL]~","\0", $original) );
 	}
 	return $original;
 }
@@ -569,14 +569,14 @@ function is_serialized_string( $data ) {
  */
 function maybe_serialize( $data ) {
 	if ( is_array( $data ) || is_object( $data ) ) {
-		return serialize( $data );
+		return str_replace("\0","~[NULL]~", serialize( $data ));
 	}
 
 	// Double serialization is required for backward compatibility.
 	// See https://core.trac.wordpress.org/ticket/12930
 	// Also the world will end. See WP 3.6.1.
 	if ( is_serialized( $data, false ) ) {
-		return serialize( $data );
+		return str_replace("\0","~[NULL]~", serialize( $data ));
 	}
 
 	return $data;
