@@ -2867,9 +2867,6 @@ class WP_Query {
 			//echo "<span style='color: green;'>found_rows = $found_rows</span>";
 		}
 	
-		if( ! empty( $found_rows ) )
-			$wpdb->query( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby" );
- 
 		$this->request = $old_request = "SELECT $distinct $fields $orderbyfields FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby $orderby $limits";
 
 		if ( !$q['suppress_filters'] ) {
@@ -2883,6 +2880,40 @@ class WP_Query {
 			 */
 			$this->request = apply_filters_ref_array( 'posts_request', array( $this->request, &$this ) );
 		}
+
+        $count_query_rows = false;
+        if( ! empty( $found_rows ) ) {
+            if ($this->request === $old_request) {
+                // The filters didn't touch the query, so it's safe to construct the COUNT from scratch.
+                $count_query_rows = $wpdb->get_var( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby" );
+            } else {
+                // One of the filters changed the query, so this becomes more dangerous.
+                // We need to construct an equivalent COUNT statement maintaining
+                // the FROM and WHERE clauses, but without the row count limits.
+
+                // First, replace the field selection with a COUNT
+                $select_pattern = "SELECT $distinct $fields $orderbyfields ";
+                if ( substr( $this->request, 0, strlen( $select_pattern ) ) !== $select_pattern ) {
+                    // TODO: The fields selected have been changed. Not sure what we do here.
+                } else {
+                    // If we're returning distinct rows, we need to match that by only counting distinct entries
+                    if (! empty( $distinct ) ) {
+                        $count_query = "SELECT COUNT(DISTINCT($fields)) " . substr( $this->request, strlen( $select_pattern ) );
+                    } else {
+                        $count_query = "SELECT COUNT(*) " . substr ($this->request, strlen( $select_pattern ) );
+                    }
+
+                    // Next, take away the row limits and order by
+                    $orderby_pattern = "$orderby $limits";
+                    if ( substr( $count_query, -strlen( $orderby_pattern ) ) !== $orderby_pattern ) {
+                        // TODO: The limits have been changed. Not sure what we do here.
+                    } else {
+                        $count_query = substr( $count_query, 0, strlen( $count_query ) - strlen( $orderby_pattern ) );
+                        $count_query_rows = $wpdb->get_var( $count_query );
+                    }
+                }
+            }
+        }
 
 		/**
 		 * Filters the posts array before the query takes place.
@@ -2909,7 +2940,7 @@ class WP_Query {
 
 			$this->posts      = array_map( 'intval', $this->posts );
 			$this->post_count = count( $this->posts );
-			$this->set_found_posts( $q, $limits );
+			$this->set_found_posts( $q, $limits, $count_query_rows );
 
 			return $this->posts;
 		}
@@ -2920,7 +2951,7 @@ class WP_Query {
 			}
 
 			$this->post_count = count( $this->posts );
-			$this->set_found_posts( $q, $limits );
+			$this->set_found_posts( $q, $limits, $count_query_rows );
 
 			$r = array();
 			foreach ( $this->posts as $key => $post ) {
@@ -2953,8 +2984,9 @@ class WP_Query {
 		    if ( $split_the_query ) {
 			    // First get the IDs and then fill in the objects
 
-			    if( ! empty( $found_rows ) )
-				    $wpdb->query( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby" );
+			    if( ! empty( $found_rows ) ) {
+				    $count_query_rows = $wpdb->get_var( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby" );
+                }
 
 			    $this->request = "SELECT $distinct {$wpdb->posts}.* $orderbyfields FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby $orderby $limits";
 
@@ -2972,14 +3004,14 @@ class WP_Query {
 
 			    if ( $ids ) {
 				    $this->posts = $ids;
-				    $this->set_found_posts( $q, $limits );
+				    $this->set_found_posts( $q, $limits, $count_query_rows );
 				    _prime_post_caches( $ids, $q['update_post_term_cache'], $q['update_post_meta_cache'] );
 			    } else {
 				    $this->posts = array();
 			    }
 		    } else {
 			    $this->posts = $wpdb->get_results( $this->request );
-			    $this->set_found_posts( $q, $limits );
+			    $this->set_found_posts( $q, $limits, $count_query_rows );
 		    }
         }
 
@@ -3165,7 +3197,7 @@ class WP_Query {
 	 * @param array  $q      Query variables.
 	 * @param string $limits LIMIT clauses of the query.
 	 */
-	private function set_found_posts( $q, $limits ) {
+	private function set_found_posts( $q, $limits, $count_query_rows ) {
 		global $wpdb;
 		// Bail if posts is an empty array. Continue if posts is an empty string,
 		// null, or false to accommodate caching plugins that fill posts later.
@@ -3174,6 +3206,11 @@ class WP_Query {
 		}
 
 		if ( ! empty( $limits ) ) {
+            // If we got a valid result from doing a SELECT COUNT, prefer that.
+            if ( $count_query_rows ) {
+                $this->found_posts = $count_query_rows;
+            }
+
 			/**
 			 * Filters the query to run for retrieving the found posts.
 			 *
