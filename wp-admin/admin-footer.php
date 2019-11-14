@@ -33,8 +33,13 @@ global $hook_suffix;
 	<p id="footer-left" class="alignleft">
 		<?php
 		// PN: Mod Start
-		$text = sprintf( __( 'Thank you for creating with <a href="%s">Project Nami</a>.' ), __( 'http://projectnami.org/' ) );
+		$text = sprintf(
+			/* translators: %s: https://wordpress.org/ */
+			__( 'Thank you for creating with <a href="%s">Project Nami</a>.' ),
+			__( 'https://projectnami.org/' )
+		);
 		// PN: Mod End
+
 		/**
 		 * Filters the "Thank you" text displayed in the admin footer.
 		 *
@@ -82,7 +87,7 @@ do_action( 'admin_footer', '' );
  *
  * @since 4.6.0
  */
-do_action( "admin_print_footer_scripts-{$hook_suffix}" );
+do_action( "admin_print_footer_scripts-{$hook_suffix}" ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 /**
  * Prints any scripts and data queued for the footer.
@@ -99,7 +104,7 @@ do_action( 'admin_print_footer_scripts' );
  *
  * @since 2.8.0
  */
-do_action( "admin_footer-{$hook_suffix}" );
+do_action( "admin_footer-{$hook_suffix}" ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 
 // get_site_option() won't exist when auto upgrading from <= 2.7
 if ( function_exists( 'get_site_option' ) ) {

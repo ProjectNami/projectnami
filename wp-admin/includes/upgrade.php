@@ -129,8 +129,8 @@ if ( !function_exists('wp_install_defaults') ) :
  *
  * @since 2.1.0
  *
- * @global wpdb       $wpdb
- * @global WP_Rewrite $wp_rewrite
+	 * @global wpdb       $wpdb         WordPress database abstraction object.
+	 * @global WP_Rewrite $wp_rewrite   WordPress rewrite component.
  * @global string     $table_prefix
  *
  * @param int $user_id User ID.
@@ -140,7 +140,7 @@ function wp_install_defaults( $user_id ) {
 
 	// Default category
 	$cat_name = __('Uncategorized');
-	/* translators: Default category slug */
+	/* translators: Default category slug. */
 	$cat_slug = sanitize_title(_x('Uncategorized', 'Default category slug'));
 
 	if ( global_terms_enabled() ) {
@@ -194,7 +194,7 @@ function wp_install_defaults( $user_id ) {
 
 		if ( ! $first_post ) {
 			$first_post = "<!-- wp:paragraph -->\n<p>" .
-				/* translators: first post content, %s: site link */
+				/* translators: First post content. %s: Site link. */
 				__( 'Welcome to %s. This is your first post. Edit or delete it, then start writing!' ) .
 				"</p>\n<!-- /wp:paragraph -->";
 		}
@@ -209,7 +209,7 @@ function wp_install_defaults( $user_id ) {
 		$first_post = str_replace( 'SITE_NAME', get_network()->site_name, $first_post );
 	} else {
 		$first_post = "<!-- wp:paragraph -->\n<p>" .
-			/* translators: first post content, %s: site link */
+			/* translators: First post content. %s: Site link. */
 			__( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' ) .
 			"</p>\n<!-- /wp:paragraph -->";
 	}
@@ -223,7 +223,7 @@ function wp_install_defaults( $user_id ) {
 			'post_content' => $first_post,
 			'post_excerpt' => '',
 			'post_title' => __('Hello world!'),
-			/* translators: Default post slug */
+			/* translators: Default post slug. */
 			'post_name' => sanitize_title( _x('hello-world', 'Default post slug') ),
 			'post_modified' => $now,
 			'post_modified_gmt' => $now_gmt,
@@ -272,28 +272,28 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 
 	if ( empty( $first_page ) ) {
 		$first_page = "<!-- wp:paragraph -->\n<p>";
-		/* translators: first page content */
+			/* translators: First page content. */
 		$first_page .= __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:" );
 		$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
 
 		$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
-		/* translators: first page content */
+			/* translators: First page content. */
 		$first_page .= __( "Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my website. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)" );
 		$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
 
 		$first_page .= "<!-- wp:paragraph -->\n<p>";
-		/* translators: first page content */
+			/* translators: First page content. */
 		$first_page .= __( '...or something like this:' );
 		$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
 
 		$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
-		/* translators: first page content */
+			/* translators: First page content. */
 		$first_page .= __( 'The XYZ Doohickey Company was founded in 1971, and has been providing quality doohickeys to the public ever since. Located in Gotham City, XYZ employs over 2,000 people and does all kinds of awesome things for the Gotham community.' );
 		$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
 
 		$first_page .= "<!-- wp:paragraph -->\n<p>";
 		$first_page .= sprintf(
-			/* translators: first page content, %s: site admin URL */
+				/* translators: First page content. %s: Site admin URL. */
 			__( 'As a new WordPress user, you should go to <a href="%s">your dashboard</a> to delete this page and create new pages for your content. Have fun!' ),
 			admin_url()
 		);
@@ -309,7 +309,7 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 		'post_excerpt' => '',
 		'comment_status' => 'closed',
 		'post_title' => __( 'Sample Page' ),
-		/* translators: Default page slug */
+				/* translators: Default page slug. */
 		'post_name' => __( 'sample-page' ),
 		'post_modified' => $now,
 		'post_modified_gmt' => $now_gmt,
@@ -327,7 +327,7 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 		$privacy_policy_content = get_site_option( 'default_privacy_policy_content' );
 	} else {
 		if ( ! class_exists( 'WP_Privacy_Policy_Content' ) ) {
-			include_once( ABSPATH . 'wp-admin/includes/misc.php' );
+				include_once( ABSPATH . 'wp-admin/includes/class-wp-privacy-policy-content.php' );
 		}
 
 		$privacy_policy_content = WP_Privacy_Policy_Content::get_default_content();
@@ -345,7 +345,7 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 				'post_excerpt'          => '',
 				'comment_status'        => 'closed',
 				'post_title'            => __( 'Privacy Policy' ),
-				/* translators: Privacy Policy page slug */
+					/* translators: Privacy Policy page slug. */
 				'post_name'             => __( 'privacy-policy' ),
 				'post_modified'         => $now,
 				'post_modified_gmt'     => $now_gmt,
@@ -374,7 +374,14 @@ Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
 	update_option( 'widget_archives', array ( 2 => array ( 'title' => '', 'count' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
 	update_option( 'widget_categories', array ( 2 => array ( 'title' => '', 'count' => 0, 'hierarchical' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
 	update_option( 'widget_meta', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
-	update_option( 'sidebars_widgets', array( 'wp_inactive_widgets' => array(), 'sidebar-1' => array( 0 => 'search-2', 1 => 'recent-posts-2', 2 => 'recent-comments-2', 3 => 'archives-2', 4 => 'categories-2', 5 => 'meta-2' ), 'array_version' => 3 ) );
+	update_option( 'sidebars_widgets', array( 'wp_inactive_widgets' => array(), 'sidebar-1' => array( 0 => 'search-2', 1 => 'recent-posts-2', 2 => 'recent-comments-2' ), 
+			'sidebar-2'           => array(
+				0 => 'archives-2',
+				1 => 'categories-2',
+				2 => 'meta-2',
+			),
+		'array_version' => 3 ) 
+	);
 	if ( ! is_multisite() )
 		update_user_meta( $user_id, 'show_welcome_panel', 1 );
 	elseif ( ! is_super_admin( $user_id ) && ! metadata_exists( 'user', $user_id, 'show_welcome_panel' ) )
@@ -435,9 +442,9 @@ function wp_install_maybe_enable_pretty_permalinks() {
 		$wp_rewrite->set_permalink_structure( $permalink_structure );
 
 		/*
-		  * Flush rules with the hard option to force refresh of the web-server's
-		  * rewrite config file (e.g. .htaccess or web.config).
-		  */
+		 * Flush rules with the hard option to force refresh of the web-server's
+		 * rewrite config file (e.g. .htaccess or web.config).
+		 */
 		$wp_rewrite->flush_rules( true );
 
 		$test_url = '';
@@ -449,12 +456,12 @@ function wp_install_maybe_enable_pretty_permalinks() {
 		}
 
 		/*
-		  * Send a request to the site, and check whether
-		  * the 'x-pingback' header is returned as expected.
-		  *
-		  * Uses wp_remote_get() instead of wp_remote_head() because web servers
-		  * can block head requests.
-		  */
+		 * Send a request to the site, and check whether
+		 * the 'x-pingback' header is returned as expected.
+		 *
+		 * Uses wp_remote_get() instead of wp_remote_head() because web servers
+		 * can block head requests.
+		 */
 		$response          = wp_remote_get( $test_url, array( 'timeout' => 5 ) );
 		$x_pingback_header = wp_remote_retrieve_header( $response, 'x-pingback' );
 		$pretty_permalinks = $x_pingback_header && $x_pingback_header === get_bloginfo( 'pingback_url' );
@@ -493,7 +500,8 @@ function wp_new_blog_notification($blog_title, $blog_url, $user_id, $password) {
 	$email = $user->user_email;
 	$name = $user->user_login;
 	$login_url = wp_login_url();
-	/* translators: New site notification email. 1: New site URL, 2: User login, 3: User password or password reset link, 4: Login URL */
+
+	/* translators: New site notification email. 1: New site URL, 2: User login, 3: User password or password reset link, 4: Login URL. */
 	$message = sprintf( __( "Your new WordPress site has been successfully set up at:
 
 %1\$s
@@ -510,7 +518,7 @@ We hope you enjoy your new site. Thanks!
 https://wordpress.org/
 "), $blog_url, $name, $password, $login_url );
 
-	@wp_mail($email, __('New WordPress Site'), $message);
+	wp_mail( $email, __( 'New WordPress Site' ), $message );
 }
 endif;
 
@@ -522,16 +530,16 @@ if ( !function_exists('wp_upgrade') ) :
  *
  * @since 2.1.0
  *
- * @global int  $wp_current_db_version
- * @global int  $wp_db_version
- * @global wpdb $wpdb WordPress database abstraction object.
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global int  $wp_db_version         The new database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function wp_upgrade() {
 	global $wp_current_db_version, $wp_db_version, $wpdb;
 
 	$wp_current_db_version = __get_option('db_version');
 
-	// We are up-to-date. Nothing to do.
+	// We are up to date. Nothing to do.
 	if ( $wp_db_version == $wp_current_db_version )
 		return;
 
@@ -545,13 +553,8 @@ function wp_upgrade() {
 	wp_cache_flush();
 
 	if ( is_multisite() ) {
-		$site_id = get_current_blog_id();
-
-		if ( $wpdb->get_row( $wpdb->prepare( "SELECT blog_id FROM {$wpdb->blog_versions} WHERE blog_id = %d", $site_id ) ) ) {
-			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->blog_versions} SET db_version = %d WHERE blog_id = %d", $wp_db_version, $site_id ) );
-		} else {
-			$wpdb->query( $wpdb->prepare( "INSERT INTO {$wpdb->blog_versions} ( [blog_id] , [db_version] , [last_updated] ) VALUES ( %d, %d, GETDATE() );", $site_id, $wp_db_version ) );
-		}
+			update_site_meta( get_current_blog_id(), 'db_version', $wp_db_version );
+			update_site_meta( get_current_blog_id(), 'db_last_updated', microtime() );
 	}
 
 	/**
@@ -575,14 +578,14 @@ endif;
  * @ignore
  * @since 1.0.1
  *
- * @global int $wp_current_db_version
- * @global int $wp_db_version
+ * @global int $wp_current_db_version The old (current) database version.
+ * @global int $wp_db_version         The new database version.
  */
 function upgrade_all() {
 	global $wp_current_db_version, $wp_db_version;
 	$wp_current_db_version = __get_option('db_version');
 
-	// We are up-to-date. Nothing to do.
+	// We are up to date. Nothing to do.
 	if ( $wp_db_version == $wp_current_db_version )
 		return;
 
@@ -634,6 +637,10 @@ function upgrade_all() {
 		upgrade_510();
 	}
 
+	if ( $wp_current_db_version < 45744 ) {
+		upgrade_530();
+	}
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -647,7 +654,7 @@ function upgrade_all() {
  *
  * @since 3.7.0
  *
- * @global int $wp_current_db_version
+ * @global int $wp_current_db_version The old (current) database version.
  */
 function upgrade_370() {
 	global $wp_current_db_version;
@@ -662,7 +669,7 @@ function upgrade_370() {
  * @since 3.7.2
  * @since 3.8.0
  *
- * @global int $wp_current_db_version
+ * @global int $wp_current_db_version The old (current) database version.
  */
 function upgrade_372() {
 	global $wp_current_db_version;
@@ -676,7 +683,7 @@ function upgrade_372() {
  *
  * @since 3.8.0
  *
- * @global int $wp_current_db_version
+ * @global int $wp_current_db_version The old (current) database version.
  */
 function upgrade_380() {
 	global $wp_current_db_version;
@@ -690,7 +697,7 @@ function upgrade_380() {
  *
  * @since 4.0.0
  *
- * @global int $wp_current_db_version
+ * @global int $wp_current_db_version The old (current) database version.
  */
 function upgrade_400() {
 	global $wp_current_db_version;
@@ -735,7 +742,7 @@ function upgrade_410a() {
  *
  * @since 4.3.0
  *
- * @global int  $wp_current_db_version Current version.
+ * @global int  $wp_current_db_version The old (current) database version.
  * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function upgrade_430() {
@@ -758,7 +765,7 @@ function upgrade_430() {
  *
  * @since 4.3.0
  *
- * @global int  $wp_current_db_version Current version.
+ * @global int  $wp_current_db_version The old (current) database version.
  * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function upgrade_430_fix_comments() {
@@ -796,7 +803,7 @@ function upgrade_431() {
  *
  * @since 4.4.0
  *
- * @global int  $wp_current_db_version Current version.
+ * @global int  $wp_current_db_version The old (current) database version.
  * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function upgrade_440() {
@@ -826,7 +833,7 @@ function upgrade_440() {
  * @ignore
  * @since 4.6.0
  *
- * @global int $wp_current_db_version Current database version.
+ * @global int $wp_current_db_version The old (current) database version.
  */
 function upgrade_460() {
 	global $wp_current_db_version;
@@ -912,12 +919,29 @@ function upgrade_510() {
 }
 
 /**
+ * Executes changes made in WordPress 5.3.0.
+ *
+ * @ignore
+ * @since 5.3.0
+ */
+function upgrade_530() {
+	// The `admin_email_lifespan` option may have been set by an admin that just logged in,
+	// saw the verification screen, clicked on a button there, and is now upgrading the db,
+	// or by populate_options() that is called earlier in upgrade_all().
+	// In the second case `admin_email_lifespan` should be reset so the verification screen
+	// is shown next time an admin logs in.
+	if ( function_exists( 'current_user_can' ) && ! current_user_can( 'manage_options' ) ) {
+		update_option( 'admin_email_lifespan', 0 );
+	}
+}
+
+/**
  * Executes network-level upgrade routines.
  *
  * @since 3.0.0
  *
- * @global int   $wp_current_db_version
- * @global wpdb  $wpdb
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function upgrade_network() {
 	global $wp_current_db_version, $wpdb;
@@ -1026,7 +1050,7 @@ function upgrade_network() {
  * @ignore
  * @since 1.0.0
  *
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $table_name Database table name to create.
  * @param string $create_ddl SQL statement to create table.
@@ -1056,7 +1080,7 @@ function maybe_create_table($table_name, $create_ddl) {
  *
  * @since 1.0.1
  *
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $table Database table name.
  * @param string $index Index name to drop.
@@ -1080,7 +1104,7 @@ function drop_index($table, $index) {
  * @ignore
  * @since 1.0.1
  *
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $table Database table name.
  * @param string $index Database table index column.
@@ -1099,7 +1123,7 @@ function add_clean_index($table, $index) {
  * @since 1.3.0
  *
  * @ignore
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $table_name  The table name to modify.
  * @param string $column_name The column name to add to the table.
@@ -1133,12 +1157,12 @@ function maybe_add_column( $table_name, $column_name, $create_ddl ) {
  * @since 1.5.1
  * @access private
  *
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $setting Option name.
  * @return mixed
  */
-function __get_option( $setting ) {
+function __get_option( $setting ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionDoubleUnderscore,PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.FunctionDoubleUnderscore
 	global $wpdb;
 
 	if ( $setting == 'home' && defined( 'WP_HOME' ) ) {
@@ -1199,7 +1223,7 @@ function deslash( $content ) {
  *
  * @since 1.5.0
  *
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string|array $queries Optional. The query to run. Can be multiple queries
  *                              in an array, or a string of queries separated by
@@ -1208,7 +1232,7 @@ function deslash( $content ) {
  *                              Default true.
  * @return array Strings containing the results of the various update queries.
  */
-function dbDelta( $queries = '', $execute = true ) {
+function dbDelta( $queries = '', $execute = true ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid
 	global $wpdb;
 
 	if ( in_array( $queries, array( '', 'all', 'blog', 'global', 'ms_global' ), true ) )
@@ -1310,7 +1334,7 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
 		if ( $oldfile == 'index.php' ) {
 			$index = implode( '', file( "$oldpath/$oldfile" ) );
 			if ( strpos( $index, 'WP_USE_THEMES' ) !== false ) {
-				if ( ! @copy( WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME . '/index.php', "$site_dir/$newfile" ) ) {
+				if ( ! copy( WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME . '/index.php', "$site_dir/$newfile" ) ) {
 					return false;
 				}
 
@@ -1319,7 +1343,7 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
 			}
 		}
 
-		if ( ! @copy( "$oldpath/$oldfile", "$site_dir/$newfile" ) ) {
+		if ( ! copy( "$oldpath/$oldfile", "$site_dir/$newfile" ) ) {
 			return false;
 		}
 
@@ -1380,19 +1404,20 @@ function make_site_theme_from_default( $theme_name, $template ) {
 	// Copy files from the default theme to the site theme.
 	//$files = array('index.php', 'comments.php', 'comments-popup.php', 'footer.php', 'header.php', 'sidebar.php', 'style.css');
 
-	$theme_dir = @ opendir( $default_dir );
+	$theme_dir = @opendir( $default_dir );
 	if ( $theme_dir ) {
 		while ( ( $theme_file = readdir( $theme_dir ) ) !== false ) {
 			if ( is_dir( "$default_dir/$theme_file" ) ) {
 				continue;
 			}
-			if ( ! @copy( "$default_dir/$theme_file", "$site_dir/$theme_file" ) ) {
+			if ( ! copy( "$default_dir/$theme_file", "$site_dir/$theme_file" ) ) {
 				return;
 			}
 			chmod( "$site_dir/$theme_file", 0777 );
 		}
+
+		closedir( $theme_dir );
 	}
-	@closedir( $theme_dir );
 
 	// Rewrite the theme header.
 	$stylelines = explode( "\n", implode( '', file( "$site_dir/style.css" ) ) );
@@ -1422,19 +1447,20 @@ function make_site_theme_from_default( $theme_name, $template ) {
 		return false;
 	}
 
-	$images_dir = @ opendir( "$default_dir/images" );
+	$images_dir = @opendir( "$default_dir/images" );
 	if ( $images_dir ) {
 		while ( ( $image = readdir( $images_dir ) ) !== false ) {
 			if ( is_dir( "$default_dir/images/$image" ) ) {
 				continue;
 			}
-			if ( ! @copy( "$default_dir/images/$image", "$site_dir/images/$image" ) ) {
+			if ( ! copy( "$default_dir/images/$image", "$site_dir/images/$image" ) ) {
 				return;
 			}
 			chmod( "$site_dir/images/$image", 0777 );
 		}
+
+		closedir( $images_dir );
 	}
-	@closedir( $images_dir );
 }
 
 /**
@@ -1514,6 +1540,7 @@ function translate_level_to_role( $level ) {
 		case 1:
 			return 'contributor';
 		case 0:
+		default:
 			return 'subscriber';
 	}
 }
@@ -1524,7 +1551,7 @@ function translate_level_to_role( $level ) {
  * @ignore
  * @since 2.1.0
  *
- * @global wpdb  $wpdb
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function wp_check_mysql_version() {
 	global $wpdb;
@@ -1556,8 +1583,8 @@ function maybe_disable_automattic_widgets() {
  *
  * @since 3.5.0
  *
- * @global int  $wp_current_db_version
- * @global wpdb $wpdb
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function maybe_disable_link_manager() {
 	global $wp_current_db_version, $wpdb;
@@ -1573,8 +1600,8 @@ function maybe_disable_link_manager() {
  * @since 2.9.0
  * @ignore
  *
- * @global int  $wp_current_db_version
- * @global wpdb $wpdb
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function pre_schema_upgrade() {
 	global $wp_current_db_version, $wpdb;
@@ -1605,7 +1632,7 @@ if ( ! function_exists( 'install_global_terms' ) ) :
 	 *
 	 * @since 3.0.0
 	 *
-	 * @global wpdb   $wpdb
+	 * @global wpdb   $wpdb            WordPress database abstraction object.
 	 * @global string $charset_collate
 	 */
 	function install_global_terms() {
@@ -1678,7 +1705,7 @@ function wp_should_upgrade_global_tables() {
  * @ignore
  * @since 4.5.0
  *
- * @global int  $wp_current_db_version Current database version.
+ * @global int  $wp_current_db_version The old (current) database version.
  * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function upgrade_450() {

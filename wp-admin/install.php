@@ -234,7 +234,13 @@ $mysql_version  = $wpdb->db_version();
 $php_compat     = version_compare( $php_version, $required_php_version, '>=' );
 $mysql_compat   = version_compare( $mysql_version, $required_mysql_version, '>=' ) || file_exists( WP_CONTENT_DIR . '/db.php' );
 
-/* translators: %s: Update PHP page URL */
+ $version_url = sprintf(
+	/* translators: %s: WordPress version. */
+ 	esc_url( __( 'https://wordpress.org/support/wordpress-version/version-%s/' ) ),
+ 	sanitize_title( $wp_version )
+ );
+
+/* translators: %s: URL to Update PHP page. */
 $php_update_message = '</p><p>' . sprintf( __( '<a href="%s">Learn more about updating PHP</a>.' ), esc_url( wp_get_update_php_url() ) );
 
 $annotation = wp_get_update_php_annotation();
@@ -255,7 +261,7 @@ if ( !$mysql_compat && !$php_compat ) {
 
 if ( !$mysql_compat || !$php_compat ) {
 	display_header();
-	die( '<h1>' . __( 'Insufficient Requirements' ) . '</h1><p>' . $compat . '</p></body></html>' );
+	die( '<h1>' . __( 'Requirements Not Met' ) . '</h1><p>' . $compat . '</p></body></html>' );
 }
 
 if ( ! is_string( $wpdb->base_prefix ) || '' === $wpdb->base_prefix ) {
@@ -286,7 +292,7 @@ if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
 
 /**
  * @global string    $wp_local_package
- * @global WP_Locale $wp_locale
+ * @global WP_Locale $wp_locale        WordPress date and time locale object.
  */
 $language = '';
 if ( ! empty( $_REQUEST['language'] ) ) {
@@ -299,13 +305,16 @@ $scripts_to_print = array( 'jquery' );
 
 switch ( $step ) {
 	case 0: // Step 0
-		if ( wp_can_install_language_pack() && empty( $language ) && ( $languages = wp_get_available_translations() ) ) {
-			$scripts_to_print[] = 'language-chooser';
-			display_header( 'language-chooser' );
-			echo '<form id="setup" method="post" action="?step=1">';
-			wp_install_language_form( $languages );
-			echo '</form>';
-			break;
+		if ( wp_can_install_language_pack() && empty( $language ) ) {
+			$languages = wp_get_available_translations();
+			if ( $languages ) {
+				$scripts_to_print[] = 'language-chooser';
+				display_header( 'language-chooser' );
+				echo '<form id="setup" method="post" action="?step=1">';
+				wp_install_language_form( $languages );
+				echo '</form>';
+				break;
+			}
 		}
 
 		// Deliberately fall through if we can't reach the translations API.
