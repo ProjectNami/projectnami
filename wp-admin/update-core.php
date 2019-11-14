@@ -163,7 +163,6 @@ function list_core_update( $update ) {
 	} elseif ( 'en_US' == $update->locale && get_locale() != 'en_US' && ( ! $update->packages->partial && $wp_version == $update->partial_version ) ) {
 		// Partial builds don't need language-specific warnings.
 		echo '<p class="hint">' . sprintf(
-			/* translators: %s: WordPress version. */
 			__( 'You are about to install WordPress %s <strong>in English (US).</strong> There is a chance this update will break your translation. You may prefer to wait for the localized version to be released.' ),
 			$update->response != 'development' ? $update->current : ''
 		) . '</p>';
