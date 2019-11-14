@@ -10,7 +10,7 @@
 /**
  * The WordPress Query class.
  *
- * @link https://codex.wordpress.org/Function_Reference/WP_Query Codex page.
+ * @link https://developer.wordpress.org/reference/classes/wp_query/
  *
  * @since 1.5.0
  * @since 4.5.0 Removed the `$comments_popup` property.
@@ -522,7 +522,7 @@ class WP_Query {
 	 * Fills in the query variables, which do not exist within the parameter.
 	 *
 	 * @since 2.1.0
-	 * @since 4.4.0 Removed the `comments_popup` public query variable.
+	 * @since 4.5.0 Removed the `comments_popup` public query variable.
 	 *
 	 * @param array $array Defined query variables.
 	 * @return array Complete query variables with undefined ones filled in empty.
@@ -613,6 +613,7 @@ class WP_Query {
 	 * @since 4.6.0 Added 'post_name__in' support for `$orderby`. Introduced the `$lazy_load_term_meta` argument.
 	 * @since 4.9.0 Introduced the `$comment_count` parameter.
 	 * @since 5.1.0 Introduced the `$meta_compare_key` parameter.
+	 * @since 5.3.0 Introduced the `$meta_type_key` parameter.
 	 *
 	 * @param string|array $query {
 	 *     Optional. Array or string of Query parameters.
@@ -654,6 +655,7 @@ class WP_Query {
 	 *     @type array        $meta_query              An associative array of WP_Meta_Query arguments. See WP_Meta_Query.
 	 *     @type string       $meta_value              Custom field value.
 	 *     @type int          $meta_value_num          Custom field value number.
+	 *     @type string       $meta_type_key           Cast for 'meta_key'. See WP_Meta_Query::construct().
 	 *     @type int          $menu_order              The menu order of the posts.
 	 *     @type int          $monthnum                The two-digit month. Default empty. Accepts numbers 1-12.
 	 *     @type string       $name                    Post slug.
@@ -730,7 +732,8 @@ class WP_Query {
 	public function parse_query( $query = '' ) {
 		if ( ! empty( $query ) ) {
 			$this->init();
-			$this->query = $this->query_vars = wp_parse_args( $query );
+			$this->query      = wp_parse_args( $query );
+			$this->query_vars = $this->query;
 		} elseif ( ! isset( $this->query ) ) {
 			$this->query = $this->query_vars;
 		}
@@ -1139,7 +1142,8 @@ class WP_Query {
 
 		// Category stuff
 		if ( ! empty( $q['cat'] ) && ! $this->is_singular ) {
-			$cat_in = $cat_not_in = array();
+			$cat_in     = array();
+			$cat_not_in = array();
 
 			$cat_array = preg_split( '/[,\s]+/', urldecode( $q['cat'] ) );
 			$cat_array = array_map( 'intval', $cat_array );
@@ -1441,7 +1445,8 @@ class WP_Query {
 			return $this->stopwords;
 		}
 
-		/* translators: This is a comma-separated list of very common words that should be excluded from a search,
+		/*
+		 * translators: This is a comma-separated list of very common words that should be excluded from a search,
 		 * like a, an, and the. These are usually called "stopwords". You should not simply translate these individual
 		 * words into your language. Instead, look for and provide commonly accepted stopwords in your language.
 		 */
@@ -2005,7 +2010,8 @@ class WP_Query {
 				$reqpage_obj   = get_post( $reqpage );
 				if ( is_object( $reqpage_obj ) && 'attachment' == $reqpage_obj->post_type ) {
 					$this->is_attachment = true;
-					$post_type           = $q['post_type'] = 'attachment';
+					$post_type           = 'attachment';
+					$q['post_type']      = 'attachment';
 					$this->is_page       = true;
 					$q['attachment_id']  = $reqpage;
 				}
@@ -2607,8 +2613,10 @@ class WP_Query {
 				 */
 				$climits = apply_filters_ref_array( 'comment_feed_limits', array( 'OFFSET 0 ROWS FETCH NEXT ' . get_option('posts_per_rss') . ' ROWS ONLY', &$this ) );
 			}
+
 			$cgroupby = ( ! empty( $cgroupby ) ) ? 'GROUP BY ' . $cgroupby : '';
 			$corderby = ( ! empty( $corderby ) ) ? 'ORDER BY ' . $corderby : '';
+			$climits  = ( ! empty( $climits ) ) ? $climits : '';
 
 			$comments = (array) $wpdb->get_results("SELECT $distinct {$wpdb->comments}.* FROM {$wpdb->comments} $cjoin $cwhere $cgroupby $corderby $climits");
 			// Convert to WP_Comment
@@ -2870,7 +2878,8 @@ class WP_Query {
 		if( ! empty( $found_rows ) )
 			$wpdb->query( "SELECT COUNT( $distinct {$wpdb->posts}.ID ) as [found_rows] FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby" );
  
-		$this->request = $old_request = "SELECT $distinct $fields $orderbyfields FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby $orderby $limits";
+		$old_request   = "SELECT $distinct $fields $orderbyfields FROM {$wpdb->posts} $join WHERE 1=1 $where $groupby $orderby $limits";
+		$this->request = $old_request;
 
 		if ( !$q['suppress_filters'] ) {
 			/**
@@ -3235,7 +3244,7 @@ class WP_Query {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @global WP_Post $post
+	 * @global WP_Post $post Global post object.
 	 */
 	public function the_post() {
 		global $post;
@@ -3324,7 +3333,7 @@ class WP_Query {
 	 * Sets up the current comment.
 	 *
 	 * @since 2.2.0
-	 * @global WP_Comment $comment Current comment.
+	 * @global WP_Comment $comment Global comment object.
 	 */
 	public function the_comment() {
 		global $comment;
@@ -3382,7 +3391,8 @@ class WP_Query {
 	 */
 	public function query( $query ) {
 		$this->init();
-		$this->query = $this->query_vars = wp_parse_args( $query );
+		$this->query      = wp_parse_args( $query );
+		$this->query_vars = $this->query;
 		return $this->get_posts();
 	}
 
@@ -3535,7 +3545,7 @@ class WP_Query {
 	 */
 	public function __call( $name, $arguments ) {
 		if ( in_array( $name, $this->compat_methods ) ) {
-			return call_user_func_array( array( $this, $name ), $arguments );
+			return $this->$name( ...$arguments );
 		}
 		return false;
 	}
@@ -4136,7 +4146,7 @@ class WP_Query {
 	 *
 	 * @since 3.3.0
 	 *
-	 * @global WP_Query $wp_query Global WP_Query instance.
+	 * @global WP_Query $wp_query WordPress Query object.
 	 *
 	 * @return bool
 	 */
@@ -4151,15 +4161,15 @@ class WP_Query {
 	 * @since 4.1.0
 	 * @since 4.4.0 Added the ability to pass a post ID to `$post`.
 	 *
-	 * @global int             $id
-	 * @global WP_User         $authordata
-	 * @global string|int|bool $currentday
-	 * @global string|int|bool $currentmonth
-	 * @global int             $page
-	 * @global array           $pages
-	 * @global int             $multipage
-	 * @global int             $more
-	 * @global int             $numpages
+	 * @global int     $id
+	 * @global WP_User $authordata
+	 * @global string  $currentday
+	 * @global string  $currentmonth
+	 * @global int     $page
+	 * @global array   $pages
+	 * @global int     $multipage
+	 * @global int     $more
+	 * @global int     $numpages
 	 *
 	 * @param WP_Post|object|int $post WP_Post instance or Post ID/object.
 	 * @return true True when finished.
@@ -4301,7 +4311,7 @@ class WP_Query {
 	 *
 	 * @since 3.7.0
 	 *
-	 * @global WP_Post $post
+	 * @global WP_Post $post Global post object.
 	 */
 	public function reset_postdata() {
 		if ( ! empty( $this->post ) ) {
