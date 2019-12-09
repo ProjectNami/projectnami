@@ -20,7 +20,6 @@ class WP_User_Query {
 	 * Query vars, after parsing
 	 *
 	 * @since 3.5.0
-	 * @access public
 	 * @var array
 	 */
 	public $query_vars = array();
@@ -29,7 +28,6 @@ class WP_User_Query {
 	 * List of found user ids
 	 *
 	 * @since 3.1.0
-	 * @access private
 	 * @var array
 	 */
 	private $results;
@@ -38,7 +36,6 @@ class WP_User_Query {
 	 * Total number of found users for the current query
 	 *
 	 * @since 3.1.0
-	 * @access private
 	 * @var int
 	 */
 	private $total_users = 0;
@@ -47,7 +44,6 @@ class WP_User_Query {
 	 * Metadata query container.
 	 *
 	 * @since 4.2.0
-	 * @access public
 	 * @var WP_Meta_Query
 	 */
 	public $meta_query = false;
@@ -56,7 +52,6 @@ class WP_User_Query {
 	 * The SQL query used to fetch matching users.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 * @var string
 	 */
 	public $request;
@@ -88,39 +83,38 @@ class WP_User_Query {
 	 * Fills in missing query variables with default values.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $args Query vars, as passed to `WP_User_Query`.
 	 * @return array Complete query variables with undefined ones filled in with defaults.
 	 */
 	public static function fill_query_vars( $args ) {
 		$defaults = array(
-			'blog_id' => get_current_blog_id(),
-			'role' => '',
-			'role__in' => array(),
-			'role__not_in' => array(),
-			'meta_key' => '',
-			'meta_value' => '',
-			'meta_compare' => '',
-			'include' => array(),
-			'exclude' => array(),
-			'search' => '',
-			'search_columns' => array(),
-			'orderby' => 'login',
-			'order' => 'ASC',
-			'offset' => '',
-			'number' => '',
-			'paged' => 1,
-			'count_total' => true,
-			'fields' => 'all',
-			'who' => '',
+			'blog_id'             => get_current_blog_id(),
+			'role'                => '',
+			'role__in'            => array(),
+			'role__not_in'        => array(),
+			'meta_key'            => '',
+			'meta_value'          => '',
+			'meta_compare'        => '',
+			'include'             => array(),
+			'exclude'             => array(),
+			'search'              => '',
+			'search_columns'      => array(),
+			'orderby'             => 'login',
+			'order'               => 'ASC',
+			'offset'              => '',
+			'number'              => '',
+			'paged'               => 1,
+			'count_total'         => true,
+			'fields'              => 'all',
+			'who'                 => '',
 			'has_published_posts' => null,
-			'nicename' => '',
-			'nicename__in' => array(),
-			'nicename__not_in' => array(),
-			'login' => '',
-			'login__in' => array(),
-			'login__not_in' => array()
+			'nicename'            => '',
+			'nicename__in'        => array(),
+			'nicename__not_in'    => array(),
+			'login'               => '',
+			'login__in'           => array(),
+			'login__not_in'       => array(),
 		);
 
 		return wp_parse_args( $args, $defaults );
@@ -139,8 +133,6 @@ class WP_User_Query {
 	 *              querying for all users with using -1.
 	 * @since 4.7.0 Added 'nicename', 'nicename__in', 'nicename__not_in', 'login', 'login__in',
 	 *              and 'login__not_in' parameters.
-	 *
-	 * @access public
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 * @global int  $blog_id
@@ -167,8 +159,9 @@ class WP_User_Query {
 	 *     @type string       $search              Search keyword. Searches for possible string matches on columns.
 	 *                                             When `$search_columns` is left empty, it tries to determine which
 	 *                                             column to search in based on search string. Default empty.
-	 *     @type array        $search_columns      Array of column names to be searched. Accepts 'ID', 'login',
-	 *                                             'nicename', 'email', 'url'. Default empty array.
+	 *     @type array        $search_columns      Array of column names to be searched. Accepts 'ID', 'user_login',
+	 *                                             'user_email', 'user_url', 'user_nicename', 'display_name'.
+	 *                                             Default empty array.
 	 *     @type string|array $orderby             Field(s) to sort the retrieved users by. May be a single value,
 	 *                                             an array of values, or a multi-dimensional array with fields as
 	 *                                             keys and orders ('ASC' or 'DESC') as values. Accepted values are
@@ -187,7 +180,7 @@ class WP_User_Query {
 	 *     @type int          $number              Number of users to limit the query for. Can be used in
 	 *                                             conjunction with pagination. Value -1 (all) is supported, but
 	 *                                             should be used with caution on larger sites.
-	 *                                             Default empty (all users).
+	 *                                             Default -1 (all users).
 	 *     @type int          $paged               When used with number, defines the page of results to return.
 	 *                                             Default 1.
 	 *     @type bool         $count_total         Whether to count the total number of users found. If pagination
@@ -220,7 +213,7 @@ class WP_User_Query {
 
 		if ( empty( $this->query_vars ) || ! empty( $query ) ) {
 			$this->query_limit = null;
-			$this->query_vars = $this->fill_query_vars( $query );
+			$this->query_vars  = $this->fill_query_vars( $query );
 		}
 
 		/**
@@ -238,14 +231,14 @@ class WP_User_Query {
 
 		// Ensure that query vars are filled after 'pre_get_users'.
 		$qv =& $this->query_vars;
-		$qv =  $this->fill_query_vars( $qv );
+		$qv = $this->fill_query_vars( $qv );
 
 		if ( is_array( $qv['fields'] ) ) {
 			$qv['fields'] = array_unique( $qv['fields'] );
 
 			$this->query_fields = array();
 			foreach ( $qv['fields'] as $field ) {
-				$field = 'ID' === $field ? 'ID' : sanitize_key( $field );
+				$field                = 'ID' === $field ? 'ID' : sanitize_key( $field );
 				$this->query_fields[] = "$wpdb->users.$field";
 			}
 			$this->query_fields = implode( ',', $this->query_fields );
@@ -281,42 +274,42 @@ class WP_User_Query {
 				$post_type = $wpdb->prepare( '%s', $post_type );
 			}
 
-			$posts_table = $wpdb->get_blog_prefix( $blog_id ) . 'posts';
-			$this->query_where .= " AND $wpdb->users.ID IN ( SELECT DISTINCT $posts_table.post_author FROM $posts_table WHERE $posts_table.post_status = 'publish' AND $posts_table.post_type IN ( " . join( ", ", $post_types ) . " ) )";
+			$posts_table        = $wpdb->get_blog_prefix( $blog_id ) . 'posts';
+			$this->query_where .= " AND $wpdb->users.ID IN ( SELECT DISTINCT $posts_table.post_author FROM $posts_table WHERE $posts_table.post_status = 'publish' AND $posts_table.post_type IN ( " . join( ', ', $post_types ) . ' ) )';
 		}
 
 		// nicename
-		if ( '' !== $qv['nicename']) {
+		if ( '' !== $qv['nicename'] ) {
 			$this->query_where .= $wpdb->prepare( ' AND user_nicename = %s', $qv['nicename'] );
 		}
 
 		if ( ! empty( $qv['nicename__in'] ) ) {
 			$sanitized_nicename__in = array_map( 'esc_sql', $qv['nicename__in'] );
-			$nicename__in = implode( "','", $sanitized_nicename__in );
-			$this->query_where .= " AND user_nicename IN ( '$nicename__in' )";
+			$nicename__in           = implode( "','", $sanitized_nicename__in );
+			$this->query_where     .= " AND user_nicename IN ( '$nicename__in' )";
 		}
 
 		if ( ! empty( $qv['nicename__not_in'] ) ) {
 			$sanitized_nicename__not_in = array_map( 'esc_sql', $qv['nicename__not_in'] );
-			$nicename__not_in = implode( "','", $sanitized_nicename__not_in );
-			$this->query_where .= " AND user_nicename NOT IN ( '$nicename__not_in' )";
+			$nicename__not_in           = implode( "','", $sanitized_nicename__not_in );
+			$this->query_where         .= " AND user_nicename NOT IN ( '$nicename__not_in' )";
 		}
 
 		// login
-		if ( '' !== $qv['login']) {
+		if ( '' !== $qv['login'] ) {
 			$this->query_where .= $wpdb->prepare( ' AND user_login = %s', $qv['login'] );
 		}
 
 		if ( ! empty( $qv['login__in'] ) ) {
 			$sanitized_login__in = array_map( 'esc_sql', $qv['login__in'] );
-			$login__in = implode( "','", $sanitized_login__in );
-			$this->query_where .= " AND user_login IN ( '$login__in' )";
+			$login__in           = implode( "','", $sanitized_login__in );
+			$this->query_where  .= " AND user_login IN ( '$login__in' )";
 		}
 
 		if ( ! empty( $qv['login__not_in'] ) ) {
 			$sanitized_login__not_in = array_map( 'esc_sql', $qv['login__not_in'] );
-			$login__not_in = implode( "','", $sanitized_login__not_in );
-			$this->query_where .= " AND user_login NOT IN ( '$login__not_in' )";
+			$login__not_in           = implode( "','", $sanitized_login__not_in );
+			$this->query_where      .= " AND user_login NOT IN ( '$login__not_in' )";
 		}
 
 		// Meta query.
@@ -325,13 +318,14 @@ class WP_User_Query {
 
 		if ( isset( $qv['who'] ) && 'authors' == $qv['who'] && $blog_id ) {
 			$who_query = array(
-				'key' => $wpdb->get_blog_prefix( $blog_id ) . 'user_level',
-				'value' => 0,
+				'key'     => $wpdb->get_blog_prefix( $blog_id ) . 'user_level',
+				'value'   => 0,
 				'compare' => '!=',
 			);
 
 			// Prevent extra meta query.
-			$qv['blog_id'] = $blog_id = 0;
+			$qv['blog_id'] = 0;
+			$blog_id       = 0;
 
 			if ( empty( $this->meta_query->queries ) ) {
 				$this->meta_query->queries = array( $who_query );
@@ -366,7 +360,7 @@ class WP_User_Query {
 		}
 
 		if ( $blog_id && ( ! empty( $roles ) || ! empty( $role__in ) || ! empty( $role__not_in ) || is_multisite() ) ) {
-			$role_queries  = array();
+			$role_queries = array();
 
 			$roles_clauses = array( 'relation' => 'AND' );
 			if ( ! empty( $roles ) ) {
@@ -410,7 +404,7 @@ class WP_User_Query {
 			// If there are no specific roles named, make sure the user is a member of the site.
 			if ( empty( $role_queries ) ) {
 				$role_queries[] = array(
-					'key' => $wpdb->get_blog_prefix( $blog_id ) . 'capabilities',
+					'key'     => $wpdb->get_blog_prefix( $blog_id ) . 'capabilities',
 					'compare' => 'EXISTS',
 				);
 			}
@@ -432,8 +426,8 @@ class WP_User_Query {
 		}
 
 		if ( ! empty( $this->meta_query->queries ) ) {
-			$clauses = $this->meta_query->get_sql( 'user', $wpdb->users, 'ID', $this );
-			$this->query_from .= $clauses['join'];
+			$clauses            = $this->meta_query->get_sql( 'user', $wpdb->users, 'ID', $this );
+			$this->query_from  .= $clauses['join'];
 			$this->query_where .= $clauses['where'];
 
 			if ( $this->meta_query->has_or_relation() ) {
@@ -443,7 +437,7 @@ class WP_User_Query {
 
 		// sorting
 		$qv['order'] = isset( $qv['order'] ) ? strtoupper( $qv['order'] ) : '';
-		$order = $this->parse_order( $qv['order'] );
+		$order       = $this->parse_order( $qv['order'] );
 
 		if ( empty( $qv['orderby'] ) ) {
 			// Default order is by 'user_login'.
@@ -464,11 +458,11 @@ class WP_User_Query {
 			if ( is_int( $_key ) ) {
 				// Integer key means this is a flat array of 'orderby' fields.
 				$_orderby = $_value;
-				$_order = $order;
+				$_order   = $order;
 			} else {
 				// Non-integer key means this the key is the field and the value is ASC/DESC.
 				$_orderby = $_key;
-				$_order = $_value;
+				$_order   = $_value;
 			}
 
 			$parsed = $this->parse_orderby( $_orderby );
@@ -501,46 +495,51 @@ class WP_User_Query {
 		}
 
 		$search = '';
-		if ( isset( $qv['search'] ) )
+		if ( isset( $qv['search'] ) ) {
 			$search = trim( $qv['search'] );
+		}
 
 		if ( $search ) {
-			$leading_wild = ( ltrim($search, '*') != $search );
-			$trailing_wild = ( rtrim($search, '*') != $search );
-			if ( $leading_wild && $trailing_wild )
+			$leading_wild  = ( ltrim( $search, '*' ) != $search );
+			$trailing_wild = ( rtrim( $search, '*' ) != $search );
+			if ( $leading_wild && $trailing_wild ) {
 				$wild = 'both';
-			elseif ( $leading_wild )
+			} elseif ( $leading_wild ) {
 				$wild = 'leading';
-			elseif ( $trailing_wild )
+			} elseif ( $trailing_wild ) {
 				$wild = 'trailing';
-			else
+			} else {
 				$wild = false;
-			if ( $wild )
-				$search = trim($search, '*');
+			}
+			if ( $wild ) {
+				$search = trim( $search, '*' );
+			}
 
 			$search_columns = array();
-			if ( $qv['search_columns'] )
-				$search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename' ) );
+			if ( $qv['search_columns'] ) {
+				$search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename', 'display_name' ) );
+			}
 			if ( ! $search_columns ) {
-				if ( false !== strpos( $search, '@') )
-					$search_columns = array('user_email');
-				elseif ( is_numeric($search) )
-					$search_columns = array('user_login', 'ID');
-				elseif ( preg_match('|^https?://|', $search) && ! ( is_multisite() && wp_is_large_network( 'users' ) ) )
-					$search_columns = array('user_url');
-				else
-					$search_columns = array('user_login', 'user_url', 'user_email', 'user_nicename', 'display_name');
+				if ( false !== strpos( $search, '@' ) ) {
+					$search_columns = array( 'user_email' );
+				} elseif ( is_numeric( $search ) ) {
+					$search_columns = array( 'user_login', 'ID' );
+				} elseif ( preg_match( '|^https?://|', $search ) && ! ( is_multisite() && wp_is_large_network( 'users' ) ) ) {
+					$search_columns = array( 'user_url' );
+				} else {
+					$search_columns = array( 'user_login', 'user_url', 'user_email', 'user_nicename', 'display_name' );
+				}
 			}
 
 			/**
 			 * Filters the columns to search in a WP_User_Query search.
 			 *
-			 * The default columns depend on the search term, and include 'user_email',
-			 * 'user_login', 'ID', 'user_url', 'display_name', and 'user_nicename'.
+			 * The default columns depend on the search term, and include 'ID', 'user_login',
+			 * 'user_email', 'user_url', 'user_nicename', and 'display_name'.
 			 *
 			 * @since 3.6.0
 			 *
-			 * @param array         $search_columns Array of column names to be searched.
+			 * @param string[]      $search_columns Array of column names to be searched.
 			 * @param string        $search         Text being searched.
 			 * @param WP_User_Query $this           The current WP_User_Query instance.
 			 */
@@ -551,16 +550,16 @@ class WP_User_Query {
 
 		if ( ! empty( $include ) ) {
 			// Sanitized earlier.
-			$ids = implode( ',', $include );
+			$ids                = implode( ',', $include );
 			$this->query_where .= " AND $wpdb->users.ID IN ($ids)";
 		} elseif ( ! empty( $qv['exclude'] ) ) {
-			$ids = implode( ',', wp_parse_id_list( $qv['exclude'] ) );
+			$ids                = implode( ',', wp_parse_id_list( $qv['exclude'] ) );
 			$this->query_where .= " AND $wpdb->users.ID NOT IN ($ids)";
 		}
 
 		// Date queries are allowed for the user_registered field.
 		if ( ! empty( $qv['date_query'] ) && is_array( $qv['date_query'] ) ) {
-			$date_query = new WP_Date_Query( $qv['date_query'], 'user_registered' );
+			$date_query         = new WP_Date_Query( $qv['date_query'], 'user_registered' );
 			$this->query_where .= $date_query->get_sql();
 		}
 
@@ -635,14 +634,14 @@ class WP_User_Query {
 	 * Retrieve query variable.
 	 *
 	 * @since 3.5.0
-	 * @access public
 	 *
 	 * @param string $query_var Query variable key.
 	 * @return mixed
 	 */
 	public function get( $query_var ) {
-		if ( isset( $this->query_vars[$query_var] ) )
-			return $this->query_vars[$query_var];
+		if ( isset( $this->query_vars[ $query_var ] ) ) {
+			return $this->query_vars[ $query_var ];
+		}
 
 		return null;
 	}
@@ -651,19 +650,17 @@ class WP_User_Query {
 	 * Set query variable.
 	 *
 	 * @since 3.5.0
-	 * @access public
 	 *
 	 * @param string $query_var Query variable key.
 	 * @param mixed $value Query variable value.
 	 */
 	public function set( $query_var, $value ) {
-		$this->query_vars[$query_var] = $value;
+		$this->query_vars[ $query_var ] = $value;
 	}
 
 	/**
 	 * Used internally to generate an SQL string for searching across multiple columns
 	 *
-	 * @access protected
 	 * @since 3.1.0
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
@@ -677,10 +674,10 @@ class WP_User_Query {
 	protected function get_search_sql( $string, $cols, $wild = false ) {
 		global $wpdb;
 
-		$searches = array();
-		$leading_wild = ( 'leading' == $wild || 'both' == $wild ) ? '%' : '';
+		$searches      = array();
+		$leading_wild  = ( 'leading' == $wild || 'both' == $wild ) ? '%' : '';
 		$trailing_wild = ( 'trailing' == $wild || 'both' == $wild ) ? '%' : '';
-		$like = $leading_wild . $wpdb->esc_like( $string ) . $trailing_wild;
+		$like          = $leading_wild . $wpdb->esc_like( $string ) . $trailing_wild;
 
 		foreach ( $cols as $col ) {
 			if ( 'ID' == $col ) {
@@ -690,14 +687,13 @@ class WP_User_Query {
 			}
 		}
 
-		return ' AND (' . implode(' OR ', $searches) . ')';
+		return ' AND (' . implode( ' OR ', $searches ) . ')';
 	}
 
 	/**
 	 * Return the list of users.
 	 *
 	 * @since 3.1.0
-	 * @access public
 	 *
 	 * @return array Array of results.
 	 */
@@ -709,7 +705,6 @@ class WP_User_Query {
 	 * Return the total number of users for the current query.
 	 *
 	 * @since 3.1.0
-	 * @access public
 	 *
 	 * @return int Number of total users.
 	 */
@@ -721,7 +716,6 @@ class WP_User_Query {
 	 * Parse and sanitize 'orderby' keys passed to the user query.
 	 *
 	 * @since 4.2.0
-	 * @access protected
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
@@ -742,7 +736,7 @@ class WP_User_Query {
 			$_orderby = 'display_name';
 		} elseif ( 'post_count' == $orderby ) {
 			// todo: avoid the JOIN
-			$where = get_posts_by_author_sql( 'post' );
+			$where             = get_posts_by_author_sql( 'post' );
 			$this->query_from .= " LEFT OUTER JOIN (
 				SELECT post_author, COUNT(*) as post_count
 				FROM $wpdb->posts
@@ -750,7 +744,7 @@ class WP_User_Query {
 				GROUP BY post_author
 			) p ON ({$wpdb->users}.ID = p.post_author)
 			";
-			$_orderby = 'post_count';
+			$_orderby          = 'post_count';
 		} elseif ( 'ID' == $orderby || 'id' == $orderby ) {
 			$_orderby = 'ID';
 		} elseif ( 'meta_value' == $orderby || $this->get( 'meta_key' ) == $orderby ) {
@@ -781,7 +775,6 @@ class WP_User_Query {
 	 * Parse an 'order' query variable and cast it to ASC or DESC as necessary.
 	 *
 	 * @since 4.2.0
-	 * @access protected
 	 *
 	 * @param string $order The 'order' query variable.
 	 * @return string The sanitized 'order' query variable.
@@ -802,7 +795,6 @@ class WP_User_Query {
 	 * Make private properties readable for backward compatibility.
 	 *
 	 * @since 4.0.0
-	 * @access public
 	 *
 	 * @param string $name Property to get.
 	 * @return mixed Property.
@@ -817,7 +809,6 @@ class WP_User_Query {
 	 * Make private properties settable for backward compatibility.
 	 *
 	 * @since 4.0.0
-	 * @access public
 	 *
 	 * @param string $name  Property to check if set.
 	 * @param mixed  $value Property value.
@@ -833,7 +824,6 @@ class WP_User_Query {
 	 * Make private properties checkable for backward compatibility.
 	 *
 	 * @since 4.0.0
-	 * @access public
 	 *
 	 * @param string $name Property to check if set.
 	 * @return bool Whether the property is set.
@@ -848,7 +838,6 @@ class WP_User_Query {
 	 * Make private properties un-settable for backward compatibility.
 	 *
 	 * @since 4.0.0
-	 * @access public
 	 *
 	 * @param string $name Property to unset.
 	 */
@@ -862,15 +851,14 @@ class WP_User_Query {
 	 * Make private/protected methods readable for backward compatibility.
 	 *
 	 * @since 4.0.0
-	 * @access public
 	 *
-	 * @param callable $name      Method to call.
+	 * @param string   $name      Method to call.
 	 * @param array    $arguments Arguments to pass when calling.
 	 * @return mixed Return value of the callback, false otherwise.
 	 */
 	public function __call( $name, $arguments ) {
 		if ( 'get_search_sql' === $name ) {
-			return call_user_func_array( array( $this, $name ), $arguments );
+			return $this->get_search_sql( ...$arguments );
 		}
 		return false;
 	}

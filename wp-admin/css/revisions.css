@@ -6,9 +6,12 @@
 	position: relative;
 }
 
+.revisions-diff-frame {
+	top: 10px;
+}
+
 .revisions-controls {
 	padding-top: 40px;
-	height: 100px;
 	z-index: 1;
 }
 
@@ -23,8 +26,7 @@
 	top: 0;
 	height: 82px;
 	background: #fff;
-	-webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .revisions-tickmarks {
@@ -33,8 +35,6 @@
 	height: 0.7em;
 	top: 7px;
 	max-width: 70%;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	background-color: #fff;
 }
@@ -43,8 +43,6 @@
 	position: absolute;
 	height: 100%;
 	border-left: 1px solid #a0a5aa;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
 
@@ -77,12 +75,9 @@
 	vertical-align: middle;
 	opacity: 0;
 	width: 100%;
-	width: -webkit-calc( 100% - 30px );
 	width: calc( 100% - 30px );
 	top: 50%;
-	top: -webkit-calc( 50% - 10px );
 	top: calc( 50% - 10px );
-	-webkit-transition: opacity 0.5s;
 	transition: opacity 0.5s;
 	filter: alpha(opacity=0); /* ie8 and earlier */
 }
@@ -103,7 +98,6 @@ body.folded .revisions .loading-indicator {
 }
 
 .revisions .diff {
-	-webkit-transition: opacity 0.5s;
 	transition: opacity 0.5s;
 }
 
@@ -119,12 +113,11 @@ body.folded .revisions .loading-indicator {
 .revisions-meta {
 	margin-top: 20px;
 	background-color: #fff;
-	-webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	overflow: hidden;
 }
 
 .revisions.pinned .revisions-meta {
-	-webkit-box-shadow: none;
 	box-shadow: none;
 }
 
@@ -183,8 +176,7 @@ body.folded .revisions .loading-indicator {
 .revisions-diff {
 	padding: 15px;
 	background-color: #fff;
-	-webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .revisions-diff h3:first-child {
@@ -231,8 +223,8 @@ table.diff td,
 table.diff th {
 	font-family: Consolas, Monaco, monospace;
 	font-size: 14px;
-	line-height: 1.618;
-	padding: .5em;
+	line-height: 1.57142857;
+	padding: 0.5em 0.5em 0.5em 2em;
 	vertical-align: top;
 	word-wrap: break-word;
 }
@@ -252,6 +244,7 @@ table.diff .diff-addedline ins {
 }
 
 table.diff .diff-deletedline {
+	position: relative;
 	background-color: #ffe9e9;
 }
 
@@ -260,7 +253,24 @@ table.diff .diff-deletedline del {
 }
 
 table.diff .diff-addedline {
+	position: relative;
 	background-color: #e9ffe9;
+}
+
+table.diff .diff-deletedline .dashicons,
+table.diff .diff-addedline .dashicons {
+	position: absolute;
+	top: 0.85714286em;
+	left: 0.5em;
+	width: 1em;
+	height: 1em;
+	font-size: 1em;
+	line-height: 1;
+}
+
+table.diff .diff-addedline .dashicons {
+	/* Compensate the vertically non-centered plus glyph. */
+	top: 0.92857143em;
 }
 
 table.diff .diff-addedline ins {
@@ -274,7 +284,7 @@ table.diff .diff-addedline ins {
 }
 
 .diff-title strong {
-	line-height: 32px;
+	line-height: 2.46153846;
 	min-width: 60px;
 	text-align: right;
 	float: left;
@@ -283,7 +293,7 @@ table.diff .diff-addedline ins {
 
 .revisions-controls .author-card .author-info {
 	font-size: 12px;
-	line-height: 16px;
+	line-height: 1.33333333;
 }
 
 .revisions-controls .author-card .avatar,
@@ -306,7 +316,7 @@ table.diff .diff-addedline ins {
 	float: right;
 	margin-left: 6px;
 	margin-right: 6px;
-	margin-top: 4px;
+	margin-top: 2px;
 }
 
 .diff-meta-from {
@@ -367,8 +377,6 @@ table.diff .diff-addedline ins {
 	top: -20px;
 	width: 25px;
 	height: 25px;
-	-webkit-transform: rotate(45deg);
-	-ms-transform: rotate(45deg);
 	transform: rotate(45deg);
 }
 
@@ -411,8 +419,7 @@ table.diff .diff-addedline ins {
 .arrow:after {
 	z-index: 9999;
 	background-color: #fff;
-	-webkit-box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-	box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .arrow.top {
@@ -431,8 +438,6 @@ table.diff .diff-addedline ins {
 	top: -20px;
 	width: 25px;
 	height: 25px;
-	-webkit-transform: rotate(45deg);
-	-ms-transform: rotate(45deg);
 	transform: rotate(45deg);
 }
 
@@ -459,7 +464,6 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 }
 
 .wp-slider .ui-slider-handle {
-	-webkit-border-radius: 50%;
 	border-radius: 50%;
 	height: 18px;
 	margin-top: -5px;
@@ -468,7 +472,6 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 	position: absolute;
 	width: 18px;
 	z-index: 2;
-	-ms-touch-action: none;
 	touch-action: none;
 }
 
@@ -476,7 +479,6 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 .wp-slider .ui-slider-handle.focus {
 	background: #f7f7f7;
 	border: 1px solid #ccc;
-	-webkit-box-shadow: 0 1px 0 #cccccc;
 	box-shadow: 0 1px 0 #cccccc;
 }
 
@@ -490,13 +492,9 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 .wp-slider .ui-slider-handle.ui-state-active {
 	background: #eee;
 	border-color: #999;
- 	-webkit-box-shadow: inset 0 2px 5px -3px rgba( 0, 0, 0, 0.5 );
- 	box-shadow: inset 0 2px 5px -3px rgba( 0, 0, 0, 0.5 );
- 	-webkit-transform: translateY(1px);
- 	-ms-transform: translateY(1px);
- 	transform: translateY(1px);
+	box-shadow: inset 0 2px 5px -3px rgba(0, 0, 0, 0.5);
+	transform: translateY(1px);
 }
-
 
 .wp-slider .ui-slider-handle:before {
 	background: none;
@@ -541,7 +539,7 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 
 .wp-slider .ui-slider-range {
 	position: absolute;
-	font-size: .7em;
+	font-size: 0.7em;
 	display: block;
 	border: 0;
 	background-color: transparent;
@@ -549,7 +547,7 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 }
 
 .wp-slider.ui-slider-horizontal {
-	height: .7em;
+	height: 0.7em;
 }
 
 .wp-slider.ui-slider-horizontal .ui-slider-handle {
@@ -584,15 +582,38 @@ div.revisions-controls > .wp-slider > .ui-slider-handle {
 	}
 }
 
-@media screen and ( max-width: 782px ) {
+@media screen and (max-width: 782px) {
 	#diff-next-revision,
 	#diff-previous-revision {
 		margin-top: -1em;
+	}
+
+	.revisions-buttons {
+		overflow: hidden;
+		margin-bottom: 15px;
+	}
+
+	.revisions-controls,
+	.comparing-two-revisions .revisions-controls {
+		height: 170px;
+	}
+
+	.revisions-tooltip {
+		bottom: 130px;
+		z-index: 2;
+	}
+
+	.diff-meta {
+		overflow: hidden;
 	}
 
 	table.diff {
 		-ms-word-break: break-all;
 		word-break: break-all;
 		word-wrap: break-word;
+	}
+
+	.diff-meta input.restore-revision {
+		margin-top: 0;
 	}
 }

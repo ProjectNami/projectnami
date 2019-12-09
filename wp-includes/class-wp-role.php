@@ -17,7 +17,6 @@ class WP_Role {
 	 * Role name.
 	 *
 	 * @since 2.0.0
-	 * @access public
 	 * @var string
 	 */
 	public $name;
@@ -26,7 +25,6 @@ class WP_Role {
 	 * List of capabilities the role contains.
 	 *
 	 * @since 2.0.0
-	 * @access public
 	 * @var array
 	 */
 	public $capabilities;
@@ -38,13 +36,12 @@ class WP_Role {
 	 * and the value a boolean of whether it is granted to the role.
 	 *
 	 * @since 2.0.0
-	 * @access public
 	 *
 	 * @param string $role Role name.
 	 * @param array $capabilities List of capabilities.
 	 */
 	public function __construct( $role, $capabilities ) {
-		$this->name = $role;
+		$this->name         = $role;
 		$this->capabilities = $capabilities;
 	}
 
@@ -52,13 +49,12 @@ class WP_Role {
 	 * Assign role a capability.
 	 *
 	 * @since 2.0.0
-	 * @access public
 	 *
 	 * @param string $cap Capability name.
 	 * @param bool $grant Whether role has capability privilege.
 	 */
 	public function add_cap( $cap, $grant = true ) {
-		$this->capabilities[$cap] = $grant;
+		$this->capabilities[ $cap ] = $grant;
 		wp_roles()->add_cap( $this->name, $cap, $grant );
 	}
 
@@ -71,12 +67,11 @@ class WP_Role {
 	 * because you don't need to enter the role name.
 	 *
 	 * @since 2.0.0
-	 * @access public
 	 *
 	 * @param string $cap Capability name.
 	 */
 	public function remove_cap( $cap ) {
-		unset( $this->capabilities[$cap] );
+		unset( $this->capabilities[ $cap ] );
 		wp_roles()->remove_cap( $this->name, $cap );
 	}
 
@@ -89,7 +84,6 @@ class WP_Role {
 	 * The third and final parameter for the hook is the role name.
 	 *
 	 * @since 2.0.0
-	 * @access public
 	 *
 	 * @param string $cap Capability name.
 	 * @return bool True if the role has the given capability. False otherwise.
@@ -100,16 +94,17 @@ class WP_Role {
 		 *
 		 * @since 2.0.0
 		 *
-		 * @param array  $capabilities Array of role capabilities.
+		 * @param bool[] $capabilities Associative array of capabilities for the role.
 		 * @param string $cap          Capability name.
 		 * @param string $name         Role name.
 		 */
 		$capabilities = apply_filters( 'role_has_cap', $this->capabilities, $cap, $this->name );
 
-		if ( !empty( $capabilities[$cap] ) )
-			return $capabilities[$cap];
-		else
+		if ( ! empty( $capabilities[ $cap ] ) ) {
+			return $capabilities[ $cap ];
+		} else {
 			return false;
+		}
 	}
 
 }

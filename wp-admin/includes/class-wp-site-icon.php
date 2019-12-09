@@ -18,16 +18,14 @@ class WP_Site_Icon {
 	 * The minimum size of the site icon.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 * @var int
 	 */
-	public $min_size  = 512;
+	public $min_size = 512;
 
 	/**
 	 * The size to which to crop the image so that we can display it in the UI nicely.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 * @var int
 	 */
 	public $page_crop = 512;
@@ -36,8 +34,7 @@ class WP_Site_Icon {
 	 * List of site icon sizes.
 	 *
 	 * @since 4.3.0
-	 * @access public
-	 * @var array
+	 * @var int[]
 	 */
 	public $site_icon_sizes = array(
 		/*
@@ -70,7 +67,6 @@ class WP_Site_Icon {
 	 * Registers actions and filters.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 */
 	public function __construct() {
 		add_action( 'delete_attachment', array( $this, 'delete_attachment_data' ) );
@@ -89,18 +85,18 @@ class WP_Site_Icon {
 	public function create_attachment_object( $cropped, $parent_attachment_id ) {
 		$parent     = get_post( $parent_attachment_id );
 		$parent_url = wp_get_attachment_url( $parent->ID );
-		$url        = str_replace( basename( $parent_url ), basename( $cropped ), $parent_url );
+		$url        = str_replace( wp_basename( $parent_url ), wp_basename( $cropped ), $parent_url );
 
 		$size       = @getimagesize( $cropped );
 		$image_type = ( $size ) ? $size['mime'] : 'image/jpeg';
 
 		$object = array(
 			'ID'             => $parent_attachment_id,
-			'post_title'     => basename( $cropped ),
+			'post_title'     => wp_basename( $cropped ),
 			'post_content'   => $url,
 			'post_mime_type' => $image_type,
 			'guid'           => $url,
-			'context'        => 'site-icon'
+			'context'        => 'site-icon',
 		);
 
 		return $object;
@@ -110,7 +106,6 @@ class WP_Site_Icon {
 	 * Inserts an attachment.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param array  $object Attachment object.
 	 * @param string $file   File path of the attached image.
@@ -136,13 +131,12 @@ class WP_Site_Icon {
 	}
 
 	/**
-	 * Adds additional sizes to be made when creating the site_icon images.
+	 * Adds additional sizes to be made when creating the site icon images.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
-	 * @param array $sizes List of additional sizes.
-	 * @return array Additional image sizes.
+	 * @param array[] $sizes Array of arrays containing information for additional sizes.
+	 * @return array[] Array of arrays containing additional image sizes.
 	 */
 	public function additional_sizes( $sizes = array() ) {
 		$only_crop_sizes = array();
@@ -152,7 +146,7 @@ class WP_Site_Icon {
 		 *
 		 * @since 4.3.0
 		 *
-		 * @param array $site_icon_sizes Sizes available for the Site Icon.
+		 * @param int[] $site_icon_sizes Array of sizes available for the Site Icon.
 		 */
 		$this->site_icon_sizes = apply_filters( 'site_icon_image_sizes', $this->site_icon_sizes );
 
@@ -184,10 +178,9 @@ class WP_Site_Icon {
 	 * Adds Site Icon sizes to the array of image sizes on demand.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
-	 * @param array $sizes List of image sizes.
-	 * @return array List of intermediate image sizes.
+	 * @param string[] $sizes Array of image size names.
+	 * @return string[] Array of image size names.
 	 */
 	public function intermediate_image_sizes( $sizes = array() ) {
 		/** This filter is documented in wp-admin/includes/class-wp-site-icon.php */
@@ -203,7 +196,6 @@ class WP_Site_Icon {
 	 * Deletes the Site Icon when the image file is deleted.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param int $post_id Attachment ID.
 	 */
@@ -219,7 +211,6 @@ class WP_Site_Icon {
 	 * Adds custom image sizes when meta data for an image is requested, that happens to be used as Site Icon.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param null|array|string $value    The value get_metadata() should return a single metadata value, or an
 	 *                                    array of values.

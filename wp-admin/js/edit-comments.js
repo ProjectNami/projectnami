@@ -1,12 +1,30 @@
+/**
+ * Handles updating and editing comments.
+ *
+ * @file This file contains functionality for the admin comments page.
+ * @since 2.1.0
+ * @output wp-admin/js/edit-comments.js
+ */
+
 /* global adminCommentsL10n, thousandsSeparator, list_args, QTags, ajaxurl, wpAjax */
-var setCommentsList, theList, theExtraList, commentReply;
+/* global commentReply, theExtraList, theList, setCommentsList */
 
 (function($) {
 var getCount, updateCount, updateCountText, updatePending, updateApproved,
-	updateHtmlTitle, updateDashboardText, adminTitle = document.title,
+	updateHtmlTitle, updateDashboardText, updateInModerationText, adminTitle = document.title,
 	isDashboard = $('#dashboard_right_now').length,
 	titleDiv, titleRegEx;
 
+	/**
+	 * Extracts a number from the content of a jQuery element.
+	 *
+	 * @since 2.9.0
+	 * @access private
+	 *
+	 * @param {jQuery} el jQuery element.
+	 *
+	 * @return {number} The number found in the given element.
+	 */
 	getCount = function(el) {
 		var n = parseInt( el.html().replace(/[^0-9]+/g, ''), 10 );
 		if ( isNaN(n) ) {
@@ -15,6 +33,17 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 		return n;
 	};
 
+	/**
+	 * Updates an html element with a localized number string.
+	 *
+	 * @since 2.9.0
+	 * @access private
+	 *
+	 * @param {jQuery} el The jQuery element to update.
+	 * @param {number} n Number to be put in the element.
+	 *
+	 * @return {void}
+	 */
 	updateCount = function(el, n) {
 		var n1 = '';
 		if ( isNaN(n) ) {
@@ -31,6 +60,17 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 		el.html(n);
 	};
 
+	/**
+	 * Updates the number of approved comments on a specific post and the filter bar.
+	 *
+	 * @since 4.4.0
+	 * @access private
+	 *
+	 * @param {number} diff The amount to lower or raise the approved count with.
+	 * @param {number} commentPostId The ID of the post to be updated.
+	 *
+	 * @return {void}
+	 */
 	updateApproved = function( diff, commentPostId ) {
 		var postSelector = '.post-com-count-' + commentPostId,
 			noClass = 'comment-count-no-comments',
@@ -44,7 +84,7 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 			return;
 		}
 
-		// cache selectors to not get dupes
+		// Cache selectors to not get duplicates.
 		approved = $( 'span.' + approvedClass, postSelector );
 		noComments = $( 'span.' + noClass, postSelector );
 
@@ -72,6 +112,18 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 		});
 	};
 
+	/**
+	 * Updates a number count in all matched HTML elements
+	 *
+	 * @since 4.4.0
+	 * @access private
+	 *
+	 * @param {string} selector The jQuery selector for elements to update a count
+	 *                          for.
+	 * @param {number} diff The amount to lower or raise the count with.
+	 *
+	 * @return {void}
+	 */
 	updateCountText = function( selector, diff ) {
 		$( selector ).each(function() {
 			var a = $(this), n = getCount(a) + diff;
@@ -82,20 +134,61 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 		});
 	};
 
-	updateDashboardText = function ( response ) {
+	/**
+	 * Updates a text about comment count on the dashboard.
+	 *
+	 * @since 4.4.0
+	 * @access private
+	 *
+	 * @param {Object} response Ajax response from the server that includes a
+	 *                          translated "comment count" message.
+	 *
+	 * @return {void}
+	 */
+	updateDashboardText = function( response ) {
 		if ( ! isDashboard || ! response || ! response.i18n_comments_text ) {
 			return;
 		}
 
-		var rightNow = $( '#dashboard_right_now' );
-
-		$( '.comment-count a', rightNow ).text( response.i18n_comments_text );
-		$( '.comment-mod-count a', rightNow ).text( response.i18n_moderation_text )
-			.parent()
-			[ response.in_moderation > 0 ? 'removeClass' : 'addClass' ]( 'hidden' );
+		$( '.comment-count a', '#dashboard_right_now' ).text( response.i18n_comments_text );
 	};
 
-	updateHtmlTitle = function ( diff ) {
+	/**
+	 * Updates the "comments in moderation" text across the UI.
+	 *
+	 * @since 5.2.0
+	 *
+	 * @param {object} response Ajax response from the server that includes a
+	 *                          translated "comments in moderation" message.
+	 *
+	 * @return {void}
+	 */
+	updateInModerationText = function( response ) {
+		if ( ! response || ! response.i18n_moderation_text ) {
+			return;
+		}
+
+		// Update the "comment in moderation" text across the UI.
+		$( '.comments-in-moderation-text' ).text( response.i18n_moderation_text );
+		// Hide the "comment in moderation" text in the Dashboard "At a Glance" widget.
+		if ( isDashboard && response.in_moderation ) {
+			$( '.comment-mod-count', '#dashboard_right_now' )
+				[ response.in_moderation > 0 ? 'removeClass' : 'addClass' ]( 'hidden' );
+		}
+	};
+
+	/**
+	 * Updates the title of the document with the number comments to be approved.
+	 *
+	 * @since 4.4.0
+	 * @access private
+	 *
+	 * @param {number} diff The amount to lower or raise the number of to be
+	 *                      approved comments with.
+	 *
+	 * @return {void}
+	 */
+	updateHtmlTitle = function( diff ) {
 		var newTitle, regExMatch, titleCount, commentFrag;
 
 		titleRegEx = titleRegEx || new RegExp( adminCommentsL10n.docTitleCommentsCount.replace( '%s', '\\([0-9' + thousandsSeparator + ']+\\)' ) + '?' );
@@ -128,6 +221,17 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 		document.title = newTitle;
 	};
 
+	/**
+	 * Updates the number of pending comments on a specific post and the filter bar.
+	 *
+	 * @since 3.2.0
+	 * @access private
+	 *
+	 * @param {number} diff The amount to lower or raise the pending count with.
+	 * @param {number} commentPostId The ID of the post to be updated.
+	 *
+	 * @return {void}
+	 */
 	updatePending = function( diff, commentPostId ) {
 		var postSelector = '.post-com-count-' + commentPostId,
 			noClass = 'comment-count-no-pending',
@@ -184,7 +288,16 @@ var getCount, updateCount, updateCountText, updatePending, updateApproved,
 		});
 	};
 
-setCommentsList = function() {
+/**
+ * Initializes the comments list.
+ *
+ * @since 4.4.0
+ *
+ * @global
+ *
+ * @return {void}
+ */
+window.setCommentsList = function() {
 	var totalInput, perPageInput, pageInput, dimAfter, delBefore, updateTotalCount, delAfter, refillTheExtraList, diff,
 		lastConfidentTime = 0;
 
@@ -192,7 +305,26 @@ setCommentsList = function() {
 	perPageInput = $('input[name="_per_page"]', '#comments-form');
 	pageInput = $('input[name="_page"]', '#comments-form');
 
-	// Updates the current total (stored in the _total input)
+	/**
+	 * Updates the total with the latest count.
+	 *
+	 * The time parameter makes sure that we only update the total if this value is
+	 * a newer value than we previously received.
+	 *
+	 * The time and setConfidentTime parameters make sure that we only update the
+	 * total when necessary. So a value that has been generated earlier will not
+	 * update the total.
+	 *
+	 * @since 2.8.0
+	 * @access private
+	 *
+	 * @param {number} total Total number of comments.
+	 * @param {number} time Unix timestamp of response.
+ 	 * @param {boolean} setConfidentTime Whether to update the last confident time
+	 *                                   with the given time.
+	 *
+	 * @return {void}
+	 */
 	updateTotalCount = function( total, time, setConfidentTime ) {
 		if ( time < lastConfidentTime )
 			return;
@@ -203,7 +335,17 @@ setCommentsList = function() {
 		totalInput.val( total.toString() );
 	};
 
-	// this fires when viewing "All"
+	/**
+	 * Changes DOM that need to be changed after a list item has been dimmed.
+	 *
+	 * @since 2.5.0
+	 * @access private
+	 *
+	 * @param {Object} r Ajax response object.
+	 * @param {Object} settings Settings for the wpList object.
+	 *
+	 * @return {void}
+	 */
 	dimAfter = function( r, settings ) {
 		var editRow, replyID, replyButton, response,
 			c = $( '#' + settings.element );
@@ -234,6 +376,7 @@ setCommentsList = function() {
 		diff = $('#' + settings.element).is('.' + settings.dimClass) ? 1 : -1;
 		if ( response ) {
 			updateDashboardText( response.supplemental );
+			updateInModerationText( response.supplemental );
 			updatePending( diff, response.supplemental.postId );
 			updateApproved( -1 * diff, response.supplemental.postId );
 		} else {
@@ -242,7 +385,19 @@ setCommentsList = function() {
 		}
 	};
 
-	// Send current total, page, per_page and url
+	/**
+	 * Handles marking a comment as spam or trashing the comment.
+	 *
+	 * Is executed in the list delBefore hook.
+	 *
+	 * @since 2.8.0
+	 * @access private
+	 *
+	 * @param {Object} settings Settings for the wpList object.
+	 * @param {HTMLElement} list Comments table element.
+	 *
+	 * @return {Object} The settings object.
+	 */
 	delBefore = function( settings, list ) {
 		var note, id, el, n, h, a, author,
 			action = false,
@@ -284,7 +439,7 @@ setCommentsList = function() {
 			a = $('.undo a', '#undo-' + id);
 			a.attr('href', 'comment.php?action=un' + action + 'comment&c=' + id + '&_wpnonce=' + settings.data._ajax_nonce);
 			a.attr('data-wp-lists', 'delete:the-comment-list:comment-' + id + '::un' + action + '=1');
-			a.attr('class', 'vim-z vim-destructive');
+			a.attr('class', 'vim-z vim-destructive aria-button-if-js');
 			$('.avatar', el).first().clone().prependTo('#undo-' + id + ' .' + action + '-undo-inside');
 
 			a.click(function( e ){
@@ -301,7 +456,21 @@ setCommentsList = function() {
 		return settings;
 	};
 
-	// In admin-ajax.php, we send back the unix time stamp instead of 1 on success
+	/**
+	 * Handles actions that need to be done after marking as spam or thrashing a
+	 * comment.
+	 *
+	 * The ajax requests return the unix time stamp a comment was marked as spam or
+	 * trashed. We use this to have a correct total amount of comments.
+	 *
+	 * @since 2.5.0
+	 * @access private
+	 *
+	 * @param {Object} r Ajax response object.
+	 * @param {Object} settings Settings for the wpList object.
+	 *
+	 * @return {void}
+	 */
 	delAfter = function( r, settings ) {
 		var total_items_i18n, total, animated, animatedCallback,
 			response = true === settings.parsed ? {} : settings.parsed.responses[0],
@@ -314,13 +483,18 @@ setCommentsList = function() {
 
 			spamDiff, trashDiff, pendingDiff, approvedDiff,
 
-			approved = commentRow.hasClass( 'approved' ),
+			/*
+			 * As `wpList` toggles only the `unapproved` class, the approved comment
+			 * rows can have both the `approved` and `unapproved` classes.
+			 */
+			approved = commentRow.hasClass( 'approved' ) && ! commentRow.hasClass( 'unapproved' ),
 			unapproved = commentRow.hasClass( 'unapproved' ),
 			spammed = commentRow.hasClass( 'spam' ),
 			trashed = commentRow.hasClass( 'trash' ),
 			undoing = false; // ticket #35904
 
 		updateDashboardText( newTotal );
+		updateInModerationText( newTotal );
 
 		// the order of these checks is important
 		// .unspam can also have .approve or .unapprove
@@ -482,8 +656,8 @@ setCommentsList = function() {
 				if ( response.supplemental.total_items_i18n && lastConfidentTime < response.supplemental.time ) {
 					total_items_i18n = response.supplemental.total_items_i18n || '';
 					if ( total_items_i18n ) {
-						$('.displaying-num').text( total_items_i18n );
-						$('.total-pages').text( response.supplemental.total_pages_i18n );
+						$('.displaying-num').text( total_items_i18n.replace( '&nbsp;', String.fromCharCode( 160 ) ) );
+						$('.total-pages').text( response.supplemental.total_pages_i18n.replace( '&nbsp;', String.fromCharCode( 160 ) ) );
 						$('.tablenav-pages').find('.next-page, .last-page').toggleClass('disabled', response.supplemental.total_pages == $('.current-page').val());
 					}
 					updateTotalCount( total, response.supplemental.time, true );
@@ -504,7 +678,7 @@ setCommentsList = function() {
 		refillTheExtraList();
 
 		animated = $( ':animated', '#the-comment-list' );
-		animatedCallback = function () {
+		animatedCallback = function() {
 			if ( ! $( '#the-comment-list tr:visible' ).length ) {
 				theList.get(0).wpList.add( theExtraList.find( '.no-items' ).clone() );
 			}
@@ -517,6 +691,16 @@ setCommentsList = function() {
 		}
 	};
 
+	/**
+	 * Retrieves additional comments to populate the extra list.
+	 *
+	 * @since 3.1.0
+	 * @access private
+	 *
+	 * @param {boolean} [ev] Repopulate the extra comments list if true.
+	 *
+	 * @return {void}
+	 */
 	refillTheExtraList = function(ev) {
 		var args = $.query.get(), total_pages = $('.total-pages').text(), per_page = $('input[name="_per_page"]', '#comments-form').val();
 
@@ -560,8 +744,19 @@ setCommentsList = function() {
 		});
 	};
 
-	theExtraList = $('#the-extra-comment-list').wpList( { alt: '', delColor: 'none', addColor: 'none' } );
-	theList = $('#the-comment-list').wpList( { alt: '', delBefore: delBefore, dimAfter: dimAfter, delAfter: delAfter, addColor: 'none' } )
+	/**
+	 * Globally available jQuery object referring to the extra comments list.
+	 *
+	 * @global
+	 */
+	window.theExtraList = $('#the-extra-comment-list').wpList( { alt: '', delColor: 'none', addColor: 'none' } );
+
+	/**
+	 * Globally available jQuery object referring to the comments list.
+	 *
+	 * @global
+	 */
+	window.theList = $('#the-comment-list').wpList( { alt: '', delBefore: delBefore, dimAfter: dimAfter, delAfter: delAfter, addColor: 'none' } )
 		.bind('wpListDelEnd', function(e, s){
 			var wpListsData = $(s.target).attr('data-wp-lists'), id = s.element.replace(/[^0-9]+/g, '');
 
@@ -570,16 +765,31 @@ setCommentsList = function() {
 		});
 };
 
-commentReply = {
+/**
+ * Object containing functionality regarding the comment quick editor and reply
+ * editor.
+ *
+ * @since 2.7.0
+ *
+ * @global
+ */
+window.commentReply = {
 	cid : '',
 	act : '',
 	originalContent : '',
 
+	/**
+	 * Initializes the comment reply functionality.
+	 *
+	 * @memberof commentReply
+	 *
+	 * @since 2.7.0
+	 */
 	init : function() {
 		var row = $('#replyrow');
 
-		$('a.cancel', row).click(function() { return commentReply.revert(); });
-		$('a.save', row).click(function() { return commentReply.send(); });
+		$( '.cancel', row ).click( function() { return commentReply.revert(); } );
+		$( '.save', row ).click( function() { return commentReply.send(); } );
 		$( 'input#author-name, input#author-email, input#author-url', row ).keypress( function( e ) {
 			if ( e.which == 13 ) {
 				commentReply.send();
@@ -599,12 +809,21 @@ commentReply = {
 		});
 
 		this.comments_listing = $('#comments-form > input[name="comment_status"]').val() || '';
-
-		/* $(listTable).bind('beforeChangePage', function(){
-			commentReply.close();
-		}); */
 	},
 
+	/**
+	 * Adds doubleclick event handler to the given comment list row.
+	 *
+	 * The double-click event will toggle the comment edit or reply form.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @param {Object} r The row to add double click handlers to.
+	 *
+	 * @return {void}
+	 */
 	addEvents : function(r) {
 		r.each(function() {
 			$(this).find('.column-comment > p').dblclick(function(){
@@ -613,12 +832,32 @@ commentReply = {
 		});
 	},
 
+	/**
+	 * Opens the quick edit for the given element.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @param {HTMLElement} el The element you want to open the quick editor for.
+	 *
+	 * @return {void}
+	 */
 	toggle : function(el) {
 		if ( 'none' !== $( el ).css( 'display' ) && ( $( '#replyrow' ).parent().is('#com-reply') || window.confirm( adminCommentsL10n.warnQuickEdit ) ) ) {
-			$( el ).find( 'a.vim-q' ).click();
+			$( el ).find( 'button.vim-q' ).click();
 		}
 	},
 
+	/**
+	 * Closes the comment quick edit or reply form and undoes any changes.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @return {void}
+	 */
 	revert : function() {
 
 		if ( $('#the-comment-list #replyrow').length < 1 )
@@ -627,39 +866,83 @@ commentReply = {
 		$('#replyrow').fadeOut('fast', function(){
 			commentReply.close();
 		});
-
-		return false;
 	},
 
+	/**
+	 * Closes the comment quick edit or reply form and undoes any changes.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @return {void}
+	 */
 	close : function() {
-		var c, replyrow = $('#replyrow');
+		var commentRow = $(),
+			replyRow = $( '#replyrow' );
 
-		// replyrow is not showing?
-		if ( replyrow.parent().is('#com-reply') )
+		// Return if the replyrow is not showing.
+		if ( replyRow.parent().is( '#com-reply' ) ) {
 			return;
+		}
 
-		if ( this.cid && this.act == 'edit-comment' ) {
-			c = $('#comment-' + this.cid);
-			c.fadeIn(300, function(){ c.show(); }).css('backgroundColor', '');
+		if ( this.cid ) {
+			commentRow = $( '#comment-' + this.cid );
+		}
+
+		/*
+		 * When closing the Quick Edit form, show the comment row and move focus
+		 * back to the Quick Edit button.
+		 */
+		if ( 'edit-comment' === this.act ) {
+			commentRow.fadeIn( 300, function() {
+				commentRow
+					.show()
+					.find( '.vim-q' )
+						.attr( 'aria-expanded', 'false' )
+						.focus();
+			} ).css( 'backgroundColor', '' );
+		}
+
+		// When closing the Reply form, move focus back to the Reply button.
+		if ( 'replyto-comment' === this.act ) {
+			commentRow.find( '.vim-r' )
+				.attr( 'aria-expanded', 'false' )
+				.focus();
 		}
 
 		// reset the Quicktags buttons
-		if ( typeof QTags != 'undefined' )
+ 		if ( typeof QTags != 'undefined' )
 			QTags.closeAllTags('replycontent');
 
 		$('#add-new-comment').css('display', '');
 
-		replyrow.hide();
-		$('#com-reply').append( replyrow );
+		replyRow.hide();
+		$( '#com-reply' ).append( replyRow );
 		$('#replycontent').css('height', '').val('');
 		$('#edithead input').val('');
-		$('.error', replyrow).empty().hide();
-		$( '.spinner', replyrow ).removeClass( 'is-active' );
+		$( '.notice-error', replyRow )
+			.addClass( 'hidden' )
+			.find( '.error' ).empty();
+		$( '.spinner', replyRow ).removeClass( 'is-active' );
 
 		this.cid = '';
 		this.originalContent = '';
 	},
 
+	/**
+	 * Opens the comment quick edit or reply form.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @param {number} comment_id The comment id to open an editor for.
+	 * @param {number} post_id The post id to open an editor for.
+	 * @param {string} action The action to perform. Either 'edit' or 'replyto'.
+	 *
+	 * @return {boolean} Always false.
+	 */
 	open : function(comment_id, post_id, action) {
 		var editRow, rowData, act, replyButton, editHeight,
 			t = this,
@@ -753,10 +1036,20 @@ commentReply = {
 		return false;
 	},
 
+	/**
+	 * Submits the comment quick edit or reply form.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @return {void}
+	 */
 	send : function() {
-		var post = {};
+		var post = {},
+			$errorNotice = $( '#replysubmit .error-notice' );
 
-		$('#replysubmit .error').hide();
+		$errorNotice.addClass( 'hidden' );
 		$( '#replysubmit .spinner' ).addClass( 'is-active' );
 
 		$('#replyrow input').not(':button').each(function() {
@@ -779,10 +1072,23 @@ commentReply = {
 			success : function(x) { commentReply.show(x); },
 			error : function(r) { commentReply.error(r); }
 		});
-
-		return false;
 	},
 
+	/**
+	 * Shows the new or updated comment or reply.
+	 *
+	 * This function needs to be passed the ajax result as received from the server.
+	 * It will handle the response and show the comment that has just been saved to
+	 * the server.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @param {Object} xml Ajax response object.
+	 *
+	 * @return {void}
+	 */
 	show : function(xml) {
 		var t = this, r, c, id, bg, pid;
 
@@ -818,12 +1124,10 @@ commentReply = {
 		}
 
 		if ( r.supplemental.i18n_comments_text ) {
-			if ( isDashboard ) {
-				updateDashboardText( r.supplemental );
-			} else {
-				updateApproved( 1, r.supplemental.parent_post_id );
-				updateCountText( 'span.all-count', 1 );
-			}
+			updateDashboardText( r.supplemental );
+			updateInModerationText( r.supplemental );
+			updateApproved( 1, r.supplemental.parent_post_id );
+			updateCountText( 'span.all-count', 1 );
 		}
 
 		c = $.trim(r.data); // Trim leading whitespaces
@@ -846,19 +1150,44 @@ commentReply = {
 
 	},
 
+	/**
+	 * Shows an error for the failed comment update or reply.
+	 *
+	 * @since 2.7.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @param {string} r The Ajax response.
+	 *
+	 * @return {void}
+	 */
 	error : function(r) {
-		var er = r.statusText;
+		var er = r.statusText,
+			$errorNotice = $( '#replysubmit .notice-error' ),
+			$error = $errorNotice.find( '.error' );
 
 		$( '#replysubmit .spinner' ).removeClass( 'is-active' );
 
 		if ( r.responseText )
 			er = r.responseText.replace( /<.[^<>]*?>/g, '' );
 
-		if ( er )
-			$('#replysubmit .error').html(er).show();
-
+		if ( er ) {
+			$errorNotice.removeClass( 'hidden' );
+			$error.html( er );
+		}
 	},
 
+	/**
+	 * Opens the add comments form in the comments metabox on the post edit page.
+	 *
+	 * @since 3.4.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @param {number} post_id The post id.
+	 *
+	 * @return {void}
+	 */
 	addcomment: function(post_id) {
 		var t = this;
 
@@ -870,10 +1199,14 @@ commentReply = {
 	},
 
 	/**
-	 * Alert the user if they have unsaved changes on a comment that will be
-	 * lost if they proceed.
+	 * Alert the user if they have unsaved changes on a comment that will be lost if
+	 * they proceed with the intended action.
 	 *
-	 * @returns {boolean}
+	 * @since 4.6.0
+	 *
+	 * @memberof commentReply
+	 *
+	 * @return {boolean} Whether it is safe the continue with the intended action.
 	 */
 	discardCommentChanges: function() {
 		var editRow = $( '#replyrow' );
@@ -897,6 +1230,16 @@ $(document).ready(function(){
 	});
 
 	if ( typeof $.table_hotkeys != 'undefined' ) {
+		/**
+		 * Creates a function that navigates to a previous or next page.
+		 *
+		 * @since 2.7.0
+		 * @access private
+		 *
+		 * @param {string} which What page to navigate to: either next or prev.
+		 *
+		 * @return {Function} The function that executes the navigation.
+		 */
 		make_hotkeys_redirect = function(which) {
 			return function() {
 				var first_last, l;
@@ -908,14 +1251,43 @@ $(document).ready(function(){
 			};
 		};
 
+		/**
+		 * Navigates to the edit page for the selected comment.
+		 *
+		 * @since 2.7.0
+		 * @access private
+		 *
+		 * @param {Object} event       The event that triggered this action.
+		 * @param {Object} current_row A jQuery object of the selected row.
+		 *
+		 * @return {void}
+		 */
 		edit_comment = function(event, current_row) {
 			window.location = $('span.edit a', current_row).attr('href');
 		};
 
+		/**
+		 * Toggles all comments on the screen, for bulk actions.
+		 *
+		 * @since 2.7.0
+		 * @access private
+		 *
+		 * @return {void}
+		 */
 		toggle_all = function() {
 			$('#cb-select-all-1').data( 'wp-toggle', 1 ).trigger( 'click' ).removeData( 'wp-toggle' );
 		};
 
+		/**
+		 * Creates a bulk action function that is executed on all selected comments.
+		 *
+		 * @since 2.7.0
+		 * @access private
+		 *
+		 * @param {string} value The name of the action to execute.
+		 *
+		 * @return {Function} The function that executes the bulk action.
+		 */
 		make_bulk = function(value) {
 			return function() {
 				var scope = $('select[name="action"]');
@@ -954,8 +1326,7 @@ $(document).ready(function(){
 	}
 
 	// Quick Edit and Reply have an inline comment editor.
-	$( '#the-comment-list' ).on( 'click', '.comment-inline', function (e) {
-		e.preventDefault();
+	$( '#the-comment-list' ).on( 'click', '.comment-inline', function() {
 		var $el = $( this ),
 			action = 'replyto';
 
@@ -963,6 +1334,7 @@ $(document).ready(function(){
 			action = $el.data( 'action' );
 		}
 
+		$( this ).attr( 'aria-expanded', 'true' );
 		commentReply.open( $el.data( 'commentId' ), $el.data( 'postId' ), action );
 	} );
 });

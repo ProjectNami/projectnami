@@ -1,22 +1,24 @@
-/* global plugininstallL10n, tb_click, tb_remove */
-
 /**
- * Functionality for the plugin install screens.
+ * @file Functionality for the plugin install screens.
+ *
+ * @output wp-admin/js/plugin-install.js
  */
-var tb_position;
+
+/* global plugininstallL10n, tb_click, tb_remove, tb_position */
+
 jQuery( document ).ready( function( $ ) {
 
 	var tbWindow,
-		$focusedBefore,
 		$iframeBody,
 		$tabbables,
 		$firstTabbable,
 		$lastTabbable,
+		$focusedBefore = $(),
 		$uploadViewToggle = $( '.upload-view-toggle' ),
 		$wrap = $ ( '.wrap' ),
 		$body = $( document.body );
 
-	tb_position = function() {
+	window.tb_position = function() {
 		var width = $( window ).width(),
 			H = $( window ).height() - ( ( 792 < width ) ? 60 : 20 ),
 			W = ( 792 < width ) ? 772 : width - 20;
@@ -58,6 +60,16 @@ jQuery( document ).ready( function( $ ) {
 	 */
 	$body
 		.on( 'thickbox:iframe:loaded', tbWindow, function() {
+			/*
+			 * Return if it's not the modal with the plugin details iframe. Other
+			 * thickbox instances might want to load an iframe with content from
+			 * an external domain. Avoid to access the iframe contents when we're
+			 * not sure the iframe loads from the same domain.
+			 */
+			if ( ! tbWindow.hasClass( 'plugin-details-modal' ) ) {
+				return;
+			}
+
 			iframeLoaded();
 		})
 		.on( 'thickbox:removed', function() {
@@ -136,8 +148,13 @@ jQuery( document ).ready( function( $ ) {
 		}
 	}
 
-	// Open the Plugin details modal.
-	$( '.thickbox.open-plugin-details-modal' ).on( 'click', function( e ) {
+	/*
+	 * Open the Plugin details modal. The event is delegated to get also the links
+	 * in the plugins search tab, after the AJAX search rebuilds the HTML. It's
+	 * delegated on the closest ancestor and not on the body to avoid conflicts
+	 * with other handlers, see Trac ticket #43082.
+	 */
+	$( '.wrap' ).on( 'click', '.thickbox.open-plugin-details-modal', function( e ) {
 		// The `data-title` attribute is used only in the Plugin screens.
 		var title = $( this ).data( 'title' ) ? plugininstallL10n.plugin_information + ' ' + $( this ).data( 'title' ) : plugininstallL10n.plugin_modal_label;
 
@@ -149,11 +166,13 @@ jQuery( document ).ready( function( $ ) {
 
 		tb_click.call(this);
 
-		// Set ARIA role and ARIA label.
-		tbWindow.attr({
-			'role': 'dialog',
-			'aria-label': plugininstallL10n.plugin_modal_label
-		});
+		// Set ARIA role, ARIA label, and add a CSS class.
+		tbWindow
+			.attr({
+				'role': 'dialog',
+				'aria-label': plugininstallL10n.plugin_modal_label
+			})
+			.addClass( 'plugin-details-modal' );
 
 		// Set title attribute on the iframe.
 		tbWindow.find( '#TB_iframeContent' ).attr( 'title', title );

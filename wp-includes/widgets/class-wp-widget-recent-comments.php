@@ -20,12 +20,11 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 	 * Sets up a new Recent Comments widget instance.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 */
 	public function __construct() {
 		$widget_ops = array(
-			'classname' => 'widget_recent_comments',
-			'description' => __( 'Your site&#8217;s most recent comments.' ),
+			'classname'                   => 'widget_recent_comments',
+			'description'                 => __( 'Your site&#8217;s most recent comments.' ),
 			'customize_selective_refresh' => true,
 		);
 		parent::__construct( 'recent-comments', __( 'Recent Comments' ), $widget_ops );
@@ -36,11 +35,10 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 		}
 	}
 
- 	/**
+	/**
 	 * Outputs the default styles for the Recent Comments widget.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 */
 	public function recent_comments_style() {
 		/**
@@ -52,26 +50,31 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 		 * @param string $id_base The widget ID.
 		 */
 		if ( ! current_theme_supports( 'widgets' ) // Temp hack #14876
-			|| ! apply_filters( 'show_recent_comments_widget_style', true, $this->id_base ) )
+			|| ! apply_filters( 'show_recent_comments_widget_style', true, $this->id_base ) ) {
 			return;
-		?>
-		<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
-		<?php
+		}
+
+		$type_attr = current_theme_supports( 'html5', 'style' ) ? '' : ' type="text/css"';
+
+		printf(
+			'<style%s>.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>',
+			$type_attr
+		);
 	}
 
 	/**
 	 * Outputs the content for the current Recent Comments widget instance.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @param array $args     Display arguments including 'before_title', 'after_title',
 	 *                        'before_widget', and 'after_widget'.
 	 * @param array $instance Settings for the current Recent Comments widget instance.
 	 */
 	public function widget( $args, $instance ) {
-		if ( ! isset( $args['widget_id'] ) )
+		if ( ! isset( $args['widget_id'] ) ) {
 			$args['widget_id'] = $this->id;
+		}
 
 		$output = '';
 
@@ -81,23 +84,32 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 		$title = apply_filters( 'widget_title', $title, $instance, $this->id_base );
 
 		$number = ( ! empty( $instance['number'] ) ) ? absint( $instance['number'] ) : 5;
-		if ( ! $number )
+		if ( ! $number ) {
 			$number = 5;
+		}
 
 		/**
 		 * Filters the arguments for the Recent Comments widget.
 		 *
 		 * @since 3.4.0
+		 * @since 4.9.0 Added the `$instance` parameter.
 		 *
 		 * @see WP_Comment_Query::query() for information on accepted arguments.
 		 *
 		 * @param array $comment_args An array of arguments used to retrieve the recent comments.
+		 * @param array $instance     Array of settings for the current widget.
 		 */
-		$comments = get_comments( apply_filters( 'widget_comments_args', array(
-			'number'      => $number,
-			'status'      => 'approve',
-			'post_status' => 'publish'
-		) ) );
+		$comments = get_comments(
+			apply_filters(
+				'widget_comments_args',
+				array(
+					'number'      => $number,
+					'status'      => 'approve',
+					'post_status' => 'publish',
+				),
+				$instance
+			)
+		);
 
 		$output .= $args['before_widget'];
 		if ( $title ) {
@@ -112,8 +124,9 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 
 			foreach ( (array) $comments as $comment ) {
 				$output .= '<li class="recentcomments">';
-				/* translators: comments widget: 1: comment author, 2: post link */
-				$output .= sprintf( _x( '%1$s on %2$s', 'widgets' ),
+				$output .= sprintf(
+					/* translators: Comments widget. 1: Comment author, 2: Post link. */
+					_x( '%1$s on %2$s', 'widgets' ),
 					'<span class="comment-author-link">' . get_comment_author_link( $comment ) . '</span>',
 					'<a href="' . esc_url( get_comment_link( $comment ) ) . '">' . get_the_title( $comment->comment_post_ID ) . '</a>'
 				);
@@ -130,7 +143,6 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 	 * Handles updating settings for the current Recent Comments widget instance.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @param array $new_instance New settings for this instance as input by the user via
 	 *                            WP_Widget::form().
@@ -138,8 +150,8 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 	 * @return array Updated settings to save.
 	 */
 	public function update( $new_instance, $old_instance ) {
-		$instance = $old_instance;
-		$instance['title'] = sanitize_text_field( $new_instance['title'] );
+		$instance           = $old_instance;
+		$instance['title']  = sanitize_text_field( $new_instance['title'] );
 		$instance['number'] = absint( $new_instance['number'] );
 		return $instance;
 	}
@@ -148,12 +160,11 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 	 * Outputs the settings form for the Recent Comments widget.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @param array $instance Current settings.
 	 */
 	public function form( $instance ) {
-		$title = isset( $instance['title'] ) ? $instance['title'] : '';
+		$title  = isset( $instance['title'] ) ? $instance['title'] : '';
 		$number = isset( $instance['number'] ) ? absint( $instance['number'] ) : 5;
 		?>
 		<p><label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Title:' ); ?></label>
@@ -168,7 +179,6 @@ class WP_Widget_Recent_Comments extends WP_Widget {
 	 * Flushes the Recent Comments widget cache.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @deprecated 4.4.0 Fragment caching was removed in favor of split queries.
 	 */

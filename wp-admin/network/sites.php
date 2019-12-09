@@ -10,43 +10,48 @@
 /** Load WordPress Administration Bootstrap */
 require_once( dirname( __FILE__ ) . '/admin.php' );
 
-if ( ! current_user_can( 'manage_sites' ) )
+if ( ! current_user_can( 'manage_sites' ) ) {
 	wp_die( __( 'Sorry, you are not allowed to access this page.' ), 403 );
+}
 
 $wp_list_table = _get_list_table( 'WP_MS_Sites_List_Table' );
-$pagenum = $wp_list_table->get_pagenum();
+$pagenum       = $wp_list_table->get_pagenum();
 
-$title = __( 'Sites' );
+$title       = __( 'Sites' );
 $parent_file = 'sites.php';
 
 add_screen_option( 'per_page' );
 
-get_current_screen()->add_help_tab( array(
-	'id'      => 'overview',
-	'title'   => __('Overview'),
-	'content' =>
-		'<p>' . __('Add New takes you to the Add New Site screen. You can search for a site by Name, ID number, or IP address. Screen Options allows you to choose how many sites to display on one page.') . '</p>' .
-		'<p>' . __('This is the main table of all sites on this network. Switch between list and excerpt views by using the icons above the right side of the table.') . '</p>' .
-		'<p>' . __('Hovering over each site reveals seven options (three for the primary site):') . '</p>' .
-		'<ul><li>' . __('An Edit link to a separate Edit Site screen.') . '</li>' .
-		'<li>' . __('Dashboard leads to the Dashboard for that site.') . '</li>' .
-		'<li>' . __('Deactivate, Archive, and Spam which lead to confirmation screens. These actions can be reversed later.') . '</li>' .
-		'<li>' . __('Delete which is a permanent action after the confirmation screens.') . '</li>' .
-		'<li>' . __('Visit to go to the front-end site live.') . '</li></ul>' .
-		'<p>' . __('The site ID is used internally, and is not shown on the front end of the site or to users/viewers.') . '</p>' .
-		'<p>' . __('Clicking on bold headings can re-sort this table.') . '</p>'
-) );
-
-get_current_screen()->set_help_sidebar(
-	'<p><strong>' . __('For more information:') . '</strong></p>' .
-	'<p>' . __('<a href="https://codex.wordpress.org/Network_Admin_Sites_Screen">Documentation on Site Management</a>') . '</p>' .
-	'<p>' . __('<a href="https://wordpress.org/support/forum/multisite/">Support Forums</a>') . '</p>'
+get_current_screen()->add_help_tab(
+	array(
+		'id'      => 'overview',
+		'title'   => __( 'Overview' ),
+		'content' =>
+			'<p>' . __( 'Add New takes you to the Add New Site screen. You can search for a site by Name, ID number, or IP address. Screen Options allows you to choose how many sites to display on one page.' ) . '</p>' .
+			'<p>' . __( 'This is the main table of all sites on this network. Switch between list and excerpt views by using the icons above the right side of the table.' ) . '</p>' .
+			'<p>' . __( 'Hovering over each site reveals seven options (three for the primary site):' ) . '</p>' .
+			'<ul><li>' . __( 'An Edit link to a separate Edit Site screen.' ) . '</li>' .
+			'<li>' . __( 'Dashboard leads to the Dashboard for that site.' ) . '</li>' .
+			'<li>' . __( 'Deactivate, Archive, and Spam which lead to confirmation screens. These actions can be reversed later.' ) . '</li>' .
+			'<li>' . __( 'Delete which is a permanent action after the confirmation screens.' ) . '</li>' .
+			'<li>' . __( 'Visit to go to the front-end site live.' ) . '</li></ul>' .
+			'<p>' . __( 'The site ID is used internally, and is not shown on the front end of the site or to users/viewers.' ) . '</p>' .
+			'<p>' . __( 'Clicking on bold headings can re-sort this table.' ) . '</p>',
+	)
 );
 
-get_current_screen()->set_screen_reader_content( array(
-	'heading_pagination' => __( 'Sites list navigation' ),
-	'heading_list'       => __( 'Sites list' ),
-) );
+get_current_screen()->set_help_sidebar(
+	'<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
+	'<p>' . __( '<a href="https://wordpress.org/support/article/network-admin-sites-screen/">Documentation on Site Management</a>' ) . '</p>' .
+	'<p>' . __( '<a href="https://wordpress.org/support/forum/multisite/">Support Forums</a>' ) . '</p>'
+);
+
+get_current_screen()->set_screen_reader_content(
+	array(
+		'heading_pagination' => __( 'Sites list navigation' ),
+		'heading_list'       => __( 'Sites list' ),
+	)
+);
 
 $id = isset( $_REQUEST['id'] ) ? intval( $_REQUEST['id'] ) : 0;
 
@@ -56,14 +61,23 @@ if ( isset( $_GET['action'] ) ) {
 
 	// A list of valid actions and their associated messaging for confirmation output.
 	$manage_actions = array(
+		/* translators: %s: Site URL. */
 		'activateblog'   => __( 'You are about to activate the site %s.' ),
+		/* translators: %s: Site URL. */
 		'deactivateblog' => __( 'You are about to deactivate the site %s.' ),
+		/* translators: %s: Site URL. */
 		'unarchiveblog'  => __( 'You are about to unarchive the site %s.' ),
+		/* translators: %s: Site URL. */
 		'archiveblog'    => __( 'You are about to archive the site %s.' ),
+		/* translators: %s: Site URL. */
 		'unspamblog'     => __( 'You are about to unspam the site %s.' ),
+		/* translators: %s: Site URL. */
 		'spamblog'       => __( 'You are about to mark the site %s as spam.' ),
+		/* translators: %s: Site URL. */
 		'deleteblog'     => __( 'You are about to delete the site %s.' ),
+		/* translators: %s: Site URL. */
 		'unmatureblog'   => __( 'You are about to mark the site %s as mature.' ),
+		/* translators: %s: Site URL. */
 		'matureblog'     => __( 'You are about to mark the site %s as not mature.' ),
 	);
 
@@ -122,15 +136,45 @@ if ( isset( $_GET['action'] ) ) {
 	switch ( $_GET['action'] ) {
 
 		case 'deleteblog':
-			if ( ! current_user_can( 'delete_sites' ) )
+			if ( ! current_user_can( 'delete_sites' ) ) {
 				wp_die( __( 'Sorry, you are not allowed to access this page.' ), '', array( 'response' => 403 ) );
+			}
 
 			$updated_action = 'not_deleted';
 			if ( $id != '0' && $id != get_network()->site_id && current_user_can( 'delete_site', $id ) ) {
 				wpmu_delete_blog( $id, true );
 				$updated_action = 'delete';
 			}
-		break;
+			break;
+
+		case 'delete_sites':
+			check_admin_referer( 'ms-delete-sites' );
+
+			foreach ( (array) $_POST['site_ids'] as $site_id ) {
+				$site_id = (int) $site_id;
+
+				if ( $site_id == get_network()->site_id ) {
+					continue;
+				}
+
+				if ( ! current_user_can( 'delete_site', $site_id ) ) {
+					$site         = get_site( $site_id );
+					$site_address = untrailingslashit( $site->domain . $site->path );
+
+					wp_die(
+						sprintf(
+							/* translators: %s: Site URL. */
+							__( 'Sorry, you are not allowed to delete the site %s.' ),
+							$site_address
+						),
+						403
+					);
+				}
+
+				$updated_action = 'all_delete';
+				wpmu_delete_blog( $site_id, true );
+			}
+			break;
 
 		case 'allblogs':
 			if ( ( isset( $_POST['action'] ) || isset( $_POST['action2'] ) ) && isset( $_POST['allblogs'] ) ) {
@@ -140,18 +184,40 @@ if ( isset( $_GET['action'] ) ) {
 					if ( $val != '0' && $val != get_network()->site_id ) {
 						switch ( $doaction ) {
 							case 'delete':
-								if ( ! current_user_can( 'delete_site', $val ) )
-									wp_die( __( 'Sorry, you are not allowed to delete the site.' ) );
-
-								$updated_action = 'all_delete';
-								wpmu_delete_blog( $val, true );
+								require_once( ABSPATH . 'wp-admin/admin-header.php' );
+								?>
+								<div class="wrap">
+									<h1><?php _e( 'Confirm your action' ); ?></h1>
+									<form action="sites.php?action=delete_sites" method="post">
+										<input type="hidden" name="action" value="delete_sites" />
+										<input type="hidden" name="_wp_http_referer" value="<?php echo esc_attr( wp_get_referer() ); ?>" />
+										<?php wp_nonce_field( 'ms-delete-sites', '_wpnonce', false ); ?>
+										<p><?php _e( 'You are about to delete the following sites:' ); ?></p>
+										<ul class="ul-disc">
+											<?php
+											foreach ( $_POST['allblogs'] as $site_id ) :
+												$site         = get_site( $site_id );
+												$site_address = untrailingslashit( $site->domain . $site->path );
+												?>
+												<li>
+													<?php echo $site_address; ?>
+													<input type="hidden" name="site_ids[]" value="<?php echo (int) $site_id; ?>" />
+												</li>
+											<?php endforeach; ?>
+										</ul>
+										<?php submit_button( __( 'Confirm' ), 'primary' ); ?>
+									</form>
+								</div>
+								<?php
+								require_once( ABSPATH . 'wp-admin/admin-footer.php' );
+								exit();
 							break;
 
 							case 'spam':
 							case 'notspam':
 								$updated_action = ( 'spam' === $doaction ) ? 'all_spam' : 'all_notspam';
 								update_blog_status( $val, 'spam', ( 'spam' === $doaction ) ? '1' : '0' );
-							break;
+								break;
 						}
 					} else {
 						wp_die( __( 'Sorry, you are not allowed to change the current site.' ) );
@@ -159,26 +225,28 @@ if ( isset( $_GET['action'] ) ) {
 				}
 				if ( ! in_array( $doaction, array( 'delete', 'spam', 'notspam' ), true ) ) {
 					$redirect_to = wp_get_referer();
-					$blogs = (array) $_POST['allblogs'];
+					$blogs       = (array) $_POST['allblogs'];
 					/** This action is documented in wp-admin/network/site-themes.php */
-					$redirect_to = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $redirect_to, $doaction, $blogs, $id );
+					$redirect_to = apply_filters( 'handle_network_bulk_actions-' . get_current_screen()->id, $redirect_to, $doaction, $blogs, $id ); // phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 					wp_safe_redirect( $redirect_to );
 					exit();
 				}
 			} else {
-				$location = network_admin_url( 'sites.php' );
-				if ( ! empty( $_REQUEST['paged'] ) ) {
-					$location = add_query_arg( 'paged', (int) $_REQUEST['paged'], $location );
-				}
+				// Process query defined by WP_MS_Site_List_Table::extra_table_nav().
+				$location = remove_query_arg(
+					array( '_wp_http_referer', '_wpnonce' ),
+					add_query_arg( $_POST, network_admin_url( 'sites.php' ) )
+				);
 				wp_redirect( $location );
-				exit();
+				exit;
 			}
-		break;
+
+			break;
 
 		case 'archiveblog':
 		case 'unarchiveblog':
 			update_blog_status( $id, 'archived', ( 'archiveblog' === $_GET['action'] ) ? '1' : '0' );
-		break;
+			break;
 
 		case 'activateblog':
 			update_blog_status( $id, 'deleted', '0' );
@@ -186,34 +254,34 @@ if ( isset( $_GET['action'] ) ) {
 			/**
 			 * Fires after a network site is activated.
 			 *
-			 * @since MU
+			 * @since MU (3.0.0)
 			 *
 			 * @param string $id The ID of the activated site.
 			 */
 			do_action( 'activate_blog', $id );
-		break;
+			break;
 
 		case 'deactivateblog':
 			/**
 			 * Fires before a network site is deactivated.
 			 *
-			 * @since MU
+			 * @since MU (3.0.0)
 			 *
 			 * @param string $id The ID of the site being deactivated.
 			 */
 			do_action( 'deactivate_blog', $id );
 			update_blog_status( $id, 'deleted', '1' );
-		break;
+			break;
 
 		case 'unspamblog':
 		case 'spamblog':
 			update_blog_status( $id, 'spam', ( 'spamblog' === $_GET['action'] ) ? '1' : '0' );
-		break;
+			break;
 
 		case 'unmatureblog':
 		case 'matureblog':
 			update_blog_status( $id, 'mature', ( 'matureblog' === $_GET['action'] ) ? '1' : '0' );
-		break;
+			break;
 	}
 
 	if ( empty( $updated_action ) && array_key_exists( $_GET['action'], $manage_actions ) ) {
@@ -228,57 +296,60 @@ if ( isset( $_GET['action'] ) ) {
 
 $msg = '';
 if ( isset( $_GET['updated'] ) ) {
-	switch ( $_GET['updated'] ) {
+	$action = $_GET['updated'];
+
+	switch ( $action ) {
 		case 'all_notspam':
 			$msg = __( 'Sites removed from spam.' );
-		break;
+			break;
 		case 'all_spam':
 			$msg = __( 'Sites marked as spam.' );
-		break;
+			break;
 		case 'all_delete':
 			$msg = __( 'Sites deleted.' );
-		break;
+			break;
 		case 'delete':
 			$msg = __( 'Site deleted.' );
-		break;
+			break;
 		case 'not_deleted':
 			$msg = __( 'Sorry, you are not allowed to delete that site.' );
-		break;
+			break;
 		case 'archiveblog':
 			$msg = __( 'Site archived.' );
-		break;
+			break;
 		case 'unarchiveblog':
 			$msg = __( 'Site unarchived.' );
-		break;
+			break;
 		case 'activateblog':
 			$msg = __( 'Site activated.' );
-		break;
+			break;
 		case 'deactivateblog':
 			$msg = __( 'Site deactivated.' );
-		break;
+			break;
 		case 'unspamblog':
 			$msg = __( 'Site removed from spam.' );
-		break;
+			break;
 		case 'spamblog':
 			$msg = __( 'Site marked as spam.' );
-		break;
+			break;
 		default:
 			/**
-			 * Filters a specific, non-default site-updated message in the Network admin.
+			 * Filters a specific, non-default, site-updated message in the Network admin.
 			 *
-			 * The dynamic portion of the hook name, `$_GET['updated']`, refers to the
-			 * non-default site update action.
+			 * The dynamic portion of the hook name, `$action`, refers to the non-default
+			 * site update action.
 			 *
 			 * @since 3.1.0
 			 *
 			 * @param string $msg The update message. Default 'Settings saved'.
 			 */
-			$msg = apply_filters( 'network_sites_updated_message_' . $_GET['updated'], __( 'Settings saved.' ) );
-		break;
+			$msg = apply_filters( "network_sites_updated_message_{$action}", __( 'Settings saved.' ) );
+			break;
 	}
 
-	if ( ! empty( $msg ) )
+	if ( ! empty( $msg ) ) {
 		$msg = '<div id="message" class="updated notice is-dismissible"><p>' . $msg . '</p></div>';
+	}
 }
 
 $wp_list_table->prepare_items();
@@ -289,22 +360,24 @@ require_once( ABSPATH . 'wp-admin/admin-header.php' );
 <div class="wrap">
 <h1 class="wp-heading-inline"><?php _e( 'Sites' ); ?></h1>
 
-<?php if ( current_user_can( 'create_sites') ) : ?>
-	<a href="<?php echo network_admin_url('site-new.php'); ?>" class="page-title-action"><?php echo esc_html_x( 'Add New', 'site' ); ?></a>
+<?php if ( current_user_can( 'create_sites' ) ) : ?>
+	<a href="<?php echo network_admin_url( 'site-new.php' ); ?>" class="page-title-action"><?php echo esc_html_x( 'Add New', 'site' ); ?></a>
 <?php endif; ?>
 
 <?php
 if ( isset( $_REQUEST['s'] ) && strlen( $_REQUEST['s'] ) ) {
-	/* translators: %s: search keywords */
+	/* translators: %s: Search query. */
 	printf( '<span class="subtitle">' . __( 'Search results for &#8220;%s&#8221;' ) . '</span>', esc_html( $s ) );
 }
 ?>
 
 <hr class="wp-header-end">
 
+<?php $wp_list_table->views(); ?>
+
 <?php echo $msg; ?>
 
-<form method="get" id="ms-search">
+<form method="get" id="ms-search" class="wp-clearfix">
 <?php $wp_list_table->search_box( __( 'Search Sites' ), 'site' ); ?>
 <input type="hidden" name="action" value="blogs" />
 </form>

@@ -21,7 +21,6 @@
 /* Note: widget-tops are more compact when (max-height: 700px) and (min-width: 981px). */
 .customize-control-widget_form .widget-top {
 	background: #fff;
-	-webkit-transition: opacity 0.5s;
 	transition: opacity 0.5s;
 }
 
@@ -76,7 +75,6 @@
 }
 
 .customize-control-widget_form.wide-widget-control .widget-top {
-	-webkit-transition: background-color 0.4s;
 	transition: background-color 0.4s;
 }
 .customize-control-widget_form.wide-widget-control.expanding .widget-top,
@@ -87,7 +85,7 @@
 .widget-inside {
 	padding: 1px 10px 10px 10px;
 	border-top: none;
-	line-height: 16px;
+	line-height: 1.23076923;
 }
 
 .customize-control-widget_form.expanded .widget-action .toggle-indicator:before {
@@ -114,8 +112,7 @@
 .control-section.accordion-section.highlighted > .accordion-section-title,
 .customize-control-widget_form.highlighted {
 	outline: none;
-	-webkit-box-shadow: 0 0 2px rgba(30,140,190,0.8);
-	box-shadow: 0 0 2px rgba(30,140,190,0.8);
+	box-shadow: 0 0 2px rgba(30, 140, 190, 0.8);
 	position: relative;
 	z-index: 1;
 }
@@ -192,7 +189,7 @@
 
 #customize-theme-controls .widget-area-select .selected {
 	color: #fff;
-	text-shadow: 0 -1px 0 rgba(0,0,0,.4);
+	text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
 	background: #00a0d2;
 }
 
@@ -238,8 +235,12 @@
 	width: auto !important;
 }
 
+/* Keep rule that is no longer necessary on widgets.php. */
+#available-widgets .widget-action {
+	display: none;
+}
+
 .ios #available-widgets {
-	-webkit-transition: left 0s;
 	transition: left 0s;
 }
 
@@ -266,7 +267,6 @@
 }
 
 #customize-preview {
-	-webkit-transition: all 0.2s;
 	transition: all 0.2s;
 }
 
@@ -305,8 +305,6 @@ body.adding-widget #customize-preview {
 	color: #32373c;
 	font: normal 20px/1 dashicons;
 	text-align: center;
-	-webkit-box-sizing: border-box;
-	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -445,7 +443,6 @@ body.adding-widget #customize-preview {
 	}
 
 	.widget-top {
-		-webkit-box-shadow: none;
 		box-shadow: none;
 		margin-top: -1px;
 	}

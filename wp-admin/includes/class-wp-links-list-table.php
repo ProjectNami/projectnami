@@ -21,21 +21,21 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Constructor.
 	 *
 	 * @since 3.1.0
-	 * @access public
 	 *
 	 * @see WP_List_Table::__construct() for more information on default arguments.
 	 *
 	 * @param array $args An associative array of arguments.
 	 */
 	public function __construct( $args = array() ) {
-		parent::__construct( array(
-			'plural' => 'bookmarks',
-			'screen' => isset( $args['screen'] ) ? $args['screen'] : null,
-		) );
+		parent::__construct(
+			array(
+				'plural' => 'bookmarks',
+				'screen' => isset( $args['screen'] ) ? $args['screen'] : null,
+			)
+		);
 	}
 
 	/**
-	 *
 	 * @return bool
 	 */
 	public function ajax_user_can() {
@@ -43,7 +43,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	}
 
 	/**
-	 *
 	 * @global int    $cat_id
 	 * @global string $s
 	 * @global string $orderby
@@ -54,72 +53,76 @@ class WP_Links_List_Table extends WP_List_Table {
 
 		wp_reset_vars( array( 'action', 'cat_id', 'link_id', 'orderby', 'order', 's' ) );
 
-		$args = array( 'hide_invisible' => 0, 'hide_empty' => 0 );
+		$args = array(
+			'hide_invisible' => 0,
+			'hide_empty'     => 0,
+		);
 
-		if ( 'all' != $cat_id )
+		if ( 'all' !== $cat_id ) {
 			$args['category'] = $cat_id;
-		if ( !empty( $s ) )
+		}
+		if ( ! empty( $s ) ) {
 			$args['search'] = $s;
-		if ( !empty( $orderby ) )
+		}
+		if ( ! empty( $orderby ) ) {
 			$args['orderby'] = $orderby;
-		if ( !empty( $order ) )
+		}
+		if ( ! empty( $order ) ) {
 			$args['order'] = $order;
+		}
 
 		$this->items = get_bookmarks( $args );
 	}
 
 	/**
-	 * @access public
 	 */
 	public function no_items() {
 		_e( 'No links found.' );
 	}
 
 	/**
-	 *
 	 * @return array
 	 */
 	protected function get_bulk_actions() {
-		$actions = array();
+		$actions           = array();
 		$actions['delete'] = __( 'Delete' );
 
 		return $actions;
 	}
 
 	/**
-	 *
 	 * @global int $cat_id
 	 * @param string $which
 	 */
 	protected function extra_tablenav( $which ) {
 		global $cat_id;
 
-		if ( 'top' != $which )
+		if ( 'top' !== $which ) {
 			return;
-?>
+		}
+		?>
 		<div class="alignleft actions">
-<?php
+		<?php
 			$dropdown_options = array(
-				'selected' => $cat_id,
-				'name' => 'cat_id',
-				'taxonomy' => 'link_category',
+				'selected'        => $cat_id,
+				'name'            => 'cat_id',
+				'taxonomy'        => 'link_category',
 				'show_option_all' => get_taxonomy( 'link_category' )->labels->all_items,
-				'hide_empty' => true,
-				'hierarchical' => 1,
-				'show_count' => 0,
-				'orderby' => 'name',
+				'hide_empty'      => true,
+				'hierarchical'    => 1,
+				'show_count'      => 0,
+				'orderby'         => 'name',
 			);
 
 			echo '<label class="screen-reader-text" for="cat_id">' . __( 'Filter by category' ) . '</label>';
 			wp_dropdown_categories( $dropdown_options );
 			submit_button( __( 'Filter' ), '', 'filter_action', false, array( 'id' => 'post-query-submit' ) );
-?>
+		?>
 		</div>
-<?php
+		<?php
 	}
 
 	/**
-	 *
 	 * @return array
 	 */
 	public function get_columns() {
@@ -130,12 +133,11 @@ class WP_Links_List_Table extends WP_List_Table {
 			'categories' => __( 'Categories' ),
 			'rel'        => __( 'Relationship' ),
 			'visible'    => __( 'Visible' ),
-			'rating'     => __( 'Rating' )
+			'rating'     => __( 'Rating' ),
 		);
 	}
 
 	/**
-	 *
 	 * @return array
 	 */
 	protected function get_sortable_columns() {
@@ -143,7 +145,7 @@ class WP_Links_List_Table extends WP_List_Table {
 			'name'    => 'name',
 			'url'     => 'url',
 			'visible' => 'visible',
-			'rating'  => 'rating'
+			'rating'  => 'rating',
 		);
 	}
 
@@ -151,7 +153,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Get the name of the default primary column.
 	 *
 	 * @since 4.3.0
-	 * @access protected
 	 *
 	 * @return string Name of the default primary column, in this case, 'name'.
 	 */
@@ -163,13 +164,17 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the checkbox column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link The current link object.
 	 */
 	public function column_cb( $link ) {
 		?>
-		<label class="screen-reader-text" for="cb-select-<?php echo $link->link_id; ?>"><?php echo sprintf( __( 'Select %s' ), $link->link_name ); ?></label>
+		<label class="screen-reader-text" for="cb-select-<?php echo $link->link_id; ?>">
+			<?php
+			/* translators: %s: Link name. */
+			printf( __( 'Select %s' ), $link->link_name );
+			?>
+		</label>
 		<input type="checkbox" name="linkcheck[]" id="cb-select-<?php echo $link->link_id; ?>" value="<?php echo esc_attr( $link->link_id ); ?>" />
 		<?php
 	}
@@ -178,15 +183,15 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the link name column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link The current link object.
 	 */
 	public function column_name( $link ) {
 		$edit_link = get_edit_bookmark_link( $link );
-		printf( '<strong><a class="row-title" href="%s" aria-label="%s">%s</a></strong>',
+		printf(
+			'<strong><a class="row-title" href="%s" aria-label="%s">%s</a></strong>',
 			$edit_link,
-			/* translators: %s: link name */
+			/* translators: %s: Link name. */
 			esc_attr( sprintf( __( 'Edit &#8220;%s&#8221;' ), $link->link_name ) ),
 			$link->link_name
 		);
@@ -196,7 +201,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the link URL column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link The current link object.
 	 */
@@ -209,9 +213,8 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the link categories column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
-	 * @global $cat_id
+	 * @global int $cat_id
 	 *
 	 * @param object $link The current link object.
 	 */
@@ -225,7 +228,7 @@ class WP_Links_List_Table extends WP_List_Table {
 				echo $cat->get_error_message();
 			}
 			$cat_name = $cat->name;
-			if ( $cat_id != $category ) {
+			if ( (int) $cat_id !== $category ) {
 				$cat_name = "<a href='link-manager.php?cat_id=$category'>$cat_name</a>";
 			}
 			$cat_names[] = $cat_name;
@@ -237,7 +240,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the link relation column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link The current link object.
 	 */
@@ -249,7 +251,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the link visibility column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link The current link object.
 	 */
@@ -265,7 +266,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the link rating column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link The current link object.
 	 */
@@ -277,7 +277,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Handles the default column output.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
 	 * @param object $link        Link object.
 	 * @param string $column_name Current column name.
@@ -296,14 +295,14 @@ class WP_Links_List_Table extends WP_List_Table {
 
 	public function display_rows() {
 		foreach ( $this->items as $link ) {
-			$link = sanitize_bookmark( $link );
-			$link->link_name = esc_attr( $link->link_name );
+			$link                = sanitize_bookmark( $link );
+			$link->link_name     = esc_attr( $link->link_name );
 			$link->link_category = wp_get_link_cats( $link->link_id );
-?>
+			?>
 		<tr id="link-<?php echo $link->link_id; ?>">
-			<?php $this->single_row_columns( $link ) ?>
+			<?php $this->single_row_columns( $link ); ?>
 		</tr>
-<?php
+			<?php
 		}
 	}
 
@@ -311,7 +310,6 @@ class WP_Links_List_Table extends WP_List_Table {
 	 * Generates and displays row action links.
 	 *
 	 * @since 4.3.0
-	 * @access protected
 	 *
 	 * @param object $link        Link being acted upon.
 	 * @param string $column_name Current column name.
@@ -325,9 +323,16 @@ class WP_Links_List_Table extends WP_List_Table {
 
 		$edit_link = get_edit_bookmark_link( $link );
 
-		$actions = array();
-		$actions['edit'] = '<a href="' . $edit_link . '">' . __('Edit') . '</a>';
-		$actions['delete'] = "<a class='submitdelete' href='" . wp_nonce_url("link.php?action=delete&amp;link_id=$link->link_id", 'delete-bookmark_' . $link->link_id) . "' onclick=\"if ( confirm( '" . esc_js(sprintf(__("You are about to delete this link '%s'\n  'Cancel' to stop, 'OK' to delete."), $link->link_name)) . "' ) ) { return true;}return false;\">" . __('Delete') . "</a>";
+		$actions           = array();
+		$actions['edit']   = '<a href="' . $edit_link . '">' . __( 'Edit' ) . '</a>';
+		$actions['delete'] = sprintf(
+			'<a class="submitdelete" href="%s" onclick="return confirm( \'%s\' );">%s</a>',
+			wp_nonce_url( "link.php?action=delete&amp;link_id=$link->link_id", 'delete-bookmark_' . $link->link_id ),
+			/* translators: %s: Link name. */
+			esc_js( sprintf( __( "You are about to delete this link '%s'\n  'Cancel' to stop, 'OK' to delete." ), $link->link_name ) ),
+			__( 'Delete' )
+		);
+
 		return $this->row_actions( $actions );
 	}
 }

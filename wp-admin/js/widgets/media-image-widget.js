@@ -1,3 +1,7 @@
+/**
+ * @output wp-admin/js/widgets/media-image-widget.js
+ */
+
 /* eslint consistent-this: [ "error", "control" ] */
 (function( component, $ ) {
 	'use strict';
@@ -9,8 +13,8 @@
 	 *
 	 * See WP_Widget_Media_Image::enqueue_admin_scripts() for amending prototype from PHP exports.
 	 *
-	 * @class ImageWidgetModel
-	 * @constructor
+	 * @class    wp.mediaWidgets.modelConstructors.media_image
+	 * @augments wp.mediaWidgets.MediaWidgetModel
 	 */
 	ImageWidgetModel = component.MediaWidgetModel.extend({});
 
@@ -19,10 +23,19 @@
 	 *
 	 * See WP_Widget_Media_Image::enqueue_admin_scripts() for amending prototype from PHP exports.
 	 *
-	 * @class ImageWidgetModel
-	 * @constructor
+	 * @class    wp.mediaWidgets.controlConstructors.media_audio
+	 * @augments wp.mediaWidgets.MediaWidgetControl
 	 */
-	ImageWidgetControl = component.MediaWidgetControl.extend({
+	ImageWidgetControl = component.MediaWidgetControl.extend(/** @lends wp.mediaWidgets.controlConstructors.media_image.prototype */{
+
+		/**
+		 * View events.
+		 *
+		 * @type {object}
+		 */
+		events: _.extend( {}, component.MediaWidgetControl.prototype.events, {
+			'click .media-widget-preview.populated': 'editMedia'
+		} ),
 
 		/**
 		 * Render preview.
@@ -30,14 +43,22 @@
 		 * @returns {void}
 		 */
 		renderPreview: function renderPreview() {
-			var control = this, previewContainer, previewTemplate;
+			var control = this, previewContainer, previewTemplate, fieldsContainer, fieldsTemplate, linkInput;
 			if ( ! control.model.get( 'attachment_id' ) && ! control.model.get( 'url' ) ) {
 				return;
 			}
 
 			previewContainer = control.$el.find( '.media-widget-preview' );
 			previewTemplate = wp.template( 'wp-media-widget-image-preview' );
-			previewContainer.html( previewTemplate( _.extend( control.previewTemplateProps.toJSON() ) ) );
+			previewContainer.html( previewTemplate( control.previewTemplateProps.toJSON() ) );
+			previewContainer.addClass( 'populated' );
+
+			linkInput = control.$el.find( '.link' );
+			if ( ! linkInput.is( document.activeElement ) ) {
+				fieldsContainer = control.$el.find( '.media-widget-fields' );
+				fieldsTemplate = wp.template( 'wp-media-widget-image-fields' );
+				fieldsContainer.html( fieldsTemplate( control.previewTemplateProps.toJSON() ) );
+			}
 		},
 
 		/**
@@ -64,11 +85,14 @@
 			mediaFrame.$el.addClass( 'media-widget' );
 
 			updateCallback = function() {
-				var mediaProps;
+				var mediaProps, linkType;
 
 				// Update cached attachment object to avoid having to re-fetch. This also triggers re-rendering of preview.
 				mediaProps = mediaFrame.state().attributes.image.toJSON();
+				linkType = mediaProps.link;
+				mediaProps.link = mediaProps.linkUrl;
 				control.selectedAttachment.set( mediaProps );
+				control.displaySettings.set( 'link', linkType );
 
 				control.model.set( _.extend(
 					control.mapMediaToModelProps( mediaProps ),
@@ -130,11 +154,12 @@
 		 * @returns {Object} Preview template props.
 		 */
 		mapModelToPreviewTemplateProps: function mapModelToPreviewTemplateProps() {
-			var control = this, mediaFrameProps, url;
+			var control = this, previewTemplateProps, url;
 			url = control.model.get( 'url' );
-			mediaFrameProps = component.MediaWidgetControl.prototype.mapModelToPreviewTemplateProps.call( control );
-			mediaFrameProps.currentFilename = url ? url.replace( /\?.*$/, '' ).replace( /^.+\//, '' ) : '';
-			return mediaFrameProps;
+			previewTemplateProps = component.MediaWidgetControl.prototype.mapModelToPreviewTemplateProps.call( control );
+			previewTemplateProps.currentFilename = url ? url.replace( /\?.*$/, '' ).replace( /^.+\//, '' ) : '';
+			previewTemplateProps.link_url = control.model.get( 'link_url' );
+			return previewTemplateProps;
 		}
 	});
 

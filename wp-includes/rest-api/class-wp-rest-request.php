@@ -24,7 +24,7 @@
  *
  * @since 4.4.0
  *
- * @see ArrayAccess
+ * @link https://secure.php.net/manual/en/class.arrayaccess.php
  */
 class WP_REST_Request implements ArrayAccess {
 
@@ -32,7 +32,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * HTTP method.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var string
 	 */
 	protected $method = '';
@@ -44,7 +43,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * superglobals when being created from the global scope.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var array Contains GET, POST and FILES keys mapping to arrays of data.
 	 */
 	protected $params;
@@ -53,7 +51,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * HTTP headers for the request.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var array Map of key to value. Key is always lowercase, as per HTTP specification.
 	 */
 	protected $headers = array();
@@ -62,7 +59,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Body data.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var string Binary data from the request.
 	 */
 	protected $body = null;
@@ -71,7 +67,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Route matched for the request.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var string
 	 */
 	protected $route;
@@ -83,7 +78,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * containing the callback as well as the valid methods for the route.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var array Attributes for the request.
 	 */
 	protected $attributes = array();
@@ -94,7 +88,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Allows lazy-parsing of JSON data where possible.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var bool
 	 */
 	protected $parsed_json = false;
@@ -103,7 +96,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Used to determine if the body data has been parsed yet.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 * @var bool
 	 */
 	protected $parsed_body = false;
@@ -112,7 +104,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Constructor.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $method     Optional. Request method. Default empty.
 	 * @param string $route      Optional. Request route. Default empty.
@@ -120,13 +111,13 @@ class WP_REST_Request implements ArrayAccess {
 	 */
 	public function __construct( $method = '', $route = '', $attributes = array() ) {
 		$this->params = array(
-			'URL'   => array(),
-			'GET'   => array(),
-			'POST'  => array(),
-			'FILES' => array(),
+			'URL'      => array(),
+			'GET'      => array(),
+			'POST'     => array(),
+			'FILES'    => array(),
 
 			// See parse_json_params.
-			'JSON'  => null,
+			'JSON'     => null,
 
 			'defaults' => array(),
 		);
@@ -140,7 +131,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves the HTTP method for the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return string HTTP method.
 	 */
@@ -152,7 +142,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets HTTP method for the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $method HTTP method.
 	 */
@@ -164,7 +153,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves all headers from the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Map of key to value. Key is always lowercase, as per HTTP specification.
 	 */
@@ -181,13 +169,11 @@ class WP_REST_Request implements ArrayAccess {
 	 * Note that we treat `-` (dashes) and `_` (underscores) as the same
 	 * character, as per header parsing rules in both Apache and nginx.
 	 *
-	 * @link http://stackoverflow.com/q/18185366
-	 * @link http://wiki.nginx.org/Pitfalls#Missing_.28disappearing.29_HTTP_headers
+	 * @link https://stackoverflow.com/q/18185366
+	 * @link https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/#missing-disappearing-http-headers
 	 * @link https://nginx.org/en/docs/http/ngx_http_core_module.html#underscores_in_headers
 	 *
 	 * @since 4.4.0
-	 * @access public
-	 * @static
 	 *
 	 * @param string $key Header name.
 	 * @return string Canonicalized name.
@@ -207,7 +193,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * (notably cookie headers) cannot be joined this way.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key Header name, will be canonicalized to lowercase.
 	 * @return string|null String value if set, null otherwise.
@@ -226,7 +211,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves header values from the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key Header name, will be canonicalized to lowercase.
 	 * @return array|null List of string values if set, null otherwise.
@@ -245,13 +229,12 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets the header on request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key   Header name.
 	 * @param string $value Header value, or list of values.
 	 */
 	public function set_header( $key, $value ) {
-		$key = $this->canonicalize_header_name( $key );
+		$key   = $this->canonicalize_header_name( $key );
 		$value = (array) $value;
 
 		$this->headers[ $key ] = $value;
@@ -261,13 +244,12 @@ class WP_REST_Request implements ArrayAccess {
 	 * Appends a header value for the given header.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key   Header name.
 	 * @param string $value Header value, or list of values.
 	 */
 	public function add_header( $key, $value ) {
-		$key = $this->canonicalize_header_name( $key );
+		$key   = $this->canonicalize_header_name( $key );
 		$value = (array) $value;
 
 		if ( ! isset( $this->headers[ $key ] ) ) {
@@ -281,7 +263,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Removes all values for a header.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key Header name.
 	 */
@@ -294,7 +275,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets headers on the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $headers  Map of header name to value.
 	 * @param bool  $override If true, replace the request's headers. Otherwise, merge with existing.
@@ -313,9 +293,10 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves the content-type of the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
-	 * @return array Map containing 'value' and 'parameters' keys.
+	 * @return array|null Map containing 'value' and 'parameters' keys
+	 *                    or null when no valid content-type header was
+	 *                    available.
 	 */
 	public function get_content_type() {
 		$value = $this->get_header( 'content-type' );
@@ -348,7 +329,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Used when checking parameters in get_param().
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 *
 	 * @return array List of types to check, in order of priority.
 	 */
@@ -356,7 +336,7 @@ class WP_REST_Request implements ArrayAccess {
 		$order = array();
 
 		$content_type = $this->get_content_type();
-		if ( $content_type['value'] === 'application/json' ) {
+		if ( isset( $content_type['value'] ) && 'application/json' === $content_type['value'] ) {
 			$order[] = 'JSON';
 		}
 
@@ -389,7 +369,7 @@ class WP_REST_Request implements ArrayAccess {
 		 * @param array           $order {
 		 *    An array of types to check, in order of priority.
 		 *
-		 *    @param string $type The type to check.
+		 * @param string $type The type to check.
 		 * }
 		 * @param WP_REST_Request $this The request object.
 		 */
@@ -400,7 +380,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves a parameter from the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key Parameter name.
 	 * @return mixed|null Value if set, null otherwise.
@@ -419,16 +398,39 @@ class WP_REST_Request implements ArrayAccess {
 	}
 
 	/**
+	 * Checks if a parameter exists in the request.
+	 *
+	 * This allows distinguishing between an omitted parameter,
+	 * and a parameter specifically set to null.
+	 *
+	 * @since 5.3.0
+	 *
+	 * @param string $key Parameter name.
+	 *
+	 * @return bool True if a param exists for the given key.
+	 */
+	public function has_param( $key ) {
+		$order = $this->get_parameter_order();
+
+		foreach ( $order as $type ) {
+			if ( array_key_exists( $key, $this->params[ $type ] ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Sets a parameter on the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $key   Parameter name.
 	 * @param mixed  $value Parameter value.
 	 */
 	public function set_param( $key, $value ) {
-		$order = $this->get_parameter_order();
+		$order                             = $this->get_parameter_order();
 		$this->params[ $order[0] ][ $key ] = $value;
 	}
 
@@ -439,7 +441,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Handles merging all the available values into a single array.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Map of key to value.
 	 */
@@ -465,7 +466,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are parsed from the URL using the regex.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Parameter map of key to value.
 	 */
@@ -479,7 +479,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Typically, this is set after parsing the URL.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $params Parameter map of key to value.
 	 */
@@ -493,7 +492,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are the parameters you'd typically find in `$_GET`.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Parameter map of key to value
 	 */
@@ -507,7 +505,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Typically, this is set from `$_GET`.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $params Parameter map of key to value.
 	 */
@@ -521,7 +518,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are the parameters you'd typically find in `$_POST`.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Parameter map of key to value.
 	 */
@@ -535,7 +531,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Typically, this is set from `$_POST`.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $params Parameter map of key to value.
 	 */
@@ -549,7 +544,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are the parameters you'd typically find in `$_FILES`.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Parameter map of key to value
 	 */
@@ -563,7 +557,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Typically, this is set from `$_FILES`.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $params Parameter map of key to value.
 	 */
@@ -577,7 +570,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are the parameters set in the route registration.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Parameter map of key to value
 	 */
@@ -591,7 +583,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are the parameters set in the route registration.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $params Parameter map of key to value.
 	 */
@@ -603,7 +594,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves the request body content.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return string Binary data from the request body.
 	 */
@@ -615,7 +605,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets body content.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $data Binary data from the request body.
 	 */
@@ -623,8 +612,8 @@ class WP_REST_Request implements ArrayAccess {
 		$this->body = $data;
 
 		// Enable lazy parsing.
-		$this->parsed_json = false;
-		$this->parsed_body = false;
+		$this->parsed_json    = false;
+		$this->parsed_body    = false;
 		$this->params['JSON'] = null;
 	}
 
@@ -632,7 +621,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves the parameters from a JSON-formatted body.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Parameter map of key to value.
 	 */
@@ -650,7 +638,6 @@ class WP_REST_Request implements ArrayAccess {
 	 *
 	 * @since 4.4.0
 	 * @since 4.7.0 Returns error instance if value cannot be decoded.
-	 * @access protected
 	 * @return true|WP_Error True if the JSON data was passed or no JSON data was provided, WP_Error if invalid JSON was passed.
 	 */
 	protected function parse_json_params() {
@@ -676,21 +663,16 @@ class WP_REST_Request implements ArrayAccess {
 
 		/*
 		 * Check for a parsing error.
-		 *
-		 * Note that due to WP's JSON compatibility functions, json_last_error
-		 * might not be defined: https://core.trac.wordpress.org/ticket/27799
 		 */
-		if ( null === $params && ( ! function_exists( 'json_last_error' ) || JSON_ERROR_NONE !== json_last_error() ) ) {
+		if ( null === $params && JSON_ERROR_NONE !== json_last_error() ) {
 			// Ensure subsequent calls receive error instance.
 			$this->parsed_json = false;
 
 			$error_data = array(
-				'status' => WP_Http::BAD_REQUEST,
+				'status'             => WP_Http::BAD_REQUEST,
+				'json_error_code'    => json_last_error(),
+				'json_error_message' => json_last_error_msg(),
 			);
-			if ( function_exists( 'json_last_error' ) ) {
-				$error_data['json_error_code'] = json_last_error();
-				$error_data['json_error_message'] = json_last_error_msg();
-			}
 
 			return new WP_Error( 'rest_invalid_json', __( 'Invalid JSON body passed.' ), $error_data );
 		}
@@ -706,7 +688,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * natively by PHP. In PHP 5.x, only POST has these parsed automatically.
 	 *
 	 * @since 4.4.0
-	 * @access protected
 	 */
 	protected function parse_body_params() {
 		if ( $this->parsed_body ) {
@@ -728,15 +709,6 @@ class WP_REST_Request implements ArrayAccess {
 		parse_str( $this->get_body(), $params );
 
 		/*
-		 * Amazingly, parse_str follows magic quote rules. Sigh.
-		 *
-		 * NOTE: Do not refactor to use `wp_unslash`.
-		 */
-		if ( get_magic_quotes_gpc() ) {
-			$params = stripslashes_deep( $params );
-		}
-
-		/*
 		 * Add to the POST parameters stored internally. If a user has already
 		 * set these manually (via `set_body_params`), don't override them.
 		 */
@@ -747,7 +719,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves the route that matched the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return string Route matching regex.
 	 */
@@ -759,7 +730,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets the route that matched the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $route Route matching regex.
 	 */
@@ -773,7 +743,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * These are the options for the route that was matched.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return array Attributes for the request.
 	 */
@@ -785,7 +754,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets the attributes for the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param array $attributes Attributes for the request.
 	 */
@@ -800,7 +768,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * argument.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return true|WP_Error True if parameters were sanitized, WP_Error if an error occurred during sanitization.
 	 */
@@ -846,7 +813,15 @@ class WP_REST_Request implements ArrayAccess {
 		}
 
 		if ( $invalid_params ) {
-			return new WP_Error( 'rest_invalid_param', sprintf( __( 'Invalid parameter(s): %s' ), implode( ', ', array_keys( $invalid_params ) ) ), array( 'status' => 400, 'params' => $invalid_params ) );
+			return new WP_Error(
+				'rest_invalid_param',
+				/* translators: %s: List of invalid parameters. */
+				sprintf( __( 'Invalid parameter(s): %s' ), implode( ', ', array_keys( $invalid_params ) ) ),
+				array(
+					'status' => 400,
+					'params' => $invalid_params,
+				)
+			);
 		}
 
 		return true;
@@ -856,7 +831,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Checks whether this request is valid according to its attributes.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @return bool|WP_Error True if there are no parameters to validate or if all pass validation,
 	 *                       WP_Error if required parameters are missing.
@@ -869,7 +843,7 @@ class WP_REST_Request implements ArrayAccess {
 		}
 
 		$attributes = $this->get_attributes();
-		$required = array();
+		$required   = array();
 
 		// No arguments set, skip validation.
 		if ( empty( $attributes['args'] ) ) {
@@ -885,7 +859,15 @@ class WP_REST_Request implements ArrayAccess {
 		}
 
 		if ( ! empty( $required ) ) {
-			return new WP_Error( 'rest_missing_callback_param', sprintf( __( 'Missing parameter(s): %s' ), implode( ', ', $required ) ), array( 'status' => 400, 'params' => $required ) );
+			return new WP_Error(
+				'rest_missing_callback_param',
+				/* translators: %s: List of required parameters. */
+				sprintf( __( 'Missing parameter(s): %s' ), implode( ', ', $required ) ),
+				array(
+					'status' => 400,
+					'params' => $required,
+				)
+			);
 		}
 
 		/*
@@ -913,7 +895,15 @@ class WP_REST_Request implements ArrayAccess {
 		}
 
 		if ( $invalid_params ) {
-			return new WP_Error( 'rest_invalid_param', sprintf( __( 'Invalid parameter(s): %s' ), implode( ', ', array_keys( $invalid_params ) ) ), array( 'status' => 400, 'params' => $invalid_params ) );
+			return new WP_Error(
+				'rest_invalid_param',
+				/* translators: %s: List of invalid parameters. */
+				sprintf( __( 'Invalid parameter(s): %s' ), implode( ', ', array_keys( $invalid_params ) ) ),
+				array(
+					'status' => 400,
+					'params' => $invalid_params,
+				)
+			);
 		}
 
 		return true;
@@ -924,7 +914,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Checks if a parameter is set.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $offset Parameter name.
 	 * @return bool Whether the parameter is set.
@@ -945,7 +934,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Retrieves a parameter from the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $offset Parameter name.
 	 * @return mixed|null Value if set, null otherwise.
@@ -958,7 +946,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Sets a parameter on the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $offset Parameter name.
 	 * @param mixed  $value  Parameter value.
@@ -971,7 +958,6 @@ class WP_REST_Request implements ArrayAccess {
 	 * Removes a parameter from the request.
 	 *
 	 * @since 4.4.0
-	 * @access public
 	 *
 	 * @param string $offset Parameter name.
 	 */
@@ -987,15 +973,13 @@ class WP_REST_Request implements ArrayAccess {
 	/**
 	 * Retrieves a WP_REST_Request object from a full URL.
 	 *
-	 * @static
 	 * @since 4.5.0
-	 * @access public
 	 *
 	 * @param string $url URL with protocol, domain, path and query args.
 	 * @return WP_REST_Request|false WP_REST_Request object on success, false on failure.
 	 */
 	public static function from_url( $url ) {
-		$bits = parse_url( $url );
+		$bits         = parse_url( $url );
 		$query_params = array();
 
 		if ( ! empty( $bits['query'] ) ) {
@@ -1006,7 +990,7 @@ class WP_REST_Request implements ArrayAccess {
 		if ( get_option( 'permalink_structure' ) && 0 === strpos( $url, $api_root ) ) {
 			// Pretty permalinks on, and URL is under the API root.
 			$api_url_part = substr( $url, strlen( untrailingslashit( $api_root ) ) );
-			$route = parse_url( $api_url_part, PHP_URL_PATH );
+			$route        = parse_url( $api_url_part, PHP_URL_PATH );
 		} elseif ( ! empty( $query_params['rest_route'] ) ) {
 			// ?rest_route=... set directly
 			$route = $query_params['rest_route'];

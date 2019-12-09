@@ -30,7 +30,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $blog_id;
@@ -39,7 +38,6 @@ final class WP_Site {
 	 * Domain of the site.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $domain = '';
@@ -48,7 +46,6 @@ final class WP_Site {
 	 * Path of the site.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $path = '';
@@ -62,7 +59,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $site_id = '0';
@@ -71,7 +67,6 @@ final class WP_Site {
 	 * The date on which the site was created or registered.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string Date in MySQL's datetime format.
 	 */
 
@@ -87,7 +82,6 @@ final class WP_Site {
 	 * The date and time on which site settings were last updated.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string Date in MySQL's datetime format.
 	 */
 
@@ -105,7 +99,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $public = '1';
@@ -116,7 +109,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $archived = '0';
@@ -130,7 +122,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $mature = '0';
@@ -141,7 +132,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $spam = '0';
@@ -152,7 +142,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $deleted = '0';
@@ -163,7 +152,6 @@ final class WP_Site {
 	 * A numeric string, for compatibility reasons.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 * @var string
 	 */
 	public $lang_id = '0';
@@ -171,9 +159,7 @@ final class WP_Site {
 	/**
 	 * Retrieves a site from the database by its ID.
 	 *
-	 * @static
 	 * @since 4.5.0
-	 * @access public
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
@@ -190,14 +176,18 @@ final class WP_Site {
 
 		$_site = wp_cache_get( $site_id, 'sites' );
 
-		if ( ! $_site ) {
+		if ( false === $_site ) {
 			$_site = $wpdb->get_row( $wpdb->prepare( "SELECT TOP 1 * FROM {$wpdb->blogs} WHERE blog_id = %d", $site_id ) );
 
 			if ( empty( $_site ) || is_wp_error( $_site ) ) {
-				return false;
+				$_site = -1;
 			}
 
 			wp_cache_add( $site_id, $_site, 'sites' );
+		}
+
+		if ( is_numeric( $_site ) ) {
+			return false;
 		}
 
 		return new WP_Site( $_site );
@@ -210,12 +200,11 @@ final class WP_Site {
 	 * default properties based on that information.
 	 *
 	 * @since 4.5.0
-	 * @access public
 	 *
 	 * @param WP_Site|object $site A site object.
 	 */
 	public function __construct( $site ) {
-		foreach( get_object_vars( $site ) as $key => $value ) {
+		foreach ( get_object_vars( $site ) as $key => $value ) {
 			$this->$key = $value;
 		}
 	}
@@ -224,7 +213,6 @@ final class WP_Site {
 	 * Converts an object to array.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @return array Object as array.
 	 */
@@ -239,7 +227,6 @@ final class WP_Site {
 	 * Allows access to extended site properties.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param string $key Property to get.
 	 * @return mixed Value of the property. Null if not available.
@@ -275,7 +262,6 @@ final class WP_Site {
 	 * Checks for extended site properties.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param string $key Property to check if set.
 	 * @return bool Whether the property is set.
@@ -313,7 +299,6 @@ final class WP_Site {
 	 * Allows current multisite naming conventions while setting properties.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param string $key   Property to set.
 	 * @param mixed  $value Value to assign to the property.
@@ -337,7 +322,6 @@ final class WP_Site {
 	 * This method is used internally to lazy-load the extended properties of a site.
 	 *
 	 * @since 4.6.0
-	 * @access private
 	 *
 	 * @see WP_Site::__get()
 	 *
@@ -349,7 +333,7 @@ final class WP_Site {
 		if ( false === $details ) {
 
 			switch_to_blog( $this->blog_id );
-			// Create a raw copy of the object for backwards compatibility with the filter below.
+			// Create a raw copy of the object for backward compatibility with the filter below.
 			$details = new stdClass();
 			foreach ( get_object_vars( $this ) as $key => $value ) {
 				$details->$key = $value;

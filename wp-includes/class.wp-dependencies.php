@@ -11,15 +11,14 @@
 /**
  * Core base class extended to register items.
  *
- * @package WordPress
  * @since 2.6.0
- * @uses _WP_Dependency
+ *
+ * @see _WP_Dependency
  */
 class WP_Dependencies {
 	/**
 	 * An array of registered handle objects.
 	 *
-	 * @access public
 	 * @since 2.6.8
 	 * @var array
 	 */
@@ -28,7 +27,6 @@ class WP_Dependencies {
 	/**
 	 * An array of queued _WP_Dependency handle objects.
 	 *
-	 * @access public
 	 * @since 2.6.8
 	 * @var array
 	 */
@@ -37,7 +35,6 @@ class WP_Dependencies {
 	/**
 	 * An array of _WP_Dependency handle objects to queue.
 	 *
-	 * @access public
 	 * @since 2.6.0
 	 * @var array
 	 */
@@ -46,7 +43,6 @@ class WP_Dependencies {
 	/**
 	 * An array of _WP_Dependency handle objects already queued.
 	 *
-	 * @access public
 	 * @since 2.6.0
 	 * @var array
 	 */
@@ -57,7 +53,6 @@ class WP_Dependencies {
 	 *
 	 * Arguments are appended to the item query string.
 	 *
-	 * @access public
 	 * @since 2.6.0
 	 * @var array
 	 */
@@ -66,7 +61,6 @@ class WP_Dependencies {
 	/**
 	 * An array of handle groups to enqueue.
 	 *
-	 * @access public
 	 * @since 2.8.0
 	 * @var array
 	 */
@@ -75,7 +69,6 @@ class WP_Dependencies {
 	/**
 	 * A handle group to enqueue.
 	 *
-	 * @access public
 	 * @since 2.8.0
 	 * @deprecated 4.5.0
 	 * @var int
@@ -87,7 +80,6 @@ class WP_Dependencies {
 	 *
 	 * Processes the items passed to it or the queue, and their dependencies.
 	 *
-	 * @access public
 	 * @since 2.6.0
 	 * @since 2.8.0 Added the `$group` parameter.
 	 *
@@ -104,17 +96,18 @@ class WP_Dependencies {
 		$this->all_deps( $handles );
 
 		foreach ( $this->to_do as $key => $handle ) {
-			if ( !in_array($handle, $this->done, true) && isset($this->registered[$handle]) ) {
+			if ( ! in_array( $handle, $this->done, true ) && isset( $this->registered[ $handle ] ) ) {
 				/*
 				 * Attempt to process the item. If successful,
 				 * add the handle to the done array.
 				 *
 				 * Unset the item from the to_do array.
 				 */
-				if ( $this->do_item( $handle, $group ) )
+				if ( $this->do_item( $handle, $group ) ) {
 					$this->done[] = $handle;
+				}
 
-				unset( $this->to_do[$key] );
+				unset( $this->to_do[ $key ] );
 			}
 		}
 
@@ -124,14 +117,13 @@ class WP_Dependencies {
 	/**
 	 * Processes a dependency.
 	 *
-	 * @access public
 	 * @since 2.6.0
 	 *
 	 * @param string $handle Name of the item. Should be unique.
 	 * @return bool True on success, false if not set.
 	 */
 	public function do_item( $handle ) {
-		return isset($this->registered[$handle]);
+		return isset( $this->registered[ $handle ] );
 	}
 
 	/**
@@ -140,7 +132,6 @@ class WP_Dependencies {
 	 * Recursively builds an array of items to process taking
 	 * dependencies into account. Does NOT catch infinite loops.
 	 *
-	 * @access public
 	 * @since 2.1.0
 	 * @since 2.6.0 Moved from `WP_Scripts`.
 	 * @since 2.8.0 Added the `$group` parameter.
@@ -151,43 +142,51 @@ class WP_Dependencies {
 	 * @return bool True on success, false on failure.
 	 */
 	public function all_deps( $handles, $recursion = false, $group = false ) {
-		if ( !$handles = (array) $handles )
+		$handles = (array) $handles;
+		if ( ! $handles ) {
 			return false;
+		}
 
 		foreach ( $handles as $handle ) {
-			$handle_parts = explode('?', $handle);
-			$handle = $handle_parts[0];
-			$queued = in_array($handle, $this->to_do, true);
+			$handle_parts = explode( '?', $handle );
+			$handle       = $handle_parts[0];
+			$queued       = in_array( $handle, $this->to_do, true );
 
-			if ( in_array($handle, $this->done, true) ) // Already done
+			if ( in_array( $handle, $this->done, true ) ) { // Already done
 				continue;
+			}
 
 			$moved     = $this->set_group( $handle, $recursion, $group );
 			$new_group = $this->groups[ $handle ];
 
-			if ( $queued && !$moved ) // already queued and in the right group
+			if ( $queued && ! $moved ) { // already queued and in the right group
 				continue;
-
-			$keep_going = true;
-			if ( !isset($this->registered[$handle]) )
-				$keep_going = false; // Item doesn't exist.
-			elseif ( $this->registered[$handle]->deps && array_diff($this->registered[$handle]->deps, array_keys($this->registered)) )
-				$keep_going = false; // Item requires dependencies that don't exist.
-			elseif ( $this->registered[$handle]->deps && !$this->all_deps( $this->registered[$handle]->deps, true, $new_group ) )
-				$keep_going = false; // Item requires dependencies that don't exist.
-
-			if ( ! $keep_going ) { // Either item or its dependencies don't exist.
-				if ( $recursion )
-					return false; // Abort this branch.
-				else
-					continue; // We're at the top level. Move on to the next one.
 			}
 
-			if ( $queued ) // Already grabbed it and its dependencies.
-				continue;
+			$keep_going = true;
+			if ( ! isset( $this->registered[ $handle ] ) ) {
+				$keep_going = false; // Item doesn't exist.
+			} elseif ( $this->registered[ $handle ]->deps && array_diff( $this->registered[ $handle ]->deps, array_keys( $this->registered ) ) ) {
+				$keep_going = false; // Item requires dependencies that don't exist.
+			} elseif ( $this->registered[ $handle ]->deps && ! $this->all_deps( $this->registered[ $handle ]->deps, true, $new_group ) ) {
+				$keep_going = false; // Item requires dependencies that don't exist.
+			}
 
-			if ( isset($handle_parts[1]) )
-				$this->args[$handle] = $handle_parts[1];
+			if ( ! $keep_going ) { // Either item or its dependencies don't exist.
+				if ( $recursion ) {
+					return false; // Abort this branch.
+				} else {
+					continue; // We're at the top level. Move on to the next one.
+				}
+			}
+
+			if ( $queued ) { // Already grabbed it and its dependencies.
+				continue;
+			}
+
+			if ( isset( $handle_parts[1] ) ) {
+				$this->args[ $handle ] = $handle_parts[1];
+			}
 
 			$this->to_do[] = $handle;
 		}
@@ -200,13 +199,13 @@ class WP_Dependencies {
 	 *
 	 * Registers the item if no item of that name already exists.
 	 *
-	 * @access public
 	 * @since 2.1.0
 	 * @since 2.6.0 Moved from `WP_Scripts`.
 	 *
 	 * @param string           $handle Name of the item. Should be unique.
-	 * @param string           $src    Full URL of the item, or path of the item relative to the WordPress root directory.
-	 * @param array            $deps   Optional. An array of registered item handles this item depends on. Default empty array.
+	 * @param string|bool      $src    Full URL of the item, or path of the item relative to the WordPress root directory.
+	 *                                 If source is set to false, item is an alias of other items it depends on.
+	 * @param string[]         $deps   Optional. An array of registered item handles this item depends on. Default empty array.
 	 * @param string|bool|null $ver    Optional. String specifying item version number, if it has one, which is added to the URL
 	 *                                 as a query string for cache busting purposes. If version is set to false, a version
 	 *                                 number is automatically added equal to current installed WordPress version.
@@ -215,9 +214,10 @@ class WP_Dependencies {
 	 * @return bool Whether the item has been registered. True on success, false on failure.
 	 */
 	public function add( $handle, $src, $deps = array(), $ver = false, $args = null ) {
-		if ( isset($this->registered[$handle]) )
+		if ( isset( $this->registered[ $handle ] ) ) {
 			return false;
-		$this->registered[$handle] = new _WP_Dependency( $handle, $src, $deps, $ver, $args );
+		}
+		$this->registered[ $handle ] = new _WP_Dependency( $handle, $src, $deps, $ver, $args );
 		return true;
 	}
 
@@ -226,7 +226,6 @@ class WP_Dependencies {
 	 *
 	 * Adds data to a registered item.
 	 *
-	 * @access public
 	 * @since 2.6.0
 	 *
 	 * @param string $handle Name of the item. Should be unique.
@@ -235,10 +234,11 @@ class WP_Dependencies {
 	 * @return bool True on success, false on failure.
 	 */
 	public function add_data( $handle, $key, $value ) {
-		if ( !isset( $this->registered[$handle] ) )
+		if ( ! isset( $this->registered[ $handle ] ) ) {
 			return false;
+		}
 
-		return $this->registered[$handle]->add_data( $key, $value );
+		return $this->registered[ $handle ]->add_data( $key, $value );
 	}
 
 	/**
@@ -246,7 +246,6 @@ class WP_Dependencies {
 	 *
 	 * Gets data associated with a registered item.
 	 *
-	 * @access public
 	 * @since 3.3.0
 	 *
 	 * @param string $handle Name of the item. Should be unique.
@@ -254,19 +253,20 @@ class WP_Dependencies {
 	 * @return mixed Extra item data (string), false otherwise.
 	 */
 	public function get_data( $handle, $key ) {
-		if ( !isset( $this->registered[$handle] ) )
+		if ( ! isset( $this->registered[ $handle ] ) ) {
 			return false;
+		}
 
-		if ( !isset( $this->registered[$handle]->extra[$key] ) )
+		if ( ! isset( $this->registered[ $handle ]->extra[ $key ] ) ) {
 			return false;
+		}
 
-		return $this->registered[$handle]->extra[$key];
+		return $this->registered[ $handle ]->extra[ $key ];
 	}
 
 	/**
 	 * Un-register an item or items.
 	 *
-	 * @access public
 	 * @since 2.1.0
 	 * @since 2.6.0 Moved from `WP_Scripts`.
 	 *
@@ -274,8 +274,9 @@ class WP_Dependencies {
 	 * @return void
 	 */
 	public function remove( $handles ) {
-		foreach ( (array) $handles as $handle )
-			unset($this->registered[$handle]);
+		foreach ( (array) $handles as $handle ) {
+			unset( $this->registered[ $handle ] );
+		}
 	}
 
 	/**
@@ -286,7 +287,6 @@ class WP_Dependencies {
 	 * classes, $args is appended to the item url as a query string.
 	 * Note $args is NOT the $args property of items in the $registered array.
 	 *
-	 * @access public
 	 * @since 2.1.0
 	 * @since 2.6.0 Moved from `WP_Scripts`.
 	 *
@@ -294,11 +294,12 @@ class WP_Dependencies {
 	 */
 	public function enqueue( $handles ) {
 		foreach ( (array) $handles as $handle ) {
-			$handle = explode('?', $handle);
-			if ( !in_array($handle[0], $this->queue) && isset($this->registered[$handle[0]]) ) {
+			$handle = explode( '?', $handle );
+			if ( ! in_array( $handle[0], $this->queue ) && isset( $this->registered[ $handle[0] ] ) ) {
 				$this->queue[] = $handle[0];
-				if ( isset($handle[1]) )
-					$this->args[$handle[0]] = $handle[1];
+				if ( isset( $handle[1] ) ) {
+					$this->args[ $handle[0] ] = $handle[1];
+				}
 			}
 		}
 	}
@@ -309,7 +310,6 @@ class WP_Dependencies {
 	 * Decodes handles and arguments, then dequeues handles
 	 * and removes arguments from the class property $args.
 	 *
-	 * @access public
 	 * @since 2.1.0
 	 * @since 2.6.0 Moved from `WP_Scripts`.
 	 *
@@ -317,11 +317,11 @@ class WP_Dependencies {
 	 */
 	public function dequeue( $handles ) {
 		foreach ( (array) $handles as $handle ) {
-			$handle = explode('?', $handle);
-			$key = array_search($handle[0], $this->queue);
+			$handle = explode( '?', $handle );
+			$key    = array_search( $handle[0], $this->queue );
 			if ( false !== $key ) {
-				unset($this->queue[$key]);
-				unset($this->args[$handle[0]]);
+				unset( $this->queue[ $key ] );
+				unset( $this->args[ $handle[0] ] );
 			}
 		}
 	}
@@ -331,8 +331,8 @@ class WP_Dependencies {
 	 *
 	 * @since 4.0.0
 	 *
-	 * @param array  $queue  An array of queued _WP_Dependency handle objects.
-	 * @param string $handle Name of the item. Should be unique.
+	 * @param string[] $queue  An array of queued _WP_Dependency handles.
+	 * @param string   $handle Name of the item. Should be unique.
 	 * @return bool Whether the handle is found after recursively searching the dependency tree.
 	 */
 	protected function recurse_deps( $queue, $handle ) {
@@ -354,7 +354,6 @@ class WP_Dependencies {
 	/**
 	 * Query list for an item.
 	 *
-	 * @access public
 	 * @since 2.1.0
 	 * @since 2.6.0 Moved from `WP_Scripts`.
 	 *
@@ -364,24 +363,25 @@ class WP_Dependencies {
 	 */
 	public function query( $handle, $list = 'registered' ) {
 		switch ( $list ) {
-			case 'registered' :
+			case 'registered':
 			case 'scripts': // back compat
-				if ( isset( $this->registered[ $handle ] ) )
+				if ( isset( $this->registered[ $handle ] ) ) {
 					return $this->registered[ $handle ];
+				}
 				return false;
 
-			case 'enqueued' :
-			case 'queue' :
+			case 'enqueued':
+			case 'queue':
 				if ( in_array( $handle, $this->queue ) ) {
 					return true;
 				}
 				return $this->recurse_deps( $this->queue, $handle );
 
-			case 'to_do' :
+			case 'to_do':
 			case 'to_print': // back compat
 				return in_array( $handle, $this->to_do );
 
-			case 'done' :
+			case 'done':
 			case 'printed': // back compat
 				return in_array( $handle, $this->done );
 		}
@@ -391,7 +391,6 @@ class WP_Dependencies {
 	/**
 	 * Set item group, unless already in a lower group.
 	 *
-	 * @access public
 	 * @since 2.8.0
 	 *
 	 * @param string $handle    Name of the item. Should be unique.

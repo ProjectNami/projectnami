@@ -20,60 +20,104 @@ class Plugin_Installer_Skin extends WP_Upgrader_Skin {
 	public $type;
 
 	/**
-	 *
 	 * @param array $args
 	 */
-	public function __construct($args = array()) {
-		$defaults = array( 'type' => 'web', 'url' => '', 'plugin' => '', 'nonce' => '', 'title' => '' );
-		$args = wp_parse_args($args, $defaults);
+	public function __construct( $args = array() ) {
+		$defaults = array(
+			'type'   => 'web',
+			'url'    => '',
+			'plugin' => '',
+			'nonce'  => '',
+			'title'  => '',
+		);
+		$args     = wp_parse_args( $args, $defaults );
 
 		$this->type = $args['type'];
-		$this->api = isset($args['api']) ? $args['api'] : array();
+		$this->api  = isset( $args['api'] ) ? $args['api'] : array();
 
-		parent::__construct($args);
+		parent::__construct( $args );
 	}
 
 	/**
-	 * @access public
 	 */
 	public function before() {
-		if ( !empty($this->api) )
-			$this->upgrader->strings['process_success'] = sprintf( __('Successfully installed the plugin <strong>%s %s</strong>.'), $this->api->name, $this->api->version);
+		if ( ! empty( $this->api ) ) {
+			$this->upgrader->strings['process_success'] = sprintf(
+				/* translators: 1: Plugin name, 2: Plugin version. */
+				__( 'Successfully installed the plugin <strong>%1$s %2$s</strong>.' ),
+				$this->api->name,
+				$this->api->version
+			);
+		}
 	}
 
 	/**
-	 * @access public
 	 */
 	public function after() {
 		$plugin_file = $this->upgrader->plugin_info();
 
 		$install_actions = array();
 
-		$from = isset($_GET['from']) ? wp_unslash( $_GET['from'] ) : 'plugins';
+		$from = isset( $_GET['from'] ) ? wp_unslash( $_GET['from'] ) : 'plugins';
 
-		if ( 'import' == $from )
-			$install_actions['activate_plugin'] = '<a class="button button-primary" href="' . wp_nonce_url( 'plugins.php?action=activate&amp;from=import&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ) . '" target="_parent">' . __( 'Activate Plugin &amp; Run Importer' ) . '</a>';
-		else
-			$install_actions['activate_plugin'] = '<a class="button button-primary" href="' . wp_nonce_url( 'plugins.php?action=activate&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ) . '" target="_parent">' . __( 'Activate Plugin' ) . '</a>';
+		if ( 'import' == $from ) {
+			$install_actions['activate_plugin'] = sprintf(
+				'<a class="button button-primary" href="%s" target="_parent">%s</a>',
+				wp_nonce_url( 'plugins.php?action=activate&amp;from=import&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ),
+				__( 'Activate Plugin &amp; Run Importer' )
+			);
+		} elseif ( 'press-this' == $from ) {
+			$install_actions['activate_plugin'] = sprintf(
+				'<a class="button button-primary" href="%s" target="_parent">%s</a>',
+				wp_nonce_url( 'plugins.php?action=activate&amp;from=press-this&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ),
+				__( 'Activate Plugin &amp; Return to Press This' )
+			);
+		} else {
+			$install_actions['activate_plugin'] = sprintf(
+				'<a class="button button-primary" href="%s" target="_parent">%s</a>',
+				wp_nonce_url( 'plugins.php?action=activate&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ),
+				__( 'Activate Plugin' )
+			);
+		}
 
 		if ( is_multisite() && current_user_can( 'manage_network_plugins' ) ) {
-			$install_actions['network_activate'] = '<a class="button button-primary" href="' . wp_nonce_url( 'plugins.php?action=activate&amp;networkwide=1&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ) . '" target="_parent">' . __( 'Network Activate' ) . '</a>';
+			$install_actions['network_activate'] = sprintf(
+				'<a class="button button-primary" href="%s" target="_parent">%s</a>',
+				wp_nonce_url( 'plugins.php?action=activate&amp;networkwide=1&amp;plugin=' . urlencode( $plugin_file ), 'activate-plugin_' . $plugin_file ),
+				__( 'Network Activate' )
+			);
 			unset( $install_actions['activate_plugin'] );
 		}
 
 		if ( 'import' == $from ) {
-			$install_actions['importers_page'] = '<a href="' . admin_url( 'import.php' ) . '" target="_parent">' . __( 'Return to Importers' ) . '</a>';
+			$install_actions['importers_page'] = sprintf(
+				'<a href="%s" target="_parent">%s</a>',
+				admin_url( 'import.php' ),
+				__( 'Return to Importers' )
+			);
 		} elseif ( $this->type == 'web' ) {
-			$install_actions['plugins_page'] = '<a href="' . self_admin_url( 'plugin-install.php' ) . '" target="_parent">' . __( 'Return to Plugin Installer' ) . '</a>';
+			$install_actions['plugins_page'] = sprintf(
+				'<a href="%s" target="_parent">%s</a>',
+				self_admin_url( 'plugin-install.php' ),
+				__( 'Return to Plugin Installer' )
+			);
 		} elseif ( 'upload' == $this->type && 'plugins' == $from ) {
-			$install_actions['plugins_page'] = '<a href="' . self_admin_url( 'plugin-install.php' ) . '">' . __( 'Return to Plugin Installer' ) . '</a>';
+			$install_actions['plugins_page'] = sprintf(
+				'<a href="%s">%s</a>',
+				self_admin_url( 'plugin-install.php' ),
+				__( 'Return to Plugin Installer' )
+			);
 		} else {
-			$install_actions['plugins_page'] = '<a href="' . self_admin_url( 'plugins.php' ) . '" target="_parent">' . __( 'Return to Plugins page' ) . '</a>';
+			$install_actions['plugins_page'] = sprintf(
+				'<a href="%s" target="_parent">%s</a>',
+				self_admin_url( 'plugins.php' ),
+				__( 'Return to Plugins page' )
+			);
 		}
 
-		if ( ! $this->result || is_wp_error($this->result) ) {
+		if ( ! $this->result || is_wp_error( $this->result ) ) {
 			unset( $install_actions['activate_plugin'], $install_actions['network_activate'] );
-		} elseif ( ! current_user_can( 'activate_plugins' ) ) {
+		} elseif ( ! current_user_can( 'activate_plugin', $plugin_file ) ) {
 			unset( $install_actions['activate_plugin'] );
 		}
 
@@ -82,11 +126,11 @@ class Plugin_Installer_Skin extends WP_Upgrader_Skin {
 		 *
 		 * @since 2.7.0
 		 *
-		 * @param array  $install_actions Array of plugin action links.
-		 * @param object $api             Object containing WordPress.org API plugin data. Empty
-		 *                                for non-API installs, such as when a plugin is installed
-		 *                                via upload.
-		 * @param string $plugin_file     Path to the plugin file.
+		 * @param string[] $install_actions Array of plugin action links.
+		 * @param object   $api             Object containing WordPress.org API plugin data. Empty
+		 *                                  for non-API installs, such as when a plugin is installed
+		 *                                  via upload.
+		 * @param string   $plugin_file     Path to the plugin file relative to the plugins directory.
 		 */
 		$install_actions = apply_filters( 'install_plugin_complete_actions', $install_actions, $this->api, $plugin_file );
 

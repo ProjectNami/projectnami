@@ -23,32 +23,35 @@ class WP_Upgrader_Skin {
 	 * Holds the result of an upgrade.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 * @var string|bool|WP_Error
 	 */
-	public $result = false;
+	public $result  = false;
 	public $options = array();
 
 	/**
-	 *
 	 * @param array $args
 	 */
-	public function __construct($args = array()) {
-		$defaults = array( 'url' => '', 'nonce' => '', 'title' => '', 'context' => false );
-		$this->options = wp_parse_args($args, $defaults);
+	public function __construct( $args = array() ) {
+		$defaults      = array(
+			'url'     => '',
+			'nonce'   => '',
+			'title'   => '',
+			'context' => false,
+		);
+		$this->options = wp_parse_args( $args, $defaults );
 	}
 
 	/**
 	 * @param WP_Upgrader $upgrader
 	 */
-	public function set_upgrader(&$upgrader) {
-		if ( is_object($upgrader) )
+	public function set_upgrader( &$upgrader ) {
+		if ( is_object( $upgrader ) ) {
 			$this->upgrader =& $upgrader;
+		}
 		$this->add_strings();
 	}
 
 	/**
-	 * @access public
 	 */
 	public function add_strings() {
 	}
@@ -57,7 +60,6 @@ class WP_Upgrader_Skin {
 	 * Sets the result of an upgrade.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @param string|bool|WP_Error $result The result of an upgrade.
 	 */
@@ -86,8 +88,8 @@ class WP_Upgrader_Skin {
 		if ( ! $context ) {
 			$context = $this->options['context'];
 		}
-		if ( !empty($this->options['nonce']) ) {
-			$url = wp_nonce_url($url, $this->options['nonce']);
+		if ( ! empty( $this->options['nonce'] ) ) {
+			$url = wp_nonce_url( $url, $this->options['nonce'] );
 		}
 
 		$extra_fields = array();
@@ -96,7 +98,6 @@ class WP_Upgrader_Skin {
 	}
 
 	/**
-	 * @access public
 	 */
 	public function header() {
 		if ( $this->done_header ) {
@@ -108,7 +109,6 @@ class WP_Upgrader_Skin {
 	}
 
 	/**
-	 * @access public
 	 */
 	public function footer() {
 		if ( $this->done_footer ) {
@@ -119,53 +119,52 @@ class WP_Upgrader_Skin {
 	}
 
 	/**
-	 *
 	 * @param string|WP_Error $errors
 	 */
-	public function error($errors) {
-		if ( ! $this->done_header )
+	public function error( $errors ) {
+		if ( ! $this->done_header ) {
 			$this->header();
-		if ( is_string($errors) ) {
-			$this->feedback($errors);
-		} elseif ( is_wp_error($errors) && $errors->get_error_code() ) {
+		}
+		if ( is_string( $errors ) ) {
+			$this->feedback( $errors );
+		} elseif ( is_wp_error( $errors ) && $errors->has_errors() ) {
 			foreach ( $errors->get_error_messages() as $message ) {
-				if ( $errors->get_error_data() && is_string( $errors->get_error_data() ) )
-					$this->feedback($message . ' ' . esc_html( strip_tags( $errors->get_error_data() ) ) );
-				else
-					$this->feedback($message);
+				if ( $errors->get_error_data() && is_string( $errors->get_error_data() ) ) {
+					$this->feedback( $message . ' ' . esc_html( strip_tags( $errors->get_error_data() ) ) );
+				} else {
+					$this->feedback( $message );
+				}
 			}
 		}
 	}
 
 	/**
-	 *
 	 * @param string $string
+	 * @param mixed  ...$args Optional text replacements.
 	 */
-	public function feedback($string) {
-		if ( isset( $this->upgrader->strings[$string] ) )
-			$string = $this->upgrader->strings[$string];
+	public function feedback( $string, ...$args ) {
+		if ( isset( $this->upgrader->strings[ $string ] ) ) {
+			$string = $this->upgrader->strings[ $string ];
+		}
 
-		if ( strpos($string, '%') !== false ) {
-			$args = func_get_args();
-			$args = array_splice($args, 1);
+		if ( strpos( $string, '%' ) !== false ) {
 			if ( $args ) {
-				$args = array_map( 'strip_tags', $args );
-				$args = array_map( 'esc_html', $args );
-				$string = vsprintf($string, $args);
+				$args   = array_map( 'strip_tags', $args );
+				$args   = array_map( 'esc_html', $args );
+				$string = vsprintf( $string, $args );
 			}
 		}
-		if ( empty($string) )
+		if ( empty( $string ) ) {
 			return;
-		show_message($string);
+		}
+		show_message( $string );
 	}
 
 	/**
-	 * @access public
 	 */
 	public function before() {}
 
 	/**
-	 * @access public
 	 */
 	public function after() {}
 
@@ -191,7 +190,7 @@ class WP_Upgrader_Skin {
 		} else {
 			echo '<script type="text/javascript">
 					(function( wp ) {
-						if ( wp && wp.updates.decrementCount ) {
+						if ( wp && wp.updates && wp.updates.decrementCount ) {
 							wp.updates.decrementCount( "' . $type . '" );
 						}
 					})( window.wp );
@@ -200,12 +199,10 @@ class WP_Upgrader_Skin {
 	}
 
 	/**
-	 * @access public
 	 */
 	public function bulk_header() {}
 
 	/**
-	 * @access public
 	 */
 	public function bulk_footer() {}
 }

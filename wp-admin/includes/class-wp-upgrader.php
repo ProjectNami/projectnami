@@ -54,7 +54,6 @@ class WP_Upgrader {
 	 * The error/notification strings used to update the user on the progress.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 * @var array $strings
 	 */
 	public $strings = array();
@@ -63,7 +62,6 @@ class WP_Upgrader {
 	 * The upgrader skin being used.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 * @var Automatic_Upgrader_Skin|WP_Upgrader_Skin $skin
 	 */
 	public $skin = null;
@@ -77,12 +75,11 @@ class WP_Upgrader {
 	 * it.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @var WP_Error|array $result {
 	 *      @type string $source             The full path to the source the files were installed from.
 	 *      @type string $source_files       List of all the files in the source directory.
-	 *      @type string $destination        The full path to the install destination folder.
+	 *      @type string $destination        The full path to the installation destination folder.
 	 *      @type string $destination_name   The name of the destination folder, or empty if `$destination`
 	 *                                       and `$local_destination` are the same.
 	 *      @type string $local_destination  The full local path to the destination folder. This is usually
@@ -100,7 +97,6 @@ class WP_Upgrader {
 	 * Set by the bulk update methods.
 	 *
 	 * @since 3.0.0
-	 * @access public
 	 * @var int $update_count
 	 */
 	public $update_count = 0;
@@ -111,7 +107,6 @@ class WP_Upgrader {
 	 * Used by the bulk update methods, and incremented for each update.
 	 *
 	 * @since 3.0.0
-	 * @access public
 	 * @var int
 	 */
 	public $update_current = 0;
@@ -120,16 +115,16 @@ class WP_Upgrader {
 	 * Construct the upgrader with a skin.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @param WP_Upgrader_Skin $skin The upgrader skin to use. Default is a WP_Upgrader_Skin.
 	 *                               instance.
 	 */
 	public function __construct( $skin = null ) {
-		if ( null == $skin )
+		if ( null == $skin ) {
 			$this->skin = new WP_Upgrader_Skin();
-		else
+		} else {
 			$this->skin = $skin;
+		}
 	}
 
 	/**
@@ -139,10 +134,9 @@ class WP_Upgrader {
 	 * and also add the generic strings to `WP_Upgrader::$strings`.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 */
 	public function init() {
-		$this->skin->set_upgrader($this);
+		$this->skin->set_upgrader( $this );
 		$this->generic_strings();
 	}
 
@@ -150,38 +144,36 @@ class WP_Upgrader {
 	 * Add the generic strings to WP_Upgrader::$strings.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 */
 	public function generic_strings() {
-		$this->strings['bad_request'] = __('Invalid data provided.');
-		$this->strings['fs_unavailable'] = __('Could not access filesystem.');
-		$this->strings['fs_error'] = __('Filesystem error.');
-		$this->strings['fs_no_root_dir'] = __('Unable to locate WordPress root directory.');
-		$this->strings['fs_no_content_dir'] = __('Unable to locate WordPress content directory (wp-content).');
-		$this->strings['fs_no_plugins_dir'] = __('Unable to locate WordPress plugin directory.');
-		$this->strings['fs_no_themes_dir'] = __('Unable to locate WordPress theme directory.');
-		/* translators: %s: directory name */
-		$this->strings['fs_no_folder'] = __('Unable to locate needed folder (%s).');
+		$this->strings['bad_request']       = __( 'Invalid data provided.' );
+		$this->strings['fs_unavailable']    = __( 'Could not access filesystem.' );
+		$this->strings['fs_error']          = __( 'Filesystem error.' );
+		$this->strings['fs_no_root_dir']    = __( 'Unable to locate WordPress root directory.' );
+		$this->strings['fs_no_content_dir'] = __( 'Unable to locate WordPress content directory (wp-content).' );
+		$this->strings['fs_no_plugins_dir'] = __( 'Unable to locate WordPress plugin directory.' );
+		$this->strings['fs_no_themes_dir']  = __( 'Unable to locate WordPress theme directory.' );
+		/* translators: %s: Directory name. */
+		$this->strings['fs_no_folder'] = __( 'Unable to locate needed folder (%s).' );
 
-		$this->strings['download_failed'] = __('Download failed.');
-		$this->strings['installing_package'] = __('Installing the latest version&#8230;');
-		$this->strings['no_files'] = __('The package contains no files.');
-		$this->strings['folder_exists'] = __('Destination folder already exists.');
-		$this->strings['mkdir_failed'] = __('Could not create directory.');
-		$this->strings['incompatible_archive'] = __('The package could not be installed.');
-		$this->strings['files_not_writable'] = __( 'The update cannot be installed because we will be unable to copy some files. This is usually due to inconsistent file permissions.' );
+		$this->strings['download_failed']      = __( 'Download failed.' );
+		$this->strings['installing_package']   = __( 'Installing the latest version&#8230;' );
+		$this->strings['no_files']             = __( 'The package contains no files.' );
+		$this->strings['folder_exists']        = __( 'Destination folder already exists.' );
+		$this->strings['mkdir_failed']         = __( 'Could not create directory.' );
+		$this->strings['incompatible_archive'] = __( 'The package could not be installed.' );
+		$this->strings['files_not_writable']   = __( 'The update cannot be installed because we will be unable to copy some files. This is usually due to inconsistent file permissions.' );
 
-		$this->strings['maintenance_start'] = __('Enabling Maintenance mode&#8230;');
-		$this->strings['maintenance_end'] = __('Disabling Maintenance mode&#8230;');
+		$this->strings['maintenance_start'] = __( 'Enabling Maintenance mode&#8230;' );
+		$this->strings['maintenance_end']   = __( 'Disabling Maintenance mode&#8230;' );
 	}
 
 	/**
 	 * Connect to the filesystem.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
-	 * @global WP_Filesystem_Base $wp_filesystem Subclass
+	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
 	 * @param array $directories                  Optional. A list of directories. If any of these do
 	 *                                            not exist, a WP_Error object will be returned.
@@ -193,46 +185,55 @@ class WP_Upgrader {
 	public function fs_connect( $directories = array(), $allow_relaxed_file_ownership = false ) {
 		global $wp_filesystem;
 
-		if ( false === ( $credentials = $this->skin->request_filesystem_credentials( false, $directories[0], $allow_relaxed_file_ownership ) ) ) {
+		$credentials = $this->skin->request_filesystem_credentials( false, $directories[0], $allow_relaxed_file_ownership );
+		if ( false === $credentials ) {
 			return false;
 		}
 
 		if ( ! WP_Filesystem( $credentials, $directories[0], $allow_relaxed_file_ownership ) ) {
 			$error = true;
-			if ( is_object($wp_filesystem) && $wp_filesystem->errors->get_error_code() )
+			if ( is_object( $wp_filesystem ) && $wp_filesystem->errors->has_errors() ) {
 				$error = $wp_filesystem->errors;
+			}
 			// Failed to connect, Error and request again
 			$this->skin->request_filesystem_credentials( $error, $directories[0], $allow_relaxed_file_ownership );
 			return false;
 		}
 
-		if ( ! is_object($wp_filesystem) )
-			return new WP_Error('fs_unavailable', $this->strings['fs_unavailable'] );
+		if ( ! is_object( $wp_filesystem ) ) {
+			return new WP_Error( 'fs_unavailable', $this->strings['fs_unavailable'] );
+		}
 
-		if ( is_wp_error($wp_filesystem->errors) && $wp_filesystem->errors->get_error_code() )
-			return new WP_Error('fs_error', $this->strings['fs_error'], $wp_filesystem->errors);
+		if ( is_wp_error( $wp_filesystem->errors ) && $wp_filesystem->errors->has_errors() ) {
+			return new WP_Error( 'fs_error', $this->strings['fs_error'], $wp_filesystem->errors );
+		}
 
-		foreach ( (array)$directories as $dir ) {
+		foreach ( (array) $directories as $dir ) {
 			switch ( $dir ) {
 				case ABSPATH:
-					if ( ! $wp_filesystem->abspath() )
-						return new WP_Error('fs_no_root_dir', $this->strings['fs_no_root_dir']);
+					if ( ! $wp_filesystem->abspath() ) {
+						return new WP_Error( 'fs_no_root_dir', $this->strings['fs_no_root_dir'] );
+					}
 					break;
 				case WP_CONTENT_DIR:
-					if ( ! $wp_filesystem->wp_content_dir() )
-						return new WP_Error('fs_no_content_dir', $this->strings['fs_no_content_dir']);
+					if ( ! $wp_filesystem->wp_content_dir() ) {
+						return new WP_Error( 'fs_no_content_dir', $this->strings['fs_no_content_dir'] );
+					}
 					break;
 				case WP_PLUGIN_DIR:
-					if ( ! $wp_filesystem->wp_plugins_dir() )
-						return new WP_Error('fs_no_plugins_dir', $this->strings['fs_no_plugins_dir']);
+					if ( ! $wp_filesystem->wp_plugins_dir() ) {
+						return new WP_Error( 'fs_no_plugins_dir', $this->strings['fs_no_plugins_dir'] );
+					}
 					break;
 				case get_theme_root():
-					if ( ! $wp_filesystem->wp_themes_dir() )
-						return new WP_Error('fs_no_themes_dir', $this->strings['fs_no_themes_dir']);
+					if ( ! $wp_filesystem->wp_themes_dir() ) {
+						return new WP_Error( 'fs_no_themes_dir', $this->strings['fs_no_themes_dir'] );
+					}
 					break;
 				default:
-					if ( ! $wp_filesystem->find_folder($dir) )
+					if ( ! $wp_filesystem->find_folder( $dir ) ) {
 						return new WP_Error( 'fs_no_folder', sprintf( $this->strings['fs_no_folder'], esc_html( basename( $dir ) ) ) );
+					}
 					break;
 			}
 		}
@@ -243,19 +244,18 @@ class WP_Upgrader {
 	 * Download a package.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
-	 * @param string $package The URI of the package. If this is the full path to an
-	 *                        existing local file, it will be returned untouched.
+	 * @param string $package          The URI of the package. If this is the full path to an
+	 *                                 existing local file, it will be returned untouched.
+	 * @param bool   $check_signatures Whether to validate file signatures. Default false.
 	 * @return string|WP_Error The full path to the downloaded package file, or a WP_Error object.
 	 */
-	public function download_package( $package ) {
+	public function download_package( $package, $check_signatures = false ) {
 
 		/**
 		 * Filters whether to return the package.
 		 *
 		 * @since 3.7.0
-		 * @access public
 		 *
 		 * @param bool        $reply   Whether to bail without returning the package.
 		 *                             Default false.
@@ -263,21 +263,25 @@ class WP_Upgrader {
 		 * @param WP_Upgrader $this    The WP_Upgrader instance.
 		 */
 		$reply = apply_filters( 'upgrader_pre_download', false, $package, $this );
-		if ( false !== $reply )
+		if ( false !== $reply ) {
 			return $reply;
+		}
 
-		if ( ! preg_match('!^(http|https|ftp)://!i', $package) && file_exists($package) ) //Local file or remote?
+		if ( ! preg_match( '!^(http|https|ftp)://!i', $package ) && file_exists( $package ) ) { //Local file or remote?
 			return $package; //must be a local file..
+		}
 
-		if ( empty($package) )
-			return new WP_Error('no_package', $this->strings['no_package']);
+		if ( empty( $package ) ) {
+			return new WP_Error( 'no_package', $this->strings['no_package'] );
+		}
 
-		$this->skin->feedback('downloading_package', $package);
+		$this->skin->feedback( 'downloading_package', $package );
 
-		$download_file = download_url($package);
+		$download_file = download_url( $package, 300, $check_signatures );
 
-		if ( is_wp_error($download_file) )
-			return new WP_Error('download_failed', $this->strings['download_failed'], $download_file->get_error_message());
+		if ( is_wp_error( $download_file ) && ! $download_file->get_error_data( 'softfail-filename' ) ) {
+			return new WP_Error( 'download_failed', $this->strings['download_failed'], $download_file->get_error_message() );
+		}
 
 		return $download_file;
 	}
@@ -286,9 +290,8 @@ class WP_Upgrader {
 	 * Unpack a compressed package file.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
-	 * @global WP_Filesystem_Base $wp_filesystem Subclass
+	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
 	 * @param string $package        Full path to the package file.
 	 * @param bool   $delete_package Optional. Whether to delete the package file after attempting
@@ -298,33 +301,36 @@ class WP_Upgrader {
 	public function unpack_package( $package, $delete_package = true ) {
 		global $wp_filesystem;
 
-		$this->skin->feedback('unpack_package');
+		$this->skin->feedback( 'unpack_package' );
 
 		$upgrade_folder = $wp_filesystem->wp_content_dir() . 'upgrade/';
 
 		//Clean up contents of upgrade directory beforehand.
-		$upgrade_files = $wp_filesystem->dirlist($upgrade_folder);
-		if ( !empty($upgrade_files) ) {
-			foreach ( $upgrade_files as $file )
-				$wp_filesystem->delete($upgrade_folder . $file['name'], true);
+		$upgrade_files = $wp_filesystem->dirlist( $upgrade_folder );
+		if ( ! empty( $upgrade_files ) ) {
+			foreach ( $upgrade_files as $file ) {
+				$wp_filesystem->delete( $upgrade_folder . $file['name'], true );
+			}
 		}
 
 		// We need a working directory - Strip off any .tmp or .zip suffixes
 		$working_dir = $upgrade_folder . basename( basename( $package, '.tmp' ), '.zip' );
 
 		// Clean up working directory
-		if ( $wp_filesystem->is_dir($working_dir) )
-			$wp_filesystem->delete($working_dir, true);
+		if ( $wp_filesystem->is_dir( $working_dir ) ) {
+			$wp_filesystem->delete( $working_dir, true );
+		}
 
 		// Unzip package to working directory
 		$result = unzip_file( $package, $working_dir );
 
 		// Once extracted, delete the package if required.
-		if ( $delete_package )
-			unlink($package);
+		if ( $delete_package ) {
+			unlink( $package );
+		}
 
-		if ( is_wp_error($result) ) {
-			$wp_filesystem->delete($working_dir, true);
+		if ( is_wp_error( $result ) ) {
+			$wp_filesystem->delete( $working_dir, true );
 			if ( 'incompatible_archive' == $result->get_error_code() ) {
 				return new WP_Error( 'incompatible_archive', $this->strings['incompatible_archive'], $result->get_error_data() );
 			}
@@ -335,12 +341,39 @@ class WP_Upgrader {
 	}
 
 	/**
+	 * Flatten the results of WP_Filesystem::dirlist() for iterating over.
+	 *
+	 * @since 4.9.0
+	 * @access protected
+	 *
+	 * @param  array  $nested_files  Array of files as returned by WP_Filesystem::dirlist()
+	 * @param  string $path          Relative path to prepend to child nodes. Optional.
+	 * @return array $files A flattened array of the $nested_files specified.
+	 */
+	protected function flatten_dirlist( $nested_files, $path = '' ) {
+		$files = array();
+
+		foreach ( $nested_files as $name => $details ) {
+			$files[ $path . $name ] = $details;
+
+			// Append children recursively
+			if ( ! empty( $details['files'] ) ) {
+				$children = $this->flatten_dirlist( $details['files'], $path . $name . '/' );
+
+				// Merge keeping possible numeric keys, which array_merge() will reindex from 0..n
+				$files = $files + $children;
+			}
+		}
+
+		return $files;
+	}
+
+	/**
 	 * Clears the directory where this item is going to be installed into.
 	 *
 	 * @since 4.3.0
-	 * @access public
 	 *
-	 * @global WP_Filesystem_Base $wp_filesystem Subclass
+	 * @global WP_Filesystem_Base $wp_filesystem WordPress filesystem subclass.
 	 *
 	 * @param string $remote_destination The location on the remote filesystem to be cleared
 	 * @return bool|WP_Error True upon success, WP_Error on failure.
@@ -348,33 +381,22 @@ class WP_Upgrader {
 	public function clear_destination( $remote_destination ) {
 		global $wp_filesystem;
 
-		if ( ! $wp_filesystem->exists( $remote_destination ) ) {
+		$files = $wp_filesystem->dirlist( $remote_destination, true, true );
+
+		// False indicates that the $remote_destination doesn't exist.
+		if ( false === $files ) {
 			return true;
 		}
+
+		// Flatten the file list to iterate over
+		$files = $this->flatten_dirlist( $files );
 
 		// Check all files are writable before attempting to clear the destination.
 		$unwritable_files = array();
 
-		$_files = $wp_filesystem->dirlist( $remote_destination, true, true );
-
-		// Flatten the resulting array, iterate using each as we append to the array during iteration.
-		while ( $f = each( $_files ) ) {
-			$file = $f['value'];
-			$name = $f['key'];
-
-			if ( ! isset( $file['files'] ) ) {
-				continue;
-			}
-
-			foreach ( $file['files'] as $filename => $details ) {
-				$_files[ $name . '/' . $filename ] = $details;
-			}
-		}
-
 		// Check writability.
-		foreach ( $_files as $filename => $file_details ) {
+		foreach ( $files as $filename => $file_details ) {
 			if ( ! $wp_filesystem->is_writable( $remote_destination . $filename ) ) {
-
 				// Attempt to alter permissions to allow writes and try again.
 				$wp_filesystem->chmod( $remote_destination . $filename, ( 'd' == $file_details['type'] ? FS_CHMOD_DIR : FS_CHMOD_FILE ) );
 				if ( ! $wp_filesystem->is_writable( $remote_destination . $filename ) ) {
@@ -402,9 +424,8 @@ class WP_Upgrader {
 	 * clear out the destination folder if it already exists.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
-	 * @global WP_Filesystem_Base $wp_filesystem Subclass
+	 * @global WP_Filesystem_Base $wp_filesystem        WordPress filesystem subclass.
 	 * @global array              $wp_theme_directories
 	 *
 	 * @param array|string $args {
@@ -429,22 +450,22 @@ class WP_Upgrader {
 		global $wp_filesystem, $wp_theme_directories;
 
 		$defaults = array(
-			'source' => '', // Please always pass this
-			'destination' => '', // and this
-			'clear_destination' => false,
-			'clear_working' => false,
+			'source'                      => '', // Please always pass this
+			'destination'                 => '', // and this
+			'clear_destination'           => false,
+			'clear_working'               => false,
 			'abort_if_destination_exists' => true,
-			'hook_extra' => array()
+			'hook_extra'                  => array(),
 		);
 
-		$args = wp_parse_args($args, $defaults);
+		$args = wp_parse_args( $args, $defaults );
 
 		// These were previously extract()'d.
-		$source = $args['source'];
-		$destination = $args['destination'];
+		$source            = $args['source'];
+		$destination       = $args['destination'];
 		$clear_destination = $args['clear_destination'];
 
-		@set_time_limit( 300 );
+		set_time_limit( 300 );
 
 		if ( empty( $source ) || empty( $destination ) ) {
 			return new WP_Error( 'bad_request', $this->strings['bad_request'] );
@@ -470,10 +491,10 @@ class WP_Upgrader {
 		}
 
 		//Retain the Original source and destinations
-		$remote_source = $args['source'];
+		$remote_source     = $args['source'];
 		$local_destination = $destination;
 
-		$source_files = array_keys( $wp_filesystem->dirlist( $remote_source ) );
+		$source_files       = array_keys( $wp_filesystem->dirlist( $remote_source ) );
 		$remote_destination = $wp_filesystem->find_folder( $local_destination );
 
 		//Locate which directory to copy to the new folder, This is based on the actual folder holding the files.
@@ -522,12 +543,12 @@ class WP_Upgrader {
 
 		if ( in_array( $destination, $protected_directories ) ) {
 			$remote_destination = trailingslashit( $remote_destination ) . trailingslashit( basename( $source ) );
-			$destination = trailingslashit( $destination ) . trailingslashit( basename( $source ) );
+			$destination        = trailingslashit( $destination ) . trailingslashit( basename( $source ) );
 		}
 
 		if ( $clear_destination ) {
 			// We're going to clear the destination if there's something there.
-			$this->skin->feedback('remove_old');
+			$this->skin->feedback( 'remove_old' );
 
 			$removed = $this->clear_destination( $remote_destination );
 
@@ -546,13 +567,13 @@ class WP_Upgrader {
 			if ( is_wp_error( $removed ) ) {
 				return $removed;
 			}
-		} elseif ( $args['abort_if_destination_exists'] && $wp_filesystem->exists($remote_destination) ) {
+		} elseif ( $args['abort_if_destination_exists'] && $wp_filesystem->exists( $remote_destination ) ) {
 			//If we're not clearing the destination folder and something exists there already, Bail.
 			//But first check to see if there are actually any files in the folder.
-			$_files = $wp_filesystem->dirlist($remote_destination);
-			if ( ! empty($_files) ) {
-				$wp_filesystem->delete($remote_source, true); //Clear out the source files.
-				return new WP_Error('folder_exists', $this->strings['folder_exists'], $remote_destination );
+			$_files = $wp_filesystem->dirlist( $remote_destination );
+			if ( ! empty( $_files ) ) {
+				$wp_filesystem->delete( $remote_source, true ); //Clear out the source files.
+				return new WP_Error( 'folder_exists', $this->strings['folder_exists'], $remote_destination );
 			}
 		}
 
@@ -563,8 +584,8 @@ class WP_Upgrader {
 			}
 		}
 		// Copy new version of item into place.
-		$result = copy_dir($source, $remote_destination);
-		if ( is_wp_error($result) ) {
+		$result = copy_dir( $source, $remote_destination );
+		if ( is_wp_error( $result ) ) {
 			if ( $args['clear_working'] ) {
 				$wp_filesystem->delete( $remote_source, true );
 			}
@@ -576,7 +597,7 @@ class WP_Upgrader {
 			$wp_filesystem->delete( $remote_source, true );
 		}
 
-		$destination_name = basename( str_replace($local_destination, '', $destination) );
+		$destination_name = basename( str_replace( $local_destination, '', $destination ) );
 		if ( '.' == $destination_name ) {
 			$destination_name = '';
 		}
@@ -584,17 +605,17 @@ class WP_Upgrader {
 		$this->result = compact( 'source', 'source_files', 'destination', 'destination_name', 'local_destination', 'remote_destination', 'clear_destination' );
 
 		/**
-		 * Filters the install response after the installation has finished.
+		 * Filters the installation response after the installation has finished.
 		 *
 		 * @since 2.8.0
 		 *
-		 * @param bool  $response   Install response.
+		 * @param bool  $response   Installation response.
 		 * @param array $hook_extra Extra arguments passed to hooked filters.
 		 * @param array $result     Installation result data.
 		 */
 		$res = apply_filters( 'upgrader_post_install', true, $args['hook_extra'], $this->result );
 
-		if ( is_wp_error($res) ) {
+		if ( is_wp_error( $res ) ) {
 			$this->result = $res;
 			return $res;
 		}
@@ -604,13 +625,12 @@ class WP_Upgrader {
 	}
 
 	/**
-	 * Run an upgrade/install.
+	 * Run an upgrade/installation.
 	 *
 	 * Attempts to download the package (if it is not a local file), unpack it, and
 	 * install it in the destination folder.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @param array $options {
 	 *     Array or string of arguments for upgrading/installing a package.
@@ -627,7 +647,7 @@ class WP_Upgrader {
 	 *     @type bool   $abort_if_destination_exists Whether to abort the installation if the destination
 	 *                                               folder already exists. When true, `$clear_destination`
 	 *                                               should be false. Default true.
-	 *     @type bool   $is_multi                    Whether this run is one of multiple upgrade/install
+	 *     @type bool   $is_multi                    Whether this run is one of multiple upgrade/installation
 	 *                                               actions being performed in bulk. When true, the skin
 	 *                                               WP_Upgrader::header() and WP_Upgrader::footer()
 	 *                                               aren't called. Default false.
@@ -640,13 +660,13 @@ class WP_Upgrader {
 	public function run( $options ) {
 
 		$defaults = array(
-			'package' => '', // Please always pass this.
-			'destination' => '', // And this
-			'clear_destination' => false,
+			'package'                     => '', // Please always pass this.
+			'destination'                 => '', // And this
+			'clear_destination'           => false,
 			'abort_if_destination_exists' => true, // Abort if the Destination directory exists, Pass clear_destination as false please
-			'clear_working' => true,
-			'is_multi' => false,
-			'hook_extra' => array() // Pass any extra $hook_extra args here, this will be passed to any hooked filters.
+			'clear_working'               => true,
+			'is_multi'                    => false,
+			'hook_extra'                  => array(), // Pass any extra $hook_extra args here, this will be passed to any hooked filters.
 		);
 
 		$options = wp_parse_args( $options, $defaults );
@@ -673,7 +693,7 @@ class WP_Upgrader {
 		 *         @type string $action               Type of action. Default 'update'.
 		 *         @type string $type                 Type of update process. Accepts 'plugin', 'theme', or 'core'.
 		 *         @type bool   $bulk                 Whether the update process is a bulk update. Default true.
-		 *         @type string $plugin               The base plugin path from the plugins directory.
+		 *         @type string $plugin               Path to the plugin file relative to the plugins directory.
 		 *         @type string $theme                The stylesheet or template name of the theme.
 		 *         @type string $language_update_type The language pack update type. Accepts 'plugin', 'theme',
 		 *                                            or 'core'.
@@ -699,8 +719,8 @@ class WP_Upgrader {
 
 		$this->skin->before();
 
-		if ( is_wp_error($res) ) {
-			$this->skin->error($res);
+		if ( is_wp_error( $res ) ) {
+			$this->skin->error( $res );
 			$this->skin->after();
 			if ( ! $options['is_multi'] ) {
 				$this->skin->footer();
@@ -712,9 +732,32 @@ class WP_Upgrader {
 		 * Download the package (Note, This just returns the filename
 		 * of the file if the package is a local file)
 		 */
-		$download = $this->download_package( $options['package'] );
-		if ( is_wp_error($download) ) {
-			$this->skin->error($download);
+		$download = $this->download_package( $options['package'], true );
+
+		// Allow for signature soft-fail.
+		// WARNING: This may be removed in the future.
+		if ( is_wp_error( $download ) && $download->get_error_data( 'softfail-filename' ) ) {
+
+			// Don't output the 'no signature could be found' failure message for now.
+			if ( 'signature_verification_no_signature' != $download->get_error_code() || WP_DEBUG ) {
+				// Outout the failure error as a normal feedback, and not as an error:
+				$this->skin->feedback( $download->get_error_message() );
+
+				// Report this failure back to WordPress.org for debugging purposes.
+				wp_version_check(
+					array(
+						'signature_failure_code' => $download->get_error_code(),
+						'signature_failure_data' => $download->get_error_data(),
+					)
+				);
+			}
+
+			// Pretend this error didn't happen.
+			$download = $download->get_error_data( 'softfail-filename' );
+		}
+
+		if ( is_wp_error( $download ) ) {
+			$this->skin->error( $download );
 			$this->skin->after();
 			if ( ! $options['is_multi'] ) {
 				$this->skin->footer();
@@ -726,8 +769,8 @@ class WP_Upgrader {
 
 		// Unzips the file into a temporary directory.
 		$working_dir = $this->unpack_package( $download, $delete_package );
-		if ( is_wp_error($working_dir) ) {
-			$this->skin->error($working_dir);
+		if ( is_wp_error( $working_dir ) ) {
+			$this->skin->error( $working_dir );
 			$this->skin->after();
 			if ( ! $options['is_multi'] ) {
 				$this->skin->footer();
@@ -736,22 +779,24 @@ class WP_Upgrader {
 		}
 
 		// With the given options, this installs it to the destination directory.
-		$result = $this->install_package( array(
-			'source' => $working_dir,
-			'destination' => $options['destination'],
-			'clear_destination' => $options['clear_destination'],
-			'abort_if_destination_exists' => $options['abort_if_destination_exists'],
-			'clear_working' => $options['clear_working'],
-			'hook_extra' => $options['hook_extra']
-		) );
+		$result = $this->install_package(
+			array(
+				'source'                      => $working_dir,
+				'destination'                 => $options['destination'],
+				'clear_destination'           => $options['clear_destination'],
+				'abort_if_destination_exists' => $options['abort_if_destination_exists'],
+				'clear_working'               => $options['clear_working'],
+				'hook_extra'                  => $options['hook_extra'],
+			)
+		);
 
-		$this->skin->set_result($result);
-		if ( is_wp_error($result) ) {
-			$this->skin->error($result);
-			$this->skin->feedback('process_failed');
+		$this->skin->set_result( $result );
+		if ( is_wp_error( $result ) ) {
+			$this->skin->error( $result );
+			$this->skin->feedback( 'process_failed' );
 		} else {
-			// Install succeeded.
-			$this->skin->feedback('process_success');
+			// Installation succeeded.
+			$this->skin->feedback( 'process_success' );
 		}
 
 		$this->skin->after();
@@ -802,7 +847,6 @@ class WP_Upgrader {
 	 * Creates/deletes the maintenance file to enable/disable maintenance mode.
 	 *
 	 * @since 2.8.0
-	 * @access public
 	 *
 	 * @global WP_Filesystem_Base $wp_filesystem Subclass
 	 *
@@ -812,24 +856,22 @@ class WP_Upgrader {
 		global $wp_filesystem;
 		$file = $wp_filesystem->abspath() . '.maintenance';
 		if ( $enable ) {
-			$this->skin->feedback('maintenance_start');
+			$this->skin->feedback( 'maintenance_start' );
 			// Create maintenance file to signal that we are upgrading
 			$maintenance_string = '<?php $upgrading = ' . time() . '; ?>';
-			$wp_filesystem->delete($file);
-			$wp_filesystem->put_contents($file, $maintenance_string, FS_CHMOD_FILE);
+			$wp_filesystem->delete( $file );
+			$wp_filesystem->put_contents( $file, $maintenance_string, FS_CHMOD_FILE );
 		} elseif ( ! $enable && $wp_filesystem->exists( $file ) ) {
-			$this->skin->feedback('maintenance_end');
-			$wp_filesystem->delete($file);
+			$this->skin->feedback( 'maintenance_end' );
+			$wp_filesystem->delete( $file );
 		}
 	}
 
 	/**
- 	 * Creates a lock using WordPress options.
- 	 *
- 	 * @since 4.5.0
- 	 * @access public
- 	 * @static
- 	 *
+	 * Creates a lock using WordPress options.
+	 *
+	 * @since 4.5.0
+	 *
 	 * @param string $lock_name       The name of this unique lock.
 	 * @param int    $release_timeout Optional. The duration in seconds to respect an existing lock.
 	 *                                Default: 1 hour.
@@ -871,17 +913,15 @@ class WP_Upgrader {
 	}
 
 	/**
- 	 * Releases an upgrader lock.
- 	 *
- 	 * @since 4.5.0
- 	 * @access public
- 	 * @static
+	 * Releases an upgrader lock.
+	 *
+	 * @since 4.5.0
 	 *
 	 * @see WP_Upgrader::create_lock()
- 	 *
- 	 * @param string $lock_name The name of this unique lock.
+	 *
+	 * @param string $lock_name The name of this unique lock.
 	 * @return bool True if the lock was successfully released. False on failure.
- 	 */
+	 */
 	public static function release_lock( $lock_name ) {
 		return delete_option( $lock_name . '.lock' );
 	}

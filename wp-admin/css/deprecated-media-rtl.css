@@ -31,7 +31,6 @@ div#media-upload-header {
 	border-bottom: 1px solid #ddd;
 	background-color: #f9f9f9;
 	text-decoration: none;
-	-webkit-transition: none;
 	transition: none;
 }
 
@@ -207,6 +206,22 @@ span.required {
 	margin: 8px 0;
 }
 
+#media-upload .tablenav-pages a,
+#media-upload .tablenav-pages .current {
+	display: inline-block;
+	padding: 4px 5px 6px;
+	font-size: 16px;
+	line-height: 1;
+	text-align: center;
+	text-decoration: none;
+}
+
+#media-upload .tablenav-pages a {
+	min-width: 17px;
+	border: 1px solid #ccc;
+	background: #f7f7f7;
+}
+
 #filter .tablenav select {
 	border-style: solid;
 	border-width: 1px;
@@ -279,11 +294,11 @@ span.required {
 	border-bottom: 1px solid #ddd;
 }
 
-h3.media-title  {
+h3.media-title {
 	font-size: 1.6em;
 }
 
-h4.media-sub-title  {
+h4.media-sub-title {
 	border-bottom: 1px solid #ddd;
 	font-size: 1.3em;
 	margin: 12px;
@@ -394,25 +409,21 @@ table.not-image tr.image-only {
 
 	.image-align-none-label {
 		background-image: url(../images/align-none-2x.png?ver=20120916);
-		-webkit-background-size: 21px 15px;
 		background-size: 21px 15px;
 	}
 
 	.image-align-left-label {
 		background-image: url(../images/align-left-2x.png?ver=20120916);
-		-webkit-background-size: 22px 15px;
 		background-size: 22px 15px;
 	}
 
 	.image-align-center-label {
 		background-image: url(../images/align-center-2x.png?ver=20120916);
-		-webkit-background-size: 21px 15px;
 		background-size: 21px 15px;
 	}
 
 	.image-align-right-label {
 		background-image: url(../images/align-right-2x.png?ver=20120916);
-		-webkit-background-size: 22px 15px;
 		background-size: 22px 15px;
 	}
 }

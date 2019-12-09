@@ -19,7 +19,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Requests Response object.
 	 *
 	 * @since 4.6.0
-	 * @access protected
 	 * @var Requests_Response
 	 */
 	protected $response;
@@ -28,7 +27,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Filename the response was saved to.
 	 *
 	 * @since 4.6.0
-	 * @access protected
 	 * @var string|null
 	 */
 	protected $filename;
@@ -37,7 +35,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Constructor.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param Requests_Response $response HTTP response.
 	 * @param string            $filename Optional. File name. Default empty.
@@ -51,7 +48,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Retrieves the response object for the request.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @return Requests_Response HTTP response.
 	 */
@@ -63,9 +59,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Retrieves headers associated with the response.
 	 *
 	 * @since 4.6.0
-	 * @access public
-	 *
-	 * @see \Requests_Utility_CaseInsensitiveDictionary
 	 *
 	 * @return \Requests_Utility_CaseInsensitiveDictionary Map of header name to header value.
 	 */
@@ -88,7 +81,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Sets all header values.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param array $headers Map of header name to header value.
 	 */
@@ -100,7 +92,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Sets a single HTTP header.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param string $key     Header name.
 	 * @param string $value   Header value.
@@ -119,7 +110,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Retrieves the HTTP return code for the response.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @return int The 3-digit HTTP status code.
 	 */
@@ -131,7 +121,6 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Sets the 3-digit HTTP status code.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @param int $code HTTP status.
 	 */
@@ -143,9 +132,8 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Retrieves the response data.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
-	 * @return mixed Response data.
+	 * @return string Response data.
 	 */
 	public function get_data() {
 		return $this->response->body;
@@ -155,9 +143,8 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Sets the response data.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
-	 * @param mixed $data Response data.
+	 * @param string $data Response data.
 	 */
 	public function set_data( $data ) {
 		$this->response->body = $data;
@@ -167,20 +154,22 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Retrieves cookies from the response.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @return WP_HTTP_Cookie[] List of cookie objects.
 	 */
 	public function get_cookies() {
 		$cookies = array();
 		foreach ( $this->response->cookies as $cookie ) {
-			$cookies[] = new WP_Http_Cookie( array(
-				'name'    => $cookie->name,
-				'value'   => urldecode( $cookie->value ),
-				'expires' => isset( $cookie->attributes['expires'] ) ? $cookie->attributes['expires'] : null,
-				'path'    => isset( $cookie->attributes['path'] ) ? $cookie->attributes['path'] : null,
-				'domain'  => isset( $cookie->attributes['domain'] ) ? $cookie->attributes['domain'] : null,
-			));
+			$cookies[] = new WP_Http_Cookie(
+				array(
+					'name'      => $cookie->name,
+					'value'     => urldecode( $cookie->value ),
+					'expires'   => isset( $cookie->attributes['expires'] ) ? $cookie->attributes['expires'] : null,
+					'path'      => isset( $cookie->attributes['path'] ) ? $cookie->attributes['path'] : null,
+					'domain'    => isset( $cookie->attributes['domain'] ) ? $cookie->attributes['domain'] : null,
+					'host_only' => isset( $cookie->flags['host-only'] ) ? $cookie->flags['host-only'] : null,
+				)
+			);
 		}
 
 		return $cookies;
@@ -190,19 +179,18 @@ class WP_HTTP_Requests_Response extends WP_HTTP_Response {
 	 * Converts the object to a WP_Http response array.
 	 *
 	 * @since 4.6.0
-	 * @access public
 	 *
 	 * @return array WP_Http response array, per WP_Http::request().
 	 */
 	public function to_array() {
 		return array(
-			'headers' => $this->get_headers(),
-			'body' => $this->get_data(),
+			'headers'  => $this->get_headers(),
+			'body'     => $this->get_data(),
 			'response' => array(
 				'code'    => $this->get_status(),
 				'message' => get_status_header_desc( $this->get_status() ),
 			),
-			'cookies' => $this->get_cookies(),
+			'cookies'  => $this->get_cookies(),
 			'filename' => $this->filename,
 		);
 	}

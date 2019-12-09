@@ -307,6 +307,7 @@ class SQL_Translations extends wpdb
             'translate_create_queries',
             'translate_specific',
 			'translate_if_not_exists_insert_merge',
+            'translate_index_hints',
         );
 
         // Perform translations and record query changes.
@@ -321,17 +322,17 @@ class SQL_Translations extends wpdb
             }
         }
 
+        if ( $this->insert_query ) {
+            // $query = $this->on_duplicate_key($query);
+            // $query = $this->split_insert_values($query);
+            /* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
+            $query = $this->on_update_to_merge($query);
+        }
+        
         if (!empty($this->preg_data)) {
             $query = vsprintf($query, $this->preg_data);
         }
         $this->preg_data = array();
-
-        if ( $this->insert_query ) {
-            // $query = $this->on_duplicate_key($query);
-            // $query = $this->split_insert_values($query);
-			/* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
-			$query = $this->on_update_to_merge($query);
-        }
 
         return $query;
     }
@@ -648,7 +649,7 @@ class SQL_Translations extends wpdb
         }
         // SHOW TABLES
         if ( strtolower($query) === 'show tables;' or strtolower($query) === 'show tables' ) {
-            $query = str_ireplace('show tables',"select name from SYSOBJECTS where TYPE = 'U' order by NAME",$query);
+            $query = str_ireplace('show tables', "select name from SYSOBJECTS where TYPE = 'U' order by NAME", $query);
         }
         if ( stripos($query, 'show tables like ') === 0 ) {
             $end_pos = strlen($query);
@@ -662,6 +663,16 @@ class SQL_Translations extends wpdb
             }
             */
             $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE ' . $param;
+        }
+        if ( stripos($query, 'show tables where ') === 0 ) {
+          $end_pos = strlen($query);
+          $param = substr($query, 18, $end_pos - 18);
+          // quoted with double quotes instead of single?
+          $param = str_ireplace('"', "'", $param);
+          // Used by plugins like WP Statistics
+          // Replace `Tables_in_THEDATABASE` parameter syntax with INFORMATION_SCHEMA.TABLES a compatible one.
+          $param = preg_replace('/.?Tables_in_.*?(=|LIKE|NOT\\ LIKE)\s?(.*?)/i', 'TABLE_NAME ${1} ${2}', $param);
+          $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE ' . $param;
         }
         // DESCRIBE - this is pretty darn close to mysql equiv, however it will need to have a flag to modify the result set
         // this and SHOW INDEX FROM are used in WP upgrading. The problem is that WP will see the different data types and try
@@ -799,8 +810,9 @@ class SQL_Translations extends wpdb
 
         // Computed
         // This is done as the SQLSRV driver doesn't seem to set a property value for computed
-        // selected columns, thus WP doesn't have anything to work with.
-        if (!preg_match('/COUNT\((.*?)\) as/i', $query)) {
+        // selected columns, thus WP doesn't have anything to work with. (Exception: if it's
+        // part of a HAVING clause, it cannot have an alias.)
+        if (!preg_match('/COUNT\((.*?)\) as/i', $query) && !preg_match('/HAVING COUNT\((.*?)\)/i', $query)) {
             $query = preg_replace('/COUNT\((.*?)\)/i', 'COUNT(\1) as Computed ', $query);
         }
 
@@ -1244,7 +1256,7 @@ class SQL_Translations extends wpdb
     function translate_sort_casting($query)
     {
         if ( stripos($query, 'ORDER') > 0 ) {
-            $ord = '';
+            $ord = strlen($query);
             $order_pos = stripos($query, 'ORDER');
             if ( stripos($query, 'BY', $order_pos) == ($order_pos + 6) && stripos($query, 'OVER(', $order_pos - 5) != ($order_pos - 5)) {
                 $ob = stripos($query, 'BY', $order_pos);
@@ -1255,7 +1267,7 @@ class SQL_Translations extends wpdb
                     $ord = stripos($query, ' DESC', $ob);
                 }
 
-                $params = substr($query, ($ob + 3), ($ord - ($ob + 3)));
+                $params = substr($query, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
                 $params = preg_split('/[\s,]+/', $params);
                 $p = array();
                 foreach ( $params as $value ) {
@@ -1286,7 +1298,7 @@ class SQL_Translations extends wpdb
                     }
                 }
                 $str = rtrim($str, ', ');
-                $query = substr_replace($query, $str, ($ob + 3), ($ord - ($ob + 3)));
+                $query = substr_replace($query, $str, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
             }
         }
         return $query;
@@ -1613,7 +1625,7 @@ class SQL_Translations extends wpdb
             $start_positions = array_reverse($this->stripos_all($query, $ac_type));
             foreach ($start_positions as $start_pos) {
                 if ($ac_type == 'varchar') {
-                    if (substr($query, $start_pos - 1, 8) == 'NVARCHAR') {
+                    if (strcasecmp(substr($query, $start_pos - 1, 8), 'nvarchar') == 'NVARCHAR') {
                         continue;
                     }
                     $query = substr_replace($query, 'NVARCHAR', $start_pos, strlen($ac_type));
@@ -1857,6 +1869,9 @@ class SQL_Translations extends wpdb
             if ( strtolower($tok[$i]) === 'as' ) {
                 $arr[] = $tok[($i + 1)];
             }
+			if ( strtolower($tok[$i]) === 'from' ) {
+				break;
+			}
         }
         return $arr;
     }
@@ -2258,6 +2273,35 @@ class SQL_Translations extends wpdb
             return $query;
         }
         return $arr;
+    }
+
+    /**
+     * MySQL uses FORCE INDEX (columns) as a query index hint. T-SQL allows
+     * an equivalent WITH (INDEX (index_name)) query hint, but that uses the name
+     * of the index rather than the columns, which we don't have here, so just
+     * drop the hint instead.
+     * 
+     * TODO: Perhaps map known index names?
+     *
+     * @param string $query Query coming in
+     *
+     * @return string Translated Query
+     */
+    function translate_index_hints($query)
+    {
+        // Index hints are only used for SELECT queries
+        if (stripos($query, "SELECT") === false) {
+            return $query;
+        }
+        // Short-circuit this translation if there don't appear to be any query hints
+        if (stripos($query, "INDEX") === false && stripos($query, "KEY") === false) {
+            return $query;
+        }
+
+        // Pattern constructed from grammar at https://dev.mysql.com/doc/refman/8.0/en/index-hints.html
+        $query = preg_replace('/(FORCE|IGNORE|USE)\s+(INDEX|KEY)\s+(FOR.*)?\(.*\)/iU', "", $query);
+        
+        return $query;
     }
 
     /**

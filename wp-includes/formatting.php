@@ -26,13 +26,23 @@
  *
  * @global array $wp_cockneyreplace Array of formatted entities for certain common phrases
  * @global array $shortcode_tags
- * @staticvar array $static_characters
- * @staticvar array $static_replacements
- * @staticvar array $dynamic_characters
- * @staticvar array $dynamic_replacements
- * @staticvar array $default_no_texturize_tags
- * @staticvar array $default_no_texturize_shortcodes
- * @staticvar bool  $run_texturize
+ * @staticvar array  $static_characters
+ * @staticvar array  $static_replacements
+ * @staticvar array  $dynamic_characters
+ * @staticvar array  $dynamic_replacements
+ * @staticvar array  $default_no_texturize_tags
+ * @staticvar array  $default_no_texturize_shortcodes
+ * @staticvar bool   $run_texturize
+ * @staticvar string $apos
+ * @staticvar string $prime
+ * @staticvar string $double_prime
+ * @staticvar string $opening_quote
+ * @staticvar string $closing_quote
+ * @staticvar string $opening_single_quote
+ * @staticvar string $closing_single_quote
+ * @staticvar string $open_q_flag
+ * @staticvar string $open_sq_flag
+ * @staticvar string $apos_flag
  *
  * @param string $text The text to be formatted
  * @param bool   $reset Set to true for unit testing. Translated patterns will reset.
@@ -40,23 +50,23 @@
  */
 function wptexturize( $text, $reset = false ) {
 	global $wp_cockneyreplace, $shortcode_tags;
-	static $static_characters = null,
-		$static_replacements = null,
-		$dynamic_characters = null,
-		$dynamic_replacements = null,
-		$default_no_texturize_tags = null,
+	static $static_characters            = null,
+		$static_replacements             = null,
+		$dynamic_characters              = null,
+		$dynamic_replacements            = null,
+		$default_no_texturize_tags       = null,
 		$default_no_texturize_shortcodes = null,
-		$run_texturize = true,
-		$apos = null,
-		$prime = null,
-		$double_prime = null,
-		$opening_quote = null,
-		$closing_quote = null,
-		$opening_single_quote = null,
-		$closing_single_quote = null,
-		$open_q_flag = '<!--oq-->',
-		$open_sq_flag = '<!--osq-->',
-		$apos_flag = '<!--apos-->';
+		$run_texturize                   = true,
+		$apos                            = null,
+		$prime                           = null,
+		$double_prime                    = null,
+		$opening_quote                   = null,
+		$closing_quote                   = null,
+		$opening_single_quote            = null,
+		$closing_single_quote            = null,
+		$open_q_flag                     = '<!--oq-->',
+		$open_sq_flag                    = '<!--osq-->',
+		$apos_flag                       = '<!--apos-->';
 
 	// If there's nothing to do, just stop.
 	if ( empty( $text ) || false === $run_texturize ) {
@@ -84,58 +94,76 @@ function wptexturize( $text, $reset = false ) {
 			return $text;
 		}
 
-		/* translators: opening curly double quote */
+		/* translators: Opening curly double quote. */
 		$opening_quote = _x( '&#8220;', 'opening curly double quote' );
-		/* translators: closing curly double quote */
+		/* translators: Closing curly double quote. */
 		$closing_quote = _x( '&#8221;', 'closing curly double quote' );
 
-		/* translators: apostrophe, for example in 'cause or can't */
+		/* translators: Apostrophe, for example in 'cause or can't. */
 		$apos = _x( '&#8217;', 'apostrophe' );
 
-		/* translators: prime, for example in 9' (nine feet) */
+		/* translators: Prime, for example in 9' (nine feet). */
 		$prime = _x( '&#8242;', 'prime' );
-		/* translators: double prime, for example in 9" (nine inches) */
+		/* translators: Double prime, for example in 9" (nine inches). */
 		$double_prime = _x( '&#8243;', 'double prime' );
 
-		/* translators: opening curly single quote */
+		/* translators: Opening curly single quote. */
 		$opening_single_quote = _x( '&#8216;', 'opening curly single quote' );
-		/* translators: closing curly single quote */
+		/* translators: Closing curly single quote. */
 		$closing_single_quote = _x( '&#8217;', 'closing curly single quote' );
 
-		/* translators: en dash */
+		/* translators: En dash. */
 		$en_dash = _x( '&#8211;', 'en dash' );
-		/* translators: em dash */
+		/* translators: Em dash. */
 		$em_dash = _x( '&#8212;', 'em dash' );
 
-		$default_no_texturize_tags = array('pre', 'code', 'kbd', 'style', 'script', 'tt');
-		$default_no_texturize_shortcodes = array('code');
+		$default_no_texturize_tags       = array( 'pre', 'code', 'kbd', 'style', 'script', 'tt' );
+		$default_no_texturize_shortcodes = array( 'code' );
 
 		// if a plugin has provided an autocorrect array, use it
-		if ( isset($wp_cockneyreplace) ) {
-			$cockney = array_keys( $wp_cockneyreplace );
+		if ( isset( $wp_cockneyreplace ) ) {
+			$cockney        = array_keys( $wp_cockneyreplace );
 			$cockneyreplace = array_values( $wp_cockneyreplace );
 		} else {
-			/* translators: This is a comma-separated list of words that defy the syntax of quotations in normal use,
+			/*
+			 * translators: This is a comma-separated list of words that defy the syntax of quotations in normal use,
 			 * for example...  'We do not have enough words yet' ... is a typical quoted phrase.  But when we write
 			 * lines of code 'til we have enough of 'em, then we need to insert apostrophes instead of quotes.
 			 */
-			$cockney = explode( ',', _x( "'tain't,'twere,'twas,'tis,'twill,'til,'bout,'nuff,'round,'cause,'em",
-				'Comma-separated list of words to texturize in your language' ) );
+			$cockney = explode(
+				',',
+				_x(
+					"'tain't,'twere,'twas,'tis,'twill,'til,'bout,'nuff,'round,'cause,'em",
+					'Comma-separated list of words to texturize in your language'
+				)
+			);
 
-			$cockneyreplace = explode( ',', _x( '&#8217;tain&#8217;t,&#8217;twere,&#8217;twas,&#8217;tis,&#8217;twill,&#8217;til,&#8217;bout,&#8217;nuff,&#8217;round,&#8217;cause,&#8217;em',
-				'Comma-separated list of replacement words in your language' ) );
+			$cockneyreplace = explode(
+				',',
+				_x(
+					'&#8217;tain&#8217;t,&#8217;twere,&#8217;twas,&#8217;tis,&#8217;twill,&#8217;til,&#8217;bout,&#8217;nuff,&#8217;round,&#8217;cause,&#8217;em',
+					'Comma-separated list of replacement words in your language'
+				)
+			);
 		}
 
-		$static_characters = array_merge( array( '...', '``', '\'\'', ' (tm)' ), $cockney );
+		$static_characters   = array_merge( array( '...', '``', '\'\'', ' (tm)' ), $cockney );
 		$static_replacements = array_merge( array( '&#8230;', $opening_quote, $closing_quote, ' &#8482;' ), $cockneyreplace );
-
 
 		// Pattern-based replacements of characters.
 		// Sort the remaining patterns into several arrays for performance tuning.
-		$dynamic_characters = array( 'apos' => array(), 'quote' => array(), 'dash' => array() );
-		$dynamic_replacements = array( 'apos' => array(), 'quote' => array(), 'dash' => array() );
-		$dynamic = array();
-		$spaces = wp_spaces_regexp();
+		$dynamic_characters   = array(
+			'apos'  => array(),
+			'quote' => array(),
+			'dash'  => array(),
+		);
+		$dynamic_replacements = array(
+			'apos'  => array(),
+			'quote' => array(),
+			'dash'  => array(),
+		);
+		$dynamic              = array();
+		$spaces               = wp_spaces_regexp();
 
 		// '99' and '99" are ambiguous among other patterns; assume it's an abbreviated year at the end of a quotation.
 		if ( "'" !== $apos || "'" !== $closing_single_quote ) {
@@ -147,7 +175,7 @@ function wptexturize( $text, $reset = false ) {
 
 		// '99 '99s '99's (apostrophe)  But never '9 or '99% or '999 or '99.0.
 		if ( "'" !== $apos ) {
-			$dynamic[ '/\'(?=\d\d(?:\Z|(?![%\d]|[.,]\d)))/' ] = $apos_flag;
+			$dynamic['/\'(?=\d\d(?:\Z|(?![%\d]|[.,]\d)))/'] = $apos_flag;
 		}
 
 		// Quoted Numbers like '0.42'
@@ -165,9 +193,9 @@ function wptexturize( $text, $reset = false ) {
 			$dynamic[ '/(?<!' . $spaces . ')\'(?!\Z|[.,:;!?"\'(){}[\]\-]|&[lg]t;|' . $spaces . ')/' ] = $apos_flag;
 		}
 
-		$dynamic_characters['apos'] = array_keys( $dynamic );
+		$dynamic_characters['apos']   = array_keys( $dynamic );
 		$dynamic_replacements['apos'] = array_values( $dynamic );
-		$dynamic = array();
+		$dynamic                      = array();
 
 		// Quoted Numbers like "42"
 		if ( '"' !== $opening_quote && '"' !== $closing_quote ) {
@@ -179,17 +207,17 @@ function wptexturize( $text, $reset = false ) {
 			$dynamic[ '/(?<=\A|[([{\-]|&lt;|' . $spaces . ')"(?!' . $spaces . ')/' ] = $open_q_flag;
 		}
 
-		$dynamic_characters['quote'] = array_keys( $dynamic );
+		$dynamic_characters['quote']   = array_keys( $dynamic );
 		$dynamic_replacements['quote'] = array_values( $dynamic );
-		$dynamic = array();
+		$dynamic                       = array();
 
 		// Dashes and spaces
-		$dynamic[ '/---/' ] = $em_dash;
+		$dynamic['/---/'] = $em_dash;
 		$dynamic[ '/(?<=^|' . $spaces . ')--(?=$|' . $spaces . ')/' ] = $em_dash;
-		$dynamic[ '/(?<!xn)--/' ] = $en_dash;
-		$dynamic[ '/(?<=^|' . $spaces . ')-(?=$|' . $spaces . ')/' ] = $en_dash;
+		$dynamic['/(?<!xn)--/']                                       = $en_dash;
+		$dynamic[ '/(?<=^|' . $spaces . ')-(?=$|' . $spaces . ')/' ]  = $en_dash;
 
-		$dynamic_characters['dash'] = array_keys( $dynamic );
+		$dynamic_characters['dash']   = array_keys( $dynamic );
 		$dynamic_replacements['dash'] = array_values( $dynamic );
 	}
 
@@ -211,16 +239,16 @@ function wptexturize( $text, $reset = false ) {
 	 */
 	$no_texturize_shortcodes = apply_filters( 'no_texturize_shortcodes', $default_no_texturize_shortcodes );
 
-	$no_texturize_tags_stack = array();
+	$no_texturize_tags_stack       = array();
 	$no_texturize_shortcodes_stack = array();
 
 	// Look for shortcodes and HTML elements.
 
 	preg_match_all( '@\[/?([^<>&/\[\]\x00-\x20=]++)@', $text, $matches );
-	$tagnames = array_intersect( array_keys( $shortcode_tags ), $matches[1] );
+	$tagnames         = array_intersect( array_keys( $shortcode_tags ), $matches[1] );
 	$found_shortcodes = ! empty( $tagnames );
-	$shortcode_regex = $found_shortcodes ? _get_wptexturize_shortcode_regex( $tagnames ) : '';
-	$regex = _get_wptexturize_split_regex( $shortcode_regex );
+	$shortcode_regex  = $found_shortcodes ? _get_wptexturize_shortcode_regex( $tagnames ) : '';
+	$regex            = _get_wptexturize_split_regex( $shortcode_regex );
 
 	$textarr = preg_split( $regex, $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY );
 
@@ -239,7 +267,6 @@ function wptexturize( $text, $reset = false ) {
 
 				_wptexturize_pushpop_element( $curl, $no_texturize_tags_stack, $no_texturize_tags );
 			}
-
 		} elseif ( '' === trim( $curl ) ) {
 			// This is a newline between delimiters.  Performance improves when we check this.
 			continue;
@@ -254,7 +281,6 @@ function wptexturize( $text, $reset = false ) {
 				// Looks like an escaped shortcode.
 				continue;
 			}
-
 		} elseif ( empty( $no_texturize_shortcodes_stack ) && empty( $no_texturize_tags_stack ) ) {
 			// This is neither a delimiter, nor is this content inside of no_texturize pairs.  Do texturize.
 
@@ -304,9 +330,9 @@ function wptexturize( $text, $reset = false ) {
  * @return string The $haystack value after primes and quotes replacements.
  */
 function wptexturize_primes( $haystack, $needle, $prime, $open_quote, $close_quote ) {
-	$spaces = wp_spaces_regexp();
-	$flag = '<!--wp-prime-or-quote-->';
-	$quote_pattern = "/$needle(?=\\Z|[.,:;!?)}\\-\\]]|&gt;|" . $spaces . ")/";
+	$spaces           = wp_spaces_regexp();
+	$flag             = '<!--wp-prime-or-quote-->';
+	$quote_pattern    = "/$needle(?=\\Z|[.,:;!?)}\\-\\]]|&gt;|" . $spaces . ')/';
 	$prime_pattern    = "/(?<=\\d)$needle/";
 	$flag_after_digit = "/(?<=\\d)$flag/";
 	$flag_no_digit    = "/(?<!\\d)$flag/";
@@ -429,8 +455,9 @@ function _wptexturize_pushpop_element( $text, &$stack, $disabled_elements ) {
 function wpautop( $pee, $br = true ) {
 	$pre_tags = array();
 
-	if ( trim($pee) === '' )
+	if ( trim( $pee ) === '' ) {
 		return '';
+	}
 
 	// Just to make things a little easier, pad the end.
 	$pee = $pee . "\n";
@@ -439,14 +466,14 @@ function wpautop( $pee, $br = true ) {
 	 * Pre tags shouldn't be touched by autop.
 	 * Replace pre tags with placeholders and bring them back after autop.
 	 */
-	if ( strpos($pee, '<pre') !== false ) {
+	if ( strpos( $pee, '<pre' ) !== false ) {
 		$pee_parts = explode( '</pre>', $pee );
-		$last_pee = array_pop($pee_parts);
-		$pee = '';
-		$i = 0;
+		$last_pee  = array_pop( $pee_parts );
+		$pee       = '';
+		$i         = 0;
 
 		foreach ( $pee_parts as $pee_part ) {
-			$start = strpos($pee_part, '<pre');
+			$start = strpos( $pee_part, '<pre' );
 
 			// Malformed html?
 			if ( $start === false ) {
@@ -454,8 +481,8 @@ function wpautop( $pee, $br = true ) {
 				continue;
 			}
 
-			$name = "<pre wp-pre-tag-$i></pre>";
-			$pre_tags[$name] = substr( $pee_part, $start ) . '</pre>';
+			$name              = "<pre wp-pre-tag-$i></pre>";
+			$pre_tags[ $name ] = substr( $pee_part, $start ) . '</pre>';
 
 			$pee .= substr( $pee_part, 0, $start ) . $name;
 			$i++;
@@ -464,21 +491,24 @@ function wpautop( $pee, $br = true ) {
 		$pee .= $last_pee;
 	}
 	// Change multiple <br>s into two line breaks, which will turn into paragraphs.
-	$pee = preg_replace('|<br\s*/?>\s*<br\s*/?>|', "\n\n", $pee);
+	$pee = preg_replace( '|<br\s*/?>\s*<br\s*/?>|', "\n\n", $pee );
 
 	$allblocks = '(?:table|thead|tfoot|caption|col|colgroup|tbody|tr|td|th|div|dl|dd|dt|ul|ol|li|pre|form|map|area|blockquote|address|math|style|p|h[1-6]|hr|fieldset|legend|section|article|aside|hgroup|header|footer|nav|figure|figcaption|details|menu|summary)';
 
 	// Add a double line break above block-level opening tags.
-	$pee = preg_replace('!(<' . $allblocks . '[\s/>])!', "\n\n$1", $pee);
+	$pee = preg_replace( '!(<' . $allblocks . '[\s/>])!', "\n\n$1", $pee );
 
 	// Add a double line break below block-level closing tags.
-	$pee = preg_replace('!(</' . $allblocks . '>)!', "$1\n\n", $pee);
+	$pee = preg_replace( '!(</' . $allblocks . '>)!', "$1\n\n", $pee );
+
+	// Add a double line break after hr tags, which are self closing.
+	$pee = preg_replace( '!(<hr\s*?/?>)!', "$1\n\n", $pee );
 
 	// Standardize newline characters to "\n".
-	$pee = str_replace(array("\r\n", "\r"), "\n", $pee);
+	$pee = str_replace( array( "\r\n", "\r" ), "\n", $pee );
 
 	// Find newlines in all elements and add placeholders.
-	$pee = wp_replace_in_html_tags( $pee, array( "\n" => " <!-- wpnl --> " ) );
+	$pee = wp_replace_in_html_tags( $pee, array( "\n" => ' <!-- wpnl --> ' ) );
 
 	// Collapse line breaks before and after <option> elements so they don't get autop'd.
 	if ( strpos( $pee, '<option' ) !== false ) {
@@ -513,66 +543,67 @@ function wpautop( $pee, $br = true ) {
 	}
 
 	// Remove more than two contiguous line breaks.
-	$pee = preg_replace("/\n\n+/", "\n\n", $pee);
+	$pee = preg_replace( "/\n\n+/", "\n\n", $pee );
 
 	// Split up the contents into an array of strings, separated by double line breaks.
-	$pees = preg_split('/\n\s*\n/', $pee, -1, PREG_SPLIT_NO_EMPTY);
+	$pees = preg_split( '/\n\s*\n/', $pee, -1, PREG_SPLIT_NO_EMPTY );
 
 	// Reset $pee prior to rebuilding.
 	$pee = '';
 
 	// Rebuild the content as a string, wrapping every bit with a <p>.
 	foreach ( $pees as $tinkle ) {
-		$pee .= '<p>' . trim($tinkle, "\n") . "</p>\n";
+		$pee .= '<p>' . trim( $tinkle, "\n" ) . "</p>\n";
 	}
 
 	// Under certain strange conditions it could create a P of entirely whitespace.
-	$pee = preg_replace('|<p>\s*</p>|', '', $pee);
+	$pee = preg_replace( '|<p>\s*</p>|', '', $pee );
 
 	// Add a closing <p> inside <div>, <address>, or <form> tag if missing.
-	$pee = preg_replace('!<p>([^<]+)</(div|address|form)>!', "<p>$1</p></$2>", $pee);
+	$pee = preg_replace( '!<p>([^<]+)</(div|address|form)>!', '<p>$1</p></$2>', $pee );
 
 	// If an opening or closing block element tag is wrapped in a <p>, unwrap it.
-	$pee = preg_replace('!<p>\s*(</?' . $allblocks . '[^>]*>)\s*</p>!', "$1", $pee);
+	$pee = preg_replace( '!<p>\s*(</?' . $allblocks . '[^>]*>)\s*</p>!', '$1', $pee );
 
 	// In some cases <li> may get wrapped in <p>, fix them.
-	$pee = preg_replace("|<p>(<li.+?)</p>|", "$1", $pee);
+	$pee = preg_replace( '|<p>(<li.+?)</p>|', '$1', $pee );
 
 	// If a <blockquote> is wrapped with a <p>, move it inside the <blockquote>.
-	$pee = preg_replace('|<p><blockquote([^>]*)>|i', "<blockquote$1><p>", $pee);
-	$pee = str_replace('</blockquote></p>', '</p></blockquote>', $pee);
+	$pee = preg_replace( '|<p><blockquote([^>]*)>|i', '<blockquote$1><p>', $pee );
+	$pee = str_replace( '</blockquote></p>', '</p></blockquote>', $pee );
 
 	// If an opening or closing block element tag is preceded by an opening <p> tag, remove it.
-	$pee = preg_replace('!<p>\s*(</?' . $allblocks . '[^>]*>)!', "$1", $pee);
+	$pee = preg_replace( '!<p>\s*(</?' . $allblocks . '[^>]*>)!', '$1', $pee );
 
 	// If an opening or closing block element tag is followed by a closing <p> tag, remove it.
-	$pee = preg_replace('!(</?' . $allblocks . '[^>]*>)\s*</p>!', "$1", $pee);
+	$pee = preg_replace( '!(</?' . $allblocks . '[^>]*>)\s*</p>!', '$1', $pee );
 
 	// Optionally insert line breaks.
 	if ( $br ) {
 		// Replace newlines that shouldn't be touched with a placeholder.
-		$pee = preg_replace_callback('/<(script|style).*?<\/\\1>/s', '_autop_newline_preservation_helper', $pee);
+		$pee = preg_replace_callback( '/<(script|style|svg).*?<\/\\1>/s', '_autop_newline_preservation_helper', $pee );
 
 		// Normalize <br>
 		$pee = str_replace( array( '<br>', '<br/>' ), '<br />', $pee );
 
 		// Replace any new line characters that aren't preceded by a <br /> with a <br />.
-		$pee = preg_replace('|(?<!<br />)\s*\n|', "<br />\n", $pee);
+		$pee = preg_replace( '|(?<!<br />)\s*\n|', "<br />\n", $pee );
 
 		// Replace newline placeholders with newlines.
-		$pee = str_replace('<WPPreserveNewline />', "\n", $pee);
+		$pee = str_replace( '<WPPreserveNewline />', "\n", $pee );
 	}
 
 	// If a <br /> tag is after an opening or closing block tag, remove it.
-	$pee = preg_replace('!(</?' . $allblocks . '[^>]*>)\s*<br />!', "$1", $pee);
+	$pee = preg_replace( '!(</?' . $allblocks . '[^>]*>)\s*<br />!', '$1', $pee );
 
 	// If a <br /> tag is before a subset of opening or closing block tags, remove it.
-	$pee = preg_replace('!<br />(\s*</?(?:p|li|div|dl|dd|dt|th|pre|td|ul|ol)[^>]*>)!', '$1', $pee);
+	$pee = preg_replace( '!<br />(\s*</?(?:p|li|div|dl|dd|dt|th|pre|td|ul|ol)[^>]*>)!', '$1', $pee );
 	$pee = preg_replace( "|\n</p>$|", '</p>', $pee );
 
 	// Replace placeholder <pre> tags with their original content.
-	if ( !empty($pre_tags) )
-		$pee = str_replace(array_keys($pre_tags), array_values($pre_tags), $pee);
+	if ( ! empty( $pre_tags ) ) {
+		$pee = str_replace( array_keys( $pre_tags ), array_values( $pre_tags ), $pee );
+	}
 
 	// Restore newlines in all elements.
 	if ( false !== strpos( $pee, '<!-- wpnl -->' ) ) {
@@ -599,14 +630,17 @@ function wp_html_split( $input ) {
  *
  * @since 4.4.0
  *
+ * @staticvar string $regex
+ *
  * @return string The regular expression
  */
 function get_html_split_regex() {
 	static $regex;
 
 	if ( ! isset( $regex ) ) {
+		// phpcs:disable Squiz.Strings.ConcatenationSpacing.PaddingFound -- don't remove regex indentation
 		$comments =
-			  '!'           // Start of comment, after the <.
+			'!'             // Start of comment, after the <.
 			. '(?:'         // Unroll the loop: Consume everything until --> is found.
 			.     '-(?!->)' // Dash not followed by end of comment.
 			.     '[^\-]*+' // Consume non-dashes.
@@ -614,7 +648,7 @@ function get_html_split_regex() {
 			. '(?:-->)?';   // End of comment. If not found, match all input.
 
 		$cdata =
-			  '!\[CDATA\['  // Start of comment, after the <.
+			'!\[CDATA\['    // Start of comment, after the <.
 			. '[^\]]*+'     // Consume non-].
 			. '(?:'         // Unroll the loop: Consume everything until ]]> is found.
 			.     '](?!]>)' // One ] not followed by end of comment.
@@ -623,7 +657,7 @@ function get_html_split_regex() {
 			. '(?:]]>)?';   // End of comment. If not found, match all input.
 
 		$escaped =
-			  '(?='           // Is the element escaped?
+			'(?='             // Is the element escaped?
 			.    '!--'
 			. '|'
 			.    '!\[CDATA\['
@@ -635,7 +669,7 @@ function get_html_split_regex() {
 			. ')';
 
 		$regex =
-			  '/('              // Capture the entire match.
+			'/('                // Capture the entire match.
 			.     '<'           // Find start of element.
 			.     '(?'          // Conditional expression follows.
 			.         $escaped  // Find end of escaped element.
@@ -643,6 +677,7 @@ function get_html_split_regex() {
 			.         '[^>]*>?' // Find end of normal element.
 			.     ')'
 			. ')/';
+		// phpcs:enable
 	}
 
 	return $regex;
@@ -656,6 +691,8 @@ function get_html_split_regex() {
  * @internal This function will be removed in 4.5.0 per Shortcode API Roadmap.
  * @since 4.4.0
  *
+ * @staticvar string $html_regex
+ *
  * @param string $shortcode_regex The result from _get_wptexturize_shortcode_regex().  Optional.
  * @return string The regular expression
  */
@@ -663,21 +700,23 @@ function _get_wptexturize_split_regex( $shortcode_regex = '' ) {
 	static $html_regex;
 
 	if ( ! isset( $html_regex ) ) {
+		// phpcs:disable Squiz.Strings.ConcatenationSpacing.PaddingFound -- don't remove regex indentation
 		$comment_regex =
-			  '!'           // Start of comment, after the <.
+			'!'             // Start of comment, after the <.
 			. '(?:'         // Unroll the loop: Consume everything until --> is found.
 			.     '-(?!->)' // Dash not followed by end of comment.
 			.     '[^\-]*+' // Consume non-dashes.
 			. ')*+'         // Loop possessively.
 			. '(?:-->)?';   // End of comment. If not found, match all input.
 
-		$html_regex =			 // Needs replaced with wp_html_split() per Shortcode API Roadmap.
-			  '<'                // Find start of element.
+		$html_regex = // Needs replaced with wp_html_split() per Shortcode API Roadmap.
+			'<'                  // Find start of element.
 			. '(?(?=!--)'        // Is this a comment?
 			.     $comment_regex // Find end of comment.
 			. '|'
 			.     '[^>]*>?'      // Find end of element. If not found, match all input.
 			. ')';
+		// phpcs:enable
 	}
 
 	if ( empty( $shortcode_regex ) ) {
@@ -703,8 +742,9 @@ function _get_wptexturize_split_regex( $shortcode_regex = '' ) {
 function _get_wptexturize_shortcode_regex( $tagnames ) {
 	$tagregexp = join( '|', array_map( 'preg_quote', $tagnames ) );
 	$tagregexp = "(?:$tagregexp)(?=[\\s\\]\\/])"; // Excerpt of get_shortcode_regex().
+	// phpcs:disable Squiz.Strings.ConcatenationSpacing.PaddingFound -- don't remove regex indentation
 	$regex =
-		  '\['              // Find start of shortcode.
+		'\['              // Find start of shortcode.
 		. '[\/\[]?'         // Shortcodes may begin with [/ or [[
 		. $tagregexp        // Only match registered shortcodes, because performance.
 		. '(?:'
@@ -714,6 +754,7 @@ function _get_wptexturize_shortcode_regex( $tagnames ) {
 		. ')*+'             // Possessive critical.
 		. '\]'              // Find end of shortcode.
 		. '\]?';            // Shortcodes may end with ]]
+	// phpcs:enable
 
 	return $regex;
 }
@@ -735,13 +776,14 @@ function wp_replace_in_html_tags( $haystack, $replace_pairs ) {
 	// Optimize when searching for one item.
 	if ( 1 === count( $replace_pairs ) ) {
 		// Extract $needle and $replace.
-		foreach ( $replace_pairs as $needle => $replace );
+		foreach ( $replace_pairs as $needle => $replace ) {
+		}
 
 		// Loop through delimiters (elements) only.
 		for ( $i = 1, $c = count( $textarr ); $i < $c; $i += 2 ) {
-			if ( false !== strpos( $textarr[$i], $needle ) ) {
-				$textarr[$i] = str_replace( $needle, $replace, $textarr[$i] );
-				$changed = true;
+			if ( false !== strpos( $textarr[ $i ], $needle ) ) {
+				$textarr[ $i ] = str_replace( $needle, $replace, $textarr[ $i ] );
+				$changed       = true;
 			}
 		}
 	} else {
@@ -751,9 +793,9 @@ function wp_replace_in_html_tags( $haystack, $replace_pairs ) {
 		// Loop through delimiters (elements) only.
 		for ( $i = 1, $c = count( $textarr ); $i < $c; $i += 2 ) {
 			foreach ( $needles as $needle ) {
-				if ( false !== strpos( $textarr[$i], $needle ) ) {
-					$textarr[$i] = strtr( $textarr[$i], $replace_pairs );
-					$changed = true;
+				if ( false !== strpos( $textarr[ $i ], $needle ) ) {
+					$textarr[ $i ] = strtr( $textarr[ $i ], $replace_pairs );
+					$changed       = true;
 					// After one strtr() break out of the foreach loop and look at next element.
 					break;
 				}
@@ -778,7 +820,7 @@ function wp_replace_in_html_tags( $haystack, $replace_pairs ) {
  * @return string
  */
 function _autop_newline_preservation_helper( $matches ) {
-	return str_replace( "\n", "<WPPreserveNewline />", $matches[0] );
+	return str_replace( "\n", '<WPPreserveNewline />', $matches[0] );
 }
 
 /**
@@ -796,22 +838,23 @@ function _autop_newline_preservation_helper( $matches ) {
 function shortcode_unautop( $pee ) {
 	global $shortcode_tags;
 
-	if ( empty( $shortcode_tags ) || !is_array( $shortcode_tags ) ) {
+	if ( empty( $shortcode_tags ) || ! is_array( $shortcode_tags ) ) {
 		return $pee;
 	}
 
 	$tagregexp = join( '|', array_map( 'preg_quote', array_keys( $shortcode_tags ) ) );
-	$spaces = wp_spaces_regexp();
+	$spaces    = wp_spaces_regexp();
 
+	// phpcs:disable Squiz.Strings.ConcatenationSpacing.PaddingFound,WordPress.WhiteSpace.PrecisionAlignment.Found -- don't remove regex indentation
 	$pattern =
-		  '/'
+		'/'
 		. '<p>'                              // Opening paragraph
 		. '(?:' . $spaces . ')*+'            // Optional leading whitespace
 		. '('                                // 1: The shortcode
 		.     '\\['                          // Opening bracket
 		.     "($tagregexp)"                 // 2: Shortcode name
 		.     '(?![\\w-])'                   // Not followed by word character or hyphen
-		                                     // Unroll the loop: Inside the opening shortcode tag
+											 // Unroll the loop: Inside the opening shortcode tag
 		.     '[^\\]\\/]*'                   // Not a closing bracket or forward slash
 		.     '(?:'
 		.         '\\/(?!\\])'               // A forward slash not followed by a closing bracket
@@ -834,6 +877,7 @@ function shortcode_unautop( $pee ) {
 		. '(?:' . $spaces . ')*+'            // optional trailing whitespace
 		. '<\\/p>'                           // closing paragraph
 		. '/';
+	// phpcs:enable
 
 	return preg_replace( $pattern, '$1', $pee );
 }
@@ -852,20 +896,29 @@ function shortcode_unautop( $pee ) {
  */
 function seems_utf8( $str ) {
 	mbstring_binary_safe_encoding();
-	$length = strlen($str);
+	$length = strlen( $str );
 	reset_mbstring_encoding();
-	for ($i=0; $i < $length; $i++) {
-		$c = ord($str[$i]);
-		if ($c < 0x80) $n = 0; // 0bbbbbbb
-		elseif (($c & 0xE0) == 0xC0) $n=1; // 110bbbbb
-		elseif (($c & 0xF0) == 0xE0) $n=2; // 1110bbbb
-		elseif (($c & 0xF8) == 0xF0) $n=3; // 11110bbb
-		elseif (($c & 0xFC) == 0xF8) $n=4; // 111110bb
-		elseif (($c & 0xFE) == 0xFC) $n=5; // 1111110b
-		else return false; // Does not match any model
-		for ($j=0; $j<$n; $j++) { // n bytes matching 10bbbbbb follow ?
-			if ((++$i == $length) || ((ord($str[$i]) & 0xC0) != 0x80))
+	for ( $i = 0; $i < $length; $i++ ) {
+		$c = ord( $str[ $i ] );
+		if ( $c < 0x80 ) {
+			$n = 0; // 0bbbbbbb
+		} elseif ( ( $c & 0xE0 ) == 0xC0 ) {
+			$n = 1; // 110bbbbb
+		} elseif ( ( $c & 0xF0 ) == 0xE0 ) {
+			$n = 2; // 1110bbbb
+		} elseif ( ( $c & 0xF8 ) == 0xF0 ) {
+			$n = 3; // 11110bbb
+		} elseif ( ( $c & 0xFC ) == 0xF8 ) {
+			$n = 4; // 111110bb
+		} elseif ( ( $c & 0xFE ) == 0xFC ) {
+			$n = 5; // 1111110b
+		} else {
+			return false; // Does not match any model
+		}
+		for ( $j = 0; $j < $n; $j++ ) { // n bytes matching 10bbbbbb follow ?
+			if ( ( ++$i == $length ) || ( ( ord( $str[ $i ] ) & 0xC0 ) != 0x80 ) ) {
 				return false;
+			}
 		}
 	}
 	return true;
@@ -884,49 +937,53 @@ function seems_utf8( $str ) {
  *
  * @staticvar string $_charset
  *
- * @param string     $string         The text which is to be encoded.
- * @param int|string $quote_style    Optional. Converts double quotes if set to ENT_COMPAT,
- *                                   both single and double if set to ENT_QUOTES or none if set to ENT_NOQUOTES.
- *                                   Also compatible with old values; converting single quotes if set to 'single',
- *                                   double if set to 'double' or both if otherwise set.
- *                                   Default is ENT_NOQUOTES.
- * @param string     $charset        Optional. The character encoding of the string. Default is false.
- * @param bool       $double_encode  Optional. Whether to encode existing html entities. Default is false.
+ * @param string       $string        The text which is to be encoded.
+ * @param int|string   $quote_style   Optional. Converts double quotes if set to ENT_COMPAT,
+ *                                    both single and double if set to ENT_QUOTES or none if set to ENT_NOQUOTES.
+ *                                    Also compatible with old values; converting single quotes if set to 'single',
+ *                                    double if set to 'double' or both if otherwise set.
+ *                                    Default is ENT_NOQUOTES.
+ * @param false|string $charset       Optional. The character encoding of the string. Default is false.
+ * @param bool         $double_encode Optional. Whether to encode existing html entities. Default is false.
  * @return string The encoded text with HTML entities.
  */
 function _wp_specialchars( $string, $quote_style = ENT_NOQUOTES, $charset = false, $double_encode = false ) {
 	$string = (string) $string;
 
-	if ( 0 === strlen( $string ) )
+	if ( 0 === strlen( $string ) ) {
 		return '';
+	}
 
 	// Don't bother if there are no specialchars - saves some processing
-	if ( ! preg_match( '/[&<>"\']/', $string ) )
+	if ( ! preg_match( '/[&<>"\']/', $string ) ) {
 		return $string;
+	}
 
 	// Account for the previous behaviour of the function when the $quote_style is not an accepted value
-	if ( empty( $quote_style ) )
+	if ( empty( $quote_style ) ) {
 		$quote_style = ENT_NOQUOTES;
-	elseif ( ! in_array( $quote_style, array( 0, 2, 3, 'single', 'double' ), true ) )
+	} elseif ( ! in_array( $quote_style, array( 0, 2, 3, 'single', 'double' ), true ) ) {
 		$quote_style = ENT_QUOTES;
+	}
 
 	// Store the site charset as a static to avoid multiple calls to wp_load_alloptions()
 	if ( ! $charset ) {
 		static $_charset = null;
 		if ( ! isset( $_charset ) ) {
 			$alloptions = wp_load_alloptions();
-			$_charset = isset( $alloptions['blog_charset'] ) ? $alloptions['blog_charset'] : '';
+			$_charset   = isset( $alloptions['blog_charset'] ) ? $alloptions['blog_charset'] : '';
 		}
 		$charset = $_charset;
 	}
 
-	if ( in_array( $charset, array( 'utf8', 'utf-8', 'UTF8' ) ) )
+	if ( in_array( $charset, array( 'utf8', 'utf-8', 'UTF8' ) ) ) {
 		$charset = 'UTF-8';
+	}
 
 	$_quote_style = $quote_style;
 
 	if ( $quote_style === 'double' ) {
-		$quote_style = ENT_COMPAT;
+		$quote_style  = ENT_COMPAT;
 		$_quote_style = ENT_COMPAT;
 	} elseif ( $quote_style === 'single' ) {
 		$quote_style = ENT_NOQUOTES;
@@ -938,11 +995,12 @@ function _wp_specialchars( $string, $quote_style = ENT_NOQUOTES, $charset = fals
 		$string = wp_kses_normalize_entities( $string );
 	}
 
-	$string = @htmlspecialchars( $string, $quote_style, $charset, $double_encode );
+	$string = htmlspecialchars( $string, $quote_style, $charset, $double_encode );
 
 	// Back-compat.
-	if ( 'single' === $_quote_style )
+	if ( 'single' === $_quote_style ) {
 		$string = str_replace( "'", '&#039;', $string );
+	}
 
 	return $string;
 }
@@ -982,29 +1040,55 @@ function wp_specialchars_decode( $string, $quote_style = ENT_NOQUOTES ) {
 	// Match the previous behaviour of _wp_specialchars() when the $quote_style is not an accepted value
 	if ( empty( $quote_style ) ) {
 		$quote_style = ENT_NOQUOTES;
-	} elseif ( !in_array( $quote_style, array( 0, 2, 3, 'single', 'double' ), true ) ) {
+	} elseif ( ! in_array( $quote_style, array( 0, 2, 3, 'single', 'double' ), true ) ) {
 		$quote_style = ENT_QUOTES;
 	}
 
 	// More complete than get_html_translation_table( HTML_SPECIALCHARS )
-	$single = array( '&#039;'  => '\'', '&#x27;' => '\'' );
-	$single_preg = array( '/&#0*39;/'  => '&#039;', '/&#x0*27;/i' => '&#x27;' );
-	$double = array( '&quot;' => '"', '&#034;'  => '"', '&#x22;' => '"' );
-	$double_preg = array( '/&#0*34;/'  => '&#034;', '/&#x0*22;/i' => '&#x22;' );
-	$others = array( '&lt;'   => '<', '&#060;'  => '<', '&gt;'   => '>', '&#062;'  => '>', '&amp;'  => '&', '&#038;'  => '&', '&#x26;' => '&' );
-	$others_preg = array( '/&#0*60;/'  => '&#060;', '/&#0*62;/'  => '&#062;', '/&#0*38;/'  => '&#038;', '/&#x0*26;/i' => '&#x26;' );
+	$single      = array(
+		'&#039;' => '\'',
+		'&#x27;' => '\'',
+	);
+	$single_preg = array(
+		'/&#0*39;/'   => '&#039;',
+		'/&#x0*27;/i' => '&#x27;',
+	);
+	$double      = array(
+		'&quot;' => '"',
+		'&#034;' => '"',
+		'&#x22;' => '"',
+	);
+	$double_preg = array(
+		'/&#0*34;/'   => '&#034;',
+		'/&#x0*22;/i' => '&#x22;',
+	);
+	$others      = array(
+		'&lt;'   => '<',
+		'&#060;' => '<',
+		'&gt;'   => '>',
+		'&#062;' => '>',
+		'&amp;'  => '&',
+		'&#038;' => '&',
+		'&#x26;' => '&',
+	);
+	$others_preg = array(
+		'/&#0*60;/'   => '&#060;',
+		'/&#0*62;/'   => '&#062;',
+		'/&#0*38;/'   => '&#038;',
+		'/&#x0*26;/i' => '&#x26;',
+	);
 
 	if ( $quote_style === ENT_QUOTES ) {
-		$translation = array_merge( $single, $double, $others );
+		$translation      = array_merge( $single, $double, $others );
 		$translation_preg = array_merge( $single_preg, $double_preg, $others_preg );
 	} elseif ( $quote_style === ENT_COMPAT || $quote_style === 'double' ) {
-		$translation = array_merge( $double, $others );
+		$translation      = array_merge( $double, $others );
 		$translation_preg = array_merge( $double_preg, $others_preg );
 	} elseif ( $quote_style === 'single' ) {
-		$translation = array_merge( $single, $others );
+		$translation      = array_merge( $single, $others );
 		$translation_preg = array_merge( $single_preg, $others_preg );
 	} elseif ( $quote_style === ENT_NOQUOTES ) {
-		$translation = $others;
+		$translation      = $others;
 		$translation_preg = $others_preg;
 	}
 
@@ -1046,14 +1130,15 @@ function wp_check_invalid_utf8( $string, $strip = false ) {
 	// Check for support for utf8 in the installed PCRE library once and store the result in a static
 	static $utf8_pcre = null;
 	if ( ! isset( $utf8_pcre ) ) {
+		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		$utf8_pcre = @preg_match( '/^./u', 'a' );
 	}
 	// We can't demand utf8 in the PCRE installation, so just return the string in those cases
-	if ( !$utf8_pcre ) {
+	if ( ! $utf8_pcre ) {
 		return $string;
 	}
 
-	// preg_match fails when it encounters invalid UTF8 in $string
+	// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- preg_match fails when it encounters invalid UTF8 in $string
 	if ( 1 === @preg_match( '/^./us', $string ) ) {
 		return $string;
 	}
@@ -1076,23 +1161,24 @@ function wp_check_invalid_utf8( $string, $strip = false ) {
  * @return string String with Unicode encoded for URI.
  */
 function utf8_uri_encode( $utf8_string, $length = 0 ) {
-	$unicode = '';
-	$values = array();
-	$num_octets = 1;
+	$unicode        = '';
+	$values         = array();
+	$num_octets     = 1;
 	$unicode_length = 0;
 
 	mbstring_binary_safe_encoding();
 	$string_length = strlen( $utf8_string );
 	reset_mbstring_encoding();
 
-	for ($i = 0; $i < $string_length; $i++ ) {
+	for ( $i = 0; $i < $string_length; $i++ ) {
 
 		$value = ord( $utf8_string[ $i ] );
 
 		if ( $value < 128 ) {
-			if ( $length && ( $unicode_length >= $length ) )
+			if ( $length && ( $unicode_length >= $length ) ) {
 				break;
-			$unicode .= chr($value);
+			}
+			$unicode .= chr( $value );
 			$unicode_length++;
 		} else {
 			if ( count( $values ) == 0 ) {
@@ -1107,8 +1193,9 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
 
 			$values[] = $value;
 
-			if ( $length && ( $unicode_length + ($num_octets * 3) ) > $length )
+			if ( $length && ( $unicode_length + ( $num_octets * 3 ) ) > $length ) {
 				break;
+			}
 			if ( count( $values ) == $num_octets ) {
 				for ( $j = 0; $j < $num_octets; $j++ ) {
 					$unicode .= '%' . dechex( $values[ $j ] );
@@ -1116,7 +1203,7 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
 
 				$unicode_length += $num_octets * 3;
 
-				$values = array();
+				$values     = array();
 				$num_octets = 1;
 			}
 		}
@@ -1285,9 +1372,9 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  * | U+0146  | ņ     | n           | Latin small letter n with cedilla                 |
  * | U+0147  | Ň     | N           | Latin capital letter N with caron                 |
  * | U+0148  | ň     | n           | Latin small letter n with caron                   |
- * | U+0149  | ┼ë     | n           | Latin small letter n preceded by apostrophe       |
- * | U+014A  | ┼è     | N           | Latin capital letter Eng                          |
- * | U+014B  | ┼ï     | n           | Latin small letter Eng                            |
+ * | U+0149  | ŉ     | n           | Latin small letter n preceded by apostrophe       |
+ * | U+014A  | Ŋ     | N           | Latin capital letter Eng                          |
+ * | U+014B  | ŋ     | n           | Latin small letter Eng                            |
  * | U+014C  | Ō     | O           | Latin capital letter O with macron                |
  * | U+014D  | ō     | o           | Latin small letter o with macron                  |
  * | U+014E  | Ŏ     | O           | Latin capital letter O with breve                 |
@@ -1500,8 +1587,8 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  *
  * |   Code   | Glyph | Replacement |               Description               |
  * | -------- | ----- | ----------- | --------------------------------------- |
- * | U+0110   | ─É     | DJ          | Latin capital letter D with stroke      |
- * | U+0111   | ─æ     | dj          | Latin small letter d with stroke        |
+ * | U+0110   | Đ     | DJ          | Latin capital letter D with stroke      |
+ * | U+0111   | đ     | dj          | Latin small letter d with stroke        |
  *
  * @since 1.2.1
  * @since 4.6.0 Added locale support for `de_CH`, `de_CH_informal`, and `ca`.
@@ -1512,233 +1599,387 @@ function utf8_uri_encode( $utf8_string, $length = 0 ) {
  * @return string Filtered string with replaced "nice" characters.
  */
 function remove_accents( $string ) {
-	if ( !preg_match('/[\x80-\xff]/', $string) )
-		return $string;
+	if ( ! preg_match( '/[\x80-\xff]/', $string ) ) {
+ 		return $string;
+	}
 
-	if (seems_utf8($string)) {
+	if ( seems_utf8( $string ) ) {
 		$chars = array(
-		// Decompositions for Latin-1 Supplement
-		'ª' => 'a', 'º' => 'o',
-		'À' => 'A', 'Á' => 'A',
-		'Â' => 'A', 'Ã' => 'A',
-		'Ä' => 'A', 'Å' => 'A',
-		'Æ' => 'AE','Ç' => 'C',
-		'È' => 'E', 'É' => 'E',
-		'Ê' => 'E', 'Ë' => 'E',
-		'Ì' => 'I', 'Í' => 'I',
-		'Î' => 'I', 'Ï' => 'I',
-		'Ð' => 'D', 'Ñ' => 'N',
-		'Ò' => 'O', 'Ó' => 'O',
-		'Ô' => 'O', 'Õ' => 'O',
-		'Ö' => 'O', 'Ù' => 'U',
-		'Ú' => 'U', 'Û' => 'U',
-		'Ü' => 'U', 'Ý' => 'Y',
-		'Þ' => 'TH','ß' => 's',
-		'à' => 'a', 'á' => 'a',
-		'â' => 'a', 'ã' => 'a',
-		'ä' => 'a', 'å' => 'a',
-		'æ' => 'ae','ç' => 'c',
-		'è' => 'e', 'é' => 'e',
-		'ê' => 'e', 'ë' => 'e',
-		'ì' => 'i', 'í' => 'i',
-		'î' => 'i', 'ï' => 'i',
-		'ð' => 'd', 'ñ' => 'n',
-		'ò' => 'o', 'ó' => 'o',
-		'ô' => 'o', 'õ' => 'o',
-		'ö' => 'o', 'ø' => 'o',
-		'ù' => 'u', 'ú' => 'u',
-		'û' => 'u', 'ü' => 'u',
-		'ý' => 'y', 'þ' => 'th',
-		'ÿ' => 'y', 'Ø' => 'O',
-		// Decompositions for Latin Extended-A
-		'Ā' => 'A', 'ā' => 'a',
-		'Ă' => 'A', 'ă' => 'a',
-		'Ą' => 'A', 'ą' => 'a',
-		'Ć' => 'C', 'ć' => 'c',
-		'Ĉ' => 'C', 'ĉ' => 'c',
-		'Ċ' => 'C', 'ċ' => 'c',
-		'Č' => 'C', 'č' => 'c',
-		'Ď' => 'D', 'ď' => 'd',
-		'Đ' => 'D', 'đ' => 'd',
-		'Ē' => 'E', 'ē' => 'e',
-		'Ĕ' => 'E', 'ĕ' => 'e',
-		'Ė' => 'E', 'ė' => 'e',
-		'Ę' => 'E', 'ę' => 'e',
-		'Ě' => 'E', 'ě' => 'e',
-		'Ĝ' => 'G', 'ĝ' => 'g',
-		'Ğ' => 'G', 'ğ' => 'g',
-		'Ġ' => 'G', 'ġ' => 'g',
-		'Ģ' => 'G', 'ģ' => 'g',
-		'Ĥ' => 'H', 'ĥ' => 'h',
-		'Ħ' => 'H', 'ħ' => 'h',
-		'Ĩ' => 'I', 'ĩ' => 'i',
-		'Ī' => 'I', 'ī' => 'i',
-		'Ĭ' => 'I', 'ĭ' => 'i',
-		'Į' => 'I', 'į' => 'i',
-		'İ' => 'I', 'ı' => 'i',
-		'Ĳ' => 'IJ','ĳ' => 'ij',
-		'Ĵ' => 'J', 'ĵ' => 'j',
-		'Ķ' => 'K', 'ķ' => 'k',
-		'ĸ' => 'k', 'Ĺ' => 'L',
-		'ĺ' => 'l', 'Ļ' => 'L',
-		'ļ' => 'l', 'Ľ' => 'L',
-		'ľ' => 'l', 'Ŀ' => 'L',
-		'ŀ' => 'l', 'Ł' => 'L',
-		'ł' => 'l', 'Ń' => 'N',
-		'ń' => 'n', 'Ņ' => 'N',
-		'ņ' => 'n', 'Ň' => 'N',
-		'ň' => 'n', 'ŉ' => 'n',
-		'Ŋ' => 'N', 'ŋ' => 'n',
-		'Ō' => 'O', 'ō' => 'o',
-		'Ŏ' => 'O', 'ŏ' => 'o',
-		'Ő' => 'O', 'ő' => 'o',
-		'Œ' => 'OE','œ' => 'oe',
-		'Ŕ' => 'R','ŕ' => 'r',
-		'Ŗ' => 'R','ŗ' => 'r',
-		'Ř' => 'R','ř' => 'r',
-		'Ś' => 'S','ś' => 's',
-		'Ŝ' => 'S','ŝ' => 's',
-		'Ş' => 'S','ş' => 's',
-		'Š' => 'S', 'š' => 's',
-		'Ţ' => 'T', 'ţ' => 't',
-		'Ť' => 'T', 'ť' => 't',
-		'Ŧ' => 'T', 'ŧ' => 't',
-		'Ũ' => 'U', 'ũ' => 'u',
-		'Ū' => 'U', 'ū' => 'u',
-		'Ŭ' => 'U', 'ŭ' => 'u',
-		'Ů' => 'U', 'ů' => 'u',
-		'Ű' => 'U', 'ű' => 'u',
-		'Ų' => 'U', 'ų' => 'u',
-		'Ŵ' => 'W', 'ŵ' => 'w',
-		'Ŷ' => 'Y', 'ŷ' => 'y',
-		'Ÿ' => 'Y', 'Ź' => 'Z',
-		'ź' => 'z', 'Ż' => 'Z',
-		'ż' => 'z', 'Ž' => 'Z',
-		'ž' => 'z', 'ſ' => 's',
-		// Decompositions for Latin Extended-B
-		'Ș' => 'S', 'ș' => 's',
-		'Ț' => 'T', 'ț' => 't',
-		// Euro Sign
-		'€' => 'E',
-		// GBP (Pound) Sign
-		'£' => '',
-		// Vowels with diacritic (Vietnamese)
-		// unmarked
-		'Ơ' => 'O', 'ơ' => 'o',
-		'Ư' => 'U', 'ư' => 'u',
-		// grave accent
-		'Ầ' => 'A', 'ầ' => 'a',
-		'Ằ' => 'A', 'ằ' => 'a',
-		'Ề' => 'E', 'ề' => 'e',
-		'Ồ' => 'O', 'ồ' => 'o',
-		'Ờ' => 'O', 'ờ' => 'o',
-		'Ừ' => 'U', 'ừ' => 'u',
-		'Ỳ' => 'Y', 'ỳ' => 'y',
-		// hook
-		'Ả' => 'A', 'ả' => 'a',
-		'Ẩ' => 'A', 'ẩ' => 'a',
-		'Ẳ' => 'A', 'ẳ' => 'a',
-		'Ẻ' => 'E', 'ẻ' => 'e',
-		'Ể' => 'E', 'ể' => 'e',
-		'Ỉ' => 'I', 'ỉ' => 'i',
-		'Ỏ' => 'O', 'ỏ' => 'o',
-		'Ổ' => 'O', 'ổ' => 'o',
-		'Ở' => 'O', 'ở' => 'o',
-		'Ủ' => 'U', 'ủ' => 'u',
-		'Ử' => 'U', 'ử' => 'u',
-		'Ỷ' => 'Y', 'ỷ' => 'y',
-		// tilde
-		'Ẫ' => 'A', 'ẫ' => 'a',
-		'Ẵ' => 'A', 'ẵ' => 'a',
-		'Ẽ' => 'E', 'ẽ' => 'e',
-		'Ễ' => 'E', 'ễ' => 'e',
-		'Ỗ' => 'O', 'ỗ' => 'o',
-		'Ỡ' => 'O', 'ỡ' => 'o',
-		'Ữ' => 'U', 'ữ' => 'u',
-		'Ỹ' => 'Y', 'ỹ' => 'y',
-		// acute accent
-		'Ấ' => 'A', 'ấ' => 'a',
-		'Ắ' => 'A', 'ắ' => 'a',
-		'Ế' => 'E', 'ế' => 'e',
-		'Ố' => 'O', 'ố' => 'o',
-		'Ớ' => 'O', 'ớ' => 'o',
-		'Ứ' => 'U', 'ứ' => 'u',
-		// dot below
-		'Ạ' => 'A', 'ạ' => 'a',
-		'Ậ' => 'A', 'ậ' => 'a',
-		'Ặ' => 'A', 'ặ' => 'a',
-		'Ẹ' => 'E', 'ẹ' => 'e',
-		'Ệ' => 'E', 'ệ' => 'e',
-		'Ị' => 'I', 'ị' => 'i',
-		'Ọ' => 'O', 'ọ' => 'o',
-		'Ộ' => 'O', 'ộ' => 'o',
-		'Ợ' => 'O', 'ợ' => 'o',
-		'Ụ' => 'U', 'ụ' => 'u',
-		'Ự' => 'U', 'ự' => 'u',
-		'Ỵ' => 'Y', 'ỵ' => 'y',
-		// Vowels with diacritic (Chinese, Hanyu Pinyin)
-		'ɑ' => 'a',
-		// macron
-		'Ǖ' => 'U', 'ǖ' => 'u',
-		// acute accent
-		'Ǘ' => 'U', 'ǘ' => 'u',
-		// caron
-		'Ǎ' => 'A', 'ǎ' => 'a',
-		'Ǐ' => 'I', 'ǐ' => 'i',
-		'Ǒ' => 'O', 'ǒ' => 'o',
-		'Ǔ' => 'U', 'ǔ' => 'u',
-		'Ǚ' => 'U', 'ǚ' => 'u',
-		// grave accent
-		'Ǜ' => 'U', 'ǜ' => 'u',
+			// Decompositions for Latin-1 Supplement
+			'ª' => 'a',
+			'º' => 'o',
+			'À' => 'A',
+			'Á' => 'A',
+			'Â' => 'A',
+			'Ã' => 'A',
+			'Ä' => 'A',
+			'Å' => 'A',
+			'Æ' => 'AE',
+			'Ç' => 'C',
+			'È' => 'E',
+			'É' => 'E',
+			'Ê' => 'E',
+			'Ë' => 'E',
+			'Ì' => 'I',
+			'Í' => 'I',
+			'Î' => 'I',
+			'Ï' => 'I',
+			'Ð' => 'D',
+			'Ñ' => 'N',
+			'Ò' => 'O',
+			'Ó' => 'O',
+			'Ô' => 'O',
+			'Õ' => 'O',
+			'Ö' => 'O',
+			'Ù' => 'U',
+			'Ú' => 'U',
+			'Û' => 'U',
+			'Ü' => 'U',
+			'Ý' => 'Y',
+			'Þ' => 'TH',
+			'ß' => 's',
+			'à' => 'a',
+			'á' => 'a',
+			'â' => 'a',
+			'ã' => 'a',
+			'ä' => 'a',
+			'å' => 'a',
+			'æ' => 'ae',
+			'ç' => 'c',
+			'è' => 'e',
+			'é' => 'e',
+			'ê' => 'e',
+			'ë' => 'e',
+			'ì' => 'i',
+			'í' => 'i',
+			'î' => 'i',
+			'ï' => 'i',
+			'ð' => 'd',
+			'ñ' => 'n',
+			'ò' => 'o',
+			'ó' => 'o',
+			'ô' => 'o',
+			'õ' => 'o',
+			'ö' => 'o',
+			'ø' => 'o',
+			'ù' => 'u',
+			'ú' => 'u',
+			'û' => 'u',
+			'ü' => 'u',
+			'ý' => 'y',
+			'þ' => 'th',
+			'ÿ' => 'y',
+			'Ø' => 'O',
+			// Decompositions for Latin Extended-A
+			'Ā' => 'A',
+			'ā' => 'a',
+			'Ă' => 'A',
+			'ă' => 'a',
+			'Ą' => 'A',
+			'ą' => 'a',
+			'Ć' => 'C',
+			'ć' => 'c',
+			'Ĉ' => 'C',
+			'ĉ' => 'c',
+			'Ċ' => 'C',
+			'ċ' => 'c',
+			'Č' => 'C',
+			'č' => 'c',
+			'Ď' => 'D',
+			'ď' => 'd',
+			'Đ' => 'D',
+			'đ' => 'd',
+			'Ē' => 'E',
+			'ē' => 'e',
+			'Ĕ' => 'E',
+			'ĕ' => 'e',
+			'Ė' => 'E',
+			'ė' => 'e',
+			'Ę' => 'E',
+			'ę' => 'e',
+			'Ě' => 'E',
+			'ě' => 'e',
+			'Ĝ' => 'G',
+			'ĝ' => 'g',
+			'Ğ' => 'G',
+			'ğ' => 'g',
+			'Ġ' => 'G',
+			'ġ' => 'g',
+			'Ģ' => 'G',
+			'ģ' => 'g',
+			'Ĥ' => 'H',
+			'ĥ' => 'h',
+			'Ħ' => 'H',
+			'ħ' => 'h',
+			'Ĩ' => 'I',
+			'ĩ' => 'i',
+			'Ī' => 'I',
+			'ī' => 'i',
+			'Ĭ' => 'I',
+			'ĭ' => 'i',
+			'Į' => 'I',
+			'į' => 'i',
+			'İ' => 'I',
+			'ı' => 'i',
+			'Ĳ' => 'IJ',
+			'ĳ' => 'ij',
+			'Ĵ' => 'J',
+			'ĵ' => 'j',
+			'Ķ' => 'K',
+			'ķ' => 'k',
+			'ĸ' => 'k',
+			'Ĺ' => 'L',
+			'ĺ' => 'l',
+			'Ļ' => 'L',
+			'ļ' => 'l',
+			'Ľ' => 'L',
+			'ľ' => 'l',
+			'Ŀ' => 'L',
+			'ŀ' => 'l',
+			'Ł' => 'L',
+			'ł' => 'l',
+			'Ń' => 'N',
+			'ń' => 'n',
+			'Ņ' => 'N',
+			'ņ' => 'n',
+			'Ň' => 'N',
+			'ň' => 'n',
+			'ŉ' => 'n',
+			'Ŋ' => 'N',
+			'ŋ' => 'n',
+			'Ō' => 'O',
+			'ō' => 'o',
+			'Ŏ' => 'O',
+			'ŏ' => 'o',
+			'Ő' => 'O',
+			'ő' => 'o',
+			'Œ' => 'OE',
+			'œ' => 'oe',
+			'Ŕ' => 'R',
+			'ŕ' => 'r',
+			'Ŗ' => 'R',
+			'ŗ' => 'r',
+			'Ř' => 'R',
+			'ř' => 'r',
+			'Ś' => 'S',
+			'ś' => 's',
+			'Ŝ' => 'S',
+			'ŝ' => 's',
+			'Ş' => 'S',
+			'ş' => 's',
+			'Š' => 'S',
+			'š' => 's',
+			'Ţ' => 'T',
+			'ţ' => 't',
+			'Ť' => 'T',
+			'ť' => 't',
+			'Ŧ' => 'T',
+			'ŧ' => 't',
+			'Ũ' => 'U',
+			'ũ' => 'u',
+			'Ū' => 'U',
+			'ū' => 'u',
+			'Ŭ' => 'U',
+			'ŭ' => 'u',
+			'Ů' => 'U',
+			'ů' => 'u',
+			'Ű' => 'U',
+			'ű' => 'u',
+			'Ų' => 'U',
+			'ų' => 'u',
+			'Ŵ' => 'W',
+			'ŵ' => 'w',
+			'Ŷ' => 'Y',
+			'ŷ' => 'y',
+			'Ÿ' => 'Y',
+			'Ź' => 'Z',
+			'ź' => 'z',
+			'Ż' => 'Z',
+			'ż' => 'z',
+			'Ž' => 'Z',
+			'ž' => 'z',
+			'ſ' => 's',
+			// Decompositions for Latin Extended-B
+			'Ș' => 'S',
+			'ș' => 's',
+			'Ț' => 'T',
+			'ț' => 't',
+			// Euro Sign
+			'€' => 'E',
+			// GBP (Pound) Sign
+			'£' => '',
+			// Vowels with diacritic (Vietnamese)
+			// unmarked
+			'Ơ' => 'O',
+			'ơ' => 'o',
+			'Ư' => 'U',
+			'ư' => 'u',
+			// grave accent
+			'Ầ' => 'A',
+			'ầ' => 'a',
+			'Ằ' => 'A',
+			'ằ' => 'a',
+			'Ề' => 'E',
+			'ề' => 'e',
+			'Ồ' => 'O',
+			'ồ' => 'o',
+			'Ờ' => 'O',
+			'ờ' => 'o',
+			'Ừ' => 'U',
+			'ừ' => 'u',
+			'Ỳ' => 'Y',
+			'ỳ' => 'y',
+			// hook
+			'Ả' => 'A',
+			'ả' => 'a',
+			'Ẩ' => 'A',
+			'ẩ' => 'a',
+			'Ẳ' => 'A',
+			'ẳ' => 'a',
+			'Ẻ' => 'E',
+			'ẻ' => 'e',
+			'Ể' => 'E',
+			'ể' => 'e',
+			'Ỉ' => 'I',
+			'ỉ' => 'i',
+			'Ỏ' => 'O',
+			'ỏ' => 'o',
+			'Ổ' => 'O',
+			'ổ' => 'o',
+			'Ở' => 'O',
+			'ở' => 'o',
+			'Ủ' => 'U',
+			'ủ' => 'u',
+			'Ử' => 'U',
+			'ử' => 'u',
+			'Ỷ' => 'Y',
+			'ỷ' => 'y',
+			// tilde
+			'Ẫ' => 'A',
+			'ẫ' => 'a',
+			'Ẵ' => 'A',
+			'ẵ' => 'a',
+			'Ẽ' => 'E',
+			'ẽ' => 'e',
+			'Ễ' => 'E',
+			'ễ' => 'e',
+			'Ỗ' => 'O',
+			'ỗ' => 'o',
+			'Ỡ' => 'O',
+			'ỡ' => 'o',
+			'Ữ' => 'U',
+			'ữ' => 'u',
+			'Ỹ' => 'Y',
+			'ỹ' => 'y',
+			// acute accent
+			'Ấ' => 'A',
+			'ấ' => 'a',
+			'Ắ' => 'A',
+			'ắ' => 'a',
+			'Ế' => 'E',
+			'ế' => 'e',
+			'Ố' => 'O',
+			'ố' => 'o',
+			'Ớ' => 'O',
+			'ớ' => 'o',
+			'Ứ' => 'U',
+			'ứ' => 'u',
+			// dot below
+			'Ạ' => 'A',
+			'ạ' => 'a',
+			'Ậ' => 'A',
+			'ậ' => 'a',
+			'Ặ' => 'A',
+			'ặ' => 'a',
+			'Ẹ' => 'E',
+			'ẹ' => 'e',
+			'Ệ' => 'E',
+			'ệ' => 'e',
+			'Ị' => 'I',
+			'ị' => 'i',
+			'Ọ' => 'O',
+			'ọ' => 'o',
+			'Ộ' => 'O',
+			'ộ' => 'o',
+			'Ợ' => 'O',
+			'ợ' => 'o',
+			'Ụ' => 'U',
+			'ụ' => 'u',
+			'Ự' => 'U',
+			'ự' => 'u',
+			'Ỵ' => 'Y',
+			'ỵ' => 'y',
+			// Vowels with diacritic (Chinese, Hanyu Pinyin)
+			'ɑ' => 'a',
+			// macron
+			'Ǖ' => 'U',
+			'ǖ' => 'u',
+			// acute accent
+			'Ǘ' => 'U',
+			'ǘ' => 'u',
+			// caron
+			'Ǎ' => 'A',
+			'ǎ' => 'a',
+			'Ǐ' => 'I',
+			'ǐ' => 'i',
+			'Ǒ' => 'O',
+			'ǒ' => 'o',
+			'Ǔ' => 'U',
+			'ǔ' => 'u',
+			'Ǚ' => 'U',
+			'ǚ' => 'u',
+			// grave accent
+			'Ǜ' => 'U',
+			'ǜ' => 'u',
 		);
 
 		// Used for locale-specific rules
 		$locale = get_locale();
 
 		if ( 'de_DE' == $locale || 'de_DE_formal' == $locale || 'de_CH' == $locale || 'de_CH_informal' == $locale ) {
-			$chars[ 'Ä' ] = 'Ae';
-			$chars[ 'ä' ] = 'ae';
-			$chars[ 'Ö' ] = 'Oe';
-			$chars[ 'ö' ] = 'oe';
-			$chars[ 'Ü' ] = 'Ue';
-			$chars[ 'ü' ] = 'ue';
-			$chars[ 'ß' ] = 'ss';
+			$chars['Ä'] = 'Ae';
+			$chars['ä'] = 'ae';
+			$chars['Ö'] = 'Oe';
+			$chars['ö'] = 'oe';
+			$chars['Ü'] = 'Ue';
+			$chars['ü'] = 'ue';
+			$chars['ß'] = 'ss';
 		} elseif ( 'da_DK' === $locale ) {
-			$chars[ 'Æ' ] = 'Ae';
- 			$chars[ 'æ' ] = 'ae';
-			$chars[ 'Ø' ] = 'Oe';
-			$chars[ 'ø' ] = 'oe';
-			$chars[ 'Å' ] = 'Aa';
-			$chars[ 'å' ] = 'aa';
+			$chars['Æ'] = 'Ae';
+			$chars['æ'] = 'ae';
+			$chars['Ø'] = 'Oe';
+			$chars['ø'] = 'oe';
+			$chars['Å'] = 'Aa';
+			$chars['å'] = 'aa';
 		} elseif ( 'ca' === $locale ) {
-			$chars[ 'l·l' ] = 'll';
+			$chars['l·l'] = 'll';
 		} elseif ( 'sr_RS' === $locale || 'bs_BA' === $locale ) {
-			$chars[ 'Đ' ] = 'DJ';
-			$chars[ 'đ' ] = 'dj';
+			$chars['Đ'] = 'DJ';
+			$chars['đ'] = 'dj';
 		}
 
-		$string = strtr($string, $chars);
+		$string = strtr( $string, $chars );
 	} else {
 		$chars = array();
 		// Assume ISO-8859-1 if not UTF-8
 		$chars['in'] = "\x80\x83\x8a\x8e\x9a\x9e"
-			."\x9f\xa2\xa5\xb5\xc0\xc1\xc2"
-			."\xc3\xc4\xc5\xc7\xc8\xc9\xca"
-			."\xcb\xcc\xcd\xce\xcf\xd1\xd2"
-			."\xd3\xd4\xd5\xd6\xd8\xd9\xda"
-			."\xdb\xdc\xdd\xe0\xe1\xe2\xe3"
-			."\xe4\xe5\xe7\xe8\xe9\xea\xeb"
-			."\xec\xed\xee\xef\xf1\xf2\xf3"
-			."\xf4\xf5\xf6\xf8\xf9\xfa\xfb"
-			."\xfc\xfd\xff";
+			. "\x9f\xa2\xa5\xb5\xc0\xc1\xc2"
+			. "\xc3\xc4\xc5\xc7\xc8\xc9\xca"
+			. "\xcb\xcc\xcd\xce\xcf\xd1\xd2"
+			. "\xd3\xd4\xd5\xd6\xd8\xd9\xda"
+			. "\xdb\xdc\xdd\xe0\xe1\xe2\xe3"
+			. "\xe4\xe5\xe7\xe8\xe9\xea\xeb"
+			. "\xec\xed\xee\xef\xf1\xf2\xf3"
+			. "\xf4\xf5\xf6\xf8\xf9\xfa\xfb"
+			. "\xfc\xfd\xff";
 
-		$chars['out'] = "EfSZszYcYuAAAAAACEEEEIIIINOOOOOOUUUUYaaaaaaceeeeiiiinoooooouuuuyy";
+		$chars['out'] = 'EfSZszYcYuAAAAAACEEEEIIIINOOOOOOUUUUYaaaaaaceeeeiiiinoooooouuuuyy';
 
-		$string = strtr($string, $chars['in'], $chars['out']);
-		$double_chars = array();
-		$double_chars['in'] = array("\x8c", "\x9c", "\xc6", "\xd0", "\xde", "\xdf", "\xe6", "\xf0", "\xfe");
-		$double_chars['out'] = array('OE', 'oe', 'AE', 'DH', 'TH', 'ss', 'ae', 'dh', 'th');
-		$string = str_replace($double_chars['in'], $double_chars['out'], $string);
+		$string              = strtr( $string, $chars['in'], $chars['out'] );
+		$double_chars        = array();
+		$double_chars['in']  = array( "\x8c", "\x9c", "\xc6", "\xd0", "\xde", "\xdf", "\xe6", "\xf0", "\xfe" );
+		$double_chars['out'] = array( 'OE', 'oe', 'AE', 'DH', 'TH', 'ss', 'ae', 'dh', 'th' );
+		$string              = str_replace( $double_chars['in'], $double_chars['out'], $string );
 	}
 
 	return $string;
@@ -1760,8 +2001,8 @@ function remove_accents( $string ) {
  * @return string The sanitized filename
  */
 function sanitize_file_name( $filename ) {
-	$filename_raw = $filename;
-	$special_chars = array("?", "[", "]", "/", "\\", "=", "<", ">", ":", ";", ",", "'", "\"", "&", "$", "#", "*", "(", ")", "|", "~", "`", "!", "{", "}", "%", "+", chr(0));
+	$filename_raw  = $filename;
+	$special_chars = array( '?', '[', ']', '/', '\\', '=', '<', '>', ':', ';', ',', "'", '"', '&', '$', '#', '*', '(', ')', '|', '~', '`', '!', '{', '}', '%', '+', chr( 0 ) );
 	/**
 	 * Filters the list of characters to remove from a filename.
 	 *
@@ -1771,22 +2012,22 @@ function sanitize_file_name( $filename ) {
 	 * @param string $filename_raw  Filename as it was passed into sanitize_file_name().
 	 */
 	$special_chars = apply_filters( 'sanitize_file_name_chars', $special_chars, $filename_raw );
-	$filename = preg_replace( "#\x{00a0}#siu", ' ', $filename );
-	$filename = str_replace( $special_chars, '', $filename );
-	$filename = str_replace( array( '%20', '+' ), '-', $filename );
-	$filename = preg_replace( '/[\r\n\t -]+/', '-', $filename );
-	$filename = trim( $filename, '.-_' );
+	$filename      = preg_replace( "#\x{00a0}#siu", ' ', $filename );
+	$filename      = str_replace( $special_chars, '', $filename );
+	$filename      = str_replace( array( '%20', '+' ), '-', $filename );
+	$filename      = preg_replace( '/[\r\n\t -]+/', '-', $filename );
+	$filename      = trim( $filename, '.-_' );
 
 	if ( false === strpos( $filename, '.' ) ) {
 		$mime_types = wp_get_mime_types();
-		$filetype = wp_check_filetype( 'test.' . $filename, $mime_types );
+		$filetype   = wp_check_filetype( 'test.' . $filename, $mime_types );
 		if ( $filetype['ext'] === $filename ) {
 			$filename = 'unnamed-file.' . $filetype['ext'];
 		}
 	}
 
 	// Split the filename into a base and extension[s]
-	$parts = explode('.', $filename);
+	$parts = explode( '.', $filename );
 
 	// Return if only one extension
 	if ( count( $parts ) <= 2 ) {
@@ -1802,18 +2043,18 @@ function sanitize_file_name( $filename ) {
 	}
 
 	// Process multiple extensions
-	$filename = array_shift($parts);
-	$extension = array_pop($parts);
-	$mimes = get_allowed_mime_types();
+	$filename  = array_shift( $parts );
+	$extension = array_pop( $parts );
+	$mimes     = get_allowed_mime_types();
 
 	/*
 	 * Loop over any intermediate extensions. Postfix them with a trailing underscore
 	 * if they are a 2 - 5 character long alpha string not in the extension whitelist.
 	 */
-	foreach ( (array) $parts as $part) {
+	foreach ( (array) $parts as $part ) {
 		$filename .= '.' . $part;
 
-		if ( preg_match("/^[a-zA-Z]{2,5}\d?$/", $part) ) {
+		if ( preg_match( '/^[a-zA-Z]{2,5}\d?$/', $part ) ) {
 			$allowed = false;
 			foreach ( $mimes as $ext_preg => $mime_match ) {
 				$ext_preg = '!^(' . $ext_preg . ')$!i';
@@ -1822,13 +2063,14 @@ function sanitize_file_name( $filename ) {
 					break;
 				}
 			}
-			if ( !$allowed )
+			if ( ! $allowed ) {
 				$filename .= '_';
+			}
 		}
 	}
 	$filename .= '.' . $extension;
 	/** This filter is documented in wp-includes/formatting.php */
-	return apply_filters('sanitize_file_name', $filename, $filename_raw);
+	return apply_filters( 'sanitize_file_name', $filename, $filename_raw );
 }
 
 /**
@@ -1847,15 +2089,16 @@ function sanitize_file_name( $filename ) {
  */
 function sanitize_user( $username, $strict = false ) {
 	$raw_username = $username;
-	$username = wp_strip_all_tags( $username );
-	$username = remove_accents( $username );
+	$username     = wp_strip_all_tags( $username );
+	$username     = remove_accents( $username );
 	// Kill octets
 	$username = preg_replace( '|%([a-fA-F0-9][a-fA-F0-9])|', '', $username );
 	$username = preg_replace( '/&.+?;/', '', $username ); // Kill entities
 
 	// If strict, reduce to ASCII for max portability.
-	if ( $strict )
+	if ( $strict ) {
 		$username = preg_replace( '|[^a-z0-9 _.\-@]|i', '', $username );
+	}
 
 	$username = trim( $username );
 	// Consolidate contiguous whitespace
@@ -1885,8 +2128,8 @@ function sanitize_user( $username, $strict = false ) {
  */
 function sanitize_key( $key ) {
 	$raw_key = $key;
-	$key = strtolower( $key );
-	$key = preg_replace( '/[^a-z0-9_\-]/', '', $key );
+	$key     = strtolower( $key );
+	$key     = preg_replace( '/[^a-z0-9_\-]/', '', $key );
 
 	/**
 	 * Filters a sanitized key string.
@@ -1916,8 +2159,9 @@ function sanitize_key( $key ) {
 function sanitize_title( $title, $fallback_title = '', $context = 'save' ) {
 	$raw_title = $title;
 
-	if ( 'save' == $context )
-		$title = remove_accents($title);
+	if ( 'save' == $context ) {
+		$title = remove_accents( $title );
+	}
 
 	/**
 	 * Filters a sanitized title string.
@@ -1930,8 +2174,9 @@ function sanitize_title( $title, $fallback_title = '', $context = 'save' ) {
 	 */
 	$title = apply_filters( 'sanitize_title', $title, $raw_title, $context );
 
-	if ( '' === $title || false === $title )
+	if ( '' === $title || false === $title ) {
 		$title = $fallback_title;
+	}
 
 	return $title;
 }
@@ -1964,57 +2209,84 @@ function sanitize_title_for_query( $title ) {
  * @return string The sanitized title.
  */
 function sanitize_title_with_dashes( $title, $raw_title = '', $context = 'display' ) {
-	$title = strip_tags($title);
+	$title = strip_tags( $title );
 	// Preserve escaped octets.
-	$title = preg_replace('|%([a-fA-F0-9][a-fA-F0-9])|', '---$1---', $title);
+	$title = preg_replace( '|%([a-fA-F0-9][a-fA-F0-9])|', '---$1---', $title );
 	// Remove percent signs that are not part of an octet.
-	$title = str_replace('%', '', $title);
+	$title = str_replace( '%', '', $title );
 	// Restore octets.
-	$title = preg_replace('|---([a-fA-F0-9][a-fA-F0-9])---|', '%$1', $title);
+	$title = preg_replace( '|---([a-fA-F0-9][a-fA-F0-9])---|', '%$1', $title );
 
-	if (seems_utf8($title)) {
-		if (function_exists('mb_strtolower')) {
-			$title = mb_strtolower($title, 'UTF-8');
+	if ( seems_utf8( $title ) ) {
+		if ( function_exists( 'mb_strtolower' ) ) {
+			$title = mb_strtolower( $title, 'UTF-8' );
 		}
-		$title = utf8_uri_encode($title, 200);
+		$title = utf8_uri_encode( $title, 200 );
 	}
 
-	$title = strtolower($title);
+	$title = strtolower( $title );
 
 	if ( 'save' == $context ) {
 		// Convert nbsp, ndash and mdash to hyphens
 		$title = str_replace( array( '%c2%a0', '%e2%80%93', '%e2%80%94' ), '-', $title );
 		// Convert nbsp, ndash and mdash HTML entities to hyphens
 		$title = str_replace( array( '&nbsp;', '&#160;', '&ndash;', '&#8211;', '&mdash;', '&#8212;' ), '-', $title );
+		// Convert forward slash to hyphen
+		$title = str_replace( '/', '-', $title );
 
 		// Strip these characters entirely
-		$title = str_replace( array(
-			// iexcl and iquest
-			'%c2%a1', '%c2%bf',
-			// angle quotes
-			'%c2%ab', '%c2%bb', '%e2%80%b9', '%e2%80%ba',
-			// curly quotes
-			'%e2%80%98', '%e2%80%99', '%e2%80%9c', '%e2%80%9d',
-			'%e2%80%9a', '%e2%80%9b', '%e2%80%9e', '%e2%80%9f',
-			// copy, reg, deg, hellip and trade
-			'%c2%a9', '%c2%ae', '%c2%b0', '%e2%80%a6', '%e2%84%a2',
-			// acute accents
-			'%c2%b4', '%cb%8a', '%cc%81', '%cd%81',
-			// grave accent, macron, caron
-			'%cc%80', '%cc%84', '%cc%8c',
-		), '', $title );
+		$title = str_replace(
+			array(
+				// soft hyphens
+				'%c2%ad',
+				// iexcl and iquest
+				'%c2%a1',
+				'%c2%bf',
+				// angle quotes
+				'%c2%ab',
+				'%c2%bb',
+				'%e2%80%b9',
+				'%e2%80%ba',
+				// curly quotes
+				'%e2%80%98',
+				'%e2%80%99',
+				'%e2%80%9c',
+				'%e2%80%9d',
+				'%e2%80%9a',
+				'%e2%80%9b',
+				'%e2%80%9e',
+				'%e2%80%9f',
+				// copy, reg, deg, hellip and trade
+				'%c2%a9',
+				'%c2%ae',
+				'%c2%b0',
+				'%e2%80%a6',
+				'%e2%84%a2',
+				// acute accents
+				'%c2%b4',
+				'%cb%8a',
+				'%cc%81',
+				'%cd%81',
+				// grave accent, macron, caron
+				'%cc%80',
+				'%cc%84',
+				'%cc%8c',
+			),
+			'',
+			$title
+		);
 
 		// Convert times to x
 		$title = str_replace( '%c3%97', 'x', $title );
 	}
 
-	$title = preg_replace('/&.+?;/', '', $title); // kill entities
-	$title = str_replace('.', '-', $title);
+	$title = preg_replace( '/&.+?;/', '', $title ); // kill entities
+	$title = str_replace( '.', '-', $title );
 
-	$title = preg_replace('/[^%a-z0-9 _-]/', '', $title);
-	$title = preg_replace('/\s+/', '-', $title);
-	$title = preg_replace('|-+|', '-', $title);
-	$title = trim($title, '-');
+	$title = preg_replace( '/[^%a-z0-9 _-]/', '', $title );
+	$title = preg_replace( '/\s+/', '-', $title );
+	$title = preg_replace( '|-+|', '-', $title );
+	$title = trim( $title, '-' );
 
 	return $title;
 }
@@ -2051,7 +2323,7 @@ function sanitize_sql_orderby( $orderby ) {
  *
  * @param string $class    The classname to be sanitized
  * @param string $fallback Optional. The value to return if the sanitization ends up as an empty string.
- * 	Defaults to an empty string.
+ *  Defaults to an empty string.
  * @return string The sanitized value
  */
 function sanitize_html_class( $class, $fallback = '' ) {
@@ -2138,7 +2410,7 @@ function convert_invalid_entities( $content ) {
 		'&#156;' => '&#339;',
 		'&#157;' => '',
 		'&#158;' => '&#382;',
-		'&#159;' => '&#376;'
+		'&#159;' => '&#376;',
 	);
 
 	if ( strpos( $content, '&#1' ) !== false ) {
@@ -2157,8 +2429,8 @@ function convert_invalid_entities( $content ) {
  * @param bool   $force If true, forces balancing, ignoring the value of the option. Default false.
  * @return string Balanced text
  */
-function balanceTags( $text, $force = false ) {
-	if ( $force || get_option('use_balanceTags') == 1 ) {
+function balanceTags( $text, $force = false ) {  // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid
+	if ( $force || (int) get_option( 'use_balanceTags' ) === 1 ) {
 		return force_balance_tags( $text );
 	} else {
 		return $text;
@@ -2169,6 +2441,7 @@ function balanceTags( $text, $force = false ) {
  * Balances tags of string using a modified stack.
  *
  * @since 2.0.4
+ * @since 5.3.0 Improve accuracy and add support for custom element tags.
  *
  * @author Leonard Lin <leonard@acm.org>
  * @license GPL
@@ -2176,55 +2449,97 @@ function balanceTags( $text, $force = false ) {
  * @version 1.1
  * @todo Make better - change loop condition to $text in 1.2
  * @internal Modified by Scott Reilly (coffee2code) 02 Aug 2004
- *		1.1  Fixed handling of append/stack pop order of end text
- *			 Added Cleaning Hooks
- *		1.0  First Version
+ *      1.1  Fixed handling of append/stack pop order of end text
+ *           Added Cleaning Hooks
+ *      1.0  First Version
  *
  * @param string $text Text to be balanced.
  * @return string Balanced text.
  */
 function force_balance_tags( $text ) {
-	$tagstack = array();
+	$tagstack  = array();
 	$stacksize = 0;
-	$tagqueue = '';
-	$newtext = '';
+	$tagqueue  = '';
+	$newtext   = '';
 	// Known single-entity/self-closing tags
 	$single_tags = array( 'area', 'base', 'basefont', 'br', 'col', 'command', 'embed', 'frame', 'hr', 'img', 'input', 'isindex', 'link', 'meta', 'param', 'source' );
 	// Tags that can be immediately nested within themselves
 	$nestable_tags = array( 'blockquote', 'div', 'object', 'q', 'span' );
 
 	// WP bug fix for comments - in case you REALLY meant to type '< !--'
-	$text = str_replace('< !--', '<    !--', $text);
+	$text = str_replace( '< !--', '<    !--', $text );
 	// WP bug fix for LOVE <3 (and other situations with '<' before a number)
-	$text = preg_replace('#<([0-9]{1})#', '&lt;$1', $text);
+	$text = preg_replace( '#<([0-9]{1})#', '&lt;$1', $text );
 
-	while ( preg_match("/<(\/?[\w:]*)\s*([^>]*)>/", $text, $regex) ) {
+	/**
+	 * Matches supported tags.
+	 *
+	 * To get the pattern as a string without the comments paste into a PHP
+	 * REPL like `php -a`.
+	 *
+	 * @see https://html.spec.whatwg.org/#elements-2
+	 * @see https://w3c.github.io/webcomponents/spec/custom/#valid-custom-element-name
+	 *
+	 * @example
+	 * ~# php -a
+	 * php > $s = [paste copied contents of expression below including parentheses];
+	 * php > echo $s;
+	 */
+	$tag_pattern = (
+		'#<' . // Start with an opening bracket.
+		'(/?)' . // Group 1 - If it's a closing tag it'll have a leading slash.
+		'(' . // Group 2 - Tag name.
+			// Custom element tags have more lenient rules than HTML tag names.
+			'(?:[a-z](?:[a-z0-9._]*)-(?:[a-z0-9._-]+)+)' .
+				'|' .
+			// Traditional tag rules approximate HTML tag names.
+			'(?:[\w:]+)' .
+		')' .
+		'(?:' .
+			// We either immediately close the tag with its '>' and have nothing here.
+			'\s*' .
+			'(/?)' . // Group 3 - "attributes" for empty tag.
+				'|' .
+			// Or we must start with space characters to separate the tag name from the attributes (or whitespace).
+			'(\s+)' . // Group 4 - Pre-attribute whitespace.
+			'([^>]*)' . // Group 5 - Attributes.
+		')' .
+		'>#' // End with a closing bracket.
+	);
+
+	while ( preg_match( $tag_pattern, $text, $regex ) ) {
+		$full_match        = $regex[0];
+		$has_leading_slash = ! empty( $regex[1] );
+		$tag_name          = $regex[2];
+		$tag               = strtolower( $tag_name );
+		$is_single_tag     = in_array( $tag, $single_tags, true );
+		$pre_attribute_ws  = isset( $regex[4] ) ? $regex[4] : '';
+		$attributes        = trim( isset( $regex[5] ) ? $regex[5] : $regex[3] );
+		$has_self_closer   = '/' === substr( $attributes, -1 );
+
 		$newtext .= $tagqueue;
 
-		$i = strpos($text, $regex[0]);
-		$l = strlen($regex[0]);
+		$i = strpos( $text, $full_match );
+		$l = strlen( $full_match );
 
-		// clear the shifter
+		// Clear the shifter.
 		$tagqueue = '';
-		// Pop or Push
-		if ( isset($regex[1][0]) && '/' == $regex[1][0] ) { // End Tag
-			$tag = strtolower(substr($regex[1],1));
-			// if too many closing tags
+		if ( $has_leading_slash ) { // End Tag.
+			// If too many closing tags.
 			if ( $stacksize <= 0 ) {
 				$tag = '';
-				// or close to be safe $tag = '/' . $tag;
-			}
-			// if stacktop value = tag close value then pop
-			elseif ( $tagstack[$stacksize - 1] == $tag ) { // found closing tag
-				$tag = '</' . $tag . '>'; // Close Tag
-				// Pop
+				// Or close to be safe $tag = '/' . $tag.
+
+				// If stacktop value = tag close value, then pop.
+			} elseif ( $tagstack[ $stacksize - 1 ] === $tag ) { // Found closing tag.
+				$tag = '</' . $tag . '>'; // Close Tag.
 				array_pop( $tagstack );
 				$stacksize--;
-			} else { // closing tag not at top, search for it
-				for ( $j = $stacksize-1; $j >= 0; $j-- ) {
-					if ( $tagstack[$j] == $tag ) {
-					// add tag to tagqueue
-						for ( $k = $stacksize-1; $k >= $j; $k--) {
+			} else { // Closing tag not at top, search for it.
+				for ( $j = $stacksize - 1; $j >= 0; $j-- ) {
+					if ( $tagstack[ $j ] === $tag ) {
+						// Add tag to tagqueue.
+						for ( $k = $stacksize - 1; $k >= $j; $k-- ) {
 							$tagqueue .= '</' . array_pop( $tagstack ) . '>';
 							$stacksize--;
 						}
@@ -2233,65 +2548,55 @@ function force_balance_tags( $text ) {
 				}
 				$tag = '';
 			}
-		} else { // Begin Tag
-			$tag = strtolower($regex[1]);
-
-			// Tag Cleaning
-
-			// If it's an empty tag "< >", do nothing
-			if ( '' == $tag ) {
-				// do nothing
-			}
-			// ElseIf it presents itself as a self-closing tag...
-			elseif ( substr( $regex[2], -1 ) == '/' ) {
+		} else { // Begin Tag.
+			if ( $has_self_closer ) { // If it presents itself as a self-closing tag...
 				// ...but it isn't a known single-entity self-closing tag, then don't let it be treated as such and
 				// immediately close it with a closing tag (the tag will encapsulate no text as a result)
-				if ( ! in_array( $tag, $single_tags ) )
-					$regex[2] = trim( substr( $regex[2], 0, -1 ) ) . "></$tag";
-			}
-			// ElseIf it's a known single-entity tag but it doesn't close itself, do so
-			elseif ( in_array($tag, $single_tags) ) {
-				$regex[2] .= '/';
-			}
-			// Else it's not a single-entity tag
-			else {
-				// If the top of the stack is the same as the tag we want to push, close previous tag
-				if ( $stacksize > 0 && !in_array($tag, $nestable_tags) && $tagstack[$stacksize - 1] == $tag ) {
+				if ( ! $is_single_tag ) {
+					$attributes = trim( substr( $attributes, 0, -1 ) ) . "></$tag";
+				}
+			} elseif ( $is_single_tag ) { // ElseIf it's a known single-entity tag but it doesn't close itself, do so
+				$pre_attribute_ws = ' ';
+				$attributes      .= '/';
+			} else { // It's not a single-entity tag.
+				// If the top of the stack is the same as the tag we want to push, close previous tag.
+				if ( $stacksize > 0 && ! in_array( $tag, $nestable_tags, true ) && $tagstack[ $stacksize - 1 ] === $tag ) {
 					$tagqueue = '</' . array_pop( $tagstack ) . '>';
 					$stacksize--;
 				}
 				$stacksize = array_push( $tagstack, $tag );
 			}
 
-			// Attributes
-			$attributes = $regex[2];
-			if ( ! empty( $attributes ) && $attributes[0] != '>' )
-				$attributes = ' ' . $attributes;
+			// Attributes.
+			if ( $has_self_closer && $is_single_tag ) {
+				// We need some space - avoid <br/> and prefer <br />.
+				$pre_attribute_ws = ' ';
+			}
 
-			$tag = '<' . $tag . $attributes . '>';
-			//If already queuing a close tag, then put this tag on, too
-			if ( !empty($tagqueue) ) {
+			$tag = '<' . $tag . $pre_attribute_ws . $attributes . '>';
+			// If already queuing a close tag, then put this tag on too.
+			if ( ! empty( $tagqueue ) ) {
 				$tagqueue .= $tag;
-				$tag = '';
+				$tag       = '';
 			}
 		}
-		$newtext .= substr($text, 0, $i) . $tag;
-		$text = substr($text, $i + $l);
+		$newtext .= substr( $text, 0, $i ) . $tag;
+		$text     = substr( $text, $i + $l );
 	}
 
-	// Clear Tag Queue
+	// Clear Tag Queue.
 	$newtext .= $tagqueue;
 
-	// Add Remaining text
+	// Add remaining text.
 	$newtext .= $text;
 
-	// Empty Stack
-	while( $x = array_pop($tagstack) )
-		$newtext .= '</' . $x . '>'; // Add remaining tags to close
+	while ( $x = array_pop( $tagstack ) ) {
+		$newtext .= '</' . $x . '>'; // Add remaining tags to close.
+	}
 
-	// WP fix for the bug with HTML comments
-	$newtext = str_replace("< !--","<!--",$newtext);
-	$newtext = str_replace("<    !--","< !--",$newtext);
+	// WP fix for the bug with HTML comments.
+	$newtext = str_replace( '< !--', '<!--', $newtext );
+	$newtext = str_replace( '<    !--', '< !--', $newtext );
 
 	return $newtext;
 }
@@ -2321,8 +2626,9 @@ function format_to_edit( $content, $rich_text = false ) {
 	 * @param string $content The text, prior to formatting for editing.
 	 */
 	$content = apply_filters( 'format_to_edit', $content );
-	if ( ! $rich_text )
+	if ( ! $rich_text ) {
 		$content = esc_textarea( $content );
+	}
 	return $content;
 }
 
@@ -2356,8 +2662,9 @@ function zeroise( $number, $threshold ) {
  * @return string String with backslashes inserted.
  */
 function backslashit( $string ) {
-	if ( isset( $string[0] ) && $string[0] >= '0' && $string[0] <= '9' )
+	if ( isset( $string[0] ) && $string[0] >= '0' && $string[0] <= '9' ) {
 		$string = '\\\\' . $string;
+	}
 	return addcslashes( $string, 'A..Za..z' );
 }
 
@@ -2405,11 +2712,8 @@ function untrailingslashit( $string ) {
  * @param string $gpc The string returned from HTTP request data.
  * @return string Returns a string escaped with slashes.
  */
-function addslashes_gpc($gpc) {
-	if ( get_magic_quotes_gpc() )
-		$gpc = stripslashes($gpc);
-
-	return wp_slash($gpc);
+function addslashes_gpc( $gpc ) {
+	return wp_slash( $gpc );
 }
 
 /**
@@ -2486,11 +2790,11 @@ function antispambot( $email_address, $hex_encoding = 0 ) {
 	for ( $i = 0, $len = strlen( $email_address ); $i < $len; $i++ ) {
 		$j = rand( 0, 1 + $hex_encoding );
 		if ( $j == 0 ) {
-			$email_no_spam_address .= '&#' . ord( $email_address[$i] ) . ';';
+			$email_no_spam_address .= '&#' . ord( $email_address[ $i ] ) . ';';
 		} elseif ( $j == 1 ) {
-			$email_no_spam_address .= $email_address[$i];
+			$email_no_spam_address .= $email_address[ $i ];
 		} elseif ( $j == 2 ) {
-			$email_no_spam_address .= '%' . zeroise( dechex( ord( $email_address[$i] ) ), 2 );
+			$email_no_spam_address .= '%' . zeroise( dechex( ord( $email_address[ $i ] ) ), 2 );
 		}
 	}
 
@@ -2514,7 +2818,7 @@ function _make_url_clickable_cb( $matches ) {
 	if ( ')' == $matches[3] && strpos( $url, '(' ) ) {
 		// If the trailing character is a closing parethesis, and the URL has an opening parenthesis in it, add the closing parenthesis to the URL.
 		// Then we can let the parenthesis balancer do its thing below.
-		$url .= $matches[3];
+		$url   .= $matches[3];
 		$suffix = '';
 	} else {
 		$suffix = $matches[3];
@@ -2523,14 +2827,32 @@ function _make_url_clickable_cb( $matches ) {
 	// Include parentheses in the URL only if paired
 	while ( substr_count( $url, '(' ) < substr_count( $url, ')' ) ) {
 		$suffix = strrchr( $url, ')' ) . $suffix;
-		$url = substr( $url, 0, strrpos( $url, ')' ) );
+		$url    = substr( $url, 0, strrpos( $url, ')' ) );
 	}
 
-	$url = esc_url($url);
-	if ( empty($url) )
+	$url = esc_url( $url );
+	if ( empty( $url ) ) {
 		return $matches[0];
+	}
 
-	return $matches[1] . "<a href=\"$url\" rel=\"nofollow\">$url</a>" . $suffix;
+	if ( 'comment_text' === current_filter() ) {
+		$rel = 'nofollow ugc';
+	} else {
+		$rel = 'nofollow';
+	}
+
+	/**
+	 * Filters the rel value that is added to URL matches converted to links.
+	 *
+	 * @since 5.3.0
+	 *
+	 * @param string $rel The rel value.
+	 * @param string $url The matched URL being converted to a link tag.
+	 */
+	$rel = apply_filters( 'make_clickable_rel', $rel, $url );
+	$rel = esc_attr( $rel );
+
+	return $matches[1] . "<a href=\"$url\" rel=\"$rel\">$url</a>" . $suffix;
 }
 
 /**
@@ -2545,21 +2867,32 @@ function _make_url_clickable_cb( $matches ) {
  * @return string HTML A element with URL address.
  */
 function _make_web_ftp_clickable_cb( $matches ) {
-	$ret = '';
+	$ret  = '';
 	$dest = $matches[2];
 	$dest = 'http://' . $dest;
 
 	// removed trailing [.,;:)] from URL
-	if ( in_array( substr($dest, -1), array('.', ',', ';', ':', ')') ) === true ) {
-		$ret = substr($dest, -1);
-		$dest = substr($dest, 0, strlen($dest)-1);
+	if ( in_array( substr( $dest, -1 ), array( '.', ',', ';', ':', ')' ) ) === true ) {
+		$ret  = substr( $dest, -1 );
+		$dest = substr( $dest, 0, strlen( $dest ) - 1 );
 	}
 
-	$dest = esc_url($dest);
-	if ( empty($dest) )
+	$dest = esc_url( $dest );
+	if ( empty( $dest ) ) {
 		return $matches[0];
+	}
 
-	return $matches[1] . "<a href=\"$dest\" rel=\"nofollow\">$dest</a>$ret";
+	if ( 'comment_text' === current_filter() ) {
+		$rel = 'nofollow ugc';
+	} else {
+		$rel = 'nofollow';
+	}
+
+	/** This filter is documented in wp-includes/formatting.php */
+	$rel = apply_filters( 'make_clickable_rel', $rel, $dest );
+	$rel = esc_attr( $rel );
+
+	return $matches[1] . "<a href=\"$dest\" rel=\"$rel\">$dest</a>$ret";
 }
 
 /**
@@ -2590,15 +2923,16 @@ function _make_email_clickable_cb( $matches ) {
  * @return string Content with converted URIs.
  */
 function make_clickable( $text ) {
-	$r = '';
-	$textarr = preg_split( '/(<[^<>]+>)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE ); // split out HTML tags
+	$r               = '';
+	$textarr         = preg_split( '/(<[^<>]+>)/', $text, -1, PREG_SPLIT_DELIM_CAPTURE ); // split out HTML tags
 	$nested_code_pre = 0; // Keep track of how many levels link is nested inside <pre> or <code>
 	foreach ( $textarr as $piece ) {
 
-		if ( preg_match( '|^<code[\s>]|i', $piece ) || preg_match( '|^<pre[\s>]|i', $piece ) || preg_match( '|^<script[\s>]|i', $piece ) || preg_match( '|^<style[\s>]|i', $piece ) )
+		if ( preg_match( '|^<code[\s>]|i', $piece ) || preg_match( '|^<pre[\s>]|i', $piece ) || preg_match( '|^<script[\s>]|i', $piece ) || preg_match( '|^<style[\s>]|i', $piece ) ) {
 			$nested_code_pre++;
-		elseif ( $nested_code_pre && ( '</code>' === strtolower( $piece ) || '</pre>' === strtolower( $piece ) || '</script>' === strtolower( $piece ) || '</style>' === strtolower( $piece ) ) )
+		} elseif ( $nested_code_pre && ( '</code>' === strtolower( $piece ) || '</pre>' === strtolower( $piece ) || '</script>' === strtolower( $piece ) || '</style>' === strtolower( $piece ) ) ) {
 			$nested_code_pre--;
+		}
 
 		if ( $nested_code_pre || empty( $piece ) || ( $piece[0] === '<' && ! preg_match( '|^<\s*[\w]{1,20}+://|', $piece ) ) ) {
 			$r .= $piece;
@@ -2630,8 +2964,9 @@ function make_clickable( $text ) {
 					)*
 				)
 				(\)?)                                                  # 3: Trailing closing parenthesis (for parethesis balancing post processing)
-			~xS'; // The regex is a non-anchored pattern and does not have a single fixed starting character.
-			      // Tell PCRE to spend more time optimizing since, when used on a page load, it will probably be used several times.
+			~xS';
+			// The regex is a non-anchored pattern and does not have a single fixed starting character.
+			// Tell PCRE to spend more time optimizing since, when used on a page load, it will probably be used several times.
 
 			$ret = preg_replace_callback( $url_clickable, '_make_url_clickable_cb', $ret );
 
@@ -2639,12 +2974,12 @@ function make_clickable( $text ) {
 			$ret = preg_replace_callback( '#([\s>])([.0-9a-z_+-]+)@(([0-9a-z-]+\.)+[0-9a-z]{2,})#i', '_make_email_clickable_cb', $ret );
 
 			$ret = substr( $ret, 1, -1 ); // Remove our whitespace padding.
-			$r .= $ret;
+			$r  .= $ret;
 		}
 	}
 
 	// Cleanup of accidental links within links
-	return preg_replace( '#(<a([ \r\n\t]+[^>]+?>|>))<a [^>]+?>([^>]+?)</a></a>#i', "$1$3</a>", $r );
+	return preg_replace( '#(<a([ \r\n\t]+[^>]+?>|>))<a [^>]+?>([^>]+?)</a></a>#i', '$1$3</a>', $r );
 }
 
 /**
@@ -2691,8 +3026,8 @@ function _split_str_by_whitespace( $string, $goal ) {
 			}
 		}
 
-		$chunks[] = substr( $string, 0, $pos + 1 );
-		$string = substr( $string, $pos + 1 );
+		$chunks[]         = substr( $string, 0, $pos + 1 );
+		$string           = substr( $string, $pos + 1 );
 		$string_nullspace = substr( $string_nullspace, $pos + 1 );
 	}
 
@@ -2704,7 +3039,50 @@ function _split_str_by_whitespace( $string, $goal ) {
 }
 
 /**
- * Adds rel nofollow string to all HTML A elements in content.
+ * Callback to add a rel attribute to HTML A element.
+ *
+ * Will remove already existing string before adding to prevent invalidating (X)HTML.
+ *
+ * @since 5.3.0
+ *
+ * @param array  $matches Single match.
+ * @param string $rel     The rel attribute to add.
+ * @return string HTML A element with the added rel attribute.
+ */
+function wp_rel_callback( $matches, $rel ) {
+	$text = $matches[1];
+	$atts = wp_kses_hair( $matches[1], wp_allowed_protocols() );
+
+	if ( ! empty( $atts['href'] ) ) {
+		if ( in_array( strtolower( wp_parse_url( $atts['href']['value'], PHP_URL_SCHEME ) ), array( 'http', 'https' ), true ) ) {
+			if ( strtolower( wp_parse_url( $atts['href']['value'], PHP_URL_HOST ) ) === strtolower( wp_parse_url( home_url(), PHP_URL_HOST ) ) ) {
+				return "<a $text>";
+			}
+		}
+	}
+
+	if ( ! empty( $atts['rel'] ) ) {
+		$parts     = array_map( 'trim', explode( ' ', $atts['rel']['value'] ) );
+		$rel_array = array_map( 'trim', explode( ' ', $rel ) );
+		$parts     = array_unique( array_merge( $parts, $rel_array ) );
+		$rel       = implode( ' ', $parts );
+		unset( $atts['rel'] );
+
+		$html = '';
+		foreach ( $atts as $name => $value ) {
+			if ( isset( $value['vless'] ) && 'y' === $value['vless'] ) {
+				$html .= $name . ' ';
+			} else {
+				$html .= "{$name}=\"" . esc_attr( $value['value'] ) . '" ';
+			}
+		}
+		$text = trim( $html );
+	}
+	return "<a $text rel=\"" . esc_attr( $rel ) . '">';
+}
+
+/**
+ * Adds `rel="nofollow"` string to all HTML A elements in content.
  *
  * @since 1.5.0
  *
@@ -2712,49 +3090,174 @@ function _split_str_by_whitespace( $string, $goal ) {
  * @return string Converted content.
  */
 function wp_rel_nofollow( $text ) {
-	// This is a pre save filter, so text is already escaped.
-	$text = stripslashes($text);
-	$text = preg_replace_callback('|<a (.+?)>|i', 'wp_rel_nofollow_callback', $text);
+	// This is a pre-save filter, so text is already escaped.
+	$text = stripslashes( $text );
+	$text = preg_replace_callback(
+		'|<a (.+?)>|i',
+		function( $matches ) {
+			return wp_rel_callback( $matches, 'nofollow' );
+		},
+		$text
+	);
 	return wp_slash( $text );
 }
 
 /**
- * Callback to add rel=nofollow string to HTML A element.
- *
- * Will remove already existing rel="nofollow" and rel='nofollow' from the
- * string to prevent from invalidating (X)HTML.
+ * Callback to add `rel="nofollow"` string to HTML A element.
  *
  * @since 2.3.0
+ * @deprecated 5.3.0 Use wp_rel_callback()
  *
- * @param array $matches Single Match
- * @return string HTML A Element with rel nofollow.
+ * @param array $matches Single match.
+ * @return string HTML A Element with `rel="nofollow"`.
  */
 function wp_rel_nofollow_callback( $matches ) {
-	$text = $matches[1];
-	$atts = shortcode_parse_atts( $matches[1] );
-	$rel  = 'nofollow';
+	return wp_rel_callback( $matches, 'nofollow' );
+}
 
-	if ( preg_match( '%href=["\'](' . preg_quote( set_url_scheme( home_url(), 'http' ) ) . ')%i', $text ) ||
-	     preg_match( '%href=["\'](' . preg_quote( set_url_scheme( home_url(), 'https' ) ) . ')%i', $text )
-	) {
-		return "<a $text>";
+/**
+ * Adds `rel="nofollow ugc"` string to all HTML A elements in content.
+ *
+ * @since 5.3.0
+ *
+ * @param string $text Content that may contain HTML A elements.
+ * @return string Converted content.
+ */
+function wp_rel_ugc( $text ) {
+	// This is a pre-save filter, so text is already escaped.
+	$text = stripslashes( $text );
+	$text = preg_replace_callback(
+		'|<a (.+?)>|i',
+		function( $matches ) {
+			return wp_rel_callback( $matches, 'nofollow ugc' );
+		},
+		$text
+	);
+	return wp_slash( $text );
+}
+
+/**
+ * Adds rel noreferrer and noopener to all HTML A elements that have a target.
+ *
+ * @since 5.1.0
+ *
+ * @param string $text Content that may contain HTML A elements.
+ * @return string Converted content.
+ */
+function wp_targeted_link_rel( $text ) {
+	// Don't run (more expensive) regex if no links with targets.
+	if ( stripos( $text, 'target' ) !== false && stripos( $text, '<a ' ) !== false ) {
+		if ( ! is_serialized( $text ) ) {
+			$text = preg_replace_callback( '|<a\s([^>]*target\s*=[^>]*)>|i', 'wp_targeted_link_rel_callback', $text );
+		}
 	}
 
-	if ( ! empty( $atts['rel'] ) ) {
-		$parts = array_map( 'trim', explode( ' ', $atts['rel'] ) );
-		if ( false === array_search( 'nofollow', $parts ) ) {
-			$parts[] = 'nofollow';
-		}
-		$rel = implode( ' ', $parts );
-		unset( $atts['rel'] );
+	return $text;
+}
 
-		$html = '';
-		foreach ( $atts as $name => $value ) {
-			$html .= "{$name}=\"$value\" ";
-		}
-		$text = trim( $html );
+/**
+ * Callback to add rel="noreferrer noopener" string to HTML A element.
+ *
+ * Will not duplicate existing noreferrer and noopener values
+ * to prevent from invalidating the HTML.
+ *
+ * @since 5.1.0
+ *
+ * @param array $matches Single Match
+ * @return string HTML A Element with rel noreferrer noopener in addition to any existing values
+ */
+function wp_targeted_link_rel_callback( $matches ) {
+	$link_html = $matches[1];
+	$rel_match = array();
+
+	/**
+	 * Filters the rel values that are added to links with `target` attribute.
+	 *
+	 * @since 5.1.0
+	 *
+	 * @param string $rel       The rel values.
+	 * @param string $link_html The matched content of the link tag including all HTML attributes.
+	 */
+	$rel = apply_filters( 'wp_targeted_link_rel', 'noopener noreferrer', $link_html );
+
+	// Avoid additional regex if the filter removes rel values.
+	if ( ! $rel ) {
+		return "<a $link_html>";
 	}
-	return "<a $text rel=\"$rel\">";
+
+	// Value with delimiters, spaces around are optional.
+	$attr_regex = '|rel\s*=\s*?(\\\\{0,1}["\'])(.*?)\\1|i';
+	preg_match( $attr_regex, $link_html, $rel_match );
+
+	if ( empty( $rel_match[0] ) ) {
+		// No delimiters, try with a single value and spaces, because `rel =  va"lue` is totally fine...
+		$attr_regex = '|rel\s*=(\s*)([^\s]*)|i';
+		preg_match( $attr_regex, $link_html, $rel_match );
+	}
+
+	if ( ! empty( $rel_match[0] ) ) {
+		$parts     = preg_split( '|\s+|', strtolower( $rel_match[2] ) );
+		$parts     = array_map( 'esc_attr', $parts );
+		$needed    = explode( ' ', $rel );
+		$parts     = array_unique( array_merge( $parts, $needed ) );
+		$delimiter = trim( $rel_match[1] ) ? $rel_match[1] : '"';
+		$rel       = 'rel=' . $delimiter . trim( implode( ' ', $parts ) ) . $delimiter;
+		$link_html = str_replace( $rel_match[0], $rel, $link_html );
+	} elseif ( preg_match( '|target\s*=\s*?\\\\"|', $link_html ) ) {
+		$link_html .= " rel=\\\"$rel\\\"";
+	} elseif ( preg_match( '#(target|href)\s*=\s*?\'#', $link_html ) ) {
+		$link_html .= " rel='$rel'";
+	} else {
+		$link_html .= " rel=\"$rel\"";
+	}
+
+	return "<a $link_html>";
+}
+
+/**
+ * Adds all filters modifying the rel attribute of targeted links.
+ *
+ * @since 5.1.0
+ */
+function wp_init_targeted_link_rel_filters() {
+	$filters = array(
+		'title_save_pre',
+		'content_save_pre',
+		'excerpt_save_pre',
+		'content_filtered_save_pre',
+		'pre_comment_content',
+		'pre_term_description',
+		'pre_link_description',
+		'pre_link_notes',
+		'pre_user_description',
+	);
+
+	foreach ( $filters as $filter ) {
+		add_filter( $filter, 'wp_targeted_link_rel' );
+	};
+}
+
+/**
+ * Removes all filters modifying the rel attribute of targeted links.
+ *
+ * @since 5.1.0
+ */
+function wp_remove_targeted_link_rel_filters() {
+	$filters = array(
+		'title_save_pre',
+		'content_save_pre',
+		'excerpt_save_pre',
+		'content_filtered_save_pre',
+		'pre_comment_content',
+		'pre_term_description',
+		'pre_link_description',
+		'pre_link_notes',
+		'pre_user_description',
+	);
+
+	foreach ( $filters as $filter ) {
+		remove_filter( $filter, 'wp_targeted_link_rel' );
+	};
 }
 
 /**
@@ -2775,14 +3278,15 @@ function wp_rel_nofollow_callback( $matches ) {
 function translate_smiley( $matches ) {
 	global $wpsmiliestrans;
 
-	if ( count( $matches ) == 0 )
+	if ( count( $matches ) == 0 ) {
 		return '';
+	}
 
 	$smiley = trim( reset( $matches ) );
-	$img = $wpsmiliestrans[ $smiley ];
+	$img    = $wpsmiliestrans[ $smiley ];
 
-	$matches = array();
-	$ext = preg_match( '/\.([^.]+)$/', $img, $matches ) ? strtolower( $matches[1] ) : false;
+	$matches    = array();
+	$ext        = preg_match( '/\.([^.]+)$/', $img, $matches ) ? strtolower( $matches[1] ) : false;
 	$image_exts = array( 'jpg', 'jpeg', 'jpe', 'gif', 'png' );
 
 	// Don't convert smilies that aren't images - they're probably emoji.
@@ -2823,27 +3327,27 @@ function convert_smilies( $text ) {
 	if ( get_option( 'use_smilies' ) && ! empty( $wp_smiliessearch ) ) {
 		// HTML loop taken from texturize function, could possible be consolidated
 		$textarr = preg_split( '/(<.*>)/U', $text, -1, PREG_SPLIT_DELIM_CAPTURE ); // capture the tags as well as in between
-		$stop = count( $textarr );// loop stuff
+		$stop    = count( $textarr );// loop stuff
 
 		// Ignore proessing of specific tags
-		$tags_to_ignore = 'code|pre|style|script|textarea';
+		$tags_to_ignore       = 'code|pre|style|script|textarea';
 		$ignore_block_element = '';
 
 		for ( $i = 0; $i < $stop; $i++ ) {
-			$content = $textarr[$i];
+			$content = $textarr[ $i ];
 
 			// If we're in an ignore block, wait until we find its closing tag
-			if ( '' == $ignore_block_element && preg_match( '/^<(' . $tags_to_ignore . ')>/', $content, $matches ) )  {
+			if ( '' == $ignore_block_element && preg_match( '/^<(' . $tags_to_ignore . ')[^>]*>/', $content, $matches ) ) {
 				$ignore_block_element = $matches[1];
 			}
 
 			// If it's not a tag and not in ignore block
-			if ( '' ==  $ignore_block_element && strlen( $content ) > 0 && '<' != $content[0] ) {
+			if ( '' == $ignore_block_element && strlen( $content ) > 0 && '<' != $content[0] ) {
 				$content = preg_replace_callback( $wp_smiliessearch, 'translate_smiley', $content );
 			}
 
 			// did we exit ignore block
-			if ( '' != $ignore_block_element && '</' . $ignore_block_element . '>' == $content )  {
+			if ( '' != $ignore_block_element && '</' . $ignore_block_element . '>' == $content ) {
 				$ignore_block_element = '';
 			}
 
@@ -2865,11 +3369,12 @@ function convert_smilies( $text ) {
  *
  * @param string $email      Email address to verify.
  * @param bool   $deprecated Deprecated.
- * @return string|bool Either false or the valid email address.
+ * @return string|false Valid email address on success, false on failure.
  */
 function is_email( $email, $deprecated = false ) {
-	if ( ! empty( $deprecated ) )
+	if ( ! empty( $deprecated ) ) {
 		_deprecated_argument( __FUNCTION__, '3.0.0' );
+	}
 
 	// Test for the minimum length the email can be
 	if ( strlen( $email ) < 6 ) {
@@ -2882,9 +3387,9 @@ function is_email( $email, $deprecated = false ) {
 		 *
 		 * @since 2.8.0
 		 *
-		 * @param bool   $is_email Whether the email address has passed the is_email() checks. Default false.
-		 * @param string $email    The email address being checked.
-		 * @param string $context  Context under which the email was tested.
+		 * @param string|false $is_email The email address if successfully passed the is_email() checks, false otherwise.
+		 * @param string       $email    The email address being checked.
+		 * @param string       $context  Context under which the email was tested.
 		 */
 		return apply_filters( 'is_email', false, $email, 'email_too_short' );
 	}
@@ -2900,7 +3405,7 @@ function is_email( $email, $deprecated = false ) {
 
 	// LOCAL PART
 	// Test for invalid characters
-	if ( !preg_match( '/^[a-zA-Z0-9!#$%&\'*+\/=?^_`{|}~\.-]+$/', $local ) ) {
+	if ( ! preg_match( '/^[a-zA-Z0-9!#$%&\'*+\/=?^_`{|}~\.-]+$/', $local ) ) {
 		/** This filter is documented in wp-includes/formatting.php */
 		return apply_filters( 'is_email', false, $email, 'local_invalid_chars' );
 	}
@@ -2936,7 +3441,7 @@ function is_email( $email, $deprecated = false ) {
 		}
 
 		// Test for invalid characters
-		if ( !preg_match('/^[a-z0-9-]+$/i', $sub ) ) {
+		if ( ! preg_match( '/^[a-z0-9-]+$/i', $sub ) ) {
 			/** This filter is documented in wp-includes/formatting.php */
 			return apply_filters( 'is_email', false, $email, 'sub_invalid_chars' );
 		}
@@ -2957,10 +3462,10 @@ function is_email( $email, $deprecated = false ) {
  */
 function wp_iso_descrambler( $string ) {
 	/* this may only work with iso-8859-1, I'm afraid */
-	if (!preg_match('#\=\?(.+)\?Q\?(.+)\?\=#i', $string, $matches)) {
+	if ( ! preg_match( '#\=\?(.+)\?Q\?(.+)\?\=#i', $string, $matches ) ) {
 		return $string;
 	} else {
-		$subject = str_replace('_', ' ', $matches[2]);
+		$subject = str_replace( '_', ' ', $matches[2] );
 		return preg_replace_callback( '#\=([0-9a-f]{2})#i', '_wp_iso_convert', $subject );
 	}
 }
@@ -2981,69 +3486,45 @@ function _wp_iso_convert( $match ) {
 /**
  * Returns a date in the GMT equivalent.
  *
- * Requires and returns a date in the Y-m-d H:i:s format. If there is a
- * timezone_string available, the date is assumed to be in that timezone,
- * otherwise it simply subtracts the value of the 'gmt_offset' option. Return
- * format can be overridden using the $format parameter.
+ * Requires and returns a date in the Y-m-d H:i:s format.
+ * Return format can be overridden using the $format parameter.
  *
  * @since 1.2.0
  *
  * @param string $string The date to be converted.
- * @param string $format The format string for the returned date (default is Y-m-d H:i:s)
+ * @param string $format The format string for the returned date. Default 'Y-m-d H:i:s'.
  * @return string GMT version of the date provided.
  */
 function get_gmt_from_date( $string, $format = 'Y-m-d H:i:s' ) {
-	$tz = get_option( 'timezone_string' );
-	if ( $tz ) {
-		$datetime = date_create( $string, new DateTimeZone( $tz ) );
-		if ( ! $datetime ) {
-			return gmdate( $format, 0 );
-		}
-		$datetime->setTimezone( new DateTimeZone( 'UTC' ) );
-		$string_gmt = $datetime->format( $format );
-	} else {
-		if ( ! preg_match( '#([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})#', $string, $matches ) ) {
-			$datetime = strtotime( $string );
-			if ( false === $datetime ) {
-				return gmdate( $format, 0 );
-			}
-			return gmdate( $format, $datetime );
-		}
-		$string_time = gmmktime( $matches[4], $matches[5], $matches[6], $matches[2], $matches[3], $matches[1] );
-		$string_gmt = gmdate( $format, $string_time - get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+	$datetime = date_create( $string, wp_timezone() );
+
+	if ( false === $datetime ) {
+		return gmdate( $format, 0 );
 	}
-	return $string_gmt;
+
+	return $datetime->setTimezone( new DateTimeZone( 'UTC' ) )->format( $format );
 }
 
 /**
  * Converts a GMT date into the correct format for the blog.
  *
- * Requires and returns a date in the Y-m-d H:i:s format. If there is a
- * timezone_string available, the returned date is in that timezone, otherwise
- * it simply adds the value of gmt_offset. Return format can be overridden
- * using the $format parameter
+ * Requires and returns a date in the Y-m-d H:i:s format.
+ * Return format can be overridden using the $format parameter.
  *
  * @since 1.2.0
  *
  * @param string $string The date to be converted.
- * @param string $format The format string for the returned date (default is Y-m-d H:i:s)
- * @return string Formatted date relative to the timezone / GMT offset.
+ * @param string $format The format string for the returned date. Default 'Y-m-d H:i:s'.
+ * @return string Formatted date relative to the timezone.
  */
 function get_date_from_gmt( $string, $format = 'Y-m-d H:i:s' ) {
-	$tz = get_option( 'timezone_string' );
-	if ( $tz ) {
-		$datetime = date_create( $string, new DateTimeZone( 'UTC' ) );
-		if ( ! $datetime )
-			return date( $format, 0 );
-		$datetime->setTimezone( new DateTimeZone( $tz ) );
-		$string_localtime = $datetime->format( $format );
-	} else {
-		if ( ! preg_match('#([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2}) ([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})#', $string, $matches) )
-			return date( $format, 0 );
-		$string_time = gmmktime( $matches[4], $matches[5], $matches[6], $matches[2], $matches[3], $matches[1] );
-		$string_localtime = gmdate( $format, $string_time + get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+	$datetime = date_create( $string, new DateTimeZone( 'UTC' ) );
+
+	if ( false === $datetime ) {
+		return gmdate( $format, 0 );
 	}
-	return $string_localtime;
+
+	return $datetime->setTimezone( wp_timezone() )->format( $format );
 }
 
 /**
@@ -3056,47 +3537,44 @@ function get_date_from_gmt( $string, $format = 'Y-m-d H:i:s' ) {
  */
 function iso8601_timezone_to_offset( $timezone ) {
 	// $timezone is either 'Z' or '[+|-]hhmm'
-	if ($timezone == 'Z') {
+	if ( $timezone == 'Z' ) {
 		$offset = 0;
 	} else {
-		$sign    = (substr($timezone, 0, 1) == '+') ? 1 : -1;
-		$hours   = intval(substr($timezone, 1, 2));
-		$minutes = intval(substr($timezone, 3, 4)) / 60;
-		$offset  = $sign * HOUR_IN_SECONDS * ($hours + $minutes);
+		$sign    = ( substr( $timezone, 0, 1 ) == '+' ) ? 1 : -1;
+		$hours   = intval( substr( $timezone, 1, 2 ) );
+		$minutes = intval( substr( $timezone, 3, 4 ) ) / 60;
+		$offset  = $sign * HOUR_IN_SECONDS * ( $hours + $minutes );
 	}
 	return $offset;
 }
 
 /**
- * Converts an iso8601 date to MySQL DateTime format used by post_date[_gmt].
+ * Converts an iso8601 (Ymd\TH:i:sO) date to MySQL DateTime (Y-m-d H:i:s) format used by post_date[_gmt].
  *
  * @since 1.5.0
  *
  * @param string $date_string Date and time in ISO 8601 format {@link https://en.wikipedia.org/wiki/ISO_8601}.
- * @param string $timezone    Optional. If set to GMT returns the time minus gmt_offset. Default is 'user'.
- * @return string The date and time in MySQL DateTime format - Y-m-d H:i:s.
+ * @param string $timezone    Optional. If set to 'gmt' returns the result in UTC. Default 'user'.
+ * @return string|bool The date and time in MySQL DateTime format - Y-m-d H:i:s, or false on failure.
  */
 function iso8601_to_datetime( $date_string, $timezone = 'user' ) {
-	$timezone = strtolower($timezone);
+	$timezone    = strtolower( $timezone );
+	$wp_timezone = wp_timezone();
+	$datetime    = date_create( $date_string, $wp_timezone ); // Timezone is ignored if input has one.
 
-	if ($timezone == 'gmt') {
-
-		preg_match('#([0-9]{4})([0-9]{2})([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(Z|[\+|\-][0-9]{2,4}){0,1}#', $date_string, $date_bits);
-
-		if (!empty($date_bits[7])) { // we have a timezone, so let's compute an offset
-			$offset = iso8601_timezone_to_offset($date_bits[7]);
-		} else { // we don't have a timezone, so we assume user local timezone (not server's!)
-			$offset = HOUR_IN_SECONDS * get_option('gmt_offset');
-		}
-
-		$timestamp = gmmktime($date_bits[4], $date_bits[5], $date_bits[6], $date_bits[2], $date_bits[3], $date_bits[1]);
-		$timestamp -= $offset;
-
-		return gmdate('Y-m-d H:i:s', $timestamp);
-
-	} elseif ($timezone == 'user') {
-		return preg_replace('#([0-9]{4})([0-9]{2})([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(Z|[\+|\-][0-9]{2,4}){0,1}#', '$1-$2-$3 $4:$5:$6', $date_string);
+	if ( false === $datetime ) {
+		return false;
 	}
+
+	if ( 'gmt' === $timezone ) {
+		return $datetime->setTimezone( new DateTimeZone( 'UTC' ) )->format( 'Y-m-d H:i:s' );
+	}
+
+	if ( 'user' === $timezone ) {
+		return $datetime->setTimezone( $wp_timezone )->format( 'Y-m-d H:i:s' );
+	}
+
+	return false;
 }
 
 /**
@@ -3119,9 +3597,9 @@ function sanitize_email( $email ) {
 		 *
 		 * @since 2.8.0
 		 *
-		 * @param string $email   The sanitized email address.
-		 * @param string $email   The email address, as provided to sanitize_email().
-		 * @param string $message A message to pass to the user.
+		 * @param string $sanitized_email The sanitized email address.
+		 * @param string $email           The email address, as provided to sanitize_email().
+		 * @param string|null $message    A message to pass to the user. null if email is sanitized.
 		 */
 		return apply_filters( 'sanitize_email', '', $email, 'email_too_short' );
 	}
@@ -3194,11 +3672,11 @@ function sanitize_email( $email ) {
 	$domain = join( '.', $new_subs );
 
 	// Put the email back together
-	$email = $local . '@' . $domain;
+	$sanitized_email = $local . '@' . $domain;
 
 	// Congratulations your email made it!
 	/** This filter is documented in wp-includes/formatting.php */
-	return apply_filters( 'sanitize_email', $email, $email, null );
+	return apply_filters( 'sanitize_email', $sanitized_email, $email, null );
 }
 
 /**
@@ -3208,53 +3686,67 @@ function sanitize_email( $email ) {
  * "5 mins", "2 days".
  *
  * @since 1.5.0
+ * @since 5.3.0 Added support for showing a difference in seconds.
  *
  * @param int $from Unix timestamp from which the difference begins.
  * @param int $to   Optional. Unix timestamp to end the time difference. Default becomes time() if not set.
  * @return string Human readable time difference.
  */
-function human_time_diff( $from, $to = '' ) {
+function human_time_diff( $from, $to = 0 ) {
 	if ( empty( $to ) ) {
 		$to = time();
 	}
 
 	$diff = (int) abs( $to - $from );
 
-	if ( $diff < HOUR_IN_SECONDS ) {
+	if ( $diff < MINUTE_IN_SECONDS ) {
+		$secs = $diff;
+		if ( $secs <= 1 ) {
+			$secs = 1;
+		}
+		/* translators: Time difference between two dates, in seconds. %s: Number of seconds. */
+		$since = sprintf( _n( '%s second', '%s seconds', $secs ), $secs );
+	} elseif ( $diff < HOUR_IN_SECONDS && $diff >= MINUTE_IN_SECONDS ) {
 		$mins = round( $diff / MINUTE_IN_SECONDS );
-		if ( $mins <= 1 )
+		if ( $mins <= 1 ) {
 			$mins = 1;
-		/* translators: Time difference between two dates, in minutes (min=minute). 1: Number of minutes */
+		}
+		/* translators: Time difference between two dates, in minutes (min=minute). %s: Number of minutes. */
 		$since = sprintf( _n( '%s min', '%s mins', $mins ), $mins );
 	} elseif ( $diff < DAY_IN_SECONDS && $diff >= HOUR_IN_SECONDS ) {
 		$hours = round( $diff / HOUR_IN_SECONDS );
-		if ( $hours <= 1 )
+		if ( $hours <= 1 ) {
 			$hours = 1;
-		/* translators: Time difference between two dates, in hours. 1: Number of hours */
+		}
+		/* translators: Time difference between two dates, in hours. %s: Number of hours. */
 		$since = sprintf( _n( '%s hour', '%s hours', $hours ), $hours );
 	} elseif ( $diff < WEEK_IN_SECONDS && $diff >= DAY_IN_SECONDS ) {
 		$days = round( $diff / DAY_IN_SECONDS );
-		if ( $days <= 1 )
+		if ( $days <= 1 ) {
 			$days = 1;
-		/* translators: Time difference between two dates, in days. 1: Number of days */
+		}
+		/* translators: Time difference between two dates, in days. %s: Number of days. */
 		$since = sprintf( _n( '%s day', '%s days', $days ), $days );
 	} elseif ( $diff < MONTH_IN_SECONDS && $diff >= WEEK_IN_SECONDS ) {
 		$weeks = round( $diff / WEEK_IN_SECONDS );
-		if ( $weeks <= 1 )
+		if ( $weeks <= 1 ) {
 			$weeks = 1;
-		/* translators: Time difference between two dates, in weeks. 1: Number of weeks */
+		}
+		/* translators: Time difference between two dates, in weeks. %s: Number of weeks. */
 		$since = sprintf( _n( '%s week', '%s weeks', $weeks ), $weeks );
 	} elseif ( $diff < YEAR_IN_SECONDS && $diff >= MONTH_IN_SECONDS ) {
 		$months = round( $diff / MONTH_IN_SECONDS );
-		if ( $months <= 1 )
+		if ( $months <= 1 ) {
 			$months = 1;
-		/* translators: Time difference between two dates, in months. 1: Number of months */
+		}
+		/* translators: Time difference between two dates, in months. %s: Number of months. */
 		$since = sprintf( _n( '%s month', '%s months', $months ), $months );
 	} elseif ( $diff >= YEAR_IN_SECONDS ) {
 		$years = round( $diff / YEAR_IN_SECONDS );
-		if ( $years <= 1 )
+		if ( $years <= 1 ) {
 			$years = 1;
-		/* translators: Time difference between two dates, in years. 1: Number of years */
+		}
+		/* translators: Time difference between two dates, in years. %s: Number of years. */
 		$since = sprintf( _n( '%s year', '%s years', $years ), $years );
 	}
 
@@ -3274,37 +3766,43 @@ function human_time_diff( $from, $to = '' ) {
 /**
  * Generates an excerpt from the content, if needed.
  *
- * The excerpt word amount will be 55 words and if the amount is greater than
- * that, then the string ' [&hellip;]' will be appended to the excerpt. If the string
- * is less than 55 words, then the content will be returned as is.
+ * Returns a maximum of 55 words with an ellipsis appended if necessary.
  *
  * The 55 word limit can be modified by plugins/themes using the {@see 'excerpt_length'} filter
  * The ' [&hellip;]' string can be modified by plugins/themes using the {@see 'excerpt_more'} filter
  *
  * @since 1.5.0
+ * @since 5.2.0 Added the `$post` parameter.
  *
- * @param string $text Optional. The excerpt. If set to empty, an excerpt is generated.
+ * @param string             $text Optional. The excerpt. If set to empty, an excerpt is generated.
+ * @param WP_Post|object|int $post Optional. WP_Post instance or Post ID/object. Default is null.
  * @return string The excerpt.
  */
-function wp_trim_excerpt( $text = '' ) {
+function wp_trim_excerpt( $text = '', $post = null ) {
 	$raw_excerpt = $text;
 	if ( '' == $text ) {
-		$text = get_the_content('');
+		$post = get_post( $post );
+		$text = get_the_content( '', false, $post );
 
 		$text = strip_shortcodes( $text );
+		$text = excerpt_remove_blocks( $text );
 
 		/** This filter is documented in wp-includes/post-template.php */
 		$text = apply_filters( 'the_content', $text );
-		$text = str_replace(']]>', ']]&gt;', $text);
+		$text = str_replace( ']]>', ']]&gt;', $text );
+
+		/* translators: Maximum number of words used in a post excerpt. */
+		$excerpt_length = intval( _x( '55', 'excerpt_length' ) );
 
 		/**
-		 * Filters the number of words in an excerpt.
+		 * Filters the maximum number of words in a post excerpt.
 		 *
 		 * @since 2.7.0
 		 *
-		 * @param int $number The number of words. Default 55.
+		 * @param int $number The maximum number of words. Default 55.
 		 */
-		$excerpt_length = apply_filters( 'excerpt_length', 55 );
+		$excerpt_length = (int) apply_filters( 'excerpt_length', $excerpt_length );
+
 		/**
 		 * Filters the string in the "more" link displayed after a trimmed excerpt.
 		 *
@@ -3313,8 +3811,9 @@ function wp_trim_excerpt( $text = '' ) {
 		 * @param string $more_string The string shown within the more link.
 		 */
 		$excerpt_more = apply_filters( 'excerpt_more', ' ' . '[&hellip;]' );
-		$text = wp_trim_words( $text, $excerpt_length, $excerpt_more );
+		$text         = wp_trim_words( $text, $excerpt_length, $excerpt_more );
 	}
+
 	/**
 	 * Filters the trimmed excerpt string.
 	 *
@@ -3346,7 +3845,8 @@ function wp_trim_words( $text, $num_words = 55, $more = null ) {
 	}
 
 	$original_text = $text;
-	$text = wp_strip_all_tags( $text );
+	$text          = wp_strip_all_tags( $text );
+	$num_words     = (int) $num_words;
 
 	/*
 	 * translators: If your word count is based on single characters (e.g. East Asian characters),
@@ -3357,10 +3857,10 @@ function wp_trim_words( $text, $num_words = 55, $more = null ) {
 		$text = trim( preg_replace( "/[\n\r\t ]+/", ' ', $text ), ' ' );
 		preg_match_all( '/./u', $text, $words_array );
 		$words_array = array_slice( $words_array[0], 0, $num_words + 1 );
-		$sep = '';
+		$sep         = '';
 	} else {
 		$words_array = preg_split( "/[\n\r\t ]+/", $text, $num_words + 1, PREG_SPLIT_NO_EMPTY );
-		$sep = ' ';
+		$sep         = ' ';
 	}
 
 	if ( count( $words_array ) > $num_words ) {
@@ -3401,273 +3901,274 @@ function ent2ncr( $text ) {
 	 *
 	 * @since 3.3.0
 	 *
-	 * @param null   $converted_text The text to be converted. Default null.
-	 * @param string $text           The text prior to entity conversion.
+	 * @param string|null $converted_text The text to be converted. Default null.
+	 * @param string      $text           The text prior to entity conversion.
 	 */
 	$filtered = apply_filters( 'pre_ent2ncr', null, $text );
-	if ( null !== $filtered )
+	if ( null !== $filtered ) {
 		return $filtered;
+	}
 
 	$to_ncr = array(
-		'&quot;' => '&#34;',
-		'&amp;' => '&#38;',
-		'&lt;' => '&#60;',
-		'&gt;' => '&#62;',
-		'|' => '&#124;',
-		'&nbsp;' => '&#160;',
-		'&iexcl;' => '&#161;',
-		'&cent;' => '&#162;',
-		'&pound;' => '&#163;',
-		'&curren;' => '&#164;',
-		'&yen;' => '&#165;',
-		'&brvbar;' => '&#166;',
-		'&brkbar;' => '&#166;',
-		'&sect;' => '&#167;',
-		'&uml;' => '&#168;',
-		'&die;' => '&#168;',
-		'&copy;' => '&#169;',
-		'&ordf;' => '&#170;',
-		'&laquo;' => '&#171;',
-		'&not;' => '&#172;',
-		'&shy;' => '&#173;',
-		'&reg;' => '&#174;',
-		'&macr;' => '&#175;',
-		'&hibar;' => '&#175;',
-		'&deg;' => '&#176;',
-		'&plusmn;' => '&#177;',
-		'&sup2;' => '&#178;',
-		'&sup3;' => '&#179;',
-		'&acute;' => '&#180;',
-		'&micro;' => '&#181;',
-		'&para;' => '&#182;',
-		'&middot;' => '&#183;',
-		'&cedil;' => '&#184;',
-		'&sup1;' => '&#185;',
-		'&ordm;' => '&#186;',
-		'&raquo;' => '&#187;',
-		'&frac14;' => '&#188;',
-		'&frac12;' => '&#189;',
-		'&frac34;' => '&#190;',
-		'&iquest;' => '&#191;',
-		'&Agrave;' => '&#192;',
-		'&Aacute;' => '&#193;',
-		'&Acirc;' => '&#194;',
-		'&Atilde;' => '&#195;',
-		'&Auml;' => '&#196;',
-		'&Aring;' => '&#197;',
-		'&AElig;' => '&#198;',
-		'&Ccedil;' => '&#199;',
-		'&Egrave;' => '&#200;',
-		'&Eacute;' => '&#201;',
-		'&Ecirc;' => '&#202;',
-		'&Euml;' => '&#203;',
-		'&Igrave;' => '&#204;',
-		'&Iacute;' => '&#205;',
-		'&Icirc;' => '&#206;',
-		'&Iuml;' => '&#207;',
-		'&ETH;' => '&#208;',
-		'&Ntilde;' => '&#209;',
-		'&Ograve;' => '&#210;',
-		'&Oacute;' => '&#211;',
-		'&Ocirc;' => '&#212;',
-		'&Otilde;' => '&#213;',
-		'&Ouml;' => '&#214;',
-		'&times;' => '&#215;',
-		'&Oslash;' => '&#216;',
-		'&Ugrave;' => '&#217;',
-		'&Uacute;' => '&#218;',
-		'&Ucirc;' => '&#219;',
-		'&Uuml;' => '&#220;',
-		'&Yacute;' => '&#221;',
-		'&THORN;' => '&#222;',
-		'&szlig;' => '&#223;',
-		'&agrave;' => '&#224;',
-		'&aacute;' => '&#225;',
-		'&acirc;' => '&#226;',
-		'&atilde;' => '&#227;',
-		'&auml;' => '&#228;',
-		'&aring;' => '&#229;',
-		'&aelig;' => '&#230;',
-		'&ccedil;' => '&#231;',
-		'&egrave;' => '&#232;',
-		'&eacute;' => '&#233;',
-		'&ecirc;' => '&#234;',
-		'&euml;' => '&#235;',
-		'&igrave;' => '&#236;',
-		'&iacute;' => '&#237;',
-		'&icirc;' => '&#238;',
-		'&iuml;' => '&#239;',
-		'&eth;' => '&#240;',
-		'&ntilde;' => '&#241;',
-		'&ograve;' => '&#242;',
-		'&oacute;' => '&#243;',
-		'&ocirc;' => '&#244;',
-		'&otilde;' => '&#245;',
-		'&ouml;' => '&#246;',
-		'&divide;' => '&#247;',
-		'&oslash;' => '&#248;',
-		'&ugrave;' => '&#249;',
-		'&uacute;' => '&#250;',
-		'&ucirc;' => '&#251;',
-		'&uuml;' => '&#252;',
-		'&yacute;' => '&#253;',
-		'&thorn;' => '&#254;',
-		'&yuml;' => '&#255;',
-		'&OElig;' => '&#338;',
-		'&oelig;' => '&#339;',
-		'&Scaron;' => '&#352;',
-		'&scaron;' => '&#353;',
-		'&Yuml;' => '&#376;',
-		'&fnof;' => '&#402;',
-		'&circ;' => '&#710;',
-		'&tilde;' => '&#732;',
-		'&Alpha;' => '&#913;',
-		'&Beta;' => '&#914;',
-		'&Gamma;' => '&#915;',
-		'&Delta;' => '&#916;',
-		'&Epsilon;' => '&#917;',
-		'&Zeta;' => '&#918;',
-		'&Eta;' => '&#919;',
-		'&Theta;' => '&#920;',
-		'&Iota;' => '&#921;',
-		'&Kappa;' => '&#922;',
-		'&Lambda;' => '&#923;',
-		'&Mu;' => '&#924;',
-		'&Nu;' => '&#925;',
-		'&Xi;' => '&#926;',
-		'&Omicron;' => '&#927;',
-		'&Pi;' => '&#928;',
-		'&Rho;' => '&#929;',
-		'&Sigma;' => '&#931;',
-		'&Tau;' => '&#932;',
-		'&Upsilon;' => '&#933;',
-		'&Phi;' => '&#934;',
-		'&Chi;' => '&#935;',
-		'&Psi;' => '&#936;',
-		'&Omega;' => '&#937;',
-		'&alpha;' => '&#945;',
-		'&beta;' => '&#946;',
-		'&gamma;' => '&#947;',
-		'&delta;' => '&#948;',
-		'&epsilon;' => '&#949;',
-		'&zeta;' => '&#950;',
-		'&eta;' => '&#951;',
-		'&theta;' => '&#952;',
-		'&iota;' => '&#953;',
-		'&kappa;' => '&#954;',
-		'&lambda;' => '&#955;',
-		'&mu;' => '&#956;',
-		'&nu;' => '&#957;',
-		'&xi;' => '&#958;',
-		'&omicron;' => '&#959;',
-		'&pi;' => '&#960;',
-		'&rho;' => '&#961;',
-		'&sigmaf;' => '&#962;',
-		'&sigma;' => '&#963;',
-		'&tau;' => '&#964;',
-		'&upsilon;' => '&#965;',
-		'&phi;' => '&#966;',
-		'&chi;' => '&#967;',
-		'&psi;' => '&#968;',
-		'&omega;' => '&#969;',
+		'&quot;'     => '&#34;',
+		'&amp;'      => '&#38;',
+		'&lt;'       => '&#60;',
+		'&gt;'       => '&#62;',
+		'|'          => '&#124;',
+		'&nbsp;'     => '&#160;',
+		'&iexcl;'    => '&#161;',
+		'&cent;'     => '&#162;',
+		'&pound;'    => '&#163;',
+		'&curren;'   => '&#164;',
+		'&yen;'      => '&#165;',
+		'&brvbar;'   => '&#166;',
+		'&brkbar;'   => '&#166;',
+		'&sect;'     => '&#167;',
+		'&uml;'      => '&#168;',
+		'&die;'      => '&#168;',
+		'&copy;'     => '&#169;',
+		'&ordf;'     => '&#170;',
+		'&laquo;'    => '&#171;',
+		'&not;'      => '&#172;',
+		'&shy;'      => '&#173;',
+		'&reg;'      => '&#174;',
+		'&macr;'     => '&#175;',
+		'&hibar;'    => '&#175;',
+		'&deg;'      => '&#176;',
+		'&plusmn;'   => '&#177;',
+		'&sup2;'     => '&#178;',
+		'&sup3;'     => '&#179;',
+		'&acute;'    => '&#180;',
+		'&micro;'    => '&#181;',
+		'&para;'     => '&#182;',
+		'&middot;'   => '&#183;',
+		'&cedil;'    => '&#184;',
+		'&sup1;'     => '&#185;',
+		'&ordm;'     => '&#186;',
+		'&raquo;'    => '&#187;',
+		'&frac14;'   => '&#188;',
+		'&frac12;'   => '&#189;',
+		'&frac34;'   => '&#190;',
+		'&iquest;'   => '&#191;',
+		'&Agrave;'   => '&#192;',
+		'&Aacute;'   => '&#193;',
+		'&Acirc;'    => '&#194;',
+		'&Atilde;'   => '&#195;',
+		'&Auml;'     => '&#196;',
+		'&Aring;'    => '&#197;',
+		'&AElig;'    => '&#198;',
+		'&Ccedil;'   => '&#199;',
+		'&Egrave;'   => '&#200;',
+		'&Eacute;'   => '&#201;',
+		'&Ecirc;'    => '&#202;',
+		'&Euml;'     => '&#203;',
+		'&Igrave;'   => '&#204;',
+		'&Iacute;'   => '&#205;',
+		'&Icirc;'    => '&#206;',
+		'&Iuml;'     => '&#207;',
+		'&ETH;'      => '&#208;',
+		'&Ntilde;'   => '&#209;',
+		'&Ograve;'   => '&#210;',
+		'&Oacute;'   => '&#211;',
+		'&Ocirc;'    => '&#212;',
+		'&Otilde;'   => '&#213;',
+		'&Ouml;'     => '&#214;',
+		'&times;'    => '&#215;',
+		'&Oslash;'   => '&#216;',
+		'&Ugrave;'   => '&#217;',
+		'&Uacute;'   => '&#218;',
+		'&Ucirc;'    => '&#219;',
+		'&Uuml;'     => '&#220;',
+		'&Yacute;'   => '&#221;',
+		'&THORN;'    => '&#222;',
+		'&szlig;'    => '&#223;',
+		'&agrave;'   => '&#224;',
+		'&aacute;'   => '&#225;',
+		'&acirc;'    => '&#226;',
+		'&atilde;'   => '&#227;',
+		'&auml;'     => '&#228;',
+		'&aring;'    => '&#229;',
+		'&aelig;'    => '&#230;',
+		'&ccedil;'   => '&#231;',
+		'&egrave;'   => '&#232;',
+		'&eacute;'   => '&#233;',
+		'&ecirc;'    => '&#234;',
+		'&euml;'     => '&#235;',
+		'&igrave;'   => '&#236;',
+		'&iacute;'   => '&#237;',
+		'&icirc;'    => '&#238;',
+		'&iuml;'     => '&#239;',
+		'&eth;'      => '&#240;',
+		'&ntilde;'   => '&#241;',
+		'&ograve;'   => '&#242;',
+		'&oacute;'   => '&#243;',
+		'&ocirc;'    => '&#244;',
+		'&otilde;'   => '&#245;',
+		'&ouml;'     => '&#246;',
+		'&divide;'   => '&#247;',
+		'&oslash;'   => '&#248;',
+		'&ugrave;'   => '&#249;',
+		'&uacute;'   => '&#250;',
+		'&ucirc;'    => '&#251;',
+		'&uuml;'     => '&#252;',
+		'&yacute;'   => '&#253;',
+		'&thorn;'    => '&#254;',
+		'&yuml;'     => '&#255;',
+		'&OElig;'    => '&#338;',
+		'&oelig;'    => '&#339;',
+		'&Scaron;'   => '&#352;',
+		'&scaron;'   => '&#353;',
+		'&Yuml;'     => '&#376;',
+		'&fnof;'     => '&#402;',
+		'&circ;'     => '&#710;',
+		'&tilde;'    => '&#732;',
+		'&Alpha;'    => '&#913;',
+		'&Beta;'     => '&#914;',
+		'&Gamma;'    => '&#915;',
+		'&Delta;'    => '&#916;',
+		'&Epsilon;'  => '&#917;',
+		'&Zeta;'     => '&#918;',
+		'&Eta;'      => '&#919;',
+		'&Theta;'    => '&#920;',
+		'&Iota;'     => '&#921;',
+		'&Kappa;'    => '&#922;',
+		'&Lambda;'   => '&#923;',
+		'&Mu;'       => '&#924;',
+		'&Nu;'       => '&#925;',
+		'&Xi;'       => '&#926;',
+		'&Omicron;'  => '&#927;',
+		'&Pi;'       => '&#928;',
+		'&Rho;'      => '&#929;',
+		'&Sigma;'    => '&#931;',
+		'&Tau;'      => '&#932;',
+		'&Upsilon;'  => '&#933;',
+		'&Phi;'      => '&#934;',
+		'&Chi;'      => '&#935;',
+		'&Psi;'      => '&#936;',
+		'&Omega;'    => '&#937;',
+		'&alpha;'    => '&#945;',
+		'&beta;'     => '&#946;',
+		'&gamma;'    => '&#947;',
+		'&delta;'    => '&#948;',
+		'&epsilon;'  => '&#949;',
+		'&zeta;'     => '&#950;',
+		'&eta;'      => '&#951;',
+		'&theta;'    => '&#952;',
+		'&iota;'     => '&#953;',
+		'&kappa;'    => '&#954;',
+		'&lambda;'   => '&#955;',
+		'&mu;'       => '&#956;',
+		'&nu;'       => '&#957;',
+		'&xi;'       => '&#958;',
+		'&omicron;'  => '&#959;',
+		'&pi;'       => '&#960;',
+		'&rho;'      => '&#961;',
+		'&sigmaf;'   => '&#962;',
+		'&sigma;'    => '&#963;',
+		'&tau;'      => '&#964;',
+		'&upsilon;'  => '&#965;',
+		'&phi;'      => '&#966;',
+		'&chi;'      => '&#967;',
+		'&psi;'      => '&#968;',
+		'&omega;'    => '&#969;',
 		'&thetasym;' => '&#977;',
-		'&upsih;' => '&#978;',
-		'&piv;' => '&#982;',
-		'&ensp;' => '&#8194;',
-		'&emsp;' => '&#8195;',
-		'&thinsp;' => '&#8201;',
-		'&zwnj;' => '&#8204;',
-		'&zwj;' => '&#8205;',
-		'&lrm;' => '&#8206;',
-		'&rlm;' => '&#8207;',
-		'&ndash;' => '&#8211;',
-		'&mdash;' => '&#8212;',
-		'&lsquo;' => '&#8216;',
-		'&rsquo;' => '&#8217;',
-		'&sbquo;' => '&#8218;',
-		'&ldquo;' => '&#8220;',
-		'&rdquo;' => '&#8221;',
-		'&bdquo;' => '&#8222;',
-		'&dagger;' => '&#8224;',
-		'&Dagger;' => '&#8225;',
-		'&bull;' => '&#8226;',
-		'&hellip;' => '&#8230;',
-		'&permil;' => '&#8240;',
-		'&prime;' => '&#8242;',
-		'&Prime;' => '&#8243;',
-		'&lsaquo;' => '&#8249;',
-		'&rsaquo;' => '&#8250;',
-		'&oline;' => '&#8254;',
-		'&frasl;' => '&#8260;',
-		'&euro;' => '&#8364;',
-		'&image;' => '&#8465;',
-		'&weierp;' => '&#8472;',
-		'&real;' => '&#8476;',
-		'&trade;' => '&#8482;',
-		'&alefsym;' => '&#8501;',
-		'&crarr;' => '&#8629;',
-		'&lArr;' => '&#8656;',
-		'&uArr;' => '&#8657;',
-		'&rArr;' => '&#8658;',
-		'&dArr;' => '&#8659;',
-		'&hArr;' => '&#8660;',
-		'&forall;' => '&#8704;',
-		'&part;' => '&#8706;',
-		'&exist;' => '&#8707;',
-		'&empty;' => '&#8709;',
-		'&nabla;' => '&#8711;',
-		'&isin;' => '&#8712;',
-		'&notin;' => '&#8713;',
-		'&ni;' => '&#8715;',
-		'&prod;' => '&#8719;',
-		'&sum;' => '&#8721;',
-		'&minus;' => '&#8722;',
-		'&lowast;' => '&#8727;',
-		'&radic;' => '&#8730;',
-		'&prop;' => '&#8733;',
-		'&infin;' => '&#8734;',
-		'&ang;' => '&#8736;',
-		'&and;' => '&#8743;',
-		'&or;' => '&#8744;',
-		'&cap;' => '&#8745;',
-		'&cup;' => '&#8746;',
-		'&int;' => '&#8747;',
-		'&there4;' => '&#8756;',
-		'&sim;' => '&#8764;',
-		'&cong;' => '&#8773;',
-		'&asymp;' => '&#8776;',
-		'&ne;' => '&#8800;',
-		'&equiv;' => '&#8801;',
-		'&le;' => '&#8804;',
-		'&ge;' => '&#8805;',
-		'&sub;' => '&#8834;',
-		'&sup;' => '&#8835;',
-		'&nsub;' => '&#8836;',
-		'&sube;' => '&#8838;',
-		'&supe;' => '&#8839;',
-		'&oplus;' => '&#8853;',
-		'&otimes;' => '&#8855;',
-		'&perp;' => '&#8869;',
-		'&sdot;' => '&#8901;',
-		'&lceil;' => '&#8968;',
-		'&rceil;' => '&#8969;',
-		'&lfloor;' => '&#8970;',
-		'&rfloor;' => '&#8971;',
-		'&lang;' => '&#9001;',
-		'&rang;' => '&#9002;',
-		'&larr;' => '&#8592;',
-		'&uarr;' => '&#8593;',
-		'&rarr;' => '&#8594;',
-		'&darr;' => '&#8595;',
-		'&harr;' => '&#8596;',
-		'&loz;' => '&#9674;',
-		'&spades;' => '&#9824;',
-		'&clubs;' => '&#9827;',
-		'&hearts;' => '&#9829;',
-		'&diams;' => '&#9830;'
+		'&upsih;'    => '&#978;',
+		'&piv;'      => '&#982;',
+		'&ensp;'     => '&#8194;',
+		'&emsp;'     => '&#8195;',
+		'&thinsp;'   => '&#8201;',
+		'&zwnj;'     => '&#8204;',
+		'&zwj;'      => '&#8205;',
+		'&lrm;'      => '&#8206;',
+		'&rlm;'      => '&#8207;',
+		'&ndash;'    => '&#8211;',
+		'&mdash;'    => '&#8212;',
+		'&lsquo;'    => '&#8216;',
+		'&rsquo;'    => '&#8217;',
+		'&sbquo;'    => '&#8218;',
+		'&ldquo;'    => '&#8220;',
+		'&rdquo;'    => '&#8221;',
+		'&bdquo;'    => '&#8222;',
+		'&dagger;'   => '&#8224;',
+		'&Dagger;'   => '&#8225;',
+		'&bull;'     => '&#8226;',
+		'&hellip;'   => '&#8230;',
+		'&permil;'   => '&#8240;',
+		'&prime;'    => '&#8242;',
+		'&Prime;'    => '&#8243;',
+		'&lsaquo;'   => '&#8249;',
+		'&rsaquo;'   => '&#8250;',
+		'&oline;'    => '&#8254;',
+		'&frasl;'    => '&#8260;',
+		'&euro;'     => '&#8364;',
+		'&image;'    => '&#8465;',
+		'&weierp;'   => '&#8472;',
+		'&real;'     => '&#8476;',
+		'&trade;'    => '&#8482;',
+		'&alefsym;'  => '&#8501;',
+		'&crarr;'    => '&#8629;',
+		'&lArr;'     => '&#8656;',
+		'&uArr;'     => '&#8657;',
+		'&rArr;'     => '&#8658;',
+		'&dArr;'     => '&#8659;',
+		'&hArr;'     => '&#8660;',
+		'&forall;'   => '&#8704;',
+		'&part;'     => '&#8706;',
+		'&exist;'    => '&#8707;',
+		'&empty;'    => '&#8709;',
+		'&nabla;'    => '&#8711;',
+		'&isin;'     => '&#8712;',
+		'&notin;'    => '&#8713;',
+		'&ni;'       => '&#8715;',
+		'&prod;'     => '&#8719;',
+		'&sum;'      => '&#8721;',
+		'&minus;'    => '&#8722;',
+		'&lowast;'   => '&#8727;',
+		'&radic;'    => '&#8730;',
+		'&prop;'     => '&#8733;',
+		'&infin;'    => '&#8734;',
+		'&ang;'      => '&#8736;',
+		'&and;'      => '&#8743;',
+		'&or;'       => '&#8744;',
+		'&cap;'      => '&#8745;',
+		'&cup;'      => '&#8746;',
+		'&int;'      => '&#8747;',
+		'&there4;'   => '&#8756;',
+		'&sim;'      => '&#8764;',
+		'&cong;'     => '&#8773;',
+		'&asymp;'    => '&#8776;',
+		'&ne;'       => '&#8800;',
+		'&equiv;'    => '&#8801;',
+		'&le;'       => '&#8804;',
+		'&ge;'       => '&#8805;',
+		'&sub;'      => '&#8834;',
+		'&sup;'      => '&#8835;',
+		'&nsub;'     => '&#8836;',
+		'&sube;'     => '&#8838;',
+		'&supe;'     => '&#8839;',
+		'&oplus;'    => '&#8853;',
+		'&otimes;'   => '&#8855;',
+		'&perp;'     => '&#8869;',
+		'&sdot;'     => '&#8901;',
+		'&lceil;'    => '&#8968;',
+		'&rceil;'    => '&#8969;',
+		'&lfloor;'   => '&#8970;',
+		'&rfloor;'   => '&#8971;',
+		'&lang;'     => '&#9001;',
+		'&rang;'     => '&#9002;',
+		'&larr;'     => '&#8592;',
+		'&uarr;'     => '&#8593;',
+		'&rarr;'     => '&#8594;',
+		'&darr;'     => '&#8595;',
+		'&harr;'     => '&#8596;',
+		'&loz;'      => '&#9674;',
+		'&spades;'   => '&#9824;',
+		'&clubs;'    => '&#9827;',
+		'&hearts;'   => '&#9829;',
+		'&diams;'    => '&#9830;',
 	);
 
-	return str_replace( array_keys($to_ncr), array_values($to_ncr), $text );
+	return str_replace( array_keys( $to_ncr ), array_values( $to_ncr ), $text );
 }
 
 /**
@@ -3718,7 +4219,7 @@ function format_for_editor( $text, $default_editor = null ) {
  * @param string|array $search  The value being searched for, otherwise known as the needle.
  *                              An array may be used to designate multiple needles.
  * @param string       $subject The string being searched and replaced on, otherwise known as the haystack.
- * @return string The string with the replaced svalues.
+ * @return string The string with the replaced values.
  */
 function _deep_replace( $search, $subject ) {
 	$subject = (string) $subject;
@@ -3737,6 +4238,11 @@ function _deep_replace( $search, $subject ) {
  * Usually you should prepare queries using wpdb::prepare().
  * Sometimes, spot-escaping is required or useful. One example
  * is preparing an array for use in an IN clause.
+ *
+ * NOTE: Since 4.8.3, '%' characters will be replaced with a placeholder string,
+ * this prevents certain SQLi attacks from taking place. This change in behaviour
+ * may cause issues for code that expects the return value of esc_sql() to be useable
+ * for other purposes.
  *
  * @since 2.8.0
  *
@@ -3761,36 +4267,38 @@ function esc_sql( $data ) {
  *
  * @param string $url       The URL to be cleaned.
  * @param array  $protocols Optional. An array of acceptable protocols.
- *		                    Defaults to return value of wp_allowed_protocols()
+ *                          Defaults to return value of wp_allowed_protocols()
  * @param string $_context  Private. Use esc_url_raw() for database usage.
  * @return string The cleaned $url after the {@see 'clean_url'} filter is applied.
  */
 function esc_url( $url, $protocols = null, $_context = 'display' ) {
 	$original_url = $url;
 
-	if ( '' == $url )
+	if ( '' == $url ) {
 		return $url;
+	}
 
-	$url = str_replace( ' ', '%20', $url );
-	$url = preg_replace('|[^a-z0-9-~+_.?#=!&;,/:%@$\|*\'()\[\]\\x80-\\xff]|i', '', $url);
+	$url = str_replace( ' ', '%20', ltrim( $url ) );
+	$url = preg_replace( '|[^a-z0-9-~+_.?#=!&;,/:%@$\|*\'()\[\]\\x80-\\xff]|i', '', $url );
 
 	if ( '' === $url ) {
 		return $url;
 	}
 
 	if ( 0 !== stripos( $url, 'mailto:' ) ) {
-		$strip = array('%0d', '%0a', '%0D', '%0A');
-		$url = _deep_replace($strip, $url);
+		$strip = array( '%0d', '%0a', '%0D', '%0A' );
+		$url   = _deep_replace( $strip, $url );
 	}
 
-	$url = str_replace(';//', '://', $url);
+	$url = str_replace( ';//', '://', $url );
 	/* If the URL doesn't appear to contain a scheme, we
 	 * presume it needs http:// prepended (unless a relative
 	 * link starting with /, # or ? or a php file).
 	 */
-	if ( strpos($url, ':') === false && ! in_array( $url[0], array( '/', '#', '?' ) ) &&
-		! preg_match('/^[a-z0-9-]+?\.php/i', $url) )
+	if ( strpos( $url, ':' ) === false && ! in_array( $url[0], array( '/', '#', '?' ) ) &&
+		! preg_match( '/^[a-z0-9-]+?\.php/i', $url ) ) {
 		$url = 'http://' . $url;
+	}
 
 	// Replace ampersands and single quotes only when displaying.
 	if ( 'display' == $_context ) {
@@ -3839,11 +4347,13 @@ function esc_url( $url, $protocols = null, $_context = 'display' ) {
 	if ( '/' === $url[0] ) {
 		$good_protocol_url = $url;
 	} else {
-		if ( ! is_array( $protocols ) )
+		if ( ! is_array( $protocols ) ) {
 			$protocols = wp_allowed_protocols();
+		}
 		$good_protocol_url = wp_kses_bad_protocol( $url, $protocols );
-		if ( strtolower( $good_protocol_url ) != strtolower( $url ) )
+		if ( strtolower( $good_protocol_url ) != strtolower( $url ) ) {
 			return '';
+		}
 	}
 
 	/**
@@ -3882,9 +4392,9 @@ function esc_url_raw( $url, $protocols = null ) {
  * @return string Converted text.
  */
 function htmlentities2( $myHTML ) {
-	$translation_table = get_html_translation_table( HTML_ENTITIES, ENT_QUOTES );
-	$translation_table[chr(38)] = '&';
-	return preg_replace( "/&(?![A-Za-z]{0,4}\w{2,3};|#[0-9]{2,3};)/", "&amp;", strtr($myHTML, $translation_table) );
+	$translation_table              = get_html_translation_table( HTML_ENTITIES, ENT_QUOTES );
+	$translation_table[ chr( 38 ) ] = '&';
+	return preg_replace( '/&(?![A-Za-z]{0,4}\w{2,3};|#[0-9]{2,3};)/', '&amp;', strtr( $myHTML, $translation_table ) );
 }
 
 /**
@@ -3914,7 +4424,7 @@ function esc_js( $text ) {
 	 * @since 2.0.6
 	 *
 	 * @param string $safe_text The text after it has been escaped.
- 	 * @param string $text      The text prior to being escaped.
+	 * @param string $text      The text prior to being escaped.
 	 */
 	return apply_filters( 'js_escape', $safe_text, $text );
 }
@@ -3939,7 +4449,7 @@ function esc_html( $text ) {
 	 * @since 2.8.0
 	 *
 	 * @param string $safe_text The text after it has been escaped.
- 	 * @param string $text      The text prior to being escaped.
+	 * @param string $text      The text prior to being escaped.
 	 */
 	return apply_filters( 'esc_html', $safe_text, $text );
 }
@@ -3964,7 +4474,7 @@ function esc_attr( $text ) {
 	 * @since 2.0.6
 	 *
 	 * @param string $safe_text The text after it has been escaped.
- 	 * @param string $text      The text prior to being escaped.
+	 * @param string $text      The text prior to being escaped.
 	 */
 	return apply_filters( 'attribute_escape', $safe_text, $text );
 }
@@ -3985,7 +4495,7 @@ function esc_textarea( $text ) {
 	 * @since 3.1.0
 	 *
 	 * @param string $safe_text The text after it has been escaped.
- 	 * @param string $text      The text prior to being escaped.
+	 * @param string $text      The text prior to being escaped.
 	 */
 	return apply_filters( 'esc_textarea', $safe_text, $text );
 }
@@ -3999,14 +4509,14 @@ function esc_textarea( $text ) {
  * @return string
  */
 function tag_escape( $tag_name ) {
-	$safe_tag = strtolower( preg_replace('/[^a-zA-Z0-9_:]/', '', $tag_name) );
+	$safe_tag = strtolower( preg_replace( '/[^a-zA-Z0-9_:]/', '', $tag_name ) );
 	/**
 	 * Filters a string cleaned and escaped for output as an HTML tag.
 	 *
 	 * @since 2.8.0
 	 *
 	 * @param string $safe_tag The tag name after it has been escaped.
- 	 * @param string $tag_name The text before it was escaped.
+	 * @param string $tag_name The text before it was escaped.
 	 */
 	return apply_filters( 'tag_escape', $safe_tag, $tag_name );
 }
@@ -4045,11 +4555,11 @@ function sanitize_option( $option, $value ) {
 	global $wpdb;
 
 	$original_value = $value;
-	$error = '';
+	$error          = '';
 
 	switch ( $option ) {
-		case 'admin_email' :
-		case 'new_admin_email' :
+		case 'admin_email':
+		case 'new_admin_email':
 			$value = $wpdb->strip_invalid_text_for_column( $wpdb->options, 'option_value', $value );
 			if ( is_wp_error( $value ) ) {
 				$error = $value->get_error_message();
@@ -4089,17 +4599,20 @@ function sanitize_option( $option, $value ) {
 		case 'posts_per_page':
 		case 'posts_per_rss':
 			$value = (int) $value;
-			if ( empty($value) )
+			if ( empty( $value ) ) {
 				$value = 1;
-			if ( $value < -1 )
-				$value = abs($value);
+			}
+			if ( $value < -1 ) {
+				$value = abs( $value );
+			}
 			break;
 
 		case 'default_ping_status':
 		case 'default_comment_status':
 			// Options that if not there have 0 value but need to be something like "closed"
-			if ( $value == '0' || $value == '')
+			if ( $value == '0' || $value == '' ) {
 				$value = 'closed';
+			}
 			break;
 
 		case 'blogdescription':
@@ -4117,15 +4630,16 @@ function sanitize_option( $option, $value ) {
 			break;
 
 		case 'blog_charset':
-			$value = preg_replace('/[^a-zA-Z0-9_-]/', '', $value); // strips slashes
+			$value = preg_replace( '/[^a-zA-Z0-9_-]/', '', $value ); // strips slashes
 			break;
 
 		case 'blog_public':
 			// This is the value if the settings checkbox is not checked on POST. Don't rely on this.
-			if ( null === $value )
+			if ( null === $value ) {
 				$value = 1;
-			else
+			} else {
 				$value = intval( $value );
+			}
 			break;
 
 		case 'date_format':
@@ -4151,7 +4665,7 @@ function sanitize_option( $option, $value ) {
 			break;
 
 		case 'gmt_offset':
-			$value = preg_replace('/[^0-9:.-]/', '', $value); // strips slashes
+			$value = preg_replace( '/[^0-9:.-]/', '', $value ); // strips slashes
 			break;
 
 		case 'siteurl':
@@ -4195,13 +4709,15 @@ function sanitize_option( $option, $value ) {
 			if ( is_wp_error( $value ) ) {
 				$error = $value->get_error_message();
 			} else {
-				if ( ! is_array( $value ) )
+				if ( ! is_array( $value ) ) {
 					$value = explode( ' ', $value );
+				}
 
 				$value = array_values( array_filter( array_map( 'trim', $value ) ) );
 
-				if ( ! $value )
+				if ( ! $value ) {
 					$value = '';
+				}
 			}
 			break;
 
@@ -4211,19 +4727,21 @@ function sanitize_option( $option, $value ) {
 			if ( is_wp_error( $value ) ) {
 				$error = $value->get_error_message();
 			} else {
-				if ( ! is_array( $value ) )
+				if ( ! is_array( $value ) ) {
 					$value = explode( "\n", $value );
+				}
 
 				$domains = array_values( array_filter( array_map( 'trim', $value ) ) );
-				$value = array();
+				$value   = array();
 
 				foreach ( $domains as $domain ) {
 					if ( ! preg_match( '/(--|\.\.)/', $domain ) && preg_match( '|^([a-zA-Z0-9-\.])+$|', $domain ) ) {
 						$value[] = $domain;
 					}
 				}
-				if ( ! $value )
+				if ( ! $value ) {
 					$value = '';
+				}
 			}
 			break;
 
@@ -4247,16 +4765,17 @@ function sanitize_option( $option, $value ) {
 
 			if ( 'permalink_structure' === $option && '' !== $value && ! preg_match( '/%[^\/%]+%/', $value ) ) {
 				$error = sprintf(
-					/* translators: %s: Codex URL */
+					/* translators: %s: Documentation URL. */
 					__( 'A structure tag is required when using custom permalinks. <a href="%s">Learn more</a>' ),
-					__( 'https://codex.wordpress.org/Using_Permalinks#Choosing_your_permalink_structure' )
+					__( 'https://wordpress.org/support/article/using-permalinks/#choosing-your-permalink-structure' )
 				);
 			}
 			break;
 
-		case 'default_role' :
-			if ( ! get_role( $value ) && get_role( 'subscriber' ) )
+		case 'default_role':
+			if ( ! get_role( $value ) && get_role( 'subscriber' ) ) {
 				$value = 'subscriber';
+			}
 			break;
 
 		case 'moderation_keys':
@@ -4324,8 +4843,6 @@ function map_deep( $value, $callback ) {
 /**
  * Parses a string into variables to be stored in an array.
  *
- * Uses {@link https://secure.php.net/parse_str parse_str()} and stripslashes if
- * {@link https://secure.php.net/magic_quotes magic_quotes_gpc} is on.
  *
  * @since 2.2.1
  *
@@ -4334,8 +4851,7 @@ function map_deep( $value, $callback ) {
  */
 function wp_parse_str( $string, &$array ) {
 	parse_str( $string, $array );
-	if ( get_magic_quotes_gpc() )
-		$array = stripslashes_deep( $array );
+
 	/**
 	 * Filters the array of variables derived from a parsed string.
 	 *
@@ -4357,7 +4873,7 @@ function wp_parse_str( $string, &$array ) {
  * @return string Converted text.
  */
 function wp_pre_kses_less_than( $text ) {
-	return preg_replace_callback('%<[^>]*?((?=<)|>|$)%', 'wp_pre_kses_less_than_callback', $text);
+	return preg_replace_callback( '%<[^>]*?((?=<)|>|$)%', 'wp_pre_kses_less_than_callback', $text );
 }
 
 /**
@@ -4369,8 +4885,9 @@ function wp_pre_kses_less_than( $text ) {
  * @return string The text returned after esc_html if needed.
  */
 function wp_pre_kses_less_than_callback( $matches ) {
-	if ( false === strpos($matches[0], '>') )
-		return esc_html($matches[0]);
+	if ( false === strpos( $matches[0], '>' ) ) {
+		return esc_html( $matches[0] );
+	}
 	return $matches[0];
 }
 
@@ -4378,47 +4895,51 @@ function wp_pre_kses_less_than_callback( $matches ) {
  * WordPress implementation of PHP sprintf() with filters.
  *
  * @since 2.5.0
+ * @since 5.3.0 Formalized the existing and already documented `...$args` parameter
+ *              by adding it to the function signature.
+ *
  * @link https://secure.php.net/sprintf
  *
- * @param string $pattern   The string which formatted args are inserted.
- * @param mixed  $args ,... Arguments to be formatted into the $pattern string.
+ * @param string $pattern The string which formatted args are inserted.
+ * @param mixed  ...$args Arguments to be formatted into the $pattern string.
  * @return string The formatted string.
  */
-function wp_sprintf( $pattern ) {
-	$args = func_get_args();
-	$len = strlen($pattern);
-	$start = 0;
-	$result = '';
+function wp_sprintf( $pattern, ...$args ) {
+	$len       = strlen( $pattern );
+	$start     = 0;
+	$result    = '';
 	$arg_index = 0;
 	while ( $len > $start ) {
 		// Last character: append and break
-		if ( strlen($pattern) - 1 == $start ) {
-			$result .= substr($pattern, -1);
+		if ( strlen( $pattern ) - 1 == $start ) {
+			$result .= substr( $pattern, -1 );
 			break;
 		}
 
 		// Literal %: append and continue
-		if ( substr($pattern, $start, 2) == '%%' ) {
-			$start += 2;
+		if ( substr( $pattern, $start, 2 ) == '%%' ) {
+			$start  += 2;
 			$result .= '%';
 			continue;
 		}
 
 		// Get fragment before next %
-		$end = strpos($pattern, '%', $start + 1);
-		if ( false === $end )
+		$end = strpos( $pattern, '%', $start + 1 );
+		if ( false === $end ) {
 			$end = $len;
-		$fragment = substr($pattern, $start, $end - $start);
+		}
+		$fragment = substr( $pattern, $start, $end - $start );
 
 		// Fragment has a specifier
-		if ( $pattern[$start] == '%' ) {
+		if ( $pattern[ $start ] == '%' ) {
 			// Find numbered arguments or take the next one in order
-			if ( preg_match('/^%(\d+)\$/', $fragment, $matches) ) {
-				$arg = isset($args[$matches[1]]) ? $args[$matches[1]] : '';
-				$fragment = str_replace("%{$matches[1]}$", '%', $fragment);
+			if ( preg_match( '/^%(\d+)\$/', $fragment, $matches ) ) {
+				$index    = $matches[1] - 1; // 0-based array vs 1-based sprintf arguments.
+				$arg      = isset( $args[ $index ] ) ? $args[ $index ] : '';
+				$fragment = str_replace( "%{$matches[1]}$", '%', $fragment );
 			} else {
+				$arg = isset( $args[ $arg_index ] ) ? $args[ $arg_index ] : '';
 				++$arg_index;
-				$arg = isset($args[$arg_index]) ? $args[$arg_index] : '';
 			}
 
 			/**
@@ -4432,15 +4953,16 @@ function wp_sprintf( $pattern ) {
 			 * @param string $arg      The argument.
 			 */
 			$_fragment = apply_filters( 'wp_sprintf', $fragment, $arg );
-			if ( $_fragment != $fragment )
+			if ( $_fragment != $fragment ) {
 				$fragment = $_fragment;
-			else
-				$fragment = sprintf($fragment, strval($arg) );
+			} else {
+				$fragment = sprintf( $fragment, strval( $arg ) );
+			}
 		}
 
 		// Append to result and move to next fragment
 		$result .= $fragment;
-		$start = $end;
+		$start   = $end;
 	}
 	return $result;
 }
@@ -4460,12 +4982,14 @@ function wp_sprintf( $pattern ) {
  */
 function wp_sprintf_l( $pattern, $args ) {
 	// Not a match
-	if ( substr($pattern, 0, 2) != '%l' )
+	if ( substr( $pattern, 0, 2 ) != '%l' ) {
 		return $pattern;
+	}
 
 	// Nothing to work with
-	if ( empty($args) )
+	if ( empty( $args ) ) {
 		return '';
+	}
 
 	/**
 	 * Filters the translated delimiters used by wp_sprintf_l().
@@ -4478,30 +5002,35 @@ function wp_sprintf_l( $pattern, $args ) {
 	 *
 	 * @param array $delimiters An array of translated delimiters.
 	 */
-	$l = apply_filters( 'wp_sprintf_l', array(
-		/* translators: used to join items in a list with more than 2 items */
-		'between'          => sprintf( __('%s, %s'), '', '' ),
-		/* translators: used to join last two items in a list with more than 2 times */
-		'between_last_two' => sprintf( __('%s, and %s'), '', '' ),
-		/* translators: used to join items in a list with only 2 items */
-		'between_only_two' => sprintf( __('%s and %s'), '', '' ),
-	) );
+	$l = apply_filters(
+		'wp_sprintf_l',
+		array(
+			/* translators: Used to join items in a list with more than 2 items. */
+			'between'          => sprintf( __( '%1$s, %2$s' ), '', '' ),
+			/* translators: Used to join last two items in a list with more than 2 times. */
+			'between_last_two' => sprintf( __( '%1$s, and %2$s' ), '', '' ),
+			/* translators: Used to join items in a list with only 2 items. */
+			'between_only_two' => sprintf( __( '%1$s and %2$s' ), '', '' ),
+		)
+	);
 
-	$args = (array) $args;
-	$result = array_shift($args);
-	if ( count($args) == 1 )
-		$result .= $l['between_only_two'] . array_shift($args);
-	// Loop when more than two args
-	$i = count($args);
-	while ( $i ) {
-		$arg = array_shift($args);
-		$i--;
-		if ( 0 == $i )
-			$result .= $l['between_last_two'] . $arg;
-		else
-			$result .= $l['between'] . $arg;
+	$args   = (array) $args;
+	$result = array_shift( $args );
+	if ( count( $args ) == 1 ) {
+		$result .= $l['between_only_two'] . array_shift( $args );
 	}
-	return $result . substr($pattern, 2);
+	// Loop when more than two args
+	$i = count( $args );
+	while ( $i ) {
+		$arg = array_shift( $args );
+		$i--;
+		if ( 0 == $i ) {
+			$result .= $l['between_last_two'] . $arg;
+		} else {
+			$result .= $l['between'] . $arg;
+		}
+	}
+	return $result . substr( $pattern, 2 );
 }
 
 /**
@@ -4519,14 +5048,16 @@ function wp_sprintf_l( $pattern, $args ) {
  * @return string The excerpt.
  */
 function wp_html_excerpt( $str, $count, $more = null ) {
-	if ( null === $more )
+	if ( null === $more ) {
 		$more = '';
-	$str = wp_strip_all_tags( $str, true );
+	}
+	$str     = wp_strip_all_tags( $str, true );
 	$excerpt = mb_substr( $str, 0, $count );
 	// remove part of an entity at the end
 	$excerpt = preg_replace( '/&[^;\s]{0,6}$/', '', $excerpt );
-	if ( $str != $excerpt )
+	if ( $str != $excerpt ) {
 		$excerpt = trim( $excerpt ) . $more;
+	}
 	return $excerpt;
 }
 
@@ -4545,10 +5076,10 @@ function wp_html_excerpt( $str, $count, $more = null ) {
  * @param array  $attrs   The attributes which should be processed.
  * @return string The processed content.
  */
-function links_add_base_url( $content, $base, $attrs = array('src', 'href') ) {
+function links_add_base_url( $content, $base, $attrs = array( 'src', 'href' ) ) {
 	global $_links_add_base;
 	$_links_add_base = $base;
-	$attrs = implode('|', (array)$attrs);
+	$attrs           = implode( '|', (array) $attrs );
 	return preg_replace_callback( "!($attrs)=(['\"])(.+?)\\2!i", '_links_add_base', $content );
 }
 
@@ -4591,10 +5122,10 @@ function _links_add_base( $m ) {
  * @param array  $tags    An array of tags to apply to.
  * @return string The processed content.
  */
-function links_add_target( $content, $target = '_blank', $tags = array('a') ) {
+function links_add_target( $content, $target = '_blank', $tags = array( 'a' ) ) {
 	global $_links_add_target;
 	$_links_add_target = $target;
-	$tags = implode('|', (array)$tags);
+	$tags              = implode( '|', (array) $tags );
 	return preg_replace_callback( "!<($tags)([^>]*)>!i", '_links_add_target', $content );
 }
 
@@ -4611,8 +5142,8 @@ function links_add_target( $content, $target = '_blank', $tags = array('a') ) {
  */
 function _links_add_target( $m ) {
 	global $_links_add_target;
-	$tag = $m[1];
-	$link = preg_replace('|( target=([\'"])(.*?)\2)|i', '', $m[2]);
+	$tag  = $m[1];
+	$link = preg_replace( '|( target=([\'"])(.*?)\2)|i', '', $m[2] );
 	return '<' . $tag . $link . ' target="' . esc_attr( $_links_add_target ) . '">';
 }
 
@@ -4625,9 +5156,9 @@ function _links_add_target( $m ) {
  * @return string The normalized string.
  */
 function normalize_whitespace( $str ) {
-	$str  = trim( $str );
-	$str  = str_replace( "\r", "\n", $str );
-	$str  = preg_replace( array( '/\n+/', '/[ \t]+/' ), array( "\n", ' ' ), $str );
+	$str = trim( $str );
+	$str = str_replace( "\r", "\n", $str );
+	$str = preg_replace( array( '/\n+/', '/[ \t]+/' ), array( "\n", ' ' ), $str );
 	return $str;
 }
 
@@ -4644,12 +5175,13 @@ function normalize_whitespace( $str ) {
  * @param bool   $remove_breaks Optional. Whether to remove left over line breaks and white space chars
  * @return string The processed string.
  */
-function wp_strip_all_tags($string, $remove_breaks = false) {
+function wp_strip_all_tags( $string, $remove_breaks = false ) {
 	$string = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $string );
-	$string = strip_tags($string);
+	$string = strip_tags( $string );
 
-	if ( $remove_breaks )
-		$string = preg_replace('/[\r\n\t ]+/', ' ', $string);
+	if ( $remove_breaks ) {
+		$string = preg_replace( '/[\r\n\t ]+/', ' ', $string );
+	}
 
 	return trim( $string );
 }
@@ -4725,16 +5257,22 @@ function sanitize_textarea_field( $str ) {
  * @return string Sanitized string.
  */
 function _sanitize_text_fields( $str, $keep_newlines = false ) {
+	if ( is_object( $str ) || is_array( $str ) ) {
+		return '';
+	}
+
+	$str = (string) $str;
+
 	$filtered = wp_check_invalid_utf8( $str );
 
-	if ( strpos($filtered, '<') !== false ) {
+	if ( strpos( $filtered, '<' ) !== false ) {
 		$filtered = wp_pre_kses_less_than( $filtered );
 		// This will strip extra whitespace for us.
 		$filtered = wp_strip_all_tags( $filtered, false );
 
 		// Use html entities in a special case to make sure no later
 		// newline stripping stage could lead to a functional tag
-		$filtered = str_replace("<\n", "&lt;\n", $filtered);
+		$filtered = str_replace( "<\n", "&lt;\n", $filtered );
 	}
 
 	if ( ! $keep_newlines ) {
@@ -4743,14 +5281,14 @@ function _sanitize_text_fields( $str, $keep_newlines = false ) {
 	$filtered = trim( $filtered );
 
 	$found = false;
-	while ( preg_match('/%[a-f0-9]{2}/i', $filtered, $match) ) {
-		$filtered = str_replace($match[0], '', $filtered);
-		$found = true;
+	while ( preg_match( '/%[a-f0-9]{2}/i', $filtered, $match ) ) {
+		$filtered = str_replace( $match[0], '', $filtered );
+		$found    = true;
 	}
 
 	if ( $found ) {
 		// Strip out the whitespace that may now exist after removing the octets.
-		$filtered = trim( preg_replace('/ +/', ' ', $filtered) );
+		$filtered = trim( preg_replace( '/ +/', ' ', $filtered ) );
 	}
 
 	return $filtered;
@@ -4769,6 +5307,7 @@ function wp_basename( $path, $suffix = '' ) {
 	return urldecode( basename( str_replace( array( '%2F', '%5C' ), '/', urlencode( $path ) ), $suffix ) );
 }
 
+// phpcs:disable WordPress.WP.CapitalPDangit.Misspelled, WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid -- 8-)
 /**
  * Forever eliminate "Wordpress" from the planet (or at least the little bit we can influence).
  *
@@ -4784,8 +5323,9 @@ function wp_basename( $path, $suffix = '' ) {
 function capital_P_dangit( $text ) {
 	// Simple replacement for titles
 	$current_filter = current_filter();
-	if ( 'the_title' === $current_filter || 'wp_title' === $current_filter )
+	if ( 'the_title' === $current_filter || 'wp_title' === $current_filter ) {
 		return str_replace( 'Wordpress', 'WordPress', $text );
+	}
 	// Still here? Use the more judicious replacement
 	static $dblq = false;
 	if ( false === $dblq ) {
@@ -4794,8 +5334,10 @@ function capital_P_dangit( $text ) {
 	return str_replace(
 		array( ' Wordpress', '&#8216;Wordpress', $dblq . 'Wordpress', '>Wordpress', '(Wordpress' ),
 		array( ' WordPress', '&#8216;WordPress', $dblq . 'WordPress', '>WordPress', '(WordPress' ),
-	$text );
+		$text
+	);
 }
+// phpcs:enable
 
 /**
  * Sanitize a mime type
@@ -4829,8 +5371,9 @@ function sanitize_mime_type( $mime_type ) {
 function sanitize_trackback_urls( $to_ping ) {
 	$urls_to_ping = preg_split( '/[\r\n\t ]/', trim( $to_ping ), -1, PREG_SPLIT_NO_EMPTY );
 	foreach ( $urls_to_ping as $k => $url ) {
-		if ( !preg_match( '#^https?://.#i', $url ) )
-			unset( $urls_to_ping[$k] );
+		if ( ! preg_match( '#^https?://.#i', $url ) ) {
+			unset( $urls_to_ping[ $k ] );
+		}
 	}
 	$urls_to_ping = array_map( 'esc_url_raw', $urls_to_ping );
 	$urls_to_ping = implode( "\n", $urls_to_ping );
@@ -4863,9 +5406,9 @@ function wp_slash( $value ) {
 	if ( is_array( $value ) ) {
 		foreach ( $value as $k => $v ) {
 			if ( is_array( $v ) ) {
-				$value[$k] = wp_slash( $v );
+				$value[ $k ] = wp_slash( $v );
 			} else {
-				$value[$k] = addslashes( $v );
+				$value[ $k ] = addslashes( $v );
 			}
 		}
 	} else {
@@ -4888,6 +5431,33 @@ function wp_slash( $value ) {
  */
 function wp_unslash( $value ) {
 	return stripslashes_deep( $value );
+}
+
+/**
+ * Adds slashes to only string values in an array of values.
+ *
+ * This should be used when preparing data for core APIs that expect slashed data.
+ * This should not be used to escape data going directly into an SQL query.
+ *
+ * @since 5.3.0
+ *
+ * @param mixed $value Scalar or array of scalars.
+ * @return mixed Slashes $value
+ */
+function wp_slash_strings_only( $value ) {
+	return map_deep( $value, 'addslashes_strings_only' );
+}
+
+/**
+ * Adds slashes only if the provided value is a string.
+ *
+ * @since 5.3.0
+ *
+ * @param mixed $value
+ * @return mixed
+ */
+function addslashes_strings_only( $value ) {
+	return is_string( $value ) ? addslashes( $value ) : $value;
 }
 
 /**
@@ -4960,8 +5530,10 @@ function print_emoji_styles() {
 	}
 
 	$printed = true;
-?>
-<style type="text/css">
+
+	$type_attr = current_theme_supports( 'html5', 'style' ) ? '' : ' type="text/css"';
+	?>
+<style<?php echo $type_attr; ?>>
 img.wp-smiley,
 img.emoji {
 	display: inline !important;
@@ -4975,7 +5547,7 @@ img.emoji {
 	padding: 0 !important;
 }
 </style>
-<?php
+	<?php
 }
 
 /**
@@ -4997,7 +5569,7 @@ function print_emoji_detection_script() {
 }
 
 /**
- * Prints inline Emoji dection script
+ * Prints inline Emoji detection script.
  *
  * @ignore
  * @since 4.6.0
@@ -5012,7 +5584,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @param string The emoji base URL for png images.
 		 */
-		'baseUrl' => apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/2.3/72x72/' ),
+		'baseUrl' => apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/12.0.0-1/72x72/' ),
 
 		/**
 		 * Filters the extension of the emoji png files.
@@ -5021,7 +5593,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @param string The emoji extension for png files. Default .png.
 		 */
-		'ext' => apply_filters( 'emoji_ext', '.png' ),
+		'ext'     => apply_filters( 'emoji_ext', '.png' ),
 
 		/**
 		 * Filters the URL where emoji SVG images are hosted.
@@ -5030,7 +5602,7 @@ function _print_emoji_detection_script() {
 		 *
 		 * @param string The emoji base URL for svg images.
 		 */
-		'svgUrl' => apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/2.3/svg/' ),
+		'svgUrl'  => apply_filters( 'emoji_svg_url', 'https://s.w.org/images/core/emoji/12.0.0-1/svg/' ),
 
 		/**
 		 * Filters the extension of the emoji SVG files.
@@ -5039,10 +5611,11 @@ function _print_emoji_detection_script() {
 		 *
 		 * @param string The emoji extension for svg files. Default .svg.
 		 */
-		'svgExt' => apply_filters( 'emoji_svg_ext', '.svg' ),
+		'svgExt'  => apply_filters( 'emoji_svg_ext', '.svg' ),
 	);
 
-	$version = 'ver=' . get_bloginfo( 'version' );
+	$version   = 'ver=' . get_bloginfo( 'version' );
+	$type_attr = current_theme_supports( 'html5', 'style' ) ? '' : ' type="text/javascript"';
 
 	if ( SCRIPT_DEBUG ) {
 		$settings['source'] = array(
@@ -5053,9 +5626,9 @@ function _print_emoji_detection_script() {
 		);
 
 		?>
-		<script type="text/javascript">
+		<script<?php echo $type_attr; ?>>
 			window._wpemojiSettings = <?php echo wp_json_encode( $settings ); ?>;
-			<?php readfile( ABSPATH . WPINC . "/js/wp-emoji-loader.js" ); ?>
+			<?php readfile( ABSPATH . WPINC . '/js/wp-emoji-loader.js' ); ?>
 		</script>
 		<?php
 	} else {
@@ -5066,7 +5639,7 @@ function _print_emoji_detection_script() {
 
 		/*
 		 * If you're looking at a src version of this file, you'll see an "include"
-		 * statement below. This is used by the `grunt build` process to directly
+		 * statement below. This is used by the `npm run build` process to directly
 		 * include a minified version of wp-emoji-loader.js, instead of using the
 		 * readfile() method from above.
 		 *
@@ -5075,19 +5648,16 @@ function _print_emoji_detection_script() {
 		 * and edit wp-emoji-loader.js directly.
 		 */
 		?>
-		<script type="text/javascript">
+		<script<?php echo $type_attr; ?>>
 			window._wpemojiSettings = <?php echo wp_json_encode( $settings ); ?>;
-			!function(a,b,c){function d(a){var b,c,d,e,f=String.fromCharCode;if(!k||!k.fillText)return!1;switch(k.clearRect(0,0,j.width,j.height),k.textBaseline="top",k.font="600 32px Arial",a){case"flag":return k.fillText(f(55356,56826,55356,56819),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,56826,8203,55356,56819),0,0),c=j.toDataURL(),b===c&&(k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447),0,0),b=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447),0,0),c=j.toDataURL(),b!==c);case"emoji4":return k.fillText(f(55358,56794,8205,9794,65039),0,0),d=j.toDataURL(),k.clearRect(0,0,j.width,j.height),k.fillText(f(55358,56794,8203,9794,65039),0,0),e=j.toDataURL(),d!==e}return!1}function e(a){var c=b.createElement("script");c.src=a,c.defer=c.type="text/javascript",b.getElementsByTagName("head")[0].appendChild(c)}var f,g,h,i,j=b.createElement("canvas"),k=j.getContext&&j.getContext("2d");for(i=Array("flag","emoji4"),c.supports={everything:!0,everythingExceptFlag:!0},h=0;h<i.length;h++)c.supports[i[h]]=d(i[h]),c.supports.everything=c.supports.everything&&c.supports[i[h]],"flag"!==i[h]&&(c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&c.supports[i[h]]);c.supports.everythingExceptFlag=c.supports.everythingExceptFlag&&!c.supports.flag,c.DOMReady=!1,c.readyCallback=function(){c.DOMReady=!0},c.supports.everything||(g=function(){c.readyCallback()},b.addEventListener?(b.addEventListener("DOMContentLoaded",g,!1),a.addEventListener("load",g,!1)):(a.attachEvent("onload",g),b.attachEvent("onreadystatechange",function(){"complete"===b.readyState&&c.readyCallback()})),f=c.source||{},f.concatemoji?e(f.concatemoji):f.wpemoji&&f.twemoji&&(e(f.twemoji),e(f.wpemoji)))}(window,document,window._wpemojiSettings);
+			!function(e,a,t){var r,n,o,i,p=a.createElement("canvas"),s=p.getContext&&p.getContext("2d");function c(e,t){var a=String.fromCharCode;s.clearRect(0,0,p.width,p.height),s.fillText(a.apply(this,e),0,0);var r=p.toDataURL();return s.clearRect(0,0,p.width,p.height),s.fillText(a.apply(this,t),0,0),r===p.toDataURL()}function l(e){if(!s||!s.fillText)return!1;switch(s.textBaseline="top",s.font="600 32px Arial",e){case"flag":return!c([127987,65039,8205,9895,65039],[127987,65039,8203,9895,65039])&&(!c([55356,56826,55356,56819],[55356,56826,8203,55356,56819])&&!c([55356,57332,56128,56423,56128,56418,56128,56421,56128,56430,56128,56423,56128,56447],[55356,57332,8203,56128,56423,8203,56128,56418,8203,56128,56421,8203,56128,56430,8203,56128,56423,8203,56128,56447]));case"emoji":return!c([55357,56424,55356,57342,8205,55358,56605,8205,55357,56424,55356,57340],[55357,56424,55356,57342,8203,55358,56605,8203,55357,56424,55356,57340])}return!1}function d(e){var t=a.createElement("script");t.src=e,t.defer=t.type="text/javascript",a.getElementsByTagName("head")[0].appendChild(t)}for(i=Array("flag","emoji"),t.supports={everything:!0,everythingExceptFlag:!0},o=0;o<i.length;o++)t.supports[i[o]]=l(i[o]),t.supports.everything=t.supports.everything&&t.supports[i[o]],"flag"!==i[o]&&(t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&t.supports[i[o]]);t.supports.everythingExceptFlag=t.supports.everythingExceptFlag&&!t.supports.flag,t.DOMReady=!1,t.readyCallback=function(){t.DOMReady=!0},t.supports.everything||(n=function(){t.readyCallback()},a.addEventListener?(a.addEventListener("DOMContentLoaded",n,!1),e.addEventListener("load",n,!1)):(e.attachEvent("onload",n),a.attachEvent("onreadystatechange",function(){"complete"===a.readyState&&t.readyCallback()})),(r=t.source||{}).concatemoji?d(r.concatemoji):r.wpemoji&&r.twemoji&&(d(r.twemoji),d(r.wpemoji)))}(window,document,window._wpemojiSettings);
 		</script>
 		<?php
 	}
 }
 
 /**
- * Convert any 4 byte emoji in a string to their equivalent HTML entity.
- *
- * Currently, only Unicode 7 emoji are supported. Skin tone modifiers are allowed,
- * all other Unicode 8 emoji will be added when the spec is finalised.
+ * Convert emoji characters to their equivalent HTML entity.
  *
  * This allows us to store emoji in a DB using the utf8 character set.
  *
@@ -5097,33 +5667,12 @@ function _print_emoji_detection_script() {
  * @return string The encoded content.
  */
 function wp_encode_emoji( $content ) {
-	if ( function_exists( 'mb_convert_encoding' ) ) {
-		$regex = '/(
-		     \x23\xE2\x83\xA3               # Digits
-		     [\x30-\x39]\xE2\x83\xA3
-		   | \xF0\x9F[\x85-\x88][\xA6-\xBF] # Enclosed characters
-		   | \xF0\x9F[\x8C-\x97][\x80-\xBF] # Misc
-		   | \xF0\x9F\x98[\x80-\xBF]        # Smilies
-		   | \xF0\x9F\x99[\x80-\x8F]
-		   | \xF0\x9F\x9A[\x80-\xBF]        # Transport and map symbols
-		)/x';
+	$emoji = _wp_emoji_list( 'partials' );
 
-		$matches = array();
-		if ( preg_match_all( $regex, $content, $matches ) ) {
-			if ( ! empty( $matches[1] ) ) {
-				foreach ( $matches[1] as $emoji ) {
-					/*
-					 * UTF-32's hex encoding is the same as HTML's hex encoding.
-					 * So, by converting the emoji from UTF-8 to UTF-32, we magically
-					 * get the correct hex encoding.
-					 */
-					$unpacked = unpack( 'H*', mb_convert_encoding( $emoji, 'UTF-32', 'UTF-8' ) );
-					if ( isset( $unpacked[1] ) ) {
-						$entity = '&#x' . ltrim( $unpacked[1], '0' ) . ';';
-						$content = str_replace( $emoji, $entity, $content );
-					}
-				}
-			}
+	foreach ( $emoji as $emojum ) {
+		$emoji_char = html_entity_decode( $emojum );
+		if ( false !== strpos( $content, $emoji_char ) ) {
+			$content = preg_replace( "/$emoji_char/", $emojum, $content );
 		}
 	}
 
@@ -5139,10 +5688,36 @@ function wp_encode_emoji( $content ) {
  * @return string The encoded content.
  */
 function wp_staticize_emoji( $text ) {
-	$text = wp_encode_emoji( $text );
+	if ( false === strpos( $text, '&#x' ) ) {
+		if ( ( function_exists( 'mb_check_encoding' ) && mb_check_encoding( $text, 'ASCII' ) ) || ! preg_match( '/[^\x00-\x7F]/', $text ) ) {
+			// The text doesn't contain anything that might be emoji, so we can return early.
+			return $text;
+		} else {
+			$encoded_text = wp_encode_emoji( $text );
+			if ( $encoded_text === $text ) {
+				return $encoded_text;
+			}
+
+			$text = $encoded_text;
+		}
+	}
+
+	$emoji = _wp_emoji_list( 'entities' );
+
+	// Quickly narrow down the list of emoji that might be in the text and need replacing.
+	$possible_emoji = array();
+	foreach ( $emoji as $emojum ) {
+		if ( false !== strpos( $text, $emojum ) ) {
+			$possible_emoji[ $emojum ] = html_entity_decode( $emojum );
+		}
+	}
+
+	if ( ! $possible_emoji ) {
+		return $text;
+	}
 
 	/** This filter is documented in wp-includes/formatting.php */
-	$cdn_url = apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/2.3/72x72/' );
+	$cdn_url = apply_filters( 'emoji_url', 'https://s.w.org/images/core/emoji/12.0.0-1/72x72/' );
 
 	/** This filter is documented in wp-includes/formatting.php */
 	$ext = apply_filters( 'emoji_ext', '.png' );
@@ -5155,59 +5730,46 @@ function wp_staticize_emoji( $text ) {
 	 * First, capture the tags as well as in between.
 	 */
 	$textarr = preg_split( '/(<.*>)/U', $text, -1, PREG_SPLIT_DELIM_CAPTURE );
-	$stop = count( $textarr );
+	$stop    = count( $textarr );
 
 	// Ignore processing of specific tags.
-	$tags_to_ignore = 'code|pre|style|script|textarea';
+	$tags_to_ignore       = 'code|pre|style|script|textarea';
 	$ignore_block_element = '';
 
 	for ( $i = 0; $i < $stop; $i++ ) {
-		$content = $textarr[$i];
+		$content = $textarr[ $i ];
 
 		// If we're in an ignore block, wait until we find its closing tag.
-		if ( '' == $ignore_block_element && preg_match( '/^<(' . $tags_to_ignore . ')>/', $content, $matches ) )  {
+		if ( '' == $ignore_block_element && preg_match( '/^<(' . $tags_to_ignore . ')>/', $content, $matches ) ) {
 			$ignore_block_element = $matches[1];
 		}
 
 		// If it's not a tag and not in ignore block.
-		if ( '' ==  $ignore_block_element && strlen( $content ) > 0 && '<' != $content[0] ) {
-			$matches = array();
-			if ( preg_match_all( '/(&#x1f1(e[6-9a-f]|f[0-9a-f]);){2}/', $content, $matches ) ) {
-				if ( ! empty( $matches[0] ) ) {
-					foreach ( $matches[0] as $flag ) {
-						$chars = str_replace( array( '&#x', ';'), '', $flag );
-
-						list( $char1, $char2 ) = str_split( $chars, 5 );
-						$entity = sprintf( '<img src="%s" alt="%s" class="wp-smiley" style="height: 1em; max-height: 1em;" />', $cdn_url . $char1 . '-' . $char2 . $ext, html_entity_decode( $flag ) );
-
-						$content = str_replace( $flag, $entity, $content );
-					}
+		if ( '' == $ignore_block_element && strlen( $content ) > 0 && '<' != $content[0] && false !== strpos( $content, '&#x' ) ) {
+			foreach ( $possible_emoji as $emojum => $emoji_char ) {
+				if ( false === strpos( $content, $emojum ) ) {
+					continue;
 				}
-			}
 
-			// Loosely match the Emoji Unicode range.
-			$regex = '/(&#x[2-3][0-9a-f]{3};|&#x1f[1-6][0-9a-f]{2};)/';
+				$file = str_replace( ';&#x', '-', $emojum );
+				$file = str_replace( array( '&#x', ';' ), '', $file );
 
-			$matches = array();
-			if ( preg_match_all( $regex, $content, $matches ) ) {
-				if ( ! empty( $matches[1] ) ) {
-					foreach ( $matches[1] as $emoji ) {
-						$char = str_replace( array( '&#x', ';'), '', $emoji );
-						$entity = sprintf( '<img src="%s" alt="%s" class="wp-smiley" style="height: 1em; max-height: 1em;" />', $cdn_url . $char . $ext, html_entity_decode( $emoji ) );
+				$entity = sprintf( '<img src="%s" alt="%s" class="wp-smiley" style="height: 1em; max-height: 1em;" />', $cdn_url . $file . $ext, $emoji_char );
 
-						$content = str_replace( $emoji, $entity, $content );
-					}
-				}
+				$content = str_replace( $emojum, $entity, $content );
 			}
 		}
 
 		// Did we exit ignore block.
-		if ( '' != $ignore_block_element && '</' . $ignore_block_element . '>' == $content )  {
+		if ( '' != $ignore_block_element && '</' . $ignore_block_element . '>' == $content ) {
 			$ignore_block_element = '';
 		}
 
 		$output .= $content;
 	}
+
+	// Finally, remove any stray U+FE0F characters
+	$output = str_replace( '&#xfe0f;', '', $output );
 
 	return $output;
 }
@@ -5242,7 +5804,7 @@ function wp_staticize_emoji_for_email( $mail ) {
 	}
 
 	foreach ( $headers as $header ) {
-		if ( strpos($header, ':') === false ) {
+		if ( strpos( $header, ':' ) === false ) {
 			continue;
 		}
 
@@ -5250,13 +5812,13 @@ function wp_staticize_emoji_for_email( $mail ) {
 		list( $name, $content ) = explode( ':', trim( $header ), 2 );
 
 		// Cleanup crew.
-		$name    = trim( $name    );
+		$name    = trim( $name );
 		$content = trim( $content );
 
 		if ( 'content-type' === strtolower( $name ) ) {
 			if ( strpos( $content, ';' ) !== false ) {
 				list( $type, $charset ) = explode( ';', $content );
-				$content_type = trim( $type );
+				$content_type           = trim( $type );
 			} else {
 				$content_type = trim( $content );
 			}
@@ -5280,6 +5842,33 @@ function wp_staticize_emoji_for_email( $mail ) {
 }
 
 /**
+ * Returns arrays of emoji data.
+ *
+ * These arrays are automatically built from the regex in twemoji.js - if they need to be updated,
+ * you should update the regex there, then run the `npm run grunt precommit:emoji` job.
+ *
+ * @since 4.9.0
+ * @access private
+ *
+ * @param string $type Optional. Which array type to return. Accepts 'partials' or 'entities', default 'entities'.
+ * @return array An array to match all emoji that WordPress recognises.
+ */
+function _wp_emoji_list( $type = 'entities' ) {
+	// Do not remove the START/END comments - they're used to find where to insert the arrays.
+
+	// START: emoji arrays
+	$entities = array( '&#x1f469;&#x200d;&#x2764;&#xfe0f;&#x200d;&#x1f48b;&#x200d;&#x1f469;', '&#x1f469;&#x200d;&#x2764;&#xfe0f;&#x200d;&#x1f48b;&#x200d;&#x1f468;', '&#x1f468;&#x200d;&#x2764;&#xfe0f;&#x200d;&#x1f48b;&#x200d;&#x1f468;', '&#x1f3f4;&#xe0067;&#xe0062;&#xe0077;&#xe006c;&#xe0073;&#xe007f;', '&#x1f3f4;&#xe0067;&#xe0062;&#xe0073;&#xe0063;&#xe0074;&#xe007f;', '&#x1f3f4;&#xe0067;&#xe0062;&#xe0065;&#xe006e;&#xe0067;&#xe007f;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fd;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fc;', '&#x1f9d1;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3ff;', '&#x1f9d1;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fe;', '&#x1f9d1;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fd;', '&#x1f9d1;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fc;', '&#x1f9d1;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fb;', '&#x1f9d1;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fe;', '&#x1f9d1;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fd;', '&#x1f9d1;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fc;', '&#x1f9d1;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fb;', '&#x1f9d1;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fd;', '&#x1f9d1;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fc;', '&#x1f9d1;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fb;', '&#x1f9d1;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fc;', '&#x1f9d1;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fb;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fd;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fe;', '&#x1f9d1;&#x1f3fb;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;&#x1f3fb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fe;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fd;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fd;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fe;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fc;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fd;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fd;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fe;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3ff;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fd;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fe;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3ff;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fb;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fe;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3ff;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fb;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f91d;&#x200d;&#x1f469;&#x1f3fc;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fb;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fc;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3fd;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f91d;&#x200d;&#x1f468;&#x1f3ff;', '&#x1f468;&#x200d;&#x1f469;&#x200d;&#x1f467;&#x200d;&#x1f467;', '&#x1f468;&#x200d;&#x1f469;&#x200d;&#x1f467;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x1f469;&#x200d;&#x1f466;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f468;&#x200d;&#x1f467;&#x200d;&#x1f467;', '&#x1f468;&#x200d;&#x1f468;&#x200d;&#x1f467;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x1f469;&#x200d;&#x1f467;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f468;&#x200d;&#x1f466;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x1f469;&#x200d;&#x1f467;&#x200d;&#x1f467;', '&#x1f468;&#x200d;&#x1f469;&#x200d;&#x1f466;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x2764;&#xfe0f;&#x200d;&#x1f468;', '&#x1f468;&#x200d;&#x2764;&#xfe0f;&#x200d;&#x1f468;', '&#x1f469;&#x200d;&#x2764;&#xfe0f;&#x200d;&#x1f469;', '&#x1f468;&#x200d;&#x1f468;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f469;&#x200d;&#x1f467;', '&#x1f469;&#x200d;&#x1f466;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x1f467;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x1f467;&#x200d;&#x1f467;', '&#x1f468;&#x200d;&#x1f468;&#x200d;&#x1f467;', '&#x1f469;&#x200d;&#x1f469;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f469;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f467;&#x200d;&#x1f467;', '&#x1f469;&#x200d;&#x1f469;&#x200d;&#x1f467;', '&#x1f468;&#x200d;&#x1f467;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f466;&#x200d;&#x1f466;', '&#x1f9d1;&#x200d;&#x1f91d;&#x200d;&#x1f9d1;', '&#x1f939;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9da;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9da;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9da;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d9;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d9;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f468;&#x1f3fc;&#x200d;&#x2695;&#xfe0f;', '&#x1f468;&#x1f3fc;&#x200d;&#x2696;&#xfe0f;', '&#x1f468;&#x1f3fc;&#x200d;&#x2708;&#xfe0f;', '&#x1f9d9;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d9;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d9;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d9;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d9;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d9;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d9;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d9;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d8;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d8;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d8;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d8;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d7;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d7;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f468;&#x1f3fd;&#x200d;&#x2695;&#xfe0f;', '&#x1f468;&#x1f3fd;&#x200d;&#x2696;&#xfe0f;', '&#x1f468;&#x1f3fd;&#x200d;&#x2708;&#xfe0f;', '&#x1f9d7;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d7;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d7;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d7;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d7;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d7;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d7;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d7;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d6;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d6;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d6;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d6;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d6;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c3;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d6;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d6;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d6;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d6;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d6;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c4;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c4;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f468;&#x1f3fe;&#x200d;&#x2695;&#xfe0f;', '&#x1f468;&#x1f3fe;&#x200d;&#x2696;&#xfe0f;', '&#x1f468;&#x1f3fe;&#x200d;&#x2708;&#xfe0f;', '&#x1f3c4;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c4;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c4;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c4;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c4;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c4;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c4;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c4;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f3ca;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f3ca;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f3ca;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f3ca;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f3ca;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f3ca;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3ca;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3ca;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f3ca;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f3ca;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cf;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cf;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f468;&#x1f3ff;&#x200d;&#x2695;&#xfe0f;', '&#x1f468;&#x1f3ff;&#x200d;&#x2696;&#xfe0f;', '&#x1f468;&#x1f3ff;&#x200d;&#x2708;&#xfe0f;', '&#x1f9cf;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cf;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9ce;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cb;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cb;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cb;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cb;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cc;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cc;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cc;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9ce;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9ce;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cd;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cd;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cd;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cd;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cd;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cd;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cd;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cd;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cd;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cd;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cc;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cc;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b9;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b9;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b9;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b9;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b8;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b8;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b8;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b8;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cc;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cc;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cc;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cc;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b8;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b8;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b8;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b8;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b8;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b8;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f93e;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x1f3fb;&#x200d;&#x2695;&#xfe0f;', '&#x1f469;&#x1f3fb;&#x200d;&#x2696;&#xfe0f;', '&#x1f469;&#x1f3fb;&#x200d;&#x2708;&#xfe0f;', '&#x1f93e;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f93e;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f93e;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f93e;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f93e;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f93e;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f93e;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f93e;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f93e;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f93d;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f93d;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f93d;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f93d;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cc;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64d;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c3;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c3;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dd;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f93d;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f93d;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f93d;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f93d;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f93d;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f93d;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x1f3fc;&#x200d;&#x2695;&#xfe0f;', '&#x1f469;&#x1f3fc;&#x200d;&#x2696;&#xfe0f;', '&#x1f469;&#x1f3fc;&#x200d;&#x2708;&#xfe0f;', '&#x1f939;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f939;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f939;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f939;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f938;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dd;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dd;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f938;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f938;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f937;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x1f3fd;&#x200d;&#x2695;&#xfe0f;', '&#x1f469;&#x1f3fd;&#x200d;&#x2696;&#xfe0f;', '&#x1f469;&#x1f3fd;&#x200d;&#x2708;&#xfe0f;', '&#x1f937;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f937;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f937;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f937;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f937;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f937;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f937;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f937;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f937;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f935;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f935;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f935;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f935;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dd;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dc;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dc;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f935;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f935;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f935;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f935;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f935;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f935;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f926;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x1f3fe;&#x200d;&#x2695;&#xfe0f;', '&#x1f469;&#x1f3fe;&#x200d;&#x2696;&#xfe0f;', '&#x1f469;&#x1f3fe;&#x200d;&#x2708;&#xfe0f;', '&#x1f926;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f926;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f926;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f926;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f926;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f926;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f926;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f926;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f926;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b6;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b6;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b6;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b6;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dc;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dc;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dc;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9db;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f9db;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b6;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b6;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b6;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b6;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b6;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b6;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b5;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x1f3ff;&#x200d;&#x2695;&#xfe0f;', '&#x1f469;&#x1f3ff;&#x200d;&#x2696;&#xfe0f;', '&#x1f469;&#x1f3ff;&#x200d;&#x2708;&#xfe0f;', '&#x1f6b5;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b5;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b5;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b5;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b5;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b5;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b5;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f468;&#x1f3fb;&#x200d;&#x2695;&#xfe0f;', '&#x1f6b5;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f468;&#x1f3fb;&#x200d;&#x2696;&#xfe0f;', '&#x1f468;&#x1f3fb;&#x200d;&#x2708;&#xfe0f;', '&#x1f6b5;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9db;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f9db;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f9db;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f9db;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9db;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b4;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b4;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b4;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b4;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b4;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b4;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b4;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b4;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b4;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b4;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f6a3;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f6a3;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f6a3;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f6a3;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f6a3;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f6a3;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9db;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9db;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f9db;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f46e;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f46e;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f46e;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f46e;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f46e;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f46e;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f46e;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f46e;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f46e;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f46e;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f6a3;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f6a3;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f6a3;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f6a3;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f471;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f471;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f471;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f471;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f471;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f471;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f471;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f471;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f471;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f471;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f473;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f473;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f473;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f473;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f477;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f477;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f477;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f477;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c3;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f481;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f481;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f481;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f481;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f64e;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f482;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f482;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f482;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f482;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f482;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f482;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f482;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f482;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f482;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f482;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f64e;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f486;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f486;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f486;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f486;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f486;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f486;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f486;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f486;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f486;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f486;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64e;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f64d;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f487;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f487;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f487;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f487;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f487;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f487;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f487;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f487;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f487;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f487;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64d;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f64d;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f574;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f574;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f574;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f574;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f574;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f574;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f574;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f574;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f574;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f574;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f575;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f575;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f575;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f575;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f575;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f575;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f575;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f575;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f575;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f575;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f645;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f645;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f645;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f645;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f645;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f645;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f645;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f645;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f645;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f645;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64d;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f64d;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f646;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f646;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f646;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f646;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f646;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f646;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f646;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f646;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f646;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f646;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64d;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f64d;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f647;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f647;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f647;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f647;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f647;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x1f64d;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f64d;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x1f64b;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x1f64b;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x1f64b;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f64b;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x1f64b;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#x1f3fc;&#x200d;&#x2640;&#xfe0f;', '&#x26f9;&#x1f3fd;&#x200d;&#x2640;&#xfe0f;', '&#x26f9;&#x1f3fd;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#x1f3fc;&#x200d;&#x2642;&#xfe0f;', '&#x1f3cb;&#xfe0f;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cb;&#xfe0f;&#x200d;&#x2642;&#xfe0f;', '&#x1f575;&#xfe0f;&#x200d;&#x2640;&#xfe0f;', '&#x1f575;&#xfe0f;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#x1f3fe;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cc;&#xfe0f;&#x200d;&#x2640;&#xfe0f;', '&#x1f3cc;&#xfe0f;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#x1f3fb;&#x200d;&#x2642;&#xfe0f;', '&#x1f574;&#xfe0f;&#x200d;&#x2640;&#xfe0f;', '&#x1f574;&#xfe0f;&#x200d;&#x2642;&#xfe0f;', '&#x1f3f3;&#xfe0f;&#x200d;&#x26a7;&#xfe0f;', '&#x26f9;&#x1f3fb;&#x200d;&#x2640;&#xfe0f;', '&#x26f9;&#x1f3fe;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#x1f3ff;&#x200d;&#x2640;&#xfe0f;', '&#x26f9;&#x1f3ff;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#xfe0f;&#x200d;&#x2642;&#xfe0f;', '&#x26f9;&#xfe0f;&#x200d;&#x2640;&#xfe0f;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f4bc;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f3eb;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f33e;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f373;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f393;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f3a4;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f3a8;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f3eb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9bd;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9bc;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9b3;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9b2;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9b1;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9b0;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f9af;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f692;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f680;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f52c;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f527;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f4bc;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f4bb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f3ed;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f3eb;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f3a8;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f3a4;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f393;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f373;', '&#x1f469;&#x1f3ff;&#x200d;&#x1f33e;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9bd;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9bc;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9b3;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9b2;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9b1;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9b0;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f9af;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f692;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f680;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f52c;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f527;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f4bc;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f4bb;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f3ed;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f3eb;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f3a8;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f3a4;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f393;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f373;', '&#x1f469;&#x1f3fe;&#x200d;&#x1f33e;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9bd;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9bc;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9b3;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9b2;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9b1;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9b0;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f9af;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f692;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f680;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f52c;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f527;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f4bc;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f4bb;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f3ed;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f3eb;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f3a8;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f3a4;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f393;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f373;', '&#x1f469;&#x1f3fd;&#x200d;&#x1f33e;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9bd;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9bc;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9b3;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9b2;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9b1;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9b0;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f9af;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f692;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f680;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f52c;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f527;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f4bc;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f4bb;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f3ed;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f3eb;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f3a8;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f3a4;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f393;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f373;', '&#x1f469;&#x1f3fc;&#x200d;&#x1f33e;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9bd;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9bc;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9b3;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9b2;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9b1;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9b0;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f9af;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f692;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f680;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f52c;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f527;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f3ed;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f4bb;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f3eb;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f3a8;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f3a4;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f393;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f373;', '&#x1f469;&#x1f3fb;&#x200d;&#x1f33e;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f3ed;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f4bb;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f4bc;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f527;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f52c;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f680;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f692;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9af;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9b0;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9b1;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9b2;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9b3;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9bc;', '&#x1f468;&#x1f3fb;&#x200d;&#x1f9bd;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f33e;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f373;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f393;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f3a4;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9bd;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9bc;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9b3;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9b2;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9b1;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9b0;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f9af;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f692;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f680;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f52c;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f527;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f4bc;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f4bb;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f3ed;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f3eb;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f3a8;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f3a4;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f393;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f373;', '&#x1f468;&#x1f3ff;&#x200d;&#x1f33e;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9bd;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9bc;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9b3;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9b2;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9b1;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9b0;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f9af;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f692;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f680;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f52c;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f527;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f4bc;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f4bb;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f3ed;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f3eb;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f3a8;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f3a4;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f393;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f373;', '&#x1f468;&#x1f3fe;&#x200d;&#x1f33e;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9bd;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9bc;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9b3;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9b2;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9b1;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9b0;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f9af;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f692;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f680;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f52c;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f527;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f4bc;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f4bb;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f3ed;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f3eb;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f3a8;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f3a4;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f393;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f373;', '&#x1f468;&#x1f3fd;&#x200d;&#x1f33e;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9bd;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9bc;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9b3;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9b2;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9b1;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9b0;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f9af;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f692;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f680;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f52c;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f527;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f4bc;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f4bb;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f3ed;', '&#x1f468;&#x1f3fc;&#x200d;&#x1f3a8;', '&#x1f3f3;&#xfe0f;&#x200d;&#x1f308;', '&#x1f64d;&#x200d;&#x2640;&#xfe0f;', '&#x1f64d;&#x200d;&#x2642;&#xfe0f;', '&#x1f9ce;&#x200d;&#x2640;&#xfe0f;', '&#x1f9ce;&#x200d;&#x2642;&#xfe0f;', '&#x1f486;&#x200d;&#x2640;&#xfe0f;', '&#x1f482;&#x200d;&#x2642;&#xfe0f;', '&#x1f482;&#x200d;&#x2640;&#xfe0f;', '&#x1f481;&#x200d;&#x2642;&#xfe0f;', '&#x1f481;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x200d;&#x2640;&#xfe0f;', '&#x1f473;&#x200d;&#x2642;&#xfe0f;', '&#x1f473;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x200d;&#x2640;&#xfe0f;', '&#x1f939;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cf;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cf;&#x200d;&#x2642;&#xfe0f;', '&#x1f93c;&#x200d;&#x2640;&#xfe0f;', '&#x1f93c;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b6;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b6;&#x200d;&#x2642;&#xfe0f;', '&#x1f471;&#x200d;&#x2642;&#xfe0f;', '&#x1f471;&#x200d;&#x2640;&#xfe0f;', '&#x1f64e;&#x200d;&#x2640;&#xfe0f;', '&#x1f64e;&#x200d;&#x2642;&#xfe0f;', '&#x1f46f;&#x200d;&#x2642;&#xfe0f;', '&#x1f46f;&#x200d;&#x2640;&#xfe0f;', '&#x1f46e;&#x200d;&#x2642;&#xfe0f;', '&#x1f46e;&#x200d;&#x2640;&#xfe0f;', '&#x1f93d;&#x200d;&#x2640;&#xfe0f;', '&#x1f93d;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x200d;&#x2708;&#xfe0f;', '&#x1f469;&#x200d;&#x2696;&#xfe0f;', '&#x1f926;&#x200d;&#x2640;&#xfe0f;', '&#x1f926;&#x200d;&#x2642;&#xfe0f;', '&#x1f469;&#x200d;&#x2695;&#xfe0f;', '&#x1f3c3;&#x200d;&#x2640;&#xfe0f;', '&#x1f3c3;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c4;&#x200d;&#x2640;&#xfe0f;', '&#x1f6a3;&#x200d;&#x2640;&#xfe0f;', '&#x1f6a3;&#x200d;&#x2642;&#xfe0f;', '&#x1f93e;&#x200d;&#x2640;&#xfe0f;', '&#x1f93e;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d6;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d6;&#x200d;&#x2642;&#xfe0f;', '&#x1f3c4;&#x200d;&#x2642;&#xfe0f;', '&#x1f3ca;&#x200d;&#x2640;&#xfe0f;', '&#x1f3ca;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x200d;&#x2642;&#xfe0f;', '&#x1f935;&#x200d;&#x2640;&#xfe0f;', '&#x1f935;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x200d;&#x2642;&#xfe0f;', '&#x1f647;&#x200d;&#x2640;&#xfe0f;', '&#x1f3f4;&#x200d;&#x2620;&#xfe0f;', '&#x1f9df;&#x200d;&#x2642;&#xfe0f;', '&#x1f9d7;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d7;&#x200d;&#x2642;&#xfe0f;', '&#x1f9b8;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b8;&#x200d;&#x2642;&#xfe0f;', '&#x1f9df;&#x200d;&#x2640;&#xfe0f;', '&#x1f9de;&#x200d;&#x2642;&#xfe0f;', '&#x1f64b;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b4;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b4;&#x200d;&#x2642;&#xfe0f;', '&#x1f9de;&#x200d;&#x2640;&#xfe0f;', '&#x1f9dd;&#x200d;&#x2642;&#xfe0f;', '&#x1f937;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d8;&#x200d;&#x2642;&#xfe0f;', '&#x1f937;&#x200d;&#x2642;&#xfe0f;', '&#x1f468;&#x200d;&#x2708;&#xfe0f;', '&#x1f9b9;&#x200d;&#x2640;&#xfe0f;', '&#x1f9b9;&#x200d;&#x2642;&#xfe0f;', '&#x1f468;&#x200d;&#x2696;&#xfe0f;', '&#x1f468;&#x200d;&#x2695;&#xfe0f;', '&#x1f9dd;&#x200d;&#x2640;&#xfe0f;', '&#x1f646;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x200d;&#x2642;&#xfe0f;', '&#x1f9dc;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d9;&#x200d;&#x2640;&#xfe0f;', '&#x1f9d9;&#x200d;&#x2642;&#xfe0f;', '&#x1f646;&#x200d;&#x2640;&#xfe0f;', '&#x1f645;&#x200d;&#x2642;&#xfe0f;', '&#x1f645;&#x200d;&#x2640;&#xfe0f;', '&#x1f487;&#x200d;&#x2642;&#xfe0f;', '&#x1f9cd;&#x200d;&#x2640;&#xfe0f;', '&#x1f9cd;&#x200d;&#x2642;&#xfe0f;', '&#x1f487;&#x200d;&#x2640;&#xfe0f;', '&#x1f486;&#x200d;&#x2642;&#xfe0f;', '&#x1f6b5;&#x200d;&#x2640;&#xfe0f;', '&#x1f6b5;&#x200d;&#x2642;&#xfe0f;', '&#x1f9da;&#x200d;&#x2640;&#xfe0f;', '&#x1f9da;&#x200d;&#x2642;&#xfe0f;', '&#x1f938;&#x200d;&#x2640;&#xfe0f;', '&#x1f938;&#x200d;&#x2642;&#xfe0f;', '&#x1f9db;&#x200d;&#x2642;&#xfe0f;', '&#x1f9db;&#x200d;&#x2640;&#xfe0f;', '&#x1f477;&#x200d;&#x2642;&#xfe0f;', '&#x1f468;&#x200d;&#x1f33e;', '&#x1f468;&#x200d;&#x1f393;', '&#x1f468;&#x200d;&#x1f3a4;', '&#x1f468;&#x200d;&#x1f3a8;', '&#x1f468;&#x200d;&#x1f3eb;', '&#x1f468;&#x200d;&#x1f3ed;', '&#x1f468;&#x200d;&#x1f466;', '&#x1f468;&#x200d;&#x1f467;', '&#x1f468;&#x200d;&#x1f4bb;', '&#x1f468;&#x200d;&#x1f4bc;', '&#x1f468;&#x200d;&#x1f527;', '&#x1f468;&#x200d;&#x1f52c;', '&#x1f468;&#x200d;&#x1f680;', '&#x1f468;&#x200d;&#x1f692;', '&#x1f468;&#x200d;&#x1f9af;', '&#x1f468;&#x200d;&#x1f9b0;', '&#x1f468;&#x200d;&#x1f9b1;', '&#x1f468;&#x200d;&#x1f9b2;', '&#x1f468;&#x200d;&#x1f9b3;', '&#x1f468;&#x200d;&#x1f9bc;', '&#x1f468;&#x200d;&#x1f9bd;', '&#x1f469;&#x200d;&#x1f33e;', '&#x1f468;&#x200d;&#x1f373;', '&#x1f469;&#x200d;&#x1f393;', '&#x1f469;&#x200d;&#x1f3a4;', '&#x1f469;&#x200d;&#x1f3a8;', '&#x1f469;&#x200d;&#x1f3eb;', '&#x1f441;&#x200d;&#x1f5e8;', '&#x1f415;&#x200d;&#x1f9ba;', '&#x1f469;&#x200d;&#x1f3ed;', '&#x1f469;&#x200d;&#x1f466;', '&#x1f469;&#x200d;&#x1f467;', '&#x1f469;&#x200d;&#x1f4bb;', '&#x1f469;&#x200d;&#x1f4bc;', '&#x1f469;&#x200d;&#x1f527;', '&#x1f469;&#x200d;&#x1f52c;', '&#x1f469;&#x200d;&#x1f680;', '&#x1f469;&#x200d;&#x1f692;', '&#x1f469;&#x200d;&#x1f9af;', '&#x1f469;&#x200d;&#x1f9b0;', '&#x1f469;&#x200d;&#x1f9b1;', '&#x1f469;&#x200d;&#x1f9b2;', '&#x1f469;&#x200d;&#x1f9b3;', '&#x1f469;&#x200d;&#x1f9bc;', '&#x1f469;&#x200d;&#x1f9bd;', '&#x1f469;&#x200d;&#x1f373;', '&#x1f1ed;&#x1f1f7;', '&#x1f481;&#x1f3ff;', '&#x1f1ed;&#x1f1f9;', '&#x1f1ed;&#x1f1fa;', '&#x1f1ee;&#x1f1e8;', '&#x1f1ee;&#x1f1e9;', '&#x1f482;&#x1f3fb;', '&#x1f1ee;&#x1f1ea;', '&#x1f1ee;&#x1f1f1;', '&#x1f482;&#x1f3fc;', '&#x1f1ee;&#x1f1f2;', '&#x1f1ee;&#x1f1f3;', '&#x1f482;&#x1f3fd;', '&#x1f1ee;&#x1f1f4;', '&#x1f1ee;&#x1f1f6;', '&#x1f482;&#x1f3fe;', '&#x1f1ee;&#x1f1f7;', '&#x1f1ee;&#x1f1f8;', '&#x1f482;&#x1f3ff;', '&#x1f1ee;&#x1f1f9;', '&#x1f468;&#x1f3fc;', '&#x1f483;&#x1f3fb;', '&#x1f483;&#x1f3fc;', '&#x1f483;&#x1f3fd;', '&#x1f483;&#x1f3fe;', '&#x1f483;&#x1f3ff;', '&#x1f485;&#x1f3fb;', '&#x1f485;&#x1f3fc;', '&#x1f485;&#x1f3fd;', '&#x1f485;&#x1f3fe;', '&#x1f485;&#x1f3ff;', '&#x1f1ef;&#x1f1ea;', '&#x1f1ef;&#x1f1f2;', '&#x1f486;&#x1f3fb;', '&#x1f1ef;&#x1f1f4;', '&#x1f1ef;&#x1f1f5;', '&#x1f486;&#x1f3fc;', '&#x1f1f0;&#x1f1ea;', '&#x1f1f0;&#x1f1ec;', '&#x1f486;&#x1f3fd;', '&#x1f1f0;&#x1f1ed;', '&#x1f1f0;&#x1f1ee;', '&#x1f486;&#x1f3fe;', '&#x1f1f0;&#x1f1f2;', '&#x1f1f0;&#x1f1f3;', '&#x1f486;&#x1f3ff;', '&#x1f1f0;&#x1f1f5;', '&#x1f1f0;&#x1f1f7;', '&#x1f1f0;&#x1f1fc;', '&#x1f1f0;&#x1f1fe;', '&#x1f487;&#x1f3fb;', '&#x1f1f0;&#x1f1ff;', '&#x1f1f1;&#x1f1e6;', '&#x1f487;&#x1f3fc;', '&#x1f1f1;&#x1f1e7;', '&#x1f1f1;&#x1f1e8;', '&#x1f487;&#x1f3fd;', '&#x1f1f1;&#x1f1ee;', '&#x1f1f1;&#x1f1f0;', '&#x1f487;&#x1f3fe;', '&#x1f1f1;&#x1f1f7;', '&#x1f1f1;&#x1f1f8;', '&#x1f487;&#x1f3ff;', '&#x1f1f1;&#x1f1f9;', '&#x1f1f1;&#x1f1fa;', '&#x1f4aa;&#x1f3fb;', '&#x1f4aa;&#x1f3fc;', '&#x1f4aa;&#x1f3fd;', '&#x1f4aa;&#x1f3fe;', '&#x1f4aa;&#x1f3ff;', '&#x1f1f1;&#x1f1fb;', '&#x1f468;&#x1f3fd;', '&#x1f574;&#x1f3fb;', '&#x1f1f1;&#x1f1fe;', '&#x1f1f2;&#x1f1e6;', '&#x1f574;&#x1f3fc;', '&#x1f1f2;&#x1f1e8;', '&#x1f1f2;&#x1f1e9;', '&#x1f574;&#x1f3fd;', '&#x1f1f2;&#x1f1ea;', '&#x1f1f2;&#x1f1eb;', '&#x1f574;&#x1f3fe;', '&#x1f1f2;&#x1f1ec;', '&#x1f1f2;&#x1f1ed;', '&#x1f574;&#x1f3ff;', '&#x1f1f2;&#x1f1f0;', '&#x1f1f2;&#x1f1f1;', '&#x1f1f2;&#x1f1f2;', '&#x1f1f2;&#x1f1f3;', '&#x1f575;&#x1f3fb;', '&#x1f1f2;&#x1f1f4;', '&#x1f1f2;&#x1f1f5;', '&#x1f575;&#x1f3fc;', '&#x1f1f2;&#x1f1f6;', '&#x1f1f2;&#x1f1f7;', '&#x1f575;&#x1f3fd;', '&#x1f1f2;&#x1f1f8;', '&#x1f1f2;&#x1f1f9;', '&#x1f575;&#x1f3fe;', '&#x1f1f2;&#x1f1fa;', '&#x1f1f2;&#x1f1fb;', '&#x1f575;&#x1f3ff;', '&#x1f1f2;&#x1f1fc;', '&#x1f1f2;&#x1f1fd;', '&#x1f57a;&#x1f3fb;', '&#x1f57a;&#x1f3fc;', '&#x1f57a;&#x1f3fd;', '&#x1f57a;&#x1f3fe;', '&#x1f57a;&#x1f3ff;', '&#x1f590;&#x1f3fb;', '&#x1f590;&#x1f3fc;', '&#x1f590;&#x1f3fd;', '&#x1f590;&#x1f3fe;', '&#x1f590;&#x1f3ff;', '&#x1f595;&#x1f3fb;', '&#x1f595;&#x1f3fc;', '&#x1f595;&#x1f3fd;', '&#x1f595;&#x1f3fe;', '&#x1f595;&#x1f3ff;', '&#x1f596;&#x1f3fb;', '&#x1f596;&#x1f3fc;', '&#x1f596;&#x1f3fd;', '&#x1f596;&#x1f3fe;', '&#x1f596;&#x1f3ff;', '&#x1f1f2;&#x1f1fe;', '&#x1f1f2;&#x1f1ff;', '&#x1f645;&#x1f3fb;', '&#x1f1f3;&#x1f1e6;', '&#x1f1f3;&#x1f1e8;', '&#x1f645;&#x1f3fc;', '&#x1f468;&#x1f3fe;', '&#x1f1f3;&#x1f1ea;', '&#x1f645;&#x1f3fd;', '&#x1f1f3;&#x1f1eb;', '&#x1f1f3;&#x1f1ec;', '&#x1f645;&#x1f3fe;', '&#x1f1f3;&#x1f1ee;', '&#x1f1f3;&#x1f1f1;', '&#x1f645;&#x1f3ff;', '&#x1f1f3;&#x1f1f4;', '&#x1f1f3;&#x1f1f5;', '&#x1f1f3;&#x1f1f7;', '&#x1f1f3;&#x1f1fa;', '&#x1f646;&#x1f3fb;', '&#x1f1f3;&#x1f1ff;', '&#x1f1f4;&#x1f1f2;', '&#x1f646;&#x1f3fc;', '&#x1f1f5;&#x1f1e6;', '&#x1f1f5;&#x1f1ea;', '&#x1f646;&#x1f3fd;', '&#x1f1f5;&#x1f1eb;', '&#x1f1f5;&#x1f1ec;', '&#x1f646;&#x1f3fe;', '&#x1f1f5;&#x1f1ed;', '&#x1f1f5;&#x1f1f0;', '&#x1f646;&#x1f3ff;', '&#x1f1f5;&#x1f1f1;', '&#x1f1f5;&#x1f1f2;', '&#x1f1f5;&#x1f1f3;', '&#x1f1f5;&#x1f1f7;', '&#x1f647;&#x1f3fb;', '&#x1f1f5;&#x1f1f8;', '&#x1f1f5;&#x1f1f9;', '&#x1f647;&#x1f3fc;', '&#x1f1f5;&#x1f1fc;', '&#x1f1f5;&#x1f1fe;', '&#x1f647;&#x1f3fd;', '&#x1f1f6;&#x1f1e6;', '&#x1f1f7;&#x1f1ea;', '&#x1f647;&#x1f3fe;', '&#x1f468;&#x1f3ff;', '&#x1f1f7;&#x1f1f4;', '&#x1f647;&#x1f3ff;', '&#x1f1f7;&#x1f1f8;', '&#x1f1f7;&#x1f1fa;', '&#x1f1f7;&#x1f1fc;', '&#x1f1f8;&#x1f1e6;', '&#x1f64b;&#x1f3fb;', '&#x1f1f8;&#x1f1e7;', '&#x1f1f8;&#x1f1e8;', '&#x1f64b;&#x1f3fc;', '&#x1f1f8;&#x1f1e9;', '&#x1f1f8;&#x1f1ea;', '&#x1f64b;&#x1f3fd;', '&#x1f1f8;&#x1f1ec;', '&#x1f1f8;&#x1f1ed;', '&#x1f64b;&#x1f3fe;', '&#x1f1f8;&#x1f1ee;', '&#x1f1f8;&#x1f1ef;', '&#x1f64b;&#x1f3ff;', '&#x1f1f8;&#x1f1f0;', '&#x1f1f8;&#x1f1f1;', '&#x1f64c;&#x1f3fb;', '&#x1f64c;&#x1f3fc;', '&#x1f64c;&#x1f3fd;', '&#x1f64c;&#x1f3fe;', '&#x1f64c;&#x1f3ff;', '&#x1f1f8;&#x1f1f2;', '&#x1f1f8;&#x1f1f3;', '&#x1f64d;&#x1f3fb;', '&#x1f1f8;&#x1f1f4;', '&#x1f1f8;&#x1f1f7;', '&#x1f64d;&#x1f3fc;', '&#x1f1f8;&#x1f1f8;', '&#x1f1f8;&#x1f1f9;', '&#x1f64d;&#x1f3fd;', '&#x1f1f8;&#x1f1fb;', '&#x1f1f8;&#x1f1fd;', '&#x1f64d;&#x1f3fe;', '&#x1f1f8;&#x1f1fe;', '&#x1f1f8;&#x1f1ff;', '&#x1f64d;&#x1f3ff;', '&#x1f1f9;&#x1f1e6;', '&#x1f1f9;&#x1f1e8;', '&#x1f1f9;&#x1f1e9;', '&#x1f1f9;&#x1f1eb;', '&#x1f64e;&#x1f3fb;', '&#x1f1f9;&#x1f1ec;', '&#x1f1f9;&#x1f1ed;', '&#x1f64e;&#x1f3fc;', '&#x1f1f9;&#x1f1ef;', '&#x1f1f9;&#x1f1f0;', '&#x1f64e;&#x1f3fd;', '&#x1f1f9;&#x1f1f1;', '&#x1f1f9;&#x1f1f2;', '&#x1f64e;&#x1f3fe;', '&#x1f1f9;&#x1f1f3;', '&#x1f1f9;&#x1f1f4;', '&#x1f64e;&#x1f3ff;', '&#x1f1f9;&#x1f1f7;', '&#x1f1f9;&#x1f1f9;', '&#x1f64f;&#x1f3fb;', '&#x1f64f;&#x1f3fc;', '&#x1f64f;&#x1f3fd;', '&#x1f64f;&#x1f3fe;', '&#x1f64f;&#x1f3ff;', '&#x1f1f9;&#x1f1fb;', '&#x1f1f9;&#x1f1fc;', '&#x1f6a3;&#x1f3fb;', '&#x1f1f9;&#x1f1ff;', '&#x1f1fa;&#x1f1e6;', '&#x1f6a3;&#x1f3fc;', '&#x1f1fa;&#x1f1ec;', '&#x1f1fa;&#x1f1f2;', '&#x1f6a3;&#x1f3fd;', '&#x1f1fa;&#x1f1f3;', '&#x1f1fa;&#x1f1f8;', '&#x1f6a3;&#x1f3fe;', '&#x1f1fa;&#x1f1fe;', '&#x1f1fa;&#x1f1ff;', '&#x1f6a3;&#x1f3ff;', '&#x1f1fb;&#x1f1e6;', '&#x1f1fb;&#x1f1e8;', '&#x1f1fb;&#x1f1ea;', '&#x1f1fb;&#x1f1ec;', '&#x1f6b4;&#x1f3fb;', '&#x1f1fb;&#x1f1ee;', '&#x1f1fb;&#x1f1f3;', '&#x1f6b4;&#x1f3fc;', '&#x1f1fb;&#x1f1fa;', '&#x1f1fc;&#x1f1eb;', '&#x1f6b4;&#x1f3fd;', '&#x1f1fc;&#x1f1f8;', '&#x1f1fd;&#x1f1f0;', '&#x1f6b4;&#x1f3fe;', '&#x1f1fe;&#x1f1ea;', '&#x1f1fe;&#x1f1f9;', '&#x1f6b4;&#x1f3ff;', '&#x1f1ff;&#x1f1e6;', '&#x1f1ff;&#x1f1f2;', '&#x1f1ff;&#x1f1fc;', '&#x1f385;&#x1f3fb;', '&#x1f6b5;&#x1f3fb;', '&#x1f385;&#x1f3fc;', '&#x1f385;&#x1f3fd;', '&#x1f6b5;&#x1f3fc;', '&#x1f469;&#x1f3fb;', '&#x1f385;&#x1f3fe;', '&#x1f6b5;&#x1f3fd;', '&#x1f385;&#x1f3ff;', '&#x1f3c2;&#x1f3fb;', '&#x1f6b5;&#x1f3fe;', '&#x1f3c2;&#x1f3fc;', '&#x1f3c2;&#x1f3fd;', '&#x1f6b5;&#x1f3ff;', '&#x1f3c2;&#x1f3fe;', '&#x1f3c2;&#x1f3ff;', '&#x1f44b;&#x1f3fc;', '&#x1f1e6;&#x1f1ea;', '&#x1f6b6;&#x1f3fb;', '&#x1f3c3;&#x1f3fb;', '&#x1f1e6;&#x1f1eb;', '&#x1f6b6;&#x1f3fc;', '&#x1f1e6;&#x1f1ec;', '&#x1f3c3;&#x1f3fc;', '&#x1f6b6;&#x1f3fd;', '&#x1f1e6;&#x1f1ee;', '&#x1f1e6;&#x1f1f1;', '&#x1f6b6;&#x1f3fe;', '&#x1f3c3;&#x1f3fd;', '&#x1f1e6;&#x1f1f2;', '&#x1f6b6;&#x1f3ff;', '&#x1f1e6;&#x1f1f4;', '&#x1f3c3;&#x1f3fe;', '&#x1f6c0;&#x1f3fb;', '&#x1f6c0;&#x1f3fc;', '&#x1f6c0;&#x1f3fd;', '&#x1f6c0;&#x1f3fe;', '&#x1f6c0;&#x1f3ff;', '&#x1f6cc;&#x1f3fb;', '&#x1f6cc;&#x1f3fc;', '&#x1f6cc;&#x1f3fd;', '&#x1f6cc;&#x1f3fe;', '&#x1f6cc;&#x1f3ff;', '&#x1f90f;&#x1f3fb;', '&#x1f90f;&#x1f3fc;', '&#x1f90f;&#x1f3fd;', '&#x1f90f;&#x1f3fe;', '&#x1f90f;&#x1f3ff;', '&#x1f918;&#x1f3fb;', '&#x1f918;&#x1f3fc;', '&#x1f918;&#x1f3fd;', '&#x1f918;&#x1f3fe;', '&#x1f918;&#x1f3ff;', '&#x1f919;&#x1f3fb;', '&#x1f919;&#x1f3fc;', '&#x1f919;&#x1f3fd;', '&#x1f919;&#x1f3fe;', '&#x1f919;&#x1f3ff;', '&#x1f91a;&#x1f3fb;', '&#x1f91a;&#x1f3fc;', '&#x1f91a;&#x1f3fd;', '&#x1f91a;&#x1f3fe;', '&#x1f91a;&#x1f3ff;', '&#x1f91b;&#x1f3fb;', '&#x1f91b;&#x1f3fc;', '&#x1f91b;&#x1f3fd;', '&#x1f91b;&#x1f3fe;', '&#x1f91b;&#x1f3ff;', '&#x1f91c;&#x1f3fb;', '&#x1f91c;&#x1f3fc;', '&#x1f91c;&#x1f3fd;', '&#x1f91c;&#x1f3fe;', '&#x1f91c;&#x1f3ff;', '&#x1f91e;&#x1f3fb;', '&#x1f91e;&#x1f3fc;', '&#x1f91e;&#x1f3fd;', '&#x1f91e;&#x1f3fe;', '&#x1f91e;&#x1f3ff;', '&#x1f91f;&#x1f3fb;', '&#x1f91f;&#x1f3fc;', '&#x1f91f;&#x1f3fd;', '&#x1f91f;&#x1f3fe;', '&#x1f91f;&#x1f3ff;', '&#x1f1e6;&#x1f1f6;', '&#x1f1e6;&#x1f1f7;', '&#x1f926;&#x1f3fb;', '&#x1f3c3;&#x1f3ff;', '&#x1f1e6;&#x1f1f8;', '&#x1f926;&#x1f3fc;', '&#x1f1e6;&#x1f1f9;', '&#x1f1e6;&#x1f1fa;', '&#x1f926;&#x1f3fd;', '&#x1f1e6;&#x1f1fc;', '&#x1f3c4;&#x1f3fb;', '&#x1f926;&#x1f3fe;', '&#x1f1e6;&#x1f1fd;', '&#x1f469;&#x1f3fc;', '&#x1f926;&#x1f3ff;', '&#x1f1e6;&#x1f1ff;', '&#x1f3c4;&#x1f3fc;', '&#x1f930;&#x1f3fb;', '&#x1f930;&#x1f3fc;', '&#x1f930;&#x1f3fd;', '&#x1f930;&#x1f3fe;', '&#x1f930;&#x1f3ff;', '&#x1f931;&#x1f3fb;', '&#x1f931;&#x1f3fc;', '&#x1f931;&#x1f3fd;', '&#x1f931;&#x1f3fe;', '&#x1f931;&#x1f3ff;', '&#x1f932;&#x1f3fb;', '&#x1f932;&#x1f3fc;', '&#x1f932;&#x1f3fd;', '&#x1f932;&#x1f3fe;', '&#x1f932;&#x1f3ff;', '&#x1f933;&#x1f3fb;', '&#x1f933;&#x1f3fc;', '&#x1f933;&#x1f3fd;', '&#x1f933;&#x1f3fe;', '&#x1f933;&#x1f3ff;', '&#x1f934;&#x1f3fb;', '&#x1f934;&#x1f3fc;', '&#x1f934;&#x1f3fd;', '&#x1f934;&#x1f3fe;', '&#x1f934;&#x1f3ff;', '&#x1f1e7;&#x1f1e6;', '&#x1f1e7;&#x1f1e7;', '&#x1f935;&#x1f3fb;', '&#x1f3c4;&#x1f3fd;', '&#x1f1e7;&#x1f1e9;', '&#x1f935;&#x1f3fc;', '&#x1f1e7;&#x1f1ea;', '&#x1f3c4;&#x1f3fe;', '&#x1f935;&#x1f3fd;', '&#x1f1e7;&#x1f1eb;', '&#x1f1e7;&#x1f1ec;', '&#x1f935;&#x1f3fe;', '&#x1f3c4;&#x1f3ff;', '&#x1f1e7;&#x1f1ed;', '&#x1f935;&#x1f3ff;', '&#x1f1e7;&#x1f1ee;', '&#x1f3c7;&#x1f3fb;', '&#x1f936;&#x1f3fb;', '&#x1f936;&#x1f3fc;', '&#x1f936;&#x1f3fd;', '&#x1f936;&#x1f3fe;', '&#x1f936;&#x1f3ff;', '&#x1f3c7;&#x1f3fc;', '&#x1f3c7;&#x1f3fd;', '&#x1f937;&#x1f3fb;', '&#x1f3c7;&#x1f3fe;', '&#x1f3c7;&#x1f3ff;', '&#x1f937;&#x1f3fc;', '&#x1f1e7;&#x1f1ef;', '&#x1f1e7;&#x1f1f1;', '&#x1f937;&#x1f3fd;', '&#x1f3ca;&#x1f3fb;', '&#x1f1e7;&#x1f1f2;', '&#x1f937;&#x1f3fe;', '&#x1f1e7;&#x1f1f3;', '&#x1f3ca;&#x1f3fc;', '&#x1f937;&#x1f3ff;', '&#x1f1e7;&#x1f1f4;', '&#x1f1e7;&#x1f1f6;', '&#x1f3ca;&#x1f3fd;', '&#x1f1e7;&#x1f1f7;', '&#x1f938;&#x1f3fb;', '&#x1f1e7;&#x1f1f8;', '&#x1f469;&#x1f3fd;', '&#x1f938;&#x1f3fc;', '&#x1f3ca;&#x1f3fe;', '&#x1f1e7;&#x1f1f9;', '&#x1f938;&#x1f3fd;', '&#x1f1e7;&#x1f1fb;', '&#x1f3ca;&#x1f3ff;', '&#x1f938;&#x1f3fe;', '&#x1f1e7;&#x1f1fc;', '&#x1f1e7;&#x1f1fe;', '&#x1f938;&#x1f3ff;', '&#x1f1e7;&#x1f1ff;', '&#x1f1e8;&#x1f1e6;', '&#x1f3cb;&#x1f3fb;', '&#x1f1e8;&#x1f1e8;', '&#x1f939;&#x1f3fb;', '&#x1f1e8;&#x1f1e9;', '&#x1f3cb;&#x1f3fc;', '&#x1f939;&#x1f3fc;', '&#x1f1e8;&#x1f1eb;', '&#x1f1e8;&#x1f1ec;', '&#x1f939;&#x1f3fd;', '&#x1f3cb;&#x1f3fd;', '&#x1f1e8;&#x1f1ed;', '&#x1f939;&#x1f3fe;', '&#x1f1e8;&#x1f1ee;', '&#x1f3cb;&#x1f3fe;', '&#x1f939;&#x1f3ff;', '&#x1f1e8;&#x1f1f0;', '&#x1f1e8;&#x1f1f1;', '&#x1f3cb;&#x1f3ff;', '&#x1f1e8;&#x1f1f2;', '&#x1f1e8;&#x1f1f3;', '&#x1f1e8;&#x1f1f4;', '&#x1f93d;&#x1f3fb;', '&#x1f1e8;&#x1f1f5;', '&#x1f3cc;&#x1f3fb;', '&#x1f93d;&#x1f3fc;', '&#x1f1e8;&#x1f1f7;', '&#x1f1e8;&#x1f1fa;', '&#x1f93d;&#x1f3fd;', '&#x1f3cc;&#x1f3fc;', '&#x1f1e8;&#x1f1fb;', '&#x1f93d;&#x1f3fe;', '&#x1f469;&#x1f3fe;', '&#x1f1e8;&#x1f1fc;', '&#x1f93d;&#x1f3ff;', '&#x1f3cc;&#x1f3fd;', '&#x1f1e8;&#x1f1fd;', '&#x1f1e8;&#x1f1fe;', '&#x1f3cc;&#x1f3fe;', '&#x1f93e;&#x1f3fb;', '&#x1f1e8;&#x1f1ff;', '&#x1f1e9;&#x1f1ea;', '&#x1f93e;&#x1f3fc;', '&#x1f3cc;&#x1f3ff;', '&#x1f1e9;&#x1f1ec;', '&#x1f93e;&#x1f3fd;', '&#x1f1e9;&#x1f1ef;', '&#x1f1e9;&#x1f1f0;', '&#x1f93e;&#x1f3fe;', '&#x1f1e9;&#x1f1f2;', '&#x1f1e9;&#x1f1f4;', '&#x1f93e;&#x1f3ff;', '&#x1f1e9;&#x1f1ff;', '&#x1f1ea;&#x1f1e6;', '&#x1f9b5;&#x1f3fb;', '&#x1f9b5;&#x1f3fc;', '&#x1f9b5;&#x1f3fd;', '&#x1f9b5;&#x1f3fe;', '&#x1f9b5;&#x1f3ff;', '&#x1f9b6;&#x1f3fb;', '&#x1f9b6;&#x1f3fc;', '&#x1f9b6;&#x1f3fd;', '&#x1f9b6;&#x1f3fe;', '&#x1f9b6;&#x1f3ff;', '&#x1f1ea;&#x1f1e8;', '&#x1f1ea;&#x1f1ea;', '&#x1f9b8;&#x1f3fb;', '&#x1f1ea;&#x1f1ec;', '&#x1f442;&#x1f3fb;', '&#x1f9b8;&#x1f3fc;', '&#x1f442;&#x1f3fc;', '&#x1f442;&#x1f3fd;', '&#x1f9b8;&#x1f3fd;', '&#x1f442;&#x1f3fe;', '&#x1f442;&#x1f3ff;', '&#x1f9b8;&#x1f3fe;', '&#x1f443;&#x1f3fb;', '&#x1f443;&#x1f3fc;', '&#x1f9b8;&#x1f3ff;', '&#x1f443;&#x1f3fd;', '&#x1f443;&#x1f3fe;', '&#x1f443;&#x1f3ff;', '&#x1f446;&#x1f3fb;', '&#x1f9b9;&#x1f3fb;', '&#x1f446;&#x1f3fc;', '&#x1f446;&#x1f3fd;', '&#x1f9b9;&#x1f3fc;', '&#x1f469;&#x1f3ff;', '&#x1f446;&#x1f3fe;', '&#x1f9b9;&#x1f3fd;', '&#x1f446;&#x1f3ff;', '&#x1f447;&#x1f3fb;', '&#x1f9b9;&#x1f3fe;', '&#x1f447;&#x1f3fc;', '&#x1f447;&#x1f3fd;', '&#x1f9b9;&#x1f3ff;', '&#x1f447;&#x1f3fe;', '&#x1f447;&#x1f3ff;', '&#x1f9bb;&#x1f3fb;', '&#x1f9bb;&#x1f3fc;', '&#x1f9bb;&#x1f3fd;', '&#x1f9bb;&#x1f3fe;', '&#x1f9bb;&#x1f3ff;', '&#x1f448;&#x1f3fb;', '&#x1f448;&#x1f3fc;', '&#x1f9cd;&#x1f3fb;', '&#x1f448;&#x1f3fd;', '&#x1f448;&#x1f3fe;', '&#x1f9cd;&#x1f3fc;', '&#x1f448;&#x1f3ff;', '&#x1f449;&#x1f3fb;', '&#x1f9cd;&#x1f3fd;', '&#x1f449;&#x1f3fc;', '&#x1f449;&#x1f3fd;', '&#x1f9cd;&#x1f3fe;', '&#x1f449;&#x1f3fe;', '&#x1f449;&#x1f3ff;', '&#x1f9cd;&#x1f3ff;', '&#x1f44a;&#x1f3fb;', '&#x1f44a;&#x1f3fc;', '&#x1f44a;&#x1f3fd;', '&#x1f44a;&#x1f3fe;', '&#x1f9ce;&#x1f3fb;', '&#x1f44a;&#x1f3ff;', '&#x1f44b;&#x1f3fb;', '&#x1f9ce;&#x1f3fc;', '&#x1f1e6;&#x1f1e8;', '&#x1f44b;&#x1f3fd;', '&#x1f9ce;&#x1f3fd;', '&#x1f44b;&#x1f3fe;', '&#x1f44b;&#x1f3ff;', '&#x1f9ce;&#x1f3fe;', '&#x1f44c;&#x1f3fb;', '&#x1f44c;&#x1f3fc;', '&#x1f9ce;&#x1f3ff;', '&#x1f44c;&#x1f3fd;', '&#x1f44c;&#x1f3fe;', '&#x1f44c;&#x1f3ff;', '&#x1f44d;&#x1f3fb;', '&#x1f9cf;&#x1f3fb;', '&#x1f44d;&#x1f3fc;', '&#x1f44d;&#x1f3fd;', '&#x1f9cf;&#x1f3fc;', '&#x1f44d;&#x1f3fe;', '&#x1f44d;&#x1f3ff;', '&#x1f9cf;&#x1f3fd;', '&#x1f46b;&#x1f3fb;', '&#x1f46b;&#x1f3fc;', '&#x1f9cf;&#x1f3fe;', '&#x1f46b;&#x1f3fd;', '&#x1f46b;&#x1f3fe;', '&#x1f9cf;&#x1f3ff;', '&#x1f46b;&#x1f3ff;', '&#x1f46c;&#x1f3fb;', '&#x1f46c;&#x1f3fc;', '&#x1f9d1;&#x1f3fb;', '&#x1f46c;&#x1f3fd;', '&#x1f46c;&#x1f3fe;', '&#x1f9d1;&#x1f3fc;', '&#x1f46c;&#x1f3ff;', '&#x1f46d;&#x1f3fb;', '&#x1f46d;&#x1f3fc;', '&#x1f9d1;&#x1f3fd;', '&#x1f46d;&#x1f3fd;', '&#x1f46d;&#x1f3fe;', '&#x1f46d;&#x1f3ff;', '&#x1f44e;&#x1f3fb;', '&#x1f9d1;&#x1f3fe;', '&#x1f44e;&#x1f3fc;', '&#x1f46e;&#x1f3fb;', '&#x1f44e;&#x1f3fd;', '&#x1f44e;&#x1f3fe;', '&#x1f46e;&#x1f3fc;', '&#x1f9d1;&#x1f3ff;', '&#x1f44e;&#x1f3ff;', '&#x1f9d2;&#x1f3fb;', '&#x1f9d2;&#x1f3fc;', '&#x1f9d2;&#x1f3fd;', '&#x1f9d2;&#x1f3fe;', '&#x1f9d2;&#x1f3ff;', '&#x1f9d3;&#x1f3fb;', '&#x1f9d3;&#x1f3fc;', '&#x1f9d3;&#x1f3fd;', '&#x1f9d3;&#x1f3fe;', '&#x1f9d3;&#x1f3ff;', '&#x1f9d4;&#x1f3fb;', '&#x1f9d4;&#x1f3fc;', '&#x1f9d4;&#x1f3fd;', '&#x1f9d4;&#x1f3fe;', '&#x1f9d4;&#x1f3ff;', '&#x1f9d5;&#x1f3fb;', '&#x1f9d5;&#x1f3fc;', '&#x1f9d5;&#x1f3fd;', '&#x1f9d5;&#x1f3fe;', '&#x1f9d5;&#x1f3ff;', '&#x1f44f;&#x1f3fb;', '&#x1f46e;&#x1f3fd;', '&#x1f9d6;&#x1f3fb;', '&#x1f44f;&#x1f3fc;', '&#x1f44f;&#x1f3fd;', '&#x1f9d6;&#x1f3fc;', '&#x1f46e;&#x1f3fe;', '&#x1f44f;&#x1f3fe;', '&#x1f9d6;&#x1f3fd;', '&#x1f44f;&#x1f3ff;', '&#x1f46e;&#x1f3ff;', '&#x1f9d6;&#x1f3fe;', '&#x1f450;&#x1f3fb;', '&#x1f450;&#x1f3fc;', '&#x1f9d6;&#x1f3ff;', '&#x1f450;&#x1f3fd;', '&#x1f450;&#x1f3fe;', '&#x1f470;&#x1f3fb;', '&#x1f470;&#x1f3fc;', '&#x1f9d7;&#x1f3fb;', '&#x1f470;&#x1f3fd;', '&#x1f470;&#x1f3fe;', '&#x1f9d7;&#x1f3fc;', '&#x1f470;&#x1f3ff;', '&#x1f450;&#x1f3ff;', '&#x1f9d7;&#x1f3fd;', '&#x1f466;&#x1f3fb;', '&#x1f471;&#x1f3fb;', '&#x1f9d7;&#x1f3fe;', '&#x1f466;&#x1f3fc;', '&#x1f466;&#x1f3fd;', '&#x1f9d7;&#x1f3ff;', '&#x1f471;&#x1f3fc;', '&#x1f466;&#x1f3fe;', '&#x1f466;&#x1f3ff;', '&#x1f471;&#x1f3fd;', '&#x1f9d8;&#x1f3fb;', '&#x1f467;&#x1f3fb;', '&#x1f467;&#x1f3fc;', '&#x1f9d8;&#x1f3fc;', '&#x1f471;&#x1f3fe;', '&#x1f467;&#x1f3fd;', '&#x1f9d8;&#x1f3fd;', '&#x1f467;&#x1f3fe;', '&#x1f471;&#x1f3ff;', '&#x1f9d8;&#x1f3fe;', '&#x1f467;&#x1f3ff;', '&#x1f1ea;&#x1f1ed;', '&#x1f9d8;&#x1f3ff;', '&#x1f472;&#x1f3fb;', '&#x1f472;&#x1f3fc;', '&#x1f472;&#x1f3fd;', '&#x1f472;&#x1f3fe;', '&#x1f9d9;&#x1f3fb;', '&#x1f472;&#x1f3ff;', '&#x1f1ea;&#x1f1f7;', '&#x1f9d9;&#x1f3fc;', '&#x1f1ea;&#x1f1f8;', '&#x1f473;&#x1f3fb;', '&#x1f9d9;&#x1f3fd;', '&#x1f1ea;&#x1f1f9;', '&#x1f1ea;&#x1f1fa;', '&#x1f9d9;&#x1f3fe;', '&#x1f473;&#x1f3fc;', '&#x1f1eb;&#x1f1ee;', '&#x1f9d9;&#x1f3ff;', '&#x1f1eb;&#x1f1ef;', '&#x1f473;&#x1f3fd;', '&#x1f1eb;&#x1f1f0;', '&#x1f1eb;&#x1f1f2;', '&#x1f9da;&#x1f3fb;', '&#x1f473;&#x1f3fe;', '&#x1f1eb;&#x1f1f4;', '&#x1f9da;&#x1f3fc;', '&#x1f1eb;&#x1f1f7;', '&#x1f473;&#x1f3ff;', '&#x1f9da;&#x1f3fd;', '&#x1f1ec;&#x1f1e6;', '&#x1f1ec;&#x1f1e7;', '&#x1f9da;&#x1f3fe;', '&#x1f474;&#x1f3fb;', '&#x1f474;&#x1f3fc;', '&#x1f9da;&#x1f3ff;', '&#x1f474;&#x1f3fd;', '&#x1f474;&#x1f3fe;', '&#x1f474;&#x1f3ff;', '&#x1f475;&#x1f3fb;', '&#x1f9db;&#x1f3fb;', '&#x1f475;&#x1f3fc;', '&#x1f475;&#x1f3fd;', '&#x1f9db;&#x1f3fc;', '&#x1f475;&#x1f3fe;', '&#x1f475;&#x1f3ff;', '&#x1f9db;&#x1f3fd;', '&#x1f476;&#x1f3fb;', '&#x1f476;&#x1f3fc;', '&#x1f9db;&#x1f3fe;', '&#x1f476;&#x1f3fd;', '&#x1f476;&#x1f3fe;', '&#x1f9db;&#x1f3ff;', '&#x1f476;&#x1f3ff;', '&#x1f1ec;&#x1f1e9;', '&#x1f1ec;&#x1f1ea;', '&#x1f477;&#x1f3fb;', '&#x1f9dc;&#x1f3fb;', '&#x1f1ec;&#x1f1eb;', '&#x1f1ec;&#x1f1ec;', '&#x1f9dc;&#x1f3fc;', '&#x1f477;&#x1f3fc;', '&#x1f1ec;&#x1f1ed;', '&#x1f9dc;&#x1f3fd;', '&#x1f1ec;&#x1f1ee;', '&#x1f477;&#x1f3fd;', '&#x1f9dc;&#x1f3fe;', '&#x1f1ec;&#x1f1f1;', '&#x1f1ec;&#x1f1f2;', '&#x1f9dc;&#x1f3ff;', '&#x1f477;&#x1f3fe;', '&#x1f1ec;&#x1f1f3;', '&#x1f1ec;&#x1f1f5;', '&#x1f477;&#x1f3ff;', '&#x1f9dd;&#x1f3fb;', '&#x1f468;&#x1f3fb;', '&#x1f1ec;&#x1f1f6;', '&#x1f9dd;&#x1f3fc;', '&#x1f478;&#x1f3fb;', '&#x1f478;&#x1f3fc;', '&#x1f9dd;&#x1f3fd;', '&#x1f478;&#x1f3fd;', '&#x1f478;&#x1f3fe;', '&#x1f9dd;&#x1f3fe;', '&#x1f478;&#x1f3ff;', '&#x1f47c;&#x1f3fb;', '&#x1f9dd;&#x1f3ff;', '&#x1f47c;&#x1f3fc;', '&#x1f47c;&#x1f3fd;', '&#x1f47c;&#x1f3fe;', '&#x1f47c;&#x1f3ff;', '&#x1f1ec;&#x1f1f7;', '&#x1f1ec;&#x1f1f8;', '&#x1f481;&#x1f3fb;', '&#x1f1ec;&#x1f1f9;', '&#x1f1ec;&#x1f1fa;', '&#x1f481;&#x1f3fc;', '&#x1f1ec;&#x1f1fc;', '&#x1f1ec;&#x1f1fe;', '&#x1f481;&#x1f3fd;', '&#x1f1ed;&#x1f1f0;', '&#x1f1ed;&#x1f1f2;', '&#x1f481;&#x1f3fe;', '&#x1f1ed;&#x1f1f3;', '&#x1f1e6;&#x1f1e9;', '&#x270d;&#x1f3ff;', '&#x26f9;&#x1f3fb;', '&#x270d;&#x1f3fe;', '&#x270d;&#x1f3fd;', '&#x270d;&#x1f3fc;', '&#x270d;&#x1f3fb;', '&#x270c;&#x1f3ff;', '&#x270c;&#x1f3fe;', '&#x270c;&#x1f3fd;', '&#x270c;&#x1f3fc;', '&#x270c;&#x1f3fb;', '&#x270b;&#x1f3ff;', '&#x270b;&#x1f3fe;', '&#x270b;&#x1f3fd;', '&#x270b;&#x1f3fc;', '&#x270b;&#x1f3fb;', '&#x270a;&#x1f3ff;', '&#x270a;&#x1f3fe;', '&#x270a;&#x1f3fd;', '&#x270a;&#x1f3fc;', '&#x270a;&#x1f3fb;', '&#x26f7;&#x1f3fd;', '&#x26f7;&#x1f3fe;', '&#x26f9;&#x1f3ff;', '&#x261d;&#x1f3ff;', '&#x261d;&#x1f3fe;', '&#x26f9;&#x1f3fe;', '&#x261d;&#x1f3fd;', '&#x261d;&#x1f3fc;', '&#x26f9;&#x1f3fd;', '&#x261d;&#x1f3fb;', '&#x26f7;&#x1f3ff;', '&#x26f9;&#x1f3fc;', '&#x26f7;&#x1f3fb;', '&#x26f7;&#x1f3fc;', '&#x34;&#x20e3;', '&#x23;&#x20e3;', '&#x30;&#x20e3;', '&#x31;&#x20e3;', '&#x32;&#x20e3;', '&#x33;&#x20e3;', '&#x2a;&#x20e3;', '&#x35;&#x20e3;', '&#x36;&#x20e3;', '&#x37;&#x20e3;', '&#x38;&#x20e3;', '&#x39;&#x20e3;', '&#x1f1f3;', '&#x1f61b;', '&#x1f61c;', '&#x1f61d;', '&#x1f61e;', '&#x1f61f;', '&#x1f620;', '&#x1f621;', '&#x1f622;', '&#x1f623;', '&#x1f624;', '&#x1f625;', '&#x1f626;', '&#x1f627;', '&#x1f628;', '&#x1f629;', '&#x1f62a;', '&#x1f62b;', '&#x1f62c;', '&#x1f62d;', '&#x1f62e;', '&#x1f62f;', '&#x1f630;', '&#x1f631;', '&#x1f632;', '&#x1f633;', '&#x1f634;', '&#x1f635;', '&#x1f636;', '&#x1f637;', '&#x1f638;', '&#x1f639;', '&#x1f63a;', '&#x1f63b;', '&#x1f63c;', '&#x1f63d;', '&#x1f63e;', '&#x1f63f;', '&#x1f640;', '&#x1f641;', '&#x1f642;', '&#x1f643;', '&#x1f644;', '&#x1f3ef;', '&#x1f3f0;', '&#x1f32d;', '&#x1f32e;', '&#x1f3f3;', '&#x1f32f;', '&#x1f330;', '&#x1f331;', '&#x1f332;', '&#x1f3f4;', '&#x1f3f5;', '&#x1f3f7;', '&#x1f3f8;', '&#x1f3f9;', '&#x1f3fa;', '&#x1f3fb;', '&#x1f3fc;', '&#x1f645;', '&#x1f3fd;', '&#x1f3fe;', '&#x1f3ff;', '&#x1f400;', '&#x1f401;', '&#x1f402;', '&#x1f403;', '&#x1f404;', '&#x1f405;', '&#x1f406;', '&#x1f407;', '&#x1f408;', '&#x1f409;', '&#x1f40a;', '&#x1f40b;', '&#x1f40c;', '&#x1f40d;', '&#x1f646;', '&#x1f40e;', '&#x1f40f;', '&#x1f410;', '&#x1f411;', '&#x1f412;', '&#x1f413;', '&#x1f414;', '&#x1f333;', '&#x1f415;', '&#x1f416;', '&#x1f417;', '&#x1f418;', '&#x1f419;', '&#x1f41a;', '&#x1f41b;', '&#x1f41c;', '&#x1f41d;', '&#x1f647;', '&#x1f648;', '&#x1f649;', '&#x1f64a;', '&#x1f41e;', '&#x1f41f;', '&#x1f420;', '&#x1f421;', '&#x1f422;', '&#x1f423;', '&#x1f424;', '&#x1f425;', '&#x1f426;', '&#x1f427;', '&#x1f428;', '&#x1f429;', '&#x1f42a;', '&#x1f42b;', '&#x1f42c;', '&#x1f42d;', '&#x1f42e;', '&#x1f64b;', '&#x1f42f;', '&#x1f430;', '&#x1f431;', '&#x1f432;', '&#x1f433;', '&#x1f64c;', '&#x1f434;', '&#x1f435;', '&#x1f436;', '&#x1f437;', '&#x1f438;', '&#x1f439;', '&#x1f43a;', '&#x1f43b;', '&#x1f43c;', '&#x1f43d;', '&#x1f43e;', '&#x1f43f;', '&#x1f440;', '&#x1f334;', '&#x1f441;', '&#x1f335;', '&#x1f336;', '&#x1f64d;', '&#x1f337;', '&#x1f338;', '&#x1f339;', '&#x1f442;', '&#x1f33a;', '&#x1f33b;', '&#x1f33c;', '&#x1f33d;', '&#x1f33e;', '&#x1f443;', '&#x1f444;', '&#x1f445;', '&#x1f33f;', '&#x1f340;', '&#x1f341;', '&#x1f342;', '&#x1f343;', '&#x1f64e;', '&#x1f446;', '&#x1f344;', '&#x1f345;', '&#x1f346;', '&#x1f347;', '&#x1f64f;', '&#x1f680;', '&#x1f681;', '&#x1f682;', '&#x1f683;', '&#x1f684;', '&#x1f685;', '&#x1f686;', '&#x1f687;', '&#x1f688;', '&#x1f689;', '&#x1f68a;', '&#x1f68b;', '&#x1f68c;', '&#x1f68d;', '&#x1f68e;', '&#x1f68f;', '&#x1f690;', '&#x1f691;', '&#x1f692;', '&#x1f693;', '&#x1f694;', '&#x1f695;', '&#x1f696;', '&#x1f697;', '&#x1f698;', '&#x1f699;', '&#x1f69a;', '&#x1f69b;', '&#x1f69c;', '&#x1f69d;', '&#x1f69e;', '&#x1f69f;', '&#x1f6a0;', '&#x1f6a1;', '&#x1f6a2;', '&#x1f348;', '&#x1f447;', '&#x1f349;', '&#x1f34a;', '&#x1f34b;', '&#x1f34c;', '&#x1f34d;', '&#x1f448;', '&#x1f34e;', '&#x1f34f;', '&#x1f350;', '&#x1f351;', '&#x1f352;', '&#x1f449;', '&#x1f353;', '&#x1f354;', '&#x1f355;', '&#x1f6a3;', '&#x1f6a4;', '&#x1f6a5;', '&#x1f6a6;', '&#x1f6a7;', '&#x1f6a8;', '&#x1f6a9;', '&#x1f6aa;', '&#x1f6ab;', '&#x1f6ac;', '&#x1f6ad;', '&#x1f6ae;', '&#x1f6af;', '&#x1f6b0;', '&#x1f6b1;', '&#x1f6b2;', '&#x1f6b3;', '&#x1f356;', '&#x1f357;', '&#x1f44a;', '&#x1f358;', '&#x1f359;', '&#x1f35a;', '&#x1f35b;', '&#x1f35c;', '&#x1f44b;', '&#x1f35d;', '&#x1f35e;', '&#x1f35f;', '&#x1f360;', '&#x1f361;', '&#x1f44c;', '&#x1f362;', '&#x1f363;', '&#x1f6b4;', '&#x1f364;', '&#x1f365;', '&#x1f366;', '&#x1f44d;', '&#x1f367;', '&#x1f469;', '&#x1f46a;', '&#x1f368;', '&#x1f369;', '&#x1f36a;', '&#x1f36b;', '&#x1f44e;', '&#x1f46b;', '&#x1f36c;', '&#x1f36d;', '&#x1f36e;', '&#x1f36f;', '&#x1f6b5;', '&#x1f370;', '&#x1f46c;', '&#x1f44f;', '&#x1f371;', '&#x1f372;', '&#x1f373;', '&#x1f374;', '&#x1f46d;', '&#x1f375;', '&#x1f450;', '&#x1f451;', '&#x1f452;', '&#x1f453;', '&#x1f454;', '&#x1f455;', '&#x1f456;', '&#x1f457;', '&#x1f6b6;', '&#x1f6b7;', '&#x1f6b8;', '&#x1f6b9;', '&#x1f6ba;', '&#x1f6bb;', '&#x1f6bc;', '&#x1f6bd;', '&#x1f6be;', '&#x1f6bf;', '&#x1f458;', '&#x1f459;', '&#x1f45a;', '&#x1f45b;', '&#x1f45c;', '&#x1f6c0;', '&#x1f6c1;', '&#x1f6c2;', '&#x1f6c3;', '&#x1f6c4;', '&#x1f6c5;', '&#x1f6cb;', '&#x1f45d;', '&#x1f45e;', '&#x1f45f;', '&#x1f46e;', '&#x1f460;', '&#x1f6cc;', '&#x1f6cd;', '&#x1f6ce;', '&#x1f6cf;', '&#x1f6d0;', '&#x1f6d1;', '&#x1f6d2;', '&#x1f6d5;', '&#x1f6e0;', '&#x1f6e1;', '&#x1f6e2;', '&#x1f6e3;', '&#x1f6e4;', '&#x1f6e5;', '&#x1f6e9;', '&#x1f6eb;', '&#x1f6ec;', '&#x1f6f0;', '&#x1f6f3;', '&#x1f6f4;', '&#x1f6f5;', '&#x1f6f6;', '&#x1f6f7;', '&#x1f6f8;', '&#x1f6f9;', '&#x1f6fa;', '&#x1f7e0;', '&#x1f7e1;', '&#x1f7e2;', '&#x1f7e3;', '&#x1f7e4;', '&#x1f7e5;', '&#x1f7e6;', '&#x1f7e7;', '&#x1f7e8;', '&#x1f7e9;', '&#x1f7ea;', '&#x1f7eb;', '&#x1f90d;', '&#x1f90e;', '&#x1f461;', '&#x1f46f;', '&#x1f462;', '&#x1f463;', '&#x1f464;', '&#x1f90f;', '&#x1f910;', '&#x1f911;', '&#x1f912;', '&#x1f913;', '&#x1f914;', '&#x1f915;', '&#x1f916;', '&#x1f917;', '&#x1f465;', '&#x1f376;', '&#x1f470;', '&#x1f377;', '&#x1f378;', '&#x1f918;', '&#x1f379;', '&#x1f37a;', '&#x1f466;', '&#x1f37b;', '&#x1f37c;', '&#x1f919;', '&#x1f37d;', '&#x1f37e;', '&#x1f37f;', '&#x1f467;', '&#x1f380;', '&#x1f91a;', '&#x1f381;', '&#x1f382;', '&#x1f383;', '&#x1f384;', '&#x1f1f5;', '&#x1f91b;', '&#x1f471;', '&#x1f17e;', '&#x1f1f6;', '&#x1f1f2;', '&#x1f17f;', '&#x1f91c;', '&#x1f91d;', '&#x1f385;', '&#x1f472;', '&#x1f386;', '&#x1f387;', '&#x1f388;', '&#x1f91e;', '&#x1f389;', '&#x1f38a;', '&#x1f38b;', '&#x1f38c;', '&#x1f38d;', '&#x1f91f;', '&#x1f920;', '&#x1f921;', '&#x1f922;', '&#x1f923;', '&#x1f924;', '&#x1f925;', '&#x1f38e;', '&#x1f38f;', '&#x1f390;', '&#x1f391;', '&#x1f392;', '&#x1f393;', '&#x1f396;', '&#x1f397;', '&#x1f399;', '&#x1f473;', '&#x1f39a;', '&#x1f39b;', '&#x1f39e;', '&#x1f39f;', '&#x1f3a0;', '&#x1f474;', '&#x1f3a1;', '&#x1f926;', '&#x1f927;', '&#x1f928;', '&#x1f929;', '&#x1f92a;', '&#x1f92b;', '&#x1f92c;', '&#x1f92d;', '&#x1f92e;', '&#x1f92f;', '&#x1f3a2;', '&#x1f3a3;', '&#x1f3a4;', '&#x1f3a5;', '&#x1f475;', '&#x1f930;', '&#x1f3a6;', '&#x1f3a7;', '&#x1f3a8;', '&#x1f3a9;', '&#x1f3aa;', '&#x1f931;', '&#x1f476;', '&#x1f3ab;', '&#x1f3ac;', '&#x1f3ad;', '&#x1f3ae;', '&#x1f932;', '&#x1f3af;', '&#x1f3b0;', '&#x1f3b1;', '&#x1f3b2;', '&#x1f3b3;', '&#x1f933;', '&#x1f3b4;', '&#x1f3b5;', '&#x1f3b6;', '&#x1f3b7;', '&#x1f3b8;', '&#x1f934;', '&#x1f3b9;', '&#x1f3ba;', '&#x1f3bb;', '&#x1f477;', '&#x1f3bc;', '&#x1f3bd;', '&#x1f3be;', '&#x1f3bf;', '&#x1f3c0;', '&#x1f478;', '&#x1f479;', '&#x1f47a;', '&#x1f47b;', '&#x1f3c1;', '&#x1f1e7;', '&#x1f1ee;', '&#x1f1ea;', '&#x1f935;', '&#x1f1f7;', '&#x1f47c;', '&#x1f47d;', '&#x1f47e;', '&#x1f47f;', '&#x1f936;', '&#x1f480;', '&#x1f1f1;', '&#x1f3c2;', '&#x1f18e;', '&#x1f191;', '&#x1f1e8;', '&#x1f1f9;', '&#x1f1ef;', '&#x1f192;', '&#x1f1ec;', '&#x1f193;', '&#x1f0cf;', '&#x1f194;', '&#x1f1f4;', '&#x1f1fa;', '&#x1f1eb;', '&#x1f195;', '&#x1f937;', '&#x1f196;', '&#x1f481;', '&#x1f197;', '&#x1f1ed;', '&#x1f3c3;', '&#x1f198;', '&#x1f1e9;', '&#x1f1fb;', '&#x1f1f0;', '&#x1f199;', '&#x1f1fc;', '&#x1f19a;', '&#x1f1fd;', '&#x1f1f8;', '&#x1f004;', '&#x1f1fe;', '&#x1f1e6;', '&#x1f938;', '&#x1f170;', '&#x1f171;', '&#x1f482;', '&#x1f1ff;', '&#x1f201;', '&#x1f202;', '&#x1f3c4;', '&#x1f3c5;', '&#x1f483;', '&#x1f484;', '&#x1f3c6;', '&#x1f21a;', '&#x1f22f;', '&#x1f232;', '&#x1f233;', '&#x1f485;', '&#x1f234;', '&#x1f939;', '&#x1f93a;', '&#x1f3c7;', '&#x1f3c8;', '&#x1f93c;', '&#x1f3c9;', '&#x1f235;', '&#x1f236;', '&#x1f237;', '&#x1f238;', '&#x1f239;', '&#x1f23a;', '&#x1f250;', '&#x1f251;', '&#x1f300;', '&#x1f301;', '&#x1f302;', '&#x1f303;', '&#x1f304;', '&#x1f486;', '&#x1f305;', '&#x1f306;', '&#x1f93d;', '&#x1f307;', '&#x1f308;', '&#x1f3ca;', '&#x1f309;', '&#x1f30a;', '&#x1f30b;', '&#x1f30c;', '&#x1f30d;', '&#x1f30e;', '&#x1f30f;', '&#x1f310;', '&#x1f311;', '&#x1f312;', '&#x1f313;', '&#x1f314;', '&#x1f487;', '&#x1f488;', '&#x1f93e;', '&#x1f93f;', '&#x1f940;', '&#x1f941;', '&#x1f942;', '&#x1f943;', '&#x1f944;', '&#x1f945;', '&#x1f947;', '&#x1f948;', '&#x1f949;', '&#x1f94a;', '&#x1f94b;', '&#x1f94c;', '&#x1f94d;', '&#x1f94e;', '&#x1f94f;', '&#x1f950;', '&#x1f951;', '&#x1f952;', '&#x1f953;', '&#x1f954;', '&#x1f955;', '&#x1f956;', '&#x1f957;', '&#x1f958;', '&#x1f959;', '&#x1f95a;', '&#x1f95b;', '&#x1f95c;', '&#x1f95d;', '&#x1f95e;', '&#x1f95f;', '&#x1f960;', '&#x1f961;', '&#x1f962;', '&#x1f963;', '&#x1f964;', '&#x1f965;', '&#x1f966;', '&#x1f967;', '&#x1f968;', '&#x1f969;', '&#x1f96a;', '&#x1f96b;', '&#x1f96c;', '&#x1f96d;', '&#x1f96e;', '&#x1f96f;', '&#x1f970;', '&#x1f971;', '&#x1f973;', '&#x1f974;', '&#x1f975;', '&#x1f976;', '&#x1f97a;', '&#x1f97b;', '&#x1f97c;', '&#x1f97d;', '&#x1f97e;', '&#x1f97f;', '&#x1f980;', '&#x1f981;', '&#x1f982;', '&#x1f983;', '&#x1f984;', '&#x1f985;', '&#x1f986;', '&#x1f987;', '&#x1f988;', '&#x1f989;', '&#x1f98a;', '&#x1f98b;', '&#x1f98c;', '&#x1f98d;', '&#x1f98e;', '&#x1f98f;', '&#x1f990;', '&#x1f991;', '&#x1f992;', '&#x1f993;', '&#x1f994;', '&#x1f995;', '&#x1f996;', '&#x1f997;', '&#x1f998;', '&#x1f999;', '&#x1f99a;', '&#x1f99b;', '&#x1f99c;', '&#x1f99d;', '&#x1f99e;', '&#x1f99f;', '&#x1f9a0;', '&#x1f9a1;', '&#x1f9a2;', '&#x1f9a5;', '&#x1f9a6;', '&#x1f9a7;', '&#x1f9a8;', '&#x1f9a9;', '&#x1f9aa;', '&#x1f9ae;', '&#x1f9af;', '&#x1f9b0;', '&#x1f9b1;', '&#x1f9b2;', '&#x1f9b3;', '&#x1f9b4;', '&#x1f489;', '&#x1f48a;', '&#x1f48b;', '&#x1f48c;', '&#x1f48d;', '&#x1f9b5;', '&#x1f48e;', '&#x1f48f;', '&#x1f490;', '&#x1f491;', '&#x1f492;', '&#x1f9b6;', '&#x1f9b7;', '&#x1f493;', '&#x1f494;', '&#x1f495;', '&#x1f496;', '&#x1f497;', '&#x1f498;', '&#x1f499;', '&#x1f49a;', '&#x1f49b;', '&#x1f49c;', '&#x1f49d;', '&#x1f49e;', '&#x1f49f;', '&#x1f4a0;', '&#x1f4a1;', '&#x1f4a2;', '&#x1f4a3;', '&#x1f9b8;', '&#x1f4a4;', '&#x1f4a5;', '&#x1f4a6;', '&#x1f4a7;', '&#x1f4a8;', '&#x1f4a9;', '&#x1f315;', '&#x1f316;', '&#x1f317;', '&#x1f318;', '&#x1f319;', '&#x1f4aa;', '&#x1f4ab;', '&#x1f4ac;', '&#x1f4ad;', '&#x1f4ae;', '&#x1f4af;', '&#x1f9b9;', '&#x1f9ba;', '&#x1f4b0;', '&#x1f4b1;', '&#x1f4b2;', '&#x1f4b3;', '&#x1f4b4;', '&#x1f9bb;', '&#x1f9bc;', '&#x1f9bd;', '&#x1f9be;', '&#x1f9bf;', '&#x1f9c0;', '&#x1f9c1;', '&#x1f9c2;', '&#x1f9c3;', '&#x1f9c4;', '&#x1f9c5;', '&#x1f9c6;', '&#x1f9c7;', '&#x1f9c8;', '&#x1f9c9;', '&#x1f9ca;', '&#x1f4b5;', '&#x1f4b6;', '&#x1f4b7;', '&#x1f4b8;', '&#x1f4b9;', '&#x1f4ba;', '&#x1f4bb;', '&#x1f4bc;', '&#x1f4bd;', '&#x1f4be;', '&#x1f4bf;', '&#x1f4c0;', '&#x1f4c1;', '&#x1f4c2;', '&#x1f4c3;', '&#x1f4c4;', '&#x1f4c5;', '&#x1f9cd;', '&#x1f4c6;', '&#x1f4c7;', '&#x1f4c8;', '&#x1f4c9;', '&#x1f4ca;', '&#x1f4cb;', '&#x1f4cc;', '&#x1f4cd;', '&#x1f4ce;', '&#x1f4cf;', '&#x1f4d0;', '&#x1f4d1;', '&#x1f4d2;', '&#x1f4d3;', '&#x1f4d4;', '&#x1f4d5;', '&#x1f4d6;', '&#x1f9ce;', '&#x1f4d7;', '&#x1f4d8;', '&#x1f4d9;', '&#x1f4da;', '&#x1f4db;', '&#x1f4dc;', '&#x1f4dd;', '&#x1f4de;', '&#x1f4df;', '&#x1f4e0;', '&#x1f4e1;', '&#x1f4e2;', '&#x1f4e3;', '&#x1f4e4;', '&#x1f4e5;', '&#x1f4e6;', '&#x1f4e7;', '&#x1f9cf;', '&#x1f9d0;', '&#x1f4e8;', '&#x1f4e9;', '&#x1f4ea;', '&#x1f4eb;', '&#x1f4ec;', '&#x1f4ed;', '&#x1f4ee;', '&#x1f4ef;', '&#x1f4f0;', '&#x1f4f1;', '&#x1f4f2;', '&#x1f4f3;', '&#x1f4f4;', '&#x1f4f5;', '&#x1f4f6;', '&#x1f4f7;', '&#x1f4f8;', '&#x1f4f9;', '&#x1f4fa;', '&#x1f4fb;', '&#x1f4fc;', '&#x1f9d1;', '&#x1f4fd;', '&#x1f4ff;', '&#x1f500;', '&#x1f501;', '&#x1f502;', '&#x1f9d2;', '&#x1f503;', '&#x1f504;', '&#x1f505;', '&#x1f506;', '&#x1f507;', '&#x1f9d3;', '&#x1f508;', '&#x1f509;', '&#x1f50a;', '&#x1f50b;', '&#x1f50c;', '&#x1f9d4;', '&#x1f50d;', '&#x1f50e;', '&#x1f50f;', '&#x1f510;', '&#x1f511;', '&#x1f9d5;', '&#x1f512;', '&#x1f513;', '&#x1f514;', '&#x1f515;', '&#x1f516;', '&#x1f517;', '&#x1f518;', '&#x1f519;', '&#x1f51a;', '&#x1f51b;', '&#x1f51c;', '&#x1f51d;', '&#x1f51e;', '&#x1f51f;', '&#x1f520;', '&#x1f521;', '&#x1f522;', '&#x1f9d6;', '&#x1f523;', '&#x1f524;', '&#x1f525;', '&#x1f526;', '&#x1f527;', '&#x1f528;', '&#x1f529;', '&#x1f52a;', '&#x1f52b;', '&#x1f52c;', '&#x1f52d;', '&#x1f52e;', '&#x1f52f;', '&#x1f530;', '&#x1f531;', '&#x1f532;', '&#x1f533;', '&#x1f9d7;', '&#x1f534;', '&#x1f535;', '&#x1f536;', '&#x1f537;', '&#x1f538;', '&#x1f539;', '&#x1f53a;', '&#x1f53b;', '&#x1f53c;', '&#x1f53d;', '&#x1f549;', '&#x1f54a;', '&#x1f54b;', '&#x1f54c;', '&#x1f54d;', '&#x1f54e;', '&#x1f550;', '&#x1f9d8;', '&#x1f551;', '&#x1f552;', '&#x1f553;', '&#x1f554;', '&#x1f555;', '&#x1f556;', '&#x1f557;', '&#x1f558;', '&#x1f559;', '&#x1f55a;', '&#x1f55b;', '&#x1f55c;', '&#x1f55d;', '&#x1f55e;', '&#x1f55f;', '&#x1f560;', '&#x1f561;', '&#x1f9d9;', '&#x1f562;', '&#x1f563;', '&#x1f564;', '&#x1f565;', '&#x1f566;', '&#x1f567;', '&#x1f56f;', '&#x1f570;', '&#x1f573;', '&#x1f3cb;', '&#x1f31a;', '&#x1f31b;', '&#x1f31c;', '&#x1f31d;', '&#x1f31e;', '&#x1f31f;', '&#x1f320;', '&#x1f9da;', '&#x1f321;', '&#x1f324;', '&#x1f325;', '&#x1f326;', '&#x1f327;', '&#x1f328;', '&#x1f329;', '&#x1f32a;', '&#x1f32b;', '&#x1f574;', '&#x1f468;', '&#x1f32c;', '&#x1f3cc;', '&#x1f3cd;', '&#x1f3ce;', '&#x1f3cf;', '&#x1f3d0;', '&#x1f9db;', '&#x1f3d1;', '&#x1f3d2;', '&#x1f3d3;', '&#x1f3d4;', '&#x1f3d5;', '&#x1f3d6;', '&#x1f3d7;', '&#x1f3d8;', '&#x1f3d9;', '&#x1f3da;', '&#x1f575;', '&#x1f576;', '&#x1f577;', '&#x1f578;', '&#x1f579;', '&#x1f3db;', '&#x1f3dc;', '&#x1f9dc;', '&#x1f3dd;', '&#x1f3de;', '&#x1f3df;', '&#x1f57a;', '&#x1f587;', '&#x1f58a;', '&#x1f58b;', '&#x1f58c;', '&#x1f58d;', '&#x1f3e0;', '&#x1f3e1;', '&#x1f3e2;', '&#x1f3e3;', '&#x1f3e4;', '&#x1f590;', '&#x1f3e5;', '&#x1f3e6;', '&#x1f9dd;', '&#x1f3e7;', '&#x1f3e8;', '&#x1f9de;', '&#x1f3e9;', '&#x1f595;', '&#x1f9df;', '&#x1f9e0;', '&#x1f9e1;', '&#x1f9e2;', '&#x1f9e3;', '&#x1f9e4;', '&#x1f9e5;', '&#x1f9e6;', '&#x1f9e7;', '&#x1f9e8;', '&#x1f9e9;', '&#x1f9ea;', '&#x1f9eb;', '&#x1f9ec;', '&#x1f9ed;', '&#x1f9ee;', '&#x1f9ef;', '&#x1f9f0;', '&#x1f9f1;', '&#x1f9f2;', '&#x1f9f3;', '&#x1f9f4;', '&#x1f9f5;', '&#x1f9f6;', '&#x1f9f7;', '&#x1f9f8;', '&#x1f9f9;', '&#x1f9fa;', '&#x1f9fb;', '&#x1f9fc;', '&#x1f9fd;', '&#x1f9fe;', '&#x1f9ff;', '&#x1fa70;', '&#x1fa71;', '&#x1fa72;', '&#x1fa73;', '&#x1fa78;', '&#x1fa79;', '&#x1fa7a;', '&#x1fa80;', '&#x1fa81;', '&#x1fa82;', '&#x1fa90;', '&#x1fa91;', '&#x1fa92;', '&#x1fa93;', '&#x1fa94;', '&#x1fa95;', '&#x1f3ea;', '&#x1f3eb;', '&#x1f3ec;', '&#x1f3ed;', '&#x1f3ee;', '&#x1f596;', '&#x1f5a4;', '&#x1f5a5;', '&#x1f5a8;', '&#x1f5b1;', '&#x1f5b2;', '&#x1f5bc;', '&#x1f5c2;', '&#x1f5c3;', '&#x1f5c4;', '&#x1f5d1;', '&#x1f5d2;', '&#x1f5d3;', '&#x1f5dc;', '&#x1f5dd;', '&#x1f5de;', '&#x1f5e1;', '&#x1f5e3;', '&#x1f5e8;', '&#x1f5ef;', '&#x1f5f3;', '&#x1f5fa;', '&#x1f5fb;', '&#x1f5fc;', '&#x1f5fd;', '&#x1f5fe;', '&#x1f5ff;', '&#x1f600;', '&#x1f601;', '&#x1f602;', '&#x1f603;', '&#x1f604;', '&#x1f605;', '&#x1f606;', '&#x1f607;', '&#x1f608;', '&#x1f609;', '&#x1f60a;', '&#x1f60b;', '&#x1f60c;', '&#x1f60d;', '&#x1f60e;', '&#x1f60f;', '&#x1f610;', '&#x1f611;', '&#x1f612;', '&#x1f613;', '&#x1f614;', '&#x1f615;', '&#x1f616;', '&#x1f617;', '&#x1f618;', '&#x1f619;', '&#x1f61a;', '&#x25ab;', '&#x2626;', '&#x262e;', '&#x262f;', '&#x2638;', '&#x2639;', '&#x263a;', '&#x2640;', '&#x2642;', '&#x2648;', '&#x2649;', '&#x264a;', '&#x264b;', '&#x264c;', '&#x264d;', '&#x264e;', '&#x264f;', '&#x2650;', '&#x2651;', '&#x2652;', '&#x2653;', '&#x265f;', '&#x2660;', '&#x2663;', '&#x2665;', '&#x2666;', '&#x2668;', '&#x267b;', '&#x267e;', '&#x267f;', '&#x2692;', '&#x2693;', '&#x2694;', '&#x2695;', '&#x2696;', '&#x2697;', '&#x2699;', '&#x269b;', '&#x269c;', '&#x26a0;', '&#x26a1;', '&#x26a7;', '&#x26aa;', '&#x26ab;', '&#x26b0;', '&#x26b1;', '&#x26bd;', '&#x26be;', '&#x26c4;', '&#x26c5;', '&#x26c8;', '&#x26ce;', '&#x26cf;', '&#x26d1;', '&#x26d3;', '&#x26d4;', '&#x26e9;', '&#x26ea;', '&#x26f0;', '&#x26f1;', '&#x26f2;', '&#x26f3;', '&#x26f4;', '&#x26f5;', '&#x2623;', '&#x2622;', '&#x2620;', '&#x261d;', '&#x2618;', '&#x26f7;', '&#x26f8;', '&#x2615;', '&#x2614;', '&#x2611;', '&#x260e;', '&#x2604;', '&#x2603;', '&#x2602;', '&#x2601;', '&#x2600;', '&#x25fe;', '&#x25fd;', '&#x25fc;', '&#x25fb;', '&#x25c0;', '&#x25b6;', '&#x262a;', '&#x25aa;', '&#x26f9;', '&#x26fa;', '&#x26fd;', '&#x2702;', '&#x2705;', '&#x2708;', '&#x2709;', '&#x24c2;', '&#x23fa;', '&#x23f9;', '&#x23f8;', '&#x23f3;', '&#x270a;', '&#x23f2;', '&#x23f1;', '&#x23f0;', '&#x23ef;', '&#x23ee;', '&#x270b;', '&#x23ed;', '&#x23ec;', '&#x23eb;', '&#x23ea;', '&#x23e9;', '&#x270c;', '&#x23cf;', '&#x2328;', '&#x231b;', '&#x231a;', '&#x21aa;', '&#x270d;', '&#x270f;', '&#x2712;', '&#x2714;', '&#x2716;', '&#x271d;', '&#x2721;', '&#x2728;', '&#x2733;', '&#x2734;', '&#x2744;', '&#x2747;', '&#x274c;', '&#x274e;', '&#x2753;', '&#x2754;', '&#x2755;', '&#x2757;', '&#x2763;', '&#x2764;', '&#x2795;', '&#x2796;', '&#x2797;', '&#x27a1;', '&#x27b0;', '&#x27bf;', '&#x2934;', '&#x2935;', '&#x21a9;', '&#x2b05;', '&#x2b06;', '&#x2b07;', '&#x2b1b;', '&#x2b1c;', '&#x2b50;', '&#x2b55;', '&#x2199;', '&#x3030;', '&#x303d;', '&#x2198;', '&#x2197;', '&#x3297;', '&#x3299;', '&#x2196;', '&#x2195;', '&#x2194;', '&#x2139;', '&#x2122;', '&#x2049;', '&#x203c;', '&#xe50a;' );
+	$partials = array( '&#x1f004;', '&#x1f0cf;', '&#x1f170;', '&#x1f171;', '&#x1f17e;', '&#x1f17f;', '&#x1f18e;', '&#x1f191;', '&#x1f192;', '&#x1f193;', '&#x1f194;', '&#x1f195;', '&#x1f196;', '&#x1f197;', '&#x1f198;', '&#x1f199;', '&#x1f19a;', '&#x1f1e6;', '&#x1f1e8;', '&#x1f1e9;', '&#x1f1ea;', '&#x1f1eb;', '&#x1f1ec;', '&#x1f1ee;', '&#x1f1f1;', '&#x1f1f2;', '&#x1f1f4;', '&#x1f1f6;', '&#x1f1f7;', '&#x1f1f8;', '&#x1f1f9;', '&#x1f1fa;', '&#x1f1fc;', '&#x1f1fd;', '&#x1f1ff;', '&#x1f1e7;', '&#x1f1ed;', '&#x1f1ef;', '&#x1f1f3;', '&#x1f1fb;', '&#x1f1fe;', '&#x1f1f0;', '&#x1f1f5;', '&#x1f201;', '&#x1f202;', '&#x1f21a;', '&#x1f22f;', '&#x1f232;', '&#x1f233;', '&#x1f234;', '&#x1f235;', '&#x1f236;', '&#x1f237;', '&#x1f238;', '&#x1f239;', '&#x1f23a;', '&#x1f250;', '&#x1f251;', '&#x1f300;', '&#x1f301;', '&#x1f302;', '&#x1f303;', '&#x1f304;', '&#x1f305;', '&#x1f306;', '&#x1f307;', '&#x1f308;', '&#x1f309;', '&#x1f30a;', '&#x1f30b;', '&#x1f30c;', '&#x1f30d;', '&#x1f30e;', '&#x1f30f;', '&#x1f310;', '&#x1f311;', '&#x1f312;', '&#x1f313;', '&#x1f314;', '&#x1f315;', '&#x1f316;', '&#x1f317;', '&#x1f318;', '&#x1f319;', '&#x1f31a;', '&#x1f31b;', '&#x1f31c;', '&#x1f31d;', '&#x1f31e;', '&#x1f31f;', '&#x1f320;', '&#x1f321;', '&#x1f324;', '&#x1f325;', '&#x1f326;', '&#x1f327;', '&#x1f328;', '&#x1f329;', '&#x1f32a;', '&#x1f32b;', '&#x1f32c;', '&#x1f32d;', '&#x1f32e;', '&#x1f32f;', '&#x1f330;', '&#x1f331;', '&#x1f332;', '&#x1f333;', '&#x1f334;', '&#x1f335;', '&#x1f336;', '&#x1f337;', '&#x1f338;', '&#x1f339;', '&#x1f33a;', '&#x1f33b;', '&#x1f33c;', '&#x1f33d;', '&#x1f33e;', '&#x1f33f;', '&#x1f340;', '&#x1f341;', '&#x1f342;', '&#x1f343;', '&#x1f344;', '&#x1f345;', '&#x1f346;', '&#x1f347;', '&#x1f348;', '&#x1f349;', '&#x1f34a;', '&#x1f34b;', '&#x1f34c;', '&#x1f34d;', '&#x1f34e;', '&#x1f34f;', '&#x1f350;', '&#x1f351;', '&#x1f352;', '&#x1f353;', '&#x1f354;', '&#x1f355;', '&#x1f356;', '&#x1f357;', '&#x1f358;', '&#x1f359;', '&#x1f35a;', '&#x1f35b;', '&#x1f35c;', '&#x1f35d;', '&#x1f35e;', '&#x1f35f;', '&#x1f360;', '&#x1f361;', '&#x1f362;', '&#x1f363;', '&#x1f364;', '&#x1f365;', '&#x1f366;', '&#x1f367;', '&#x1f368;', '&#x1f369;', '&#x1f36a;', '&#x1f36b;', '&#x1f36c;', '&#x1f36d;', '&#x1f36e;', '&#x1f36f;', '&#x1f370;', '&#x1f371;', '&#x1f372;', '&#x1f373;', '&#x1f374;', '&#x1f375;', '&#x1f376;', '&#x1f377;', '&#x1f378;', '&#x1f379;', '&#x1f37a;', '&#x1f37b;', '&#x1f37c;', '&#x1f37d;', '&#x1f37e;', '&#x1f37f;', '&#x1f380;', '&#x1f381;', '&#x1f382;', '&#x1f383;', '&#x1f384;', '&#x1f385;', '&#x1f3fb;', '&#x1f3fc;', '&#x1f3fd;', '&#x1f3fe;', '&#x1f3ff;', '&#x1f386;', '&#x1f387;', '&#x1f388;', '&#x1f389;', '&#x1f38a;', '&#x1f38b;', '&#x1f38c;', '&#x1f38d;', '&#x1f38e;', '&#x1f38f;', '&#x1f390;', '&#x1f391;', '&#x1f392;', '&#x1f393;', '&#x1f396;', '&#x1f397;', '&#x1f399;', '&#x1f39a;', '&#x1f39b;', '&#x1f39e;', '&#x1f39f;', '&#x1f3a0;', '&#x1f3a1;', '&#x1f3a2;', '&#x1f3a3;', '&#x1f3a4;', '&#x1f3a5;', '&#x1f3a6;', '&#x1f3a7;', '&#x1f3a8;', '&#x1f3a9;', '&#x1f3aa;', '&#x1f3ab;', '&#x1f3ac;', '&#x1f3ad;', '&#x1f3ae;', '&#x1f3af;', '&#x1f3b0;', '&#x1f3b1;', '&#x1f3b2;', '&#x1f3b3;', '&#x1f3b4;', '&#x1f3b5;', '&#x1f3b6;', '&#x1f3b7;', '&#x1f3b8;', '&#x1f3b9;', '&#x1f3ba;', '&#x1f3bb;', '&#x1f3bc;', '&#x1f3bd;', '&#x1f3be;', '&#x1f3bf;', '&#x1f3c0;', '&#x1f3c1;', '&#x1f3c2;', '&#x1f3c3;', '&#x200d;', '&#x2640;', '&#xfe0f;', '&#x2642;', '&#x1f3c4;', '&#x1f3c5;', '&#x1f3c6;', '&#x1f3c7;', '&#x1f3c8;', '&#x1f3c9;', '&#x1f3ca;', '&#x1f3cb;', '&#x1f3cc;', '&#x1f3cd;', '&#x1f3ce;', '&#x1f3cf;', '&#x1f3d0;', '&#x1f3d1;', '&#x1f3d2;', '&#x1f3d3;', '&#x1f3d4;', '&#x1f3d5;', '&#x1f3d6;', '&#x1f3d7;', '&#x1f3d8;', '&#x1f3d9;', '&#x1f3da;', '&#x1f3db;', '&#x1f3dc;', '&#x1f3dd;', '&#x1f3de;', '&#x1f3df;', '&#x1f3e0;', '&#x1f3e1;', '&#x1f3e2;', '&#x1f3e3;', '&#x1f3e4;', '&#x1f3e5;', '&#x1f3e6;', '&#x1f3e7;', '&#x1f3e8;', '&#x1f3e9;', '&#x1f3ea;', '&#x1f3eb;', '&#x1f3ec;', '&#x1f3ed;', '&#x1f3ee;', '&#x1f3ef;', '&#x1f3f0;', '&#x1f3f3;', '&#x26a7;', '&#x1f3f4;', '&#x2620;', '&#xe0067;', '&#xe0062;', '&#xe0065;', '&#xe006e;', '&#xe007f;', '&#xe0073;', '&#xe0063;', '&#xe0074;', '&#xe0077;', '&#xe006c;', '&#x1f3f5;', '&#x1f3f7;', '&#x1f3f8;', '&#x1f3f9;', '&#x1f3fa;', '&#x1f400;', '&#x1f401;', '&#x1f402;', '&#x1f403;', '&#x1f404;', '&#x1f405;', '&#x1f406;', '&#x1f407;', '&#x1f408;', '&#x1f409;', '&#x1f40a;', '&#x1f40b;', '&#x1f40c;', '&#x1f40d;', '&#x1f40e;', '&#x1f40f;', '&#x1f410;', '&#x1f411;', '&#x1f412;', '&#x1f413;', '&#x1f414;', '&#x1f415;', '&#x1f9ba;', '&#x1f416;', '&#x1f417;', '&#x1f418;', '&#x1f419;', '&#x1f41a;', '&#x1f41b;', '&#x1f41c;', '&#x1f41d;', '&#x1f41e;', '&#x1f41f;', '&#x1f420;', '&#x1f421;', '&#x1f422;', '&#x1f423;', '&#x1f424;', '&#x1f425;', '&#x1f426;', '&#x1f427;', '&#x1f428;', '&#x1f429;', '&#x1f42a;', '&#x1f42b;', '&#x1f42c;', '&#x1f42d;', '&#x1f42e;', '&#x1f42f;', '&#x1f430;', '&#x1f431;', '&#x1f432;', '&#x1f433;', '&#x1f434;', '&#x1f435;', '&#x1f436;', '&#x1f437;', '&#x1f438;', '&#x1f439;', '&#x1f43a;', '&#x1f43b;', '&#x1f43c;', '&#x1f43d;', '&#x1f43e;', '&#x1f43f;', '&#x1f440;', '&#x1f441;', '&#x1f5e8;', '&#x1f442;', '&#x1f443;', '&#x1f444;', '&#x1f445;', '&#x1f446;', '&#x1f447;', '&#x1f448;', '&#x1f449;', '&#x1f44a;', '&#x1f44b;', '&#x1f44c;', '&#x1f44d;', '&#x1f44e;', '&#x1f44f;', '&#x1f450;', '&#x1f451;', '&#x1f452;', '&#x1f453;', '&#x1f454;', '&#x1f455;', '&#x1f456;', '&#x1f457;', '&#x1f458;', '&#x1f459;', '&#x1f45a;', '&#x1f45b;', '&#x1f45c;', '&#x1f45d;', '&#x1f45e;', '&#x1f45f;', '&#x1f460;', '&#x1f461;', '&#x1f462;', '&#x1f463;', '&#x1f464;', '&#x1f465;', '&#x1f466;', '&#x1f467;', '&#x1f468;', '&#x1f4bb;', '&#x1f4bc;', '&#x1f527;', '&#x1f52c;', '&#x1f680;', '&#x1f692;', '&#x1f9af;', '&#x1f9b0;', '&#x1f9b1;', '&#x1f9b2;', '&#x1f9b3;', '&#x1f9bc;', '&#x1f9bd;', '&#x2695;', '&#x2696;', '&#x2708;', '&#x1f91d;', '&#x1f469;', '&#x2764;', '&#x1f48b;', '&#x1f46a;', '&#x1f46b;', '&#x1f46c;', '&#x1f46d;', '&#x1f46e;', '&#x1f46f;', '&#x1f470;', '&#x1f471;', '&#x1f472;', '&#x1f473;', '&#x1f474;', '&#x1f475;', '&#x1f476;', '&#x1f477;', '&#x1f478;', '&#x1f479;', '&#x1f47a;', '&#x1f47b;', '&#x1f47c;', '&#x1f47d;', '&#x1f47e;', '&#x1f47f;', '&#x1f480;', '&#x1f481;', '&#x1f482;', '&#x1f483;', '&#x1f484;', '&#x1f485;', '&#x1f486;', '&#x1f487;', '&#x1f488;', '&#x1f489;', '&#x1f48a;', '&#x1f48c;', '&#x1f48d;', '&#x1f48e;', '&#x1f48f;', '&#x1f490;', '&#x1f491;', '&#x1f492;', '&#x1f493;', '&#x1f494;', '&#x1f495;', '&#x1f496;', '&#x1f497;', '&#x1f498;', '&#x1f499;', '&#x1f49a;', '&#x1f49b;', '&#x1f49c;', '&#x1f49d;', '&#x1f49e;', '&#x1f49f;', '&#x1f4a0;', '&#x1f4a1;', '&#x1f4a2;', '&#x1f4a3;', '&#x1f4a4;', '&#x1f4a5;', '&#x1f4a6;', '&#x1f4a7;', '&#x1f4a8;', '&#x1f4a9;', '&#x1f4aa;', '&#x1f4ab;', '&#x1f4ac;', '&#x1f4ad;', '&#x1f4ae;', '&#x1f4af;', '&#x1f4b0;', '&#x1f4b1;', '&#x1f4b2;', '&#x1f4b3;', '&#x1f4b4;', '&#x1f4b5;', '&#x1f4b6;', '&#x1f4b7;', '&#x1f4b8;', '&#x1f4b9;', '&#x1f4ba;', '&#x1f4bd;', '&#x1f4be;', '&#x1f4bf;', '&#x1f4c0;', '&#x1f4c1;', '&#x1f4c2;', '&#x1f4c3;', '&#x1f4c4;', '&#x1f4c5;', '&#x1f4c6;', '&#x1f4c7;', '&#x1f4c8;', '&#x1f4c9;', '&#x1f4ca;', '&#x1f4cb;', '&#x1f4cc;', '&#x1f4cd;', '&#x1f4ce;', '&#x1f4cf;', '&#x1f4d0;', '&#x1f4d1;', '&#x1f4d2;', '&#x1f4d3;', '&#x1f4d4;', '&#x1f4d5;', '&#x1f4d6;', '&#x1f4d7;', '&#x1f4d8;', '&#x1f4d9;', '&#x1f4da;', '&#x1f4db;', '&#x1f4dc;', '&#x1f4dd;', '&#x1f4de;', '&#x1f4df;', '&#x1f4e0;', '&#x1f4e1;', '&#x1f4e2;', '&#x1f4e3;', '&#x1f4e4;', '&#x1f4e5;', '&#x1f4e6;', '&#x1f4e7;', '&#x1f4e8;', '&#x1f4e9;', '&#x1f4ea;', '&#x1f4eb;', '&#x1f4ec;', '&#x1f4ed;', '&#x1f4ee;', '&#x1f4ef;', '&#x1f4f0;', '&#x1f4f1;', '&#x1f4f2;', '&#x1f4f3;', '&#x1f4f4;', '&#x1f4f5;', '&#x1f4f6;', '&#x1f4f7;', '&#x1f4f8;', '&#x1f4f9;', '&#x1f4fa;', '&#x1f4fb;', '&#x1f4fc;', '&#x1f4fd;', '&#x1f4ff;', '&#x1f500;', '&#x1f501;', '&#x1f502;', '&#x1f503;', '&#x1f504;', '&#x1f505;', '&#x1f506;', '&#x1f507;', '&#x1f508;', '&#x1f509;', '&#x1f50a;', '&#x1f50b;', '&#x1f50c;', '&#x1f50d;', '&#x1f50e;', '&#x1f50f;', '&#x1f510;', '&#x1f511;', '&#x1f512;', '&#x1f513;', '&#x1f514;', '&#x1f515;', '&#x1f516;', '&#x1f517;', '&#x1f518;', '&#x1f519;', '&#x1f51a;', '&#x1f51b;', '&#x1f51c;', '&#x1f51d;', '&#x1f51e;', '&#x1f51f;', '&#x1f520;', '&#x1f521;', '&#x1f522;', '&#x1f523;', '&#x1f524;', '&#x1f525;', '&#x1f526;', '&#x1f528;', '&#x1f529;', '&#x1f52a;', '&#x1f52b;', '&#x1f52d;', '&#x1f52e;', '&#x1f52f;', '&#x1f530;', '&#x1f531;', '&#x1f532;', '&#x1f533;', '&#x1f534;', '&#x1f535;', '&#x1f536;', '&#x1f537;', '&#x1f538;', '&#x1f539;', '&#x1f53a;', '&#x1f53b;', '&#x1f53c;', '&#x1f53d;', '&#x1f549;', '&#x1f54a;', '&#x1f54b;', '&#x1f54c;', '&#x1f54d;', '&#x1f54e;', '&#x1f550;', '&#x1f551;', '&#x1f552;', '&#x1f553;', '&#x1f554;', '&#x1f555;', '&#x1f556;', '&#x1f557;', '&#x1f558;', '&#x1f559;', '&#x1f55a;', '&#x1f55b;', '&#x1f55c;', '&#x1f55d;', '&#x1f55e;', '&#x1f55f;', '&#x1f560;', '&#x1f561;', '&#x1f562;', '&#x1f563;', '&#x1f564;', '&#x1f565;', '&#x1f566;', '&#x1f567;', '&#x1f56f;', '&#x1f570;', '&#x1f573;', '&#x1f574;', '&#x1f575;', '&#x1f576;', '&#x1f577;', '&#x1f578;', '&#x1f579;', '&#x1f57a;', '&#x1f587;', '&#x1f58a;', '&#x1f58b;', '&#x1f58c;', '&#x1f58d;', '&#x1f590;', '&#x1f595;', '&#x1f596;', '&#x1f5a4;', '&#x1f5a5;', '&#x1f5a8;', '&#x1f5b1;', '&#x1f5b2;', '&#x1f5bc;', '&#x1f5c2;', '&#x1f5c3;', '&#x1f5c4;', '&#x1f5d1;', '&#x1f5d2;', '&#x1f5d3;', '&#x1f5dc;', '&#x1f5dd;', '&#x1f5de;', '&#x1f5e1;', '&#x1f5e3;', '&#x1f5ef;', '&#x1f5f3;', '&#x1f5fa;', '&#x1f5fb;', '&#x1f5fc;', '&#x1f5fd;', '&#x1f5fe;', '&#x1f5ff;', '&#x1f600;', '&#x1f601;', '&#x1f602;', '&#x1f603;', '&#x1f604;', '&#x1f605;', '&#x1f606;', '&#x1f607;', '&#x1f608;', '&#x1f609;', '&#x1f60a;', '&#x1f60b;', '&#x1f60c;', '&#x1f60d;', '&#x1f60e;', '&#x1f60f;', '&#x1f610;', '&#x1f611;', '&#x1f612;', '&#x1f613;', '&#x1f614;', '&#x1f615;', '&#x1f616;', '&#x1f617;', '&#x1f618;', '&#x1f619;', '&#x1f61a;', '&#x1f61b;', '&#x1f61c;', '&#x1f61d;', '&#x1f61e;', '&#x1f61f;', '&#x1f620;', '&#x1f621;', '&#x1f622;', '&#x1f623;', '&#x1f624;', '&#x1f625;', '&#x1f626;', '&#x1f627;', '&#x1f628;', '&#x1f629;', '&#x1f62a;', '&#x1f62b;', '&#x1f62c;', '&#x1f62d;', '&#x1f62e;', '&#x1f62f;', '&#x1f630;', '&#x1f631;', '&#x1f632;', '&#x1f633;', '&#x1f634;', '&#x1f635;', '&#x1f636;', '&#x1f637;', '&#x1f638;', '&#x1f639;', '&#x1f63a;', '&#x1f63b;', '&#x1f63c;', '&#x1f63d;', '&#x1f63e;', '&#x1f63f;', '&#x1f640;', '&#x1f641;', '&#x1f642;', '&#x1f643;', '&#x1f644;', '&#x1f645;', '&#x1f646;', '&#x1f647;', '&#x1f648;', '&#x1f649;', '&#x1f64a;', '&#x1f64b;', '&#x1f64c;', '&#x1f64d;', '&#x1f64e;', '&#x1f64f;', '&#x1f681;', '&#x1f682;', '&#x1f683;', '&#x1f684;', '&#x1f685;', '&#x1f686;', '&#x1f687;', '&#x1f688;', '&#x1f689;', '&#x1f68a;', '&#x1f68b;', '&#x1f68c;', '&#x1f68d;', '&#x1f68e;', '&#x1f68f;', '&#x1f690;', '&#x1f691;', '&#x1f693;', '&#x1f694;', '&#x1f695;', '&#x1f696;', '&#x1f697;', '&#x1f698;', '&#x1f699;', '&#x1f69a;', '&#x1f69b;', '&#x1f69c;', '&#x1f69d;', '&#x1f69e;', '&#x1f69f;', '&#x1f6a0;', '&#x1f6a1;', '&#x1f6a2;', '&#x1f6a3;', '&#x1f6a4;', '&#x1f6a5;', '&#x1f6a6;', '&#x1f6a7;', '&#x1f6a8;', '&#x1f6a9;', '&#x1f6aa;', '&#x1f6ab;', '&#x1f6ac;', '&#x1f6ad;', '&#x1f6ae;', '&#x1f6af;', '&#x1f6b0;', '&#x1f6b1;', '&#x1f6b2;', '&#x1f6b3;', '&#x1f6b4;', '&#x1f6b5;', '&#x1f6b6;', '&#x1f6b7;', '&#x1f6b8;', '&#x1f6b9;', '&#x1f6ba;', '&#x1f6bb;', '&#x1f6bc;', '&#x1f6bd;', '&#x1f6be;', '&#x1f6bf;', '&#x1f6c0;', '&#x1f6c1;', '&#x1f6c2;', '&#x1f6c3;', '&#x1f6c4;', '&#x1f6c5;', '&#x1f6cb;', '&#x1f6cc;', '&#x1f6cd;', '&#x1f6ce;', '&#x1f6cf;', '&#x1f6d0;', '&#x1f6d1;', '&#x1f6d2;', '&#x1f6d5;', '&#x1f6e0;', '&#x1f6e1;', '&#x1f6e2;', '&#x1f6e3;', '&#x1f6e4;', '&#x1f6e5;', '&#x1f6e9;', '&#x1f6eb;', '&#x1f6ec;', '&#x1f6f0;', '&#x1f6f3;', '&#x1f6f4;', '&#x1f6f5;', '&#x1f6f6;', '&#x1f6f7;', '&#x1f6f8;', '&#x1f6f9;', '&#x1f6fa;', '&#x1f7e0;', '&#x1f7e1;', '&#x1f7e2;', '&#x1f7e3;', '&#x1f7e4;', '&#x1f7e5;', '&#x1f7e6;', '&#x1f7e7;', '&#x1f7e8;', '&#x1f7e9;', '&#x1f7ea;', '&#x1f7eb;', '&#x1f90d;', '&#x1f90e;', '&#x1f90f;', '&#x1f910;', '&#x1f911;', '&#x1f912;', '&#x1f913;', '&#x1f914;', '&#x1f915;', '&#x1f916;', '&#x1f917;', '&#x1f918;', '&#x1f919;', '&#x1f91a;', '&#x1f91b;', '&#x1f91c;', '&#x1f91e;', '&#x1f91f;', '&#x1f920;', '&#x1f921;', '&#x1f922;', '&#x1f923;', '&#x1f924;', '&#x1f925;', '&#x1f926;', '&#x1f927;', '&#x1f928;', '&#x1f929;', '&#x1f92a;', '&#x1f92b;', '&#x1f92c;', '&#x1f92d;', '&#x1f92e;', '&#x1f92f;', '&#x1f930;', '&#x1f931;', '&#x1f932;', '&#x1f933;', '&#x1f934;', '&#x1f935;', '&#x1f936;', '&#x1f937;', '&#x1f938;', '&#x1f939;', '&#x1f93a;', '&#x1f93c;', '&#x1f93d;', '&#x1f93e;', '&#x1f93f;', '&#x1f940;', '&#x1f941;', '&#x1f942;', '&#x1f943;', '&#x1f944;', '&#x1f945;', '&#x1f947;', '&#x1f948;', '&#x1f949;', '&#x1f94a;', '&#x1f94b;', '&#x1f94c;', '&#x1f94d;', '&#x1f94e;', '&#x1f94f;', '&#x1f950;', '&#x1f951;', '&#x1f952;', '&#x1f953;', '&#x1f954;', '&#x1f955;', '&#x1f956;', '&#x1f957;', '&#x1f958;', '&#x1f959;', '&#x1f95a;', '&#x1f95b;', '&#x1f95c;', '&#x1f95d;', '&#x1f95e;', '&#x1f95f;', '&#x1f960;', '&#x1f961;', '&#x1f962;', '&#x1f963;', '&#x1f964;', '&#x1f965;', '&#x1f966;', '&#x1f967;', '&#x1f968;', '&#x1f969;', '&#x1f96a;', '&#x1f96b;', '&#x1f96c;', '&#x1f96d;', '&#x1f96e;', '&#x1f96f;', '&#x1f970;', '&#x1f971;', '&#x1f973;', '&#x1f974;', '&#x1f975;', '&#x1f976;', '&#x1f97a;', '&#x1f97b;', '&#x1f97c;', '&#x1f97d;', '&#x1f97e;', '&#x1f97f;', '&#x1f980;', '&#x1f981;', '&#x1f982;', '&#x1f983;', '&#x1f984;', '&#x1f985;', '&#x1f986;', '&#x1f987;', '&#x1f988;', '&#x1f989;', '&#x1f98a;', '&#x1f98b;', '&#x1f98c;', '&#x1f98d;', '&#x1f98e;', '&#x1f98f;', '&#x1f990;', '&#x1f991;', '&#x1f992;', '&#x1f993;', '&#x1f994;', '&#x1f995;', '&#x1f996;', '&#x1f997;', '&#x1f998;', '&#x1f999;', '&#x1f99a;', '&#x1f99b;', '&#x1f99c;', '&#x1f99d;', '&#x1f99e;', '&#x1f99f;', '&#x1f9a0;', '&#x1f9a1;', '&#x1f9a2;', '&#x1f9a5;', '&#x1f9a6;', '&#x1f9a7;', '&#x1f9a8;', '&#x1f9a9;', '&#x1f9aa;', '&#x1f9ae;', '&#x1f9b4;', '&#x1f9b5;', '&#x1f9b6;', '&#x1f9b7;', '&#x1f9b8;', '&#x1f9b9;', '&#x1f9bb;', '&#x1f9be;', '&#x1f9bf;', '&#x1f9c0;', '&#x1f9c1;', '&#x1f9c2;', '&#x1f9c3;', '&#x1f9c4;', '&#x1f9c5;', '&#x1f9c6;', '&#x1f9c7;', '&#x1f9c8;', '&#x1f9c9;', '&#x1f9ca;', '&#x1f9cd;', '&#x1f9ce;', '&#x1f9cf;', '&#x1f9d0;', '&#x1f9d1;', '&#x1f9d2;', '&#x1f9d3;', '&#x1f9d4;', '&#x1f9d5;', '&#x1f9d6;', '&#x1f9d7;', '&#x1f9d8;', '&#x1f9d9;', '&#x1f9da;', '&#x1f9db;', '&#x1f9dc;', '&#x1f9dd;', '&#x1f9de;', '&#x1f9df;', '&#x1f9e0;', '&#x1f9e1;', '&#x1f9e2;', '&#x1f9e3;', '&#x1f9e4;', '&#x1f9e5;', '&#x1f9e6;', '&#x1f9e7;', '&#x1f9e8;', '&#x1f9e9;', '&#x1f9ea;', '&#x1f9eb;', '&#x1f9ec;', '&#x1f9ed;', '&#x1f9ee;', '&#x1f9ef;', '&#x1f9f0;', '&#x1f9f1;', '&#x1f9f2;', '&#x1f9f3;', '&#x1f9f4;', '&#x1f9f5;', '&#x1f9f6;', '&#x1f9f7;', '&#x1f9f8;', '&#x1f9f9;', '&#x1f9fa;', '&#x1f9fb;', '&#x1f9fc;', '&#x1f9fd;', '&#x1f9fe;', '&#x1f9ff;', '&#x1fa70;', '&#x1fa71;', '&#x1fa72;', '&#x1fa73;', '&#x1fa78;', '&#x1fa79;', '&#x1fa7a;', '&#x1fa80;', '&#x1fa81;', '&#x1fa82;', '&#x1fa90;', '&#x1fa91;', '&#x1fa92;', '&#x1fa93;', '&#x1fa94;', '&#x1fa95;', '&#x203c;', '&#x2049;', '&#x2122;', '&#x2139;', '&#x2194;', '&#x2195;', '&#x2196;', '&#x2197;', '&#x2198;', '&#x2199;', '&#x21a9;', '&#x21aa;', '&#x20e3;', '&#x231a;', '&#x231b;', '&#x2328;', '&#x23cf;', '&#x23e9;', '&#x23ea;', '&#x23eb;', '&#x23ec;', '&#x23ed;', '&#x23ee;', '&#x23ef;', '&#x23f0;', '&#x23f1;', '&#x23f2;', '&#x23f3;', '&#x23f8;', '&#x23f9;', '&#x23fa;', '&#x24c2;', '&#x25aa;', '&#x25ab;', '&#x25b6;', '&#x25c0;', '&#x25fb;', '&#x25fc;', '&#x25fd;', '&#x25fe;', '&#x2600;', '&#x2601;', '&#x2602;', '&#x2603;', '&#x2604;', '&#x260e;', '&#x2611;', '&#x2614;', '&#x2615;', '&#x2618;', '&#x261d;', '&#x2622;', '&#x2623;', '&#x2626;', '&#x262a;', '&#x262e;', '&#x262f;', '&#x2638;', '&#x2639;', '&#x263a;', '&#x2648;', '&#x2649;', '&#x264a;', '&#x264b;', '&#x264c;', '&#x264d;', '&#x264e;', '&#x264f;', '&#x2650;', '&#x2651;', '&#x2652;', '&#x2653;', '&#x265f;', '&#x2660;', '&#x2663;', '&#x2665;', '&#x2666;', '&#x2668;', '&#x267b;', '&#x267e;', '&#x267f;', '&#x2692;', '&#x2693;', '&#x2694;', '&#x2697;', '&#x2699;', '&#x269b;', '&#x269c;', '&#x26a0;', '&#x26a1;', '&#x26aa;', '&#x26ab;', '&#x26b0;', '&#x26b1;', '&#x26bd;', '&#x26be;', '&#x26c4;', '&#x26c5;', '&#x26c8;', '&#x26ce;', '&#x26cf;', '&#x26d1;', '&#x26d3;', '&#x26d4;', '&#x26e9;', '&#x26ea;', '&#x26f0;', '&#x26f1;', '&#x26f2;', '&#x26f3;', '&#x26f4;', '&#x26f5;', '&#x26f7;', '&#x26f8;', '&#x26f9;', '&#x26fa;', '&#x26fd;', '&#x2702;', '&#x2705;', '&#x2709;', '&#x270a;', '&#x270b;', '&#x270c;', '&#x270d;', '&#x270f;', '&#x2712;', '&#x2714;', '&#x2716;', '&#x271d;', '&#x2721;', '&#x2728;', '&#x2733;', '&#x2734;', '&#x2744;', '&#x2747;', '&#x274c;', '&#x274e;', '&#x2753;', '&#x2754;', '&#x2755;', '&#x2757;', '&#x2763;', '&#x2795;', '&#x2796;', '&#x2797;', '&#x27a1;', '&#x27b0;', '&#x27bf;', '&#x2934;', '&#x2935;', '&#x2b05;', '&#x2b06;', '&#x2b07;', '&#x2b1b;', '&#x2b1c;', '&#x2b50;', '&#x2b55;', '&#x3030;', '&#x303d;', '&#x3297;', '&#x3299;', '&#xe50a;' );
+	// END: emoji arrays
+
+	if ( 'entities' === $type ) {
+		return $entities;
+	}
+
+	return $partials;
+}
+
+/**
  * Shorten a URL, to be used as link text.
  *
  * @since 1.2.0
@@ -5290,7 +5879,7 @@ function wp_staticize_emoji_for_email( $mail ) {
  * @return string Shortened URL.
  */
 function url_shorten( $url, $length = 35 ) {
-	$stripped = str_replace( array( 'https://', 'http://', 'www.' ), '', $url );
+	$stripped  = str_replace( array( 'https://', 'http://', 'www.' ), '', $url );
 	$short_url = untrailingslashit( $stripped );
 
 	if ( strlen( $short_url ) > $length ) {
@@ -5316,7 +5905,7 @@ function sanitize_hex_color( $color ) {
 	}
 
 	// 3 or 6 hex digits, or the empty string.
-	if ( preg_match('|^#([A-Fa-f0-9]{3}){1,2}$|', $color ) ) {
+	if ( preg_match( '|^#([A-Fa-f0-9]{3}){1,2}$|', $color ) ) {
 		return $color;
 	}
 }
@@ -5357,7 +5946,8 @@ function sanitize_hex_color_no_hash( $color ) {
  * @return string
  */
 function maybe_hash_hex_color( $color ) {
-	if ( $unhashed = sanitize_hex_color_no_hash( $color ) ) {
+	$unhashed = sanitize_hex_color_no_hash( $color );
+	if ( $unhashed ) {
 		return '#' . $unhashed;
 	}
 

@@ -2,9 +2,7 @@
  * Functions for ajaxified updates, deletions and installs inside the WordPress admin.
  *
  * @version 4.2.0
- *
- * @package WordPress
- * @subpackage Administration
+ * @output wp-admin/js/updates.js
  */
 
 /* global pagenow */
@@ -38,7 +36,7 @@
 	 *
 	 * @since 4.2.0
 	 *
-	 * @type {object}
+	 * @namespace wp.updates
 	 */
 	wp.updates = {};
 
@@ -84,19 +82,19 @@
 	 * @since 4.2.0
 	 * @since 4.6.0 Added `available` property to indicate whether credentials have been provided.
 	 *
-	 * @type {object} filesystemCredentials                    Holds filesystem credentials.
-	 * @type {object} filesystemCredentials.ftp                Holds FTP credentials.
-	 * @type {string} filesystemCredentials.ftp.host           FTP host. Default empty string.
-	 * @type {string} filesystemCredentials.ftp.username       FTP user name. Default empty string.
-	 * @type {string} filesystemCredentials.ftp.password       FTP password. Default empty string.
-	 * @type {string} filesystemCredentials.ftp.connectionType Type of FTP connection. 'ssh', 'ftp', or 'ftps'.
-	 *                                                         Default empty string.
-	 * @type {object} filesystemCredentials.ssh                Holds SSH credentials.
-	 * @type {string} filesystemCredentials.ssh.publicKey      The public key. Default empty string.
-	 * @type {string} filesystemCredentials.ssh.privateKey     The private key. Default empty string.
-	 * @type {string} filesystemCredentials.fsNonce            Filesystem credentials form nonce.
-	 * @type {bool}   filesystemCredentials.available          Whether filesystem credentials have been provided.
-	 *                                                         Default 'false'.
+	 * @type {Object}
+	 * @property {Object} filesystemCredentials.ftp                Holds FTP credentials.
+	 * @property {string} filesystemCredentials.ftp.host           FTP host. Default empty string.
+	 * @property {string} filesystemCredentials.ftp.username       FTP user name. Default empty string.
+	 * @property {string} filesystemCredentials.ftp.password       FTP password. Default empty string.
+	 * @property {string} filesystemCredentials.ftp.connectionType Type of FTP connection. 'ssh', 'ftp', or 'ftps'.
+	 *                                                             Default empty string.
+	 * @property {Object} filesystemCredentials.ssh                Holds SSH credentials.
+	 * @property {string} filesystemCredentials.ssh.publicKey      The public key. Default empty string.
+	 * @property {string} filesystemCredentials.ssh.privateKey     The private key. Default empty string.
+	 * @property {string} filesystemCredentials.fsNonce            Filesystem credentials form nonce.
+	 * @property {bool}   filesystemCredentials.available          Whether filesystem credentials have been provided.
+	 *                                                             Default 'false'.
 	 */
 	wp.updates.filesystemCredentials = {
 		ftp:       {
@@ -128,7 +126,7 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @type {function} A function that lazily-compiles the template requested.
+	 * @type {function}
 	 */
 	wp.updates.adminNotice = wp.template( 'wp-updates-admin-notice' );
 
@@ -170,7 +168,9 @@
 	 *
 	 */
 	wp.updates.addAdminNotice = function( data ) {
-		var $notice = $( data.selector ), $adminNotice;
+		var $notice = $( data.selector ),
+			$headerEnd = $( '.wp-header-end' ),
+			$adminNotice;
 
 		delete data.selector;
 		$adminNotice = wp.updates.adminNotice( data );
@@ -182,8 +182,14 @@
 
 		if ( $notice.length ) {
 			$notice.replaceWith( $adminNotice );
+		} else if ( $headerEnd.length ) {
+			$headerEnd.after( $adminNotice );
 		} else {
-			$( '.wrap' ).find( '> h1' ).after( $adminNotice );
+			if ( 'customize' === pagenow ) {
+				$( '.customize-themes-notifications' ).append( $adminNotice );
+			} else {
+				$( '.wrap' ).find( '> h1' ).after( $adminNotice );
+			}
 		}
 
 		$document.trigger( 'wp-updates-notice-added' );
@@ -256,7 +262,8 @@
 
 		if ( 'undefined' !== typeof response.debug && window.console && window.console.log ) {
 			_.map( response.debug, function( message ) {
-				window.console.log( $( '<p />' ).html( message ).text() );
+				// Remove all HTML tags and write a message to the console.
+				window.console.log( wp.sanitize.stripTagsAndEncodeText( message ) );
 			} );
 		}
 	};
@@ -403,7 +410,6 @@
 	 * @since 4.2.0
 	 * @since 4.6.0 More accurately named `updatePluginSuccess`.
 	 *
-	 * @typedef {object} updatePluginSuccess
 	 * @param {object} response            Response from the server.
 	 * @param {string} response.slug       Slug of the plugin to be updated.
 	 * @param {string} response.plugin     Basename of the plugin to be updated.
@@ -448,7 +454,6 @@
 	 * @since 4.2.0
 	 * @since 4.6.0 More accurately named `updatePluginError`.
 	 *
-	 * @typedef {object} updatePluginError
 	 * @param {object}  response              Response from the server.
 	 * @param {string}  response.slug         Slug of the plugin to be updated.
 	 * @param {string}  response.plugin       Basename of the plugin to be updated.
@@ -570,7 +575,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} installPluginSuccess
 	 * @param {object} response             Response from the server.
 	 * @param {string} response.slug        Slug of the installed plugin.
 	 * @param {string} response.pluginName  Name of the installed plugin.
@@ -606,7 +610,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} installPluginError
 	 * @param {object}  response              Response from the server.
 	 * @param {string}  response.slug         Slug of the plugin to be installed.
 	 * @param {string=} response.pluginName   Optional. Name of the plugin to be installed.
@@ -657,7 +660,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} installImporterSuccess
 	 * @param {object} response             Response from the server.
 	 * @param {string} response.slug        Slug of the installed plugin.
 	 * @param {string} response.pluginName  Name of the installed plugin.
@@ -689,7 +691,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} installImporterError
 	 * @param {object}  response              Response from the server.
 	 * @param {string}  response.slug         Slug of the plugin to be installed.
 	 * @param {string=} response.pluginName   Optional. Name of the plugin to be installed.
@@ -718,7 +719,7 @@
 		$installLink
 			.removeClass( 'updating-message' )
 			.text( wp.updates.l10n.installNow )
-			.attr( 'aria-label', wp.updates.l10n.installNowLabel.replace( '%s', pluginName ) );
+			.attr( 'aria-label', wp.updates.l10n.pluginInstallNowLabel.replace( '%s', pluginName ) );
 
 		wp.a11y.speak( errorMessage, 'assertive' );
 
@@ -764,8 +765,7 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} deletePluginSuccess
-	 * @param {object} response            Response from the server.
+	 * @param {Object} response            Response from the server.
 	 * @param {string} response.slug       Slug of the plugin that was deleted.
 	 * @param {string} response.plugin     Base name of the plugin that was deleted.
 	 * @param {string} response.pluginName Name of the plugin that was deleted.
@@ -779,7 +779,11 @@
 				$pluginRow       = $( this ),
 				columnCount      = $form.find( 'thead th:not(.hidden), thead td' ).length,
 				pluginDeletedRow = wp.template( 'item-deleted-row' ),
-				/** @type {object} plugins Base names of plugins in their different states. */
+				/**
+				 * Plugins Base names of plugins in their different states.
+				 *
+				 * @type {Object}
+				 */
 				plugins          = settings.plugins;
 
 			// Add a success message after deleting a plugin.
@@ -854,7 +858,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} deletePluginError
 	 * @param {object}  response              Response from the server.
 	 * @param {string}  response.slug         Slug of the plugin to be deleted.
 	 * @param {string}  response.plugin       Base name of the plugin to be deleted
@@ -930,6 +933,17 @@
 		if ( 'themes-network' === pagenow ) {
 			$notice = $( '[data-slug="' + args.slug + '"]' ).find( '.update-message' ).removeClass( 'notice-error' ).addClass( 'updating-message notice-warning' ).find( 'p' );
 
+		} else if ( 'customize' === pagenow ) {
+
+			// Update the theme details UI.
+			$notice = $( '[data-slug="' + args.slug + '"].notice' ).removeClass( 'notice-large' );
+
+			$notice.find( 'h3' ).remove();
+
+			// Add the top-level UI, and update both.
+			$notice = $notice.add( $( '#customize-control-installed_theme_' + args.slug ).find( '.update-message' ) );
+			$notice = $notice.addClass( 'updating-message' ).find( 'p' );
+
 		} else {
 			$notice = $( '#update-theme' ).closest( '.notice' ).removeClass( 'notice-large' );
 
@@ -956,7 +970,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} updateThemeSuccess
 	 * @param {object} response
 	 * @param {string} response.slug       Slug of the theme to be updated.
 	 * @param {object} response.theme      Updated theme.
@@ -972,7 +985,18 @@
 			},
 			$notice, newText;
 
-		if ( 'themes-network' === pagenow ) {
+		if ( 'customize' === pagenow ) {
+			$theme = $( '.updating-message' ).siblings( '.theme-name' );
+
+			if ( $theme.length ) {
+
+				// Update the version number in the row.
+				newText = $theme.html().replace( response.oldVersion, response.newVersion );
+				$theme.html( newText );
+			}
+
+			$notice = $( '.theme-info .notice' ).add( wp.customize.control( 'installed_theme_' + response.slug ).container.find( '.theme' ).find( '.update-message' ) );
+		} else if ( 'themes-network' === pagenow ) {
 			$notice = $theme.find( '.update-message' );
 
 			// Update the version number in the row.
@@ -997,7 +1021,7 @@
 		$document.trigger( 'wp-theme-update-success', response );
 
 		// Show updated message after modal re-rendered.
-		if ( isModalOpen ) {
+		if ( isModalOpen && 'customize' !== pagenow ) {
 			$( '.theme-info .theme-author' ).after( wp.updates.adminNotice( updatedMessage ) );
 		}
 	};
@@ -1007,7 +1031,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} updateThemeError
 	 * @param {object} response              Response from the server.
 	 * @param {string} response.slug         Slug of the theme to be updated.
 	 * @param {string} response.errorCode    Error code for the error that occurred.
@@ -1024,6 +1047,10 @@
 
 		if ( wp.updates.maybeHandleCredentialError( response, 'update-theme' ) ) {
 			return;
+		}
+
+		if ( 'customize' === pagenow ) {
+			$theme = wp.customize.control( 'installed_theme_' + response.slug ).container.find( '.theme' );
 		}
 
 		if ( 'themes-network' === pagenow ) {
@@ -1089,7 +1116,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} installThemeSuccess
 	 * @param {object} response              Response from the server.
 	 * @param {string} response.slug         Slug of the theme to be installed.
 	 * @param {string} response.customizeUrl URL to the Customizer for the just installed theme.
@@ -1140,7 +1166,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} installThemeError
 	 * @param {object} response              Response from the server.
 	 * @param {string} response.slug         Slug of the theme to be installed.
 	 * @param {string} response.errorCode    Error code for the error that occurred.
@@ -1162,12 +1187,23 @@
 			return;
 		}
 
-		if ( $document.find( 'body' ).hasClass( 'full-overlay-active' ) ) {
-			$button = $( '.theme-install[data-slug="' + response.slug + '"]' );
-			$card   = $( '.install-theme-info' ).prepend( $message );
+		if ( 'customize' === pagenow ) {
+			if ( $document.find( 'body' ).hasClass( 'modal-open' ) ) {
+				$button = $( '.theme-install[data-slug="' + response.slug + '"]' );
+				$card   = $( '.theme-overlay .theme-info' ).prepend( $message );
+			} else {
+				$button = $( '.theme-install[data-slug="' + response.slug + '"]' );
+				$card   = $button.closest( '.theme' ).addClass( 'theme-install-failed' ).append( $message );
+			}
+			wp.customize.notifications.remove( 'theme_installing' );
 		} else {
-			$card   = $( '[data-slug="' + response.slug + '"]' ).removeClass( 'focus' ).addClass( 'theme-install-failed' ).append( $message );
-			$button = $card.find( '.theme-install' );
+			if ( $document.find( 'body' ).hasClass( 'full-overlay-active' ) ) {
+				$button = $( '.theme-install[data-slug="' + response.slug + '"]' );
+				$card   = $( '.install-theme-info' ).prepend( $message );
+			} else {
+				$card   = $( '[data-slug="' + response.slug + '"]' ).removeClass( 'focus' ).addClass( 'theme-install-failed' ).append( $message );
+				$button = $card.find( '.theme-install' );
+			}
 		}
 
 		$button
@@ -1227,7 +1263,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} deleteThemeSuccess
 	 * @param {object} response      Response from the server.
 	 * @param {string} response.slug Slug of the theme that was deleted.
 	 */
@@ -1286,7 +1321,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} deleteThemeError
 	 * @param {object} response              Response from the server.
 	 * @param {string} response.slug         Slug of the theme to be deleted.
 	 * @param {string} response.errorCode    Error code for the error that occurred.
@@ -1560,7 +1594,6 @@
 	 *
 	 * @since 4.6.0
 	 *
-	 * @typedef {object} maybeHandleCredentialError
 	 * @param {object} response              Response from the server.
 	 * @param {string} response.errorCode    Error code for the error that occurred.
 	 * @param {string} response.errorMessage The error that occurred.
@@ -1899,7 +1932,7 @@
 					$button
 						.removeClass( 'updating-message' )
 						.text( wp.updates.l10n.installNow )
-						.attr( 'aria-label', wp.updates.l10n.installNowLabel.replace( '%s', pluginName ) );
+						.attr( 'aria-label', wp.updates.l10n.pluginInstallNowLabel.replace( '%s', pluginName ) );
 
 					wp.a11y.speak( wp.updates.l10n.updateCancel, 'polite' );
 				} );
@@ -1996,7 +2029,7 @@
 		 *
 		 * @param {Event} event Event interface.
 		 */
-		$bulkActionForm.on( 'click', '[type="submit"]', function( event ) {
+		$bulkActionForm.on( 'click', '[type="submit"]:not([name="clear-recent-list"])', function( event ) {
 			var bulkAction    = $( event.target ).siblings( 'select' ).val(),
 				itemsSelected = $bulkActionForm.find( 'input[name="checked[]"]:checked' ),
 				success       = 0,
@@ -2203,7 +2236,7 @@
 					wp.a11y.speak( wp.updates.l10n.pluginsFound.replace( '%d', response.count ) );
 				}
 			} );
-		}, 500 ) );
+		}, 1000 ) );
 
 		if ( $pluginSearch.length ) {
 			$pluginSearch.attr( 'aria-describedby', 'live-search-desc' );
@@ -2292,6 +2325,16 @@
 		} );
 
 		/**
+		 * Trigger a search event when the "Try Again" button is clicked.
+		 *
+		 * @since 4.9.0
+		 */
+		$document.on( 'click', '.try-again', function( event ) {
+			event.preventDefault();
+			$pluginInstallSearch.trigger( 'input' );
+		} );
+
+		/**
 		 * Trigger a search event when the search type gets changed.
 		 *
 		 * @since 4.6.0
@@ -2373,7 +2416,7 @@
 		 */
 		$( window ).on( 'message', function( event ) {
 			var originalEvent  = event.originalEvent,
-				expectedOrigin = document.location.protocol + '//' + document.location.hostname,
+				expectedOrigin = document.location.protocol + '//' + document.location.host,
 				message;
 
 			if ( originalEvent.origin !== expectedOrigin ) {
@@ -2386,7 +2429,7 @@
 				return;
 			}
 
-			if ( 'undefined' === typeof message.action ) {
+			if ( ! message || 'undefined' === typeof message.action ) {
 				return;
 			}
 

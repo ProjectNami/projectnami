@@ -222,6 +222,8 @@ function use_codepress() {
  *
  * @deprecated 3.1.0 Use get_users()
  *
+ * @global wpdb $wpdb WordPress database abstraction object.
+ *
  * @return array List of user IDs.
  */
 function get_author_user_ids() {
@@ -240,6 +242,8 @@ function get_author_user_ids() {
  * Gets author users who can edit posts.
  *
  * @deprecated 3.1.0 Use get_users()
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int $user_id User ID.
  * @return array|bool List of editable authors. False if no editable users.
@@ -265,6 +269,8 @@ function get_editable_authors( $user_id ) {
  * Gets the IDs of any users who can edit posts.
  *
  * @deprecated 3.1.0 Use get_users()
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int  $user_id       User ID.
  * @param bool $exclude_zeros Optional. Whether to exclude zeroes. Default true.
@@ -302,6 +308,8 @@ function get_editable_user_ids( $user_id, $exclude_zeros = true, $post_type = 'p
  * Gets all users who are not authors.
  *
  * @deprecated 3.1.0 Use get_users()
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function get_nonauthor_user_ids() {
 	_deprecated_function( __FUNCTION__, '3.1.0', 'get_users()' );
@@ -595,7 +603,9 @@ class WP_User_Search {
 				'add_args' => $args
 			) );
 			if ( $this->paging_text ) {
-				$this->paging_text = sprintf( '<span class="displaying-num">' . __( 'Displaying %s&#8211;%s of %s' ) . '</span>%s',
+				$this->paging_text = sprintf(
+					/* translators: 1: Starting number of users on the current page, 2: Ending number of users, 3: Total number of users. */
+					'<span class="displaying-num">' . __( 'Displaying %1$s&#8211;%2$s of %3$s' ) . '</span>%s',
 					number_format_i18n( ( $this->page - 1 ) * $this->users_per_page + 1 ),
 					number_format_i18n( min( $this->page * $this->users_per_page, $this->total_users_for_query ) ),
 					number_format_i18n( $this->total_users_for_query ),
@@ -667,6 +677,8 @@ endif;
  * @since 2.3.0
  * @deprecated 3.1.0 Use get_posts()
  * @see get_posts()
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param int    $user_id User ID to not retrieve posts from.
  * @param string $type    Optional. Post type to retrieve. Accepts 'draft', 'pending' or 'any' (all).
@@ -1214,22 +1226,23 @@ function the_attachment_links( $id = false ) {
  * Displays a screen icon.
  *
  * @since 2.7.0
- * @since 3.8.0 Screen icons are no longer used in WordPress. This function no longer produces output.
- * @deprecated 3.8.0 Use get_screen_icon()
- * @see get_screen_icon()
+ * @deprecated 3.8.0
  */
 function screen_icon() {
+	_deprecated_function( __FUNCTION__, '3.8.0' );
 	echo get_screen_icon();
 }
 
 /**
  * Retrieves the screen icon (no longer used in 3.8+).
  *
+ * @since 3.2.0
  * @deprecated 3.8.0
  *
- * @return string
+ * @return string An HTML comment explaining that icons are no longer used.
  */
 function get_screen_icon() {
+	_deprecated_function( __FUNCTION__, '3.8.0' );
 	return '<!-- Screen icons are no longer used as of WordPress 3.8. -->';
 }
 
@@ -1370,7 +1383,7 @@ function wp_dashboard_plugins_output( $rss, $args = array() ) {
 		$ilink = wp_nonce_url('plugin-install.php?tab=plugin-information&plugin=' . $slug, 'install-plugin_' . $slug) . '&amp;TB_iframe=true&amp;width=600&amp;height=800';
 		echo '<li class="dashboard-news-plugin"><span>' . __( 'Popular Plugin' ) . ':</span> ' . esc_html( $raw_title ) .
 			'&nbsp;<a href="' . $ilink . '" class="thickbox open-plugin-details-modal" aria-label="' .
-			/* translators: %s: plugin name */
+			/* translators: %s: Plugin name. */
 			esc_attr( sprintf( __( 'Install %s' ), $raw_title ) ) . '">(' . __( 'Install' ) . ')</a></li>';
 
 		$feed->__destruct();
@@ -1468,7 +1481,9 @@ function add_utility_page( $page_title, $menu_title, $capability, $menu_slug, $f
  * Replaced with wp_page_reload_on_back_button_js() that also fixes this problem.
  *
  * @since 4.0.0
- * $deprecated 4.6.0
+ * @deprecated 4.6.0
+ *
+ * @link https://core.trac.wordpress.org/ticket/35852
  *
  * @global bool $is_safari
  * @global bool $is_chrome
@@ -1481,4 +1496,74 @@ function post_form_autocomplete_off() {
 	if ( $is_safari || $is_chrome ) {
 		echo ' autocomplete="off"';
 	}
+}
+
+/**
+ * Display JavaScript on the page.
+ *
+ * @since 3.5.0
+ * @deprecated 4.9.0
+ */
+function options_permalink_add_js() {
+	?>
+	<script type="text/javascript">
+		jQuery(document).ready(function() {
+			jQuery('.permalink-structure input:radio').change(function() {
+				if ( 'custom' == this.value )
+					return;
+				jQuery('#permalink_structure').val( this.value );
+			});
+			jQuery( '#permalink_structure' ).on( 'click input', function() {
+				jQuery( '#custom_selection' ).prop( 'checked', true );
+			});
+		});
+	</script>
+	<?php
+}
+
+/**
+ * Previous class for list table for privacy data export requests.
+ *
+ * @since 4.9.6
+ * @deprecated 5.3.0
+ */
+class WP_Privacy_Data_Export_Requests_Table extends WP_Privacy_Data_Export_Requests_List_Table {
+	function __construct( $args ) {
+		_deprecated_function( __CLASS__, '5.3.0', 'WP_Privacy_Data_Export_Requests_List_Table' );
+
+		if ( ! isset( $args['screen'] ) || $args['screen'] === 'export_personal_data' ) {
+			$args['screen'] = 'export-personal-data';
+		}
+
+		parent::__construct( $args );	
+	}
+}
+
+/**
+ * Previous class for list table for privacy data erasure requests.
+ *
+ * @since 4.9.6
+ * @deprecated 5.3.0
+ */
+class WP_Privacy_Data_Removal_Requests_Table extends WP_Privacy_Data_Removal_Requests_List_Table {
+	function __construct( $args ) {
+		_deprecated_function( __CLASS__, '5.3.0', 'WP_Privacy_Data_Removal_Requests_List_Table' );
+
+		if ( ! isset( $args['screen'] ) || $args['screen'] === 'remove_personal_data' ) {
+			$args['screen'] = 'erase-personal-data';
+		}
+
+		parent::__construct( $args );
+	}
+}
+
+/**
+ * Was used to add options for the privacy requests screens before they were separate files.
+ *
+ * @since 4.9.8
+ * @access private
+ * @deprecated 5.3.0
+ */
+function _wp_privacy_requests_screen_options() {
+	_deprecated_function( __FUNCTION__, '5.3.0' );
 }
