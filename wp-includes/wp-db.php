@@ -3499,14 +3499,14 @@ class wpdb {
 				}
 			} else {
 				if ( is_resource( $this->dbh ) ) {
-					$error = mysql_error( $this->dbh );
+					$error = sqlsrv_errors();
 				} else {
-					$error = mysql_error();
+					$error = sqlsrv_errors();
 				}
 			}
 
 			if ( $error ) {
-				$message = '<p><code>' . $error . "</code></p>\n" . $message;
+				$message = '<p><code>' . $error[ 0 ][ 'message' ] . "</code></p>\n" . $message;
 			}
 
 			wp_die( $message );
