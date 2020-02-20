@@ -692,7 +692,7 @@ function meta_form( $post = null ) {
 			WHERE meta_key NOT BETWEEN '_' AND '_z'
 			AND meta_key NOT LIKE %s
 			ORDER BY meta_key";
-		$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%', $limit ) );
+		$keys  = $wpdb->get_col( $wpdb->prepare( $sql, $wpdb->esc_like( '_' ) . '%' ) );
 	}
 
 	if ( $keys ) {
