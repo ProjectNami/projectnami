@@ -35,8 +35,8 @@ global $hook_suffix;
 		// PN: Mod Start
 		$text = sprintf(
 			/* translators: %s: https://wordpress.org/ */
-			__( 'Thank you for creating with <a href="%s">Project Nami</a>.' ),
-			__( 'https://projectnami.org/' )
+			__( 'Project Nami is made possible by <a href="%s">our patrons and sponsors</a>.' ),
+			__( 'https://projectnami.org/contribute/' )
 		);
 		// PN: Mod End
 
