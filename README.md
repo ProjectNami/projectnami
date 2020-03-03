@@ -29,4 +29,4 @@ We needed a version of WordPress powered by SQL Server in the cloud on Microsoft
 
 Project Nami is an open source project derived from WordPress and available freely under the GPL. Your contributions help support our team and their expenses as they continue to support, maintain and extend the project.
 
-[![Become a patron](https://projectnami.blob.core.windows.net/siteimages/2020/02/become_a_patron_button@2x.png)](https://patreon.com/projectnami)
+[![Become a patron](https://projectnami.blob.core.windows.net/siteimages/2020/02/become_a_patron_button.png)](https://patreon.com/projectnami)
