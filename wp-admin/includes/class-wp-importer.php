@@ -25,7 +25,7 @@ class WP_Importer {
 		$limit  = 100;
 		$offset = 0;
 
-		// Grab all posts in chunks
+		// Grab all posts in chunks.
 		do {
 			$meta_key = $importer_name . '_' . $bid . '_permalink';
 			
@@ -37,12 +37,12 @@ class WP_Importer {
 			// PN Mod: End
 			$results  = $wpdb->get_results( $sql );
 
-			// Increment offset
+			// Increment offset.
 			$offset = ( $limit + $offset );
 
 			if ( ! empty( $results ) ) {
  				foreach ( $results as $r ) {
- 					// Set permalinks into array
+					// Set permalinks into array.
 					$hashtable[ $r->meta_value ] = intval( $r->post_id );
 				}
 			}
@@ -68,7 +68,7 @@ class WP_Importer {
 
 		$count = 0;
 
-		// Get count of permalinks
+		// Get count of permalinks.
 		$meta_key = $importer_name . '_' . $bid . '_permalink';
 		$sql      = $wpdb->prepare( "SELECT COUNT( post_id ) AS cnt FROM $wpdb->postmeta WHERE meta_key = %s", $meta_key );
 
@@ -100,7 +100,7 @@ class WP_Importer {
 		$limit  = 100;
 		$offset = 0;
 
-		// Grab all comments in chunks
+		// Grab all comments in chunks.
 		do {
 			/*
 			* PN Mod: Start
@@ -110,16 +110,16 @@ class WP_Importer {
 			// PN Mod: End
 			$results = $wpdb->get_results( $sql );
 
-			// Increment offset
+			// Increment offset.
 			$offset = ( $limit + $offset );
 
 			if ( ! empty( $results ) ) {
  				foreach ( $results as $r ) {
- 					// Explode comment_agent key
+					// Explode comment_agent key.
  					list ( $ca_bid, $source_comment_id ) = explode( '-', $r->comment_agent );
 					$source_comment_id                   = intval( $source_comment_id );
  
- 					// Check if this comment came from this blog
+					// Check if this comment came from this blog.
  					if ( $bid == $ca_bid ) {
 						$hashtable[ $source_comment_id ] = intval( $r->comment_ID );
 					}
@@ -214,7 +214,7 @@ class WP_Importer {
 	 * @return array
 	 */
 	public function get_page( $url, $username = '', $password = '', $head = false ) {
-		// Increase the timeout
+		// Increase the timeout.
 		add_filter( 'http_request_timeout', array( $this, 'bump_request_timeout' ) );
 
 		$headers = array();
@@ -278,7 +278,7 @@ class WP_Importer {
 		global $wpdb, $wp_actions;
 		// Or define( 'WP_IMPORTING', true );
 		$wpdb->queries = array();
-		// Reset $wp_actions to keep it from growing out of control
+		// Reset $wp_actions to keep it from growing out of control.
 		$wp_actions = array();
 	}
 }
@@ -323,20 +323,20 @@ function get_cli_args( $param, $required = false ) {
 			}
 
 			$last_arg = $key;
-		} elseif ( $last_arg !== null ) {
+		} elseif ( null !== $last_arg ) {
 			$out[ $last_arg ] = $args[ $i ];
 		}
 	}
 
-	// Check array for specified param
+	// Check array for specified param.
 	if ( isset( $out[ $param ] ) ) {
-		// Set return value
+		// Set return value.
 		$return = $out[ $param ];
 	}
 
-	// Check for missing required param
+	// Check for missing required param.
 	if ( ! isset( $out[ $param ] ) && $required ) {
-		// Display message and exit
+		// Display message and exit.
 		echo "\"$param\" parameter is required but was not specified\n";
 		exit();
 	}
