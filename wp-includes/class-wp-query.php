@@ -3076,6 +3076,7 @@ class WP_Query {
 								if ( 'future' != $status ) {
 									$this->posts[0]->post_date = current_time( 'mysql' );
 								}
+							}
 						} elseif ( $post_status_obj->private ) {
 							if ( ! current_user_can( $read_cap, $this->posts[0]->ID ) ) {
 								$this->posts = array();
