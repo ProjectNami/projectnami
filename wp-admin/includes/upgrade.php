@@ -419,6 +419,7 @@ if ( !function_exists('wp_install_defaults') ) :
 			// TODO: Get previous_blog_id.
 			if ( ! is_super_admin( $user_id ) && 1 != $user_id ) {
 				$wpdb->delete( $wpdb->usermeta, array( 'user_id' => $user_id , 'meta_key' => $wpdb->base_prefix.'1_capabilities' ) );
+			}
 		}
 	}
 endif;
