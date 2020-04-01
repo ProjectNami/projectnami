@@ -10,400 +10,417 @@
 
 /** Include user installation customization script. */
 if ( file_exists( WP_CONTENT_DIR . '/install.php' ) ) {
-	require( WP_CONTENT_DIR . '/install.php' );
+	require WP_CONTENT_DIR . '/install.php';
 }
 
 /** WordPress Administration API */
-require_once(ABSPATH . 'wp-admin/includes/admin.php');
+require_once ABSPATH . 'wp-admin/includes/admin.php';
 
 /** WordPress Schema API */
-require_once(ABSPATH . 'wp-admin/includes/schema.php');
+require_once ABSPATH . 'wp-admin/includes/schema.php';
 
 if ( !function_exists('wp_install') ) :
-/**
- * Installs the site.
- *
- * Runs the required functions to set up and populate the database,
- * including primary admin user and initial options.
- *
- * @since 2.1.0
- *
- * @param string $blog_title    Site title.
- * @param string $user_name     User's username.
- * @param string $user_email    User's email.
- * @param bool   $public        Whether site is public.
- * @param string $deprecated    Optional. Not used.
- * @param string $user_password Optional. User's chosen password. Default empty (random password).
- * @param string $language      Optional. Language chosen. Default empty.
- * @return array Array keys 'url', 'user_id', 'password', and 'password_message'.
- */
-function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '', $language = '' ) {
-	if ( !empty( $deprecated ) ) {
-		_deprecated_argument( __FUNCTION__, '2.6.0' );
-	}
-
-	wp_check_mysql_version();
-	wp_cache_flush();
-	make_db_current_silent();
-	populate_options();
-	populate_roles();
-
-	update_option('blogname', $blog_title);
-	update_option('admin_email', $user_email);
-	update_option('blog_public', $public);
-
-	// Freshness of site - in the future, this could get more specific about actions taken, perhaps.
-	update_option( 'fresh_site', 1 );
-
-	if ( $language ) {
-		update_option( 'WPLANG', $language );
-	}
-
-	$guessurl = wp_guess_url();
-
-	update_option('siteurl', $guessurl);
-
-	// If not a public site, don't ping.
-	if ( ! $public ) {
-		update_option('default_pingback_flag', 0);
-	}
-
-	/*
-	 * Create default user. If the user already exists, the user tables are
-	 * being shared among sites. Just set the role in that case.
-	 */
-	$user_id = username_exists($user_name);
-	$user_password = trim($user_password);
-	$email_password = false;
-	if ( !$user_id && empty($user_password) ) {
-		$user_password = wp_generate_password( 12, false );
-		$message = __('<strong><em>Note that password</em></strong> carefully! It is a <em>random</em> password that was generated just for you.');
-		$user_id = wp_create_user($user_name, $user_password, $user_email);
-		update_user_option($user_id, 'default_password_nag', true, true);
-		$email_password = true;
-	} elseif ( ! $user_id ) {
-		// Password has been provided
-		$message = '<em>'.__('Your chosen password.').'</em>';
-		$user_id = wp_create_user($user_name, $user_password, $user_email);
-	} else {
-		$message = __('User already exists. Password inherited.');
-	}
-
-	$user = new WP_User($user_id);
-	$user->set_role('administrator');
-
-	wp_install_defaults($user_id);
-
-	wp_install_maybe_enable_pretty_permalinks();
-
-	flush_rewrite_rules();
-
-	wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during installation.') ) );
-
-	wp_cache_flush();
-
 	/**
-	 * Fires after a site is fully installed.
+	 * Installs the site.
 	 *
-	 * @since 3.9.0
+	 * Runs the required functions to set up and populate the database,
+	 * including primary admin user and initial options.
 	 *
-	 * @param WP_User $user The site owner.
+	 * @since 2.1.0
+	 *
+	 * @param string $blog_title    Site title.
+	 * @param string $user_name     User's username.
+	 * @param string $user_email    User's email.
+	 * @param bool   $public        Whether site is public.
+	 * @param string $deprecated    Optional. Not used.
+	 * @param string $user_password Optional. User's chosen password. Default empty (random password).
+	 * @param string $language      Optional. Language chosen. Default empty.
+	 * @return array {
+	 *     Data for the newly installed site.
+	 *
+	 *     @type string $url              The URL of the site.
+	 *     @type int    $user_id          The ID of the site owner.
+	 *     @type string $password         The password of the site owner, if their user account didn't already exist.
+	 *     @type string $password_message The explanatory message regarding the password.
+	 * }
 	 */
-	do_action( 'wp_install', $user );
+	function wp_install( $blog_title, $user_name, $user_email, $public, $deprecated = '', $user_password = '', $language = '' ) {
+		if ( !empty( $deprecated ) ) {
+			_deprecated_argument( __FUNCTION__, '2.6.0' );
+		}
 
-	return array(
-		'url'              => $guessurl,
-		'user_id'          => $user_id,
-		'password'         => $user_password,
-		'password_message' => $message,
-	);
-}
+		wp_check_mysql_version();
+		wp_cache_flush();
+		make_db_current_silent();
+		populate_options();
+		populate_roles();
+
+		update_option('blogname', $blog_title);
+		update_option('admin_email', $user_email);
+		update_option('blog_public', $public);
+
+		// Freshness of site - in the future, this could get more specific about actions taken, perhaps.
+		update_option( 'fresh_site', 1 );
+
+		if ( $language ) {
+			update_option( 'WPLANG', $language );
+		}
+
+		$guessurl = wp_guess_url();
+
+		update_option('siteurl', $guessurl);
+
+		// If not a public site, don't ping.
+		if ( ! $public ) {
+			update_option('default_pingback_flag', 0);
+		}
+
+		/*
+		 * Create default user. If the user already exists, the user tables are
+		 * being shared among sites. Just set the role in that case.
+		 */
+		$user_id = username_exists($user_name);
+		$user_password = trim($user_password);
+		$email_password = false;
+		$user_created   = false;
+
+		if ( !$user_id && empty($user_password) ) {
+			$user_password = wp_generate_password( 12, false );
+			$message = __('<strong><em>Note that password</em></strong> carefully! It is a <em>random</em> password that was generated just for you.');
+			$user_id = wp_create_user($user_name, $user_password, $user_email);
+			update_user_option($user_id, 'default_password_nag', true, true);
+			$email_password = true;
+			$user_created   = true;
+		} elseif ( ! $user_id ) {
+			// Password has been provided.
+			$message      = '<em>' . __( 'Your chosen password.' ) . '</em>';
+			$user_id      = wp_create_user( $user_name, $user_password, $user_email );
+			$user_created = true;
+		} else {
+			$message = __('User already exists. Password inherited.');
+		}
+
+		$user = new WP_User($user_id);
+		$user->set_role('administrator');
+
+		if ( $user_created ) {
+			$user->user_url = $guessurl;
+			wp_update_user( $user );
+		}
+
+		wp_install_defaults($user_id);
+
+		wp_install_maybe_enable_pretty_permalinks();
+
+		flush_rewrite_rules();
+
+		wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during installation.') ) );
+
+		wp_cache_flush();
+
+		/**
+		 * Fires after a site is fully installed.
+		 *
+		 * @since 3.9.0
+		 *
+		 * @param WP_User $user The site owner.
+		 */
+		do_action( 'wp_install', $user );
+
+		return array(
+			'url'              => $guessurl,
+			'user_id'          => $user_id,
+			'password'         => $user_password,
+			'password_message' => $message,
+		);
+	}
 endif;
 
 if ( !function_exists('wp_install_defaults') ) :
-/**
- * Creates the initial content for a newly-installed site.
- *
- * Adds the default "Uncategorized" category, the first post (with comment),
- * first page, and default widgets for default theme for the current version.
- *
- * @since 2.1.0
- *
-	 * @global wpdb       $wpdb         WordPress database abstraction object.
-	 * @global WP_Rewrite $wp_rewrite   WordPress rewrite component.
- * @global string     $table_prefix
- *
- * @param int $user_id User ID.
- */
-function wp_install_defaults( $user_id ) {
-	global $wpdb, $wp_rewrite, $table_prefix;
+	/**
+	 * Creates the initial content for a newly-installed site.
+	 *
+	 * Adds the default "Uncategorized" category, the first post (with comment),
+	 * first page, and default widgets for default theme for the current version.
+	 *
+	 * @since 2.1.0
+	 *
+		 * @global wpdb       $wpdb         WordPress database abstraction object.
+		 * @global WP_Rewrite $wp_rewrite   WordPress rewrite component.
+	 * @global string     $table_prefix
+	 *
+	 * @param int $user_id User ID.
+	 */
+	function wp_install_defaults( $user_id ) {
+		global $wpdb, $wp_rewrite, $table_prefix;
 
-	// Default category
-	$cat_name = __('Uncategorized');
-	/* translators: Default category slug. */
-	$cat_slug = sanitize_title(_x('Uncategorized', 'Default category slug'));
+		// Default category.
+		$cat_name = __('Uncategorized');
+		/* translators: Default category slug. */
+		$cat_slug = sanitize_title(_x('Uncategorized', 'Default category slug'));
 
-	if ( global_terms_enabled() ) {
-		$cat_id = $wpdb->get_var( $wpdb->prepare( "SELECT cat_ID FROM {$wpdb->sitecategories} WHERE category_nicename = %s", $cat_slug ) );
-		if ( $cat_id == null ) {
-			$wpdb->insert(
-				$wpdb->sitecategories,
-				array(
-					'cat_ID'            => 0,
-					'cat_name'          => $cat_name,
-					'category_nicename' => $cat_slug,
-					'last_updated'      => current_time( 'mysql', true ),
-				)
-			);
-			$cat_id = $wpdb->insert_id;
+		if ( global_terms_enabled() ) {
+			$cat_id = $wpdb->get_var( $wpdb->prepare( "SELECT cat_ID FROM {$wpdb->sitecategories} WHERE category_nicename = %s", $cat_slug ) );
+			if ( null == $cat_id ) {
+				$wpdb->insert(
+					$wpdb->sitecategories,
+					array(
+						'cat_ID'            => 0,
+						'cat_name'          => $cat_name,
+						'category_nicename' => $cat_slug,
+						'last_updated'      => current_time( 'mysql', true ),
+					)
+				);
+				$cat_id = $wpdb->insert_id;
+			}
+			update_option('default_category', $cat_id);
+		} else {
+			$cat_id = 1;
 		}
-		update_option('default_category', $cat_id);
-	} else {
-		$cat_id = 1;
-	}
 
-	$wpdb->insert(
-		$wpdb->terms,
-		array(
-			//'term_id'    => $cat_id,
-			'name'       => $cat_name,
-			'slug'       => $cat_slug,
-			'term_group' => 0,
-		)
-	);
-	$term_id = $wpdb->insert_id;
-	$wpdb->insert(
-		$wpdb->term_taxonomy,
-		array(
-			'term_id'     => $term_id,
-			'taxonomy'    => 'category',
-			'description' => '',
-			'parent'      => 0,
-			'count'       => 1,
-		)
-	);
-	$cat_tt_id = $wpdb->insert_id;
+		$wpdb->insert(
+			$wpdb->terms,
+			array(
+				//'term_id'    => $cat_id,
+				'name'       => $cat_name,
+				'slug'       => $cat_slug,
+				'term_group' => 0,
+			)
+		);
+		$term_id = $wpdb->insert_id;
+		$wpdb->insert(
+			$wpdb->term_taxonomy,
+			array(
+				'term_id'     => $term_id,
+				'taxonomy'    => 'category',
+				'description' => '',
+				'parent'      => 0,
+				'count'       => 1,
+			)
+		);
+		$cat_tt_id = $wpdb->insert_id;
 
-	// First post
-	$now = current_time( 'mysql' );
-	$now_gmt = current_time( 'mysql', 1 );
-	$first_post_guid = get_option( 'home' ) . '/?p=1';
+		// First post.
+		$now = current_time( 'mysql' );
+		$now_gmt = current_time( 'mysql', 1 );
+		$first_post_guid = get_option( 'home' ) . '/?p=1';
 
-	if ( is_multisite() ) {
-		$first_post = get_site_option( 'first_post' );
+		if ( is_multisite() ) {
+			$first_post = get_site_option( 'first_post' );
 
-		if ( ! $first_post ) {
+			if ( ! $first_post ) {
+				$first_post = "<!-- wp:paragraph -->\n<p>" .
+					/* translators: First post content. %s: Site link. */
+					__( 'Welcome to %s. This is your first post. Edit or delete it, then start writing!' ) .
+					"</p>\n<!-- /wp:paragraph -->";
+			}
+
+			$first_post = sprintf(
+				$first_post,
+				sprintf( '<a href="%s">%s</a>', esc_url( network_home_url() ), get_network()->site_name )
+			);
+
+			// Back-compat for pre-4.4.
+			$first_post = str_replace( 'SITE_URL', esc_url( network_home_url() ), $first_post );
+			$first_post = str_replace( 'SITE_NAME', get_network()->site_name, $first_post );
+		} else {
 			$first_post = "<!-- wp:paragraph -->\n<p>" .
 				/* translators: First post content. %s: Site link. */
-				__( 'Welcome to %s. This is your first post. Edit or delete it, then start writing!' ) .
+				__( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' ) .
 				"</p>\n<!-- /wp:paragraph -->";
 		}
 
-		$first_post = sprintf(
-			$first_post,
-			sprintf( '<a href="%s">%s</a>', esc_url( network_home_url() ), get_network()->site_name )
-		);
-
-		// Back-compat for pre-4.4
-		$first_post = str_replace( 'SITE_URL', esc_url( network_home_url() ), $first_post );
-		$first_post = str_replace( 'SITE_NAME', get_network()->site_name, $first_post );
-	} else {
-		$first_post = "<!-- wp:paragraph -->\n<p>" .
-			/* translators: First post content. %s: Site link. */
-			__( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' ) .
-			"</p>\n<!-- /wp:paragraph -->";
-	}
-
-	$wpdb->insert(
-		$wpdb->posts,
-		array(
-			'post_author' => $user_id,
-			'post_date' => $now,
-			'post_date_gmt' => $now_gmt,
-			'post_content' => $first_post,
-			'post_excerpt' => '',
-			'post_title' => __('Hello world!'),
-			/* translators: Default post slug. */
-			'post_name' => sanitize_title( _x('hello-world', 'Default post slug') ),
-			'post_modified' => $now,
-			'post_modified_gmt' => $now_gmt,
-			'guid' => $first_post_guid,
-			'comment_count' => 1,
-			'to_ping' => '',
-			'pinged' => '',
-			'post_content_filtered' => '',
-		)
-	);
-	$wpdb->insert(
-		$wpdb->term_relationships,
-		array(
-			'term_taxonomy_id' => $cat_tt_id,
-			'object_id'        => 1,
-		)
-	);
-
-	// Default comment
-	if ( is_multisite() ) {
-		$first_comment_author = get_site_option( 'first_comment_author' );
-		$first_comment_email = get_site_option( 'first_comment_email' );
-		$first_comment_url = get_site_option( 'first_comment_url', network_home_url() );
-		$first_comment = get_site_option( 'first_comment' );
-	}
-
-	$first_comment_author = ! empty( $first_comment_author ) ? $first_comment_author : __( 'A WordPress Commenter' );
-	$first_comment_email = ! empty( $first_comment_email ) ? $first_comment_email : 'wapuu@wordpress.example';
-	$first_comment_url = ! empty( $first_comment_url ) ? $first_comment_url : 'https://wordpress.org/';
-	$first_comment = ! empty( $first_comment ) ? $first_comment :  __( 'Hi, this is a comment.
-To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.
-Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
-	$wpdb->insert( $wpdb->comments, array(
-		'comment_post_ID' => 1,
-		'comment_author' => $first_comment_author,
-		'comment_author_email' => $first_comment_email,
-		'comment_author_url' => $first_comment_url,
-		'comment_date' => $now,
-		'comment_date_gmt' => $now_gmt,
-		'comment_content' => $first_comment
-	));
-
-	// First Page
-	if ( is_multisite() )
-		$first_page = get_site_option( 'first_page' );
-
-	if ( empty( $first_page ) ) {
-		$first_page = "<!-- wp:paragraph -->\n<p>";
-			/* translators: First page content. */
-		$first_page .= __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:" );
-		$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
-
-		$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
-			/* translators: First page content. */
-		$first_page .= __( "Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my website. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)" );
-		$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
-
-		$first_page .= "<!-- wp:paragraph -->\n<p>";
-			/* translators: First page content. */
-		$first_page .= __( '...or something like this:' );
-		$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
-
-		$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
-			/* translators: First page content. */
-		$first_page .= __( 'The XYZ Doohickey Company was founded in 1971, and has been providing quality doohickeys to the public ever since. Located in Gotham City, XYZ employs over 2,000 people and does all kinds of awesome things for the Gotham community.' );
-		$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
-
-		$first_page .= "<!-- wp:paragraph -->\n<p>";
-		$first_page .= sprintf(
-				/* translators: First page content. %s: Site admin URL. */
-			__( 'As a new WordPress user, you should go to <a href="%s">your dashboard</a> to delete this page and create new pages for your content. Have fun!' ),
-			admin_url()
-		);
-		$first_page .= "</p>\n<!-- /wp:paragraph -->";
-	}
-
-	$first_post_guid = get_option('home') . '/?page_id=2';
-	$wpdb->insert( $wpdb->posts, array(
-		'post_author' => $user_id,
-		'post_date' => $now,
-		'post_date_gmt' => $now_gmt,
-		'post_content' => $first_page,
-		'post_excerpt' => '',
-		'comment_status' => 'closed',
-		'post_title' => __( 'Sample Page' ),
-				/* translators: Default page slug. */
-		'post_name' => __( 'sample-page' ),
-		'post_modified' => $now,
-		'post_modified_gmt' => $now_gmt,
-		'guid' => $first_post_guid,
-		'post_type' => 'page',
-		'to_ping' => '',
-		'pinged' => '',
-		'post_content_filtered' => ''
-	));
-	$wpdb->insert( $wpdb->postmeta, array( 'post_id' => 2, 'meta_key' => '_wp_page_template', 'meta_value' => 'default' ) );
-
-	// Privacy Policy page
-	if ( is_multisite() ) {
-		// Disable by default unless the suggested content is provided.
-		$privacy_policy_content = get_site_option( 'default_privacy_policy_content' );
-	} else {
-		if ( ! class_exists( 'WP_Privacy_Policy_Content' ) ) {
-				include_once( ABSPATH . 'wp-admin/includes/class-wp-privacy-policy-content.php' );
-		}
-
-		$privacy_policy_content = WP_Privacy_Policy_Content::get_default_content();
-	}
-
-	if ( ! empty( $privacy_policy_content ) ) {
-		$privacy_policy_guid = get_option( 'home' ) . '/?page_id=3';
-
 		$wpdb->insert(
-			$wpdb->posts, array(
-				'post_author'           => $user_id,
-				'post_date'             => $now,
-				'post_date_gmt'         => $now_gmt,
-				'post_content'          => $privacy_policy_content,
-				'post_excerpt'          => '',
-				'comment_status'        => 'closed',
-				'post_title'            => __( 'Privacy Policy' ),
-					/* translators: Privacy Policy page slug. */
-				'post_name'             => __( 'privacy-policy' ),
-				'post_modified'         => $now,
-				'post_modified_gmt'     => $now_gmt,
-				'guid'                  => $privacy_policy_guid,
-				'post_type'             => 'page',
-				'post_status'           => 'draft',
-				'to_ping'               => '',
-				'pinged'                => '',
+			$wpdb->posts,
+			array(
+				'post_author' => $user_id,
+				'post_date' => $now,
+				'post_date_gmt' => $now_gmt,
+				'post_content' => $first_post,
+				'post_excerpt' => '',
+				'post_title' => __('Hello world!'),
+				/* translators: Default post slug. */
+				'post_name' => sanitize_title( _x('hello-world', 'Default post slug') ),
+				'post_modified' => $now,
+				'post_modified_gmt' => $now_gmt,
+				'guid' => $first_post_guid,
+				'comment_count' => 1,
+				'to_ping' => '',
+				'pinged' => '',
 				'post_content_filtered' => '',
 			)
 		);
 		$wpdb->insert(
-			$wpdb->postmeta, array(
-				'post_id'    => 3,
-				'meta_key'   => '_wp_page_template',
-				'meta_value' => 'default',
+			$wpdb->term_relationships,
+			array(
+				'term_taxonomy_id' => $cat_tt_id,
+				'object_id'        => 1,
 			)
 		);
-		update_option( 'wp_page_for_privacy_policy', 3 );
+
+		// Default comment.
+		if ( is_multisite() ) {
+			$first_comment_author = get_site_option( 'first_comment_author' );
+			$first_comment_email = get_site_option( 'first_comment_email' );
+			$first_comment_url = get_site_option( 'first_comment_url', network_home_url() );
+			$first_comment = get_site_option( 'first_comment' );
+		}
+
+		$first_comment_author = ! empty( $first_comment_author ) ? $first_comment_author : __( 'A WordPress Commenter' );
+		$first_comment_email = ! empty( $first_comment_email ) ? $first_comment_email : 'wapuu@wordpress.example';
+		$first_comment_url = ! empty( $first_comment_url ) ? $first_comment_url : 'https://wordpress.org/';
+		$first_comment = ! empty( $first_comment ) ? $first_comment :  __( 'Hi, this is a comment.
+	To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.
+	Commenter avatars come from <a href="https://gravatar.com">Gravatar</a>.' );
+		$wpdb->insert( $wpdb->comments, array(
+			'comment_post_ID' => 1,
+			'comment_author' => $first_comment_author,
+			'comment_author_email' => $first_comment_email,
+			'comment_author_url' => $first_comment_url,
+			'comment_date' => $now,
+			'comment_date_gmt' => $now_gmt,
+			'comment_content' => $first_comment
+		));
+
+		// First page.
+		if ( is_multisite() )
+			$first_page = get_site_option( 'first_page' );
+
+		if ( empty( $first_page ) ) {
+			$first_page = "<!-- wp:paragraph -->\n<p>";
+				/* translators: First page content. */
+			$first_page .= __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:" );
+			$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
+
+			$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
+				/* translators: First page content. */
+			$first_page .= __( "Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my website. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)" );
+			$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
+
+			$first_page .= "<!-- wp:paragraph -->\n<p>";
+				/* translators: First page content. */
+			$first_page .= __( '...or something like this:' );
+			$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
+
+			$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
+				/* translators: First page content. */
+			$first_page .= __( 'The XYZ Doohickey Company was founded in 1971, and has been providing quality doohickeys to the public ever since. Located in Gotham City, XYZ employs over 2,000 people and does all kinds of awesome things for the Gotham community.' );
+			$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
+
+			$first_page .= "<!-- wp:paragraph -->\n<p>";
+			$first_page .= sprintf(
+					/* translators: First page content. %s: Site admin URL. */
+				__( 'As a new WordPress user, you should go to <a href="%s">your dashboard</a> to delete this page and create new pages for your content. Have fun!' ),
+				admin_url()
+			);
+			$first_page .= "</p>\n<!-- /wp:paragraph -->";
+		}
+
+		$first_post_guid = get_option('home') . '/?page_id=2';
+		$wpdb->insert( $wpdb->posts, array(
+			'post_author' => $user_id,
+			'post_date' => $now,
+			'post_date_gmt' => $now_gmt,
+			'post_content' => $first_page,
+			'post_excerpt' => '',
+			'comment_status' => 'closed',
+			'post_title' => __( 'Sample Page' ),
+					/* translators: Default page slug. */
+			'post_name' => __( 'sample-page' ),
+			'post_modified' => $now,
+			'post_modified_gmt' => $now_gmt,
+			'guid' => $first_post_guid,
+			'post_type' => 'page',
+			'to_ping' => '',
+			'pinged' => '',
+			'post_content_filtered' => ''
+		));
+		$wpdb->insert( $wpdb->postmeta, array( 'post_id' => 2, 'meta_key' => '_wp_page_template', 'meta_value' => 'default' ) );
+
+		// Privacy Policy page.
+		if ( is_multisite() ) {
+			// Disable by default unless the suggested content is provided.
+			$privacy_policy_content = get_site_option( 'default_privacy_policy_content' );
+		} else {
+			if ( ! class_exists( 'WP_Privacy_Policy_Content' ) ) {
+				include_once ABSPATH . 'wp-admin/includes/class-wp-privacy-policy-content.php';
+			}
+
+			$privacy_policy_content = WP_Privacy_Policy_Content::get_default_content();
+		}
+
+		if ( ! empty( $privacy_policy_content ) ) {
+			$privacy_policy_guid = get_option( 'home' ) . '/?page_id=3';
+
+			$wpdb->insert(
+				$wpdb->posts, array(
+					'post_author'           => $user_id,
+					'post_date'             => $now,
+					'post_date_gmt'         => $now_gmt,
+					'post_content'          => $privacy_policy_content,
+					'post_excerpt'          => '',
+					'comment_status'        => 'closed',
+					'post_title'            => __( 'Privacy Policy' ),
+						/* translators: Privacy Policy page slug. */
+					'post_name'             => __( 'privacy-policy' ),
+					'post_modified'         => $now,
+					'post_modified_gmt'     => $now_gmt,
+					'guid'                  => $privacy_policy_guid,
+					'post_type'             => 'page',
+					'post_status'           => 'draft',
+					'to_ping'               => '',
+					'pinged'                => '',
+					'post_content_filtered' => '',
+				)
+			);
+			$wpdb->insert(
+				$wpdb->postmeta, array(
+					'post_id'    => 3,
+					'meta_key'   => '_wp_page_template',
+					'meta_value' => 'default',
+				)
+			);
+			update_option( 'wp_page_for_privacy_policy', 3 );
+		}
+
+		// Set up default widgets for default theme.
+		update_option( 'widget_search', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
+		update_option( 'widget_recent-posts', array ( 2 => array ( 'title' => '', 'number' => 5 ), '_multiwidget' => 1 ) );
+		update_option( 'widget_recent-comments', array ( 2 => array ( 'title' => '', 'number' => 5 ), '_multiwidget' => 1 ) );
+		update_option( 'widget_archives', array ( 2 => array ( 'title' => '', 'count' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
+		update_option( 'widget_categories', array ( 2 => array ( 'title' => '', 'count' => 0, 'hierarchical' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
+		update_option( 'widget_meta', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
+		update_option( 'sidebars_widgets', array( 'wp_inactive_widgets' => array(), 'sidebar-1' => array( 0 => 'search-2', 1 => 'recent-posts-2', 2 => 'recent-comments-2' ), 
+				'sidebar-2'           => array(
+					0 => 'archives-2',
+					1 => 'categories-2',
+					2 => 'meta-2',
+				),
+			'array_version' => 3 ) 
+		);
+		if ( ! is_multisite() )
+			update_user_meta( $user_id, 'show_welcome_panel', 1 );
+		elseif ( ! is_super_admin( $user_id ) && ! metadata_exists( 'user', $user_id, 'show_welcome_panel' ) )
+			update_user_meta( $user_id, 'show_welcome_panel', 2 );
+
+		if ( is_multisite() ) {
+			// Flush rules to pick up the new page.
+			$wp_rewrite->init();
+			$wp_rewrite->flush_rules();
+
+			$user = new WP_User($user_id);
+			$wpdb->update( $wpdb->options, array('option_value' => $user->user_email), array('option_name' => 'admin_email') );
+
+			// Remove all perms except for the login user.
+			$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'user_level') );
+			$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'capabilities') );
+
+			// Delete any caps that snuck into the previously active blog. (Hardcoded to blog 1 for now.)
+			// TODO: Get previous_blog_id.
+			if ( ! is_super_admin( $user_id ) && 1 != $user_id ) {
+				$wpdb->delete( $wpdb->usermeta, array( 'user_id' => $user_id , 'meta_key' => $wpdb->base_prefix.'1_capabilities' ) );
+		}
 	}
-
-	// Set up default widgets for default theme.
-	update_option( 'widget_search', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
-	update_option( 'widget_recent-posts', array ( 2 => array ( 'title' => '', 'number' => 5 ), '_multiwidget' => 1 ) );
-	update_option( 'widget_recent-comments', array ( 2 => array ( 'title' => '', 'number' => 5 ), '_multiwidget' => 1 ) );
-	update_option( 'widget_archives', array ( 2 => array ( 'title' => '', 'count' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
-	update_option( 'widget_categories', array ( 2 => array ( 'title' => '', 'count' => 0, 'hierarchical' => 0, 'dropdown' => 0 ), '_multiwidget' => 1 ) );
-	update_option( 'widget_meta', array ( 2 => array ( 'title' => '' ), '_multiwidget' => 1 ) );
-	update_option( 'sidebars_widgets', array( 'wp_inactive_widgets' => array(), 'sidebar-1' => array( 0 => 'search-2', 1 => 'recent-posts-2', 2 => 'recent-comments-2' ), 
-			'sidebar-2'           => array(
-				0 => 'archives-2',
-				1 => 'categories-2',
-				2 => 'meta-2',
-			),
-		'array_version' => 3 ) 
-	);
-	if ( ! is_multisite() )
-		update_user_meta( $user_id, 'show_welcome_panel', 1 );
-	elseif ( ! is_super_admin( $user_id ) && ! metadata_exists( 'user', $user_id, 'show_welcome_panel' ) )
-		update_user_meta( $user_id, 'show_welcome_panel', 2 );
-
-	if ( is_multisite() ) {
-		// Flush rules to pick up the new page.
-		$wp_rewrite->init();
-		$wp_rewrite->flush_rules();
-
-		$user = new WP_User($user_id);
-		$wpdb->update( $wpdb->options, array('option_value' => $user->user_email), array('option_name' => 'admin_email') );
-
-		// Remove all perms except for the login user.
-		$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'user_level') );
-		$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'capabilities') );
-
-		// Delete any caps that snuck into the previously active blog. (Hardcoded to blog 1 for now.) TODO: Get previous_blog_id.
-		if ( !is_super_admin( $user_id ) && $user_id != 1 )
-			$wpdb->delete( $wpdb->usermeta, array( 'user_id' => $user_id , 'meta_key' => $wpdb->base_prefix.'1_capabilities' ) );
-	}
-}
 endif;
 
 /**
@@ -449,7 +466,7 @@ function wp_install_maybe_enable_pretty_permalinks() {
 
 		$test_url = '';
 
-		// Test against a real WordPress Post
+		// Test against a real WordPress post.
 		$first_post = get_page_by_path( sanitize_title( _x( 'hello-world', 'Default post slug' ) ), OBJECT, 'post' );
 		if ( $first_post ) {
 			$test_url = get_permalink( $first_post->ID );
@@ -464,7 +481,7 @@ function wp_install_maybe_enable_pretty_permalinks() {
 		 */
 		$response          = wp_remote_get( $test_url, array( 'timeout' => 5 ) );
 		$x_pingback_header = wp_remote_retrieve_header( $response, 'x-pingback' );
-		$pretty_permalinks = $x_pingback_header && $x_pingback_header === get_bloginfo( 'pingback_url' );
+		$pretty_permalinks = $x_pingback_header && get_bloginfo( 'pingback_url' ) === $x_pingback_header;
 
 		if ( $pretty_permalinks ) {
 			return true;
@@ -765,11 +782,10 @@ function upgrade_430() {
  *
  * @since 4.3.0
  *
- * @global int  $wp_current_db_version The old (current) database version.
- * @global wpdb $wpdb                  WordPress database abstraction object.
+ * @global wpdb $wpdb WordPress database abstraction object.
  */
 function upgrade_430_fix_comments() {
-	global $wp_current_db_version, $wpdb;
+	global $wpdb;
 
 	$comments = $wpdb->get_results(
 			"SELECT comment_ID FROM {$wpdb->comments}
@@ -789,7 +805,7 @@ function upgrade_430_fix_comments() {
  * @since 4.3.1
  */
 function upgrade_431() {
-	// Fix incorrect cron entries for term splitting
+	// Fix incorrect cron entries for term splitting.
 	$cron_array = _get_cron_array();
 	if ( isset( $cron_array['wp_batch_split_terms'] ) ) {
 		unset( $cron_array['wp_batch_split_terms'] );
@@ -925,11 +941,13 @@ function upgrade_510() {
  * @since 5.3.0
  */
 function upgrade_530() {
-	// The `admin_email_lifespan` option may have been set by an admin that just logged in,
-	// saw the verification screen, clicked on a button there, and is now upgrading the db,
-	// or by populate_options() that is called earlier in upgrade_all().
-	// In the second case `admin_email_lifespan` should be reset so the verification screen
-	// is shown next time an admin logs in.
+	/*
+	 * The `admin_email_lifespan` option may have been set by an admin that just logged in,
+	 * saw the verification screen, clicked on a button there, and is now upgrading the db,
+	 * or by populate_options() that is called earlier in upgrade_all().
+	 * In the second case `admin_email_lifespan` should be reset so the verification screen
+	 * is shown next time an admin logs in.
+	 */
 	if ( function_exists( 'current_user_can' ) && ! current_user_can( 'manage_options' ) ) {
 		update_option( 'admin_email_lifespan', 0 );
 	}
@@ -946,10 +964,10 @@ function upgrade_530() {
 function upgrade_network() {
 	global $wp_current_db_version, $wpdb;
 
-	// Always clear expired transients
+	// Always clear expired transients.
 	delete_expired_transients( true );
 
-	// 2.8.
+	// 2.8
 	if ( $wp_current_db_version < 11549 ) {
 		$wpmu_sitewide_plugins   = get_site_option( 'wpmu_sitewide_plugins' );
 		$active_sitewide_plugins = get_site_option( 'active_sitewide_plugins' );
@@ -1037,7 +1055,7 @@ function upgrade_network() {
 }
 
 //
-// General functions we use to actually do stuff
+// General functions we use to actually do stuff.
 //
 
 /**
@@ -1065,7 +1083,7 @@ function maybe_create_table($table_name, $create_ddl) {
 		return true;
 	}
 
-	// Didn't find it try to create it..
+	// Didn't find it, so try to create it.
 	$wpdb->query($create_ddl);
 
 	// We cannot directly tell that whether this succeeded!
@@ -1090,7 +1108,7 @@ function drop_index($table, $index) {
 	global $wpdb;
 	$wpdb->hide_errors();
 	$wpdb->query("ALTER TABLE [$table] DROP INDEX [$index]");
-	// Now we need to take out all the extra ones we may have created
+	// Now we need to take out all the extra ones we may have created.
 	for ($i = 0; $i < 25; $i++) {
 		$wpdb->query("ALTER TABLE [$table] DROP INDEX [{$index}_$i]");
 	}
@@ -1138,7 +1156,7 @@ function maybe_add_column( $table_name, $column_name, $create_ddl ) {
 		}
 	}
 
-	// Didn't find it try to create it.
+	// Didn't find it, so try to create it.
 	$wpdb->query( $create_ddl );
 
 	// We cannot directly tell that whether this succeeded!
@@ -1165,21 +1183,21 @@ function maybe_add_column( $table_name, $column_name, $create_ddl ) {
 function __get_option( $setting ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionDoubleUnderscore,PHPCompatibility.FunctionNameRestrictions.ReservedFunctionNames.FunctionDoubleUnderscore
 	global $wpdb;
 
-	if ( $setting == 'home' && defined( 'WP_HOME' ) ) {
+	if ( 'home' === $setting && defined( 'WP_HOME' ) ) {
 		return untrailingslashit( WP_HOME );
 	}
 
-	if ( $setting == 'siteurl' && defined( 'WP_SITEURL' ) ) {
+	if ( 'siteurl' === $setting && defined( 'WP_SITEURL' ) ) {
 		return untrailingslashit( WP_SITEURL );
 	}
 
 	$option = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s", $setting ) );
 
-	if ( 'home' == $setting && '' == $option ) {
+	if ( 'home' === $setting && '' == $option ) {
 		return __get_option( 'siteurl' );
 	}
 
-	if ( 'siteurl' == $setting || 'home' == $setting || 'category_base' == $setting || 'tag_base' == $setting ) {
+	if ( 'siteurl' === $setting || 'home' === $setting || 'category_base' === $setting || 'tag_base' === $setting ) {
 		$option = untrailingslashit( $option );
 	}
 
@@ -1236,21 +1254,21 @@ function dbDelta( $queries = '', $execute = true ) { // phpcs:ignore WordPress.N
 	global $wpdb;
 
 	if ( in_array( $queries, array( '', 'all', 'blog', 'global', 'ms_global' ), true ) )
-	    $queries = wp_get_db_schema( $queries );
+		$queries = wp_get_db_schema( $queries );
 
-	// Separate individual queries into an array
+	// Separate individual queries into an array.
 	if ( !is_array($queries) ) {
-        if (stristr($queries, "GO") !== FALSE) {
-    		$queries = explode( 'GO', $queries );
-        } else {
-    		$queries = explode( ';', $queries );
-        }
+		if (stristr($queries, "GO") !== FALSE) {
+			$queries = explode( 'GO', $queries );
+		} else {
+			$queries = explode( ';', $queries );
+		}
 		$queries = array_filter( $queries );
 	}
 
 	foreach( $queries as $query ) {
 		$wpdb->query($query);
- 	}
+	}
  
 	return array();
 
@@ -1324,14 +1342,14 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
 	);
 
 	foreach ( $files as $oldfile => $newfile ) {
-		if ( $oldfile == 'index.php' ) {
+		if ( 'index.php' === $oldfile ) {
 			$oldpath = $home_path;
 		} else {
 			$oldpath = ABSPATH;
 		}
 
 		// Check to make sure it's not a new index.
-		if ( $oldfile == 'index.php' ) {
+		if ( 'index.php' === $oldfile ) {
 			$index = implode( '', file( "$oldpath/$oldfile" ) );
 			if ( strpos( $index, 'WP_USE_THEMES' ) !== false ) {
 				if ( ! copy( WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME . '/index.php', "$site_dir/$newfile" ) ) {
@@ -1395,14 +1413,14 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
  *
  * @param string $theme_name The name of the theme.
  * @param string $template   The directory name of the theme.
- * @return false|void
+ * @return void|false
  */
 function make_site_theme_from_default( $theme_name, $template ) {
 	$site_dir    = WP_CONTENT_DIR . "/themes/$template";
 	$default_dir = WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME;
 
 	// Copy files from the default theme to the site theme.
-	//$files = array('index.php', 'comments.php', 'comments-popup.php', 'footer.php', 'header.php', 'sidebar.php', 'style.css');
+	// $files = array( 'index.php', 'comments.php', 'comments-popup.php', 'footer.php', 'header.php', 'sidebar.php', 'style.css' );
 
 	$theme_dir = @opendir( $default_dir );
 	if ( $theme_dir ) {
@@ -1470,7 +1488,7 @@ function make_site_theme_from_default( $theme_name, $template ) {
  *
  * @since 1.5.0
  *
- * @return false|string
+ * @return string|false
  */
 function make_site_theme() {
 	// Name the theme after the blog.
@@ -1507,7 +1525,7 @@ function make_site_theme() {
 
 	// Make the new site theme active.
 	$current_template = __get_option( 'template' );
-	if ( $current_template == WP_DEFAULT_THEME ) {
+	if ( WP_DEFAULT_THEME == $current_template ) {
 		update_option( 'template', $template );
 		update_option( 'stylesheet', $template );
 	}
@@ -1612,7 +1630,7 @@ function pre_schema_upgrade() {
 	// Multisite schema upgrades.
 	if ( $wp_current_db_version < 25448 && is_multisite() && wp_should_upgrade_global_tables() ) {
 
-		// Upgrade versions prior to 3.7
+		// Upgrade versions prior to 3.7.
 		if ( $wp_current_db_version < 25179 ) {
 			// New primary key for signups.
 			$wpdb->query( "ALTER TABLE $wpdb->signups ADD signup_id INT NOT NULL IDENTITY(1,1)" );
@@ -1648,7 +1666,7 @@ CREATE TABLE $wpdb->sitecategories (
   KEY last_updated (last_updated)
 ) $charset_collate;
 ";
-		// now create tables
+		// Now create tables.
 		dbDelta( $ms_queries );
 	}
 endif;
@@ -1673,20 +1691,20 @@ endif;
  */
 function wp_should_upgrade_global_tables() {
 
-	// Return false early if explicitly not upgrading
+	// Return false early if explicitly not upgrading.
 	if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
 		return false;
 	}
 
-	// Assume global tables should be upgraded
+	// Assume global tables should be upgraded.
 	$should_upgrade = true;
 
-	// Set to false if not on main network (does not matter if not multi-network)
+	// Set to false if not on main network (does not matter if not multi-network).
 	if ( ! is_main_network() ) {
 		$should_upgrade = false;
 	}
 
-	// Set to false if not on main site of current network (does not matter if not multi-site)
+	// Set to false if not on main site of current network (does not matter if not multi-site).
 	if ( ! is_main_site() ) {
 		$should_upgrade = false;
 	}
