@@ -3083,6 +3083,7 @@ class WP_Query {
 							}
 						} else {
 							$this->posts = array();
+						}
 					}
 				} elseif ( ! $post_status_obj ) {
 					// Post status is not registered, assume it's not public.
