@@ -286,13 +286,13 @@ class WP_Meta_Query {
 	 */
 	public function get_cast_for_type( $type = '' ) {
 		if ( empty( $type ) ) {
- 			return 'CHAR';
+ 			return 'NVARCHAR';
 		}
 
 		$meta_type = strtoupper( $type );
 
 		if ( ! preg_match( '/^(?:BINARY|CHAR|DATE|DATETIME|SIGNED|UNSIGNED|TIME|NUMERIC(?:\(\d+(?:,\s?\d+)?\))?|DECIMAL(?:\(\d+(?:,\s?\d+)?\))?)$/', $meta_type ) ) {
- 			return 'CHAR';
+ 			return 'NVARCHAR';
 		}
 
         switch ( $meta_type ){
@@ -300,6 +300,10 @@ class WP_Meta_Query {
             case 'UNSIGNED' :
             case 'NUMERIC' :
                 $meta_type = 'INT';
+			case 'DATE' :
+			case 'DATETIME' :
+			case 'TIME' :
+				$meta_type = 'DATETIME2';
         }
 
 		return $meta_type;
