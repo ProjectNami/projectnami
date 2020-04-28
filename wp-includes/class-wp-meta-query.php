@@ -300,10 +300,12 @@ class WP_Meta_Query {
             case 'UNSIGNED' :
             case 'NUMERIC' :
                 $meta_type = 'INT';
+				break;
 			case 'DATE' :
 			case 'DATETIME' :
 			case 'TIME' :
 				$meta_type = 'DATETIME2';
+				break;
         }
 
 		return $meta_type;
