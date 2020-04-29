@@ -811,10 +811,6 @@ class WP_Query {
 			$this->is_single = true;
 		} elseif ( $qv['p'] ) {
 			$this->is_single = true;
-		} elseif ( ( '' !== $qv['hour'] ) && ( '' !== $qv['minute'] ) && ( '' !== $qv['second'] ) && ( '' != $qv['year'] ) && ( '' != $qv['monthnum'] ) && ( '' != $qv['day'] ) ) {
-			// If year, month, day, hour, minute, and second are set,
-			// a single post is being queried.
-			$this->is_single = true;
 		} elseif ( '' != $qv['pagename'] || ! empty( $qv['page_id'] ) ) {
 			$this->is_page   = true;
 			$this->is_single = false;
@@ -1631,7 +1627,7 @@ class WP_Query {
 			case 'meta_value':
 				$orderby_clause = "meta_value";
 				if ( ! empty( $primary_meta_query['type'] ) ) {
-					$orderbyfields = $orderbyfields . ", CAST({$primary_meta_query['alias']}.meta_value AS {$sql_type}) as meta_value";
+					$orderbyfields = $orderbyfields . ", CAST({$primary_meta_query['alias']}.meta_value AS {$primary_meta_query['type']}) as meta_value";
 				} else {
                     $orderbyfields = $orderbyfields . ", {$primary_meta_query['alias']}.meta_value";
 				}
