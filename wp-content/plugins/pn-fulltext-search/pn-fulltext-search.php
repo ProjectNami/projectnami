@@ -48,7 +48,7 @@ class PN_Fulltext_Search
         $wpdb->query( "if not exists (select * from sys.dm_fts_active_catalogs where name = 'ftCatalog' and database_id = DB_ID()) create fulltext catalog ftCatalog" );
 
         // Create the full text view if it does not exist
-        $wpdb->query( "if not exists (select * from INFORMATION_SCHEMA.TABLES where table_name = '{$wpdb->get_blog_prefix()}fulltext_search') exec('CREATE VIEW [dbo].[{$wpdb->get_blog_prefix()}fulltext_search] WITH SCHEMABINDING AS select {$wpdb->get_blog_prefix()}posts.ID, display_name + '' '' + post_title + '' '' + post_excerpt + '' '' + post_content as search_text from dbo.{$wpdb->get_blog_prefix()}posts inner join dbo.wp_users on {$wpdb->get_blog_prefix()}posts.post_author = wp_users.ID')" );
+        $wpdb->query( "if not exists (select * from INFORMATION_SCHEMA.TABLES where table_name = '{$wpdb->get_blog_prefix()}fulltext_search') exec('CREATE VIEW [dbo].[{$wpdb->get_blog_prefix()}fulltext_search] WITH SCHEMABINDING AS select {$wpdb->get_blog_prefix()}posts.ID, display_name + '' '' + post_title + '' '' + post_excerpt + '' '' + post_content as search_text from dbo.{$wpdb->get_blog_prefix()}posts inner join dbo.{$wpdb->get_blog_prefix()}users on {$wpdb->get_blog_prefix()}posts.post_author = {$wpdb->get_blog_prefix()}users.ID')" );
 
         // Create the clustered index if it does not exist
         $wpdb->query( "if not exists (select * from sys.indexes where name = 'CLU_{$wpdb->get_blog_prefix()}fulltext_search') CREATE UNIQUE CLUSTERED INDEX [CLU_{$wpdb->get_blog_prefix()}fulltext_search] ON [dbo].[{$wpdb->get_blog_prefix()}fulltext_search] ([ID] ASC)" );
