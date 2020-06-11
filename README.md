@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-### Version: `2.4.1` ###
+### Version: `2.4.2` ###
 
 ### Description: ###
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://deploy.azure.com/?repository=https://github.com/ProjectNami/projectnami/tree/latest)
@@ -31,3 +31,9 @@ Project Nami is an open source project derived from WordPress and available free
 
 
 [![Become a patron](https://projectnami.blob.core.windows.net/siteimages/2020/02/become_a_patron_button.png)](https://patreon.com/projectnami)
+
+
+### CURRENT PATRONS ###
+
+#### FRIENDS ####
+Julio Moraes

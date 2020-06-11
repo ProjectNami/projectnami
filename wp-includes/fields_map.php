@@ -219,12 +219,32 @@ class Fields_map
      * @return array
      */
     function read() {
+        global $wpdb;
         if (empty($this->fields_map)) {
-            if (file_exists($this->filepath)) {
-                $this->fields_map = require($this->filepath);
-            } else {
-                $this->fields_map = array();
-            }
+            $query = "select tab.name as table_name, col.name as column_name,
+                        CASE WHEN exists (select * from sys.indexes pk inner join sys.index_columns ic on ic.object_id = pk.object_id and ic.index_id = pk.index_id where pk.object_id = tab.object_id and ic.column_id = col.column_id and pk.is_primary_key = 1) then 'primary_id' else t.name end as data_type 
+                        from sys.tables as tab 
+                        inner join sys.columns as col on tab.object_id = col.object_id 
+                        left join sys.types as t on col.user_type_id = t.user_type_id 
+                        order by table_name, column_name";
+
+       		$result_resource = sqlsrv_query( $wpdb->dbh, $query );
+
+            $table_name = '';
+            $this->fields_map = array();
+            $field_types = array();
+
+			while ( $row = @sqlsrv_fetch_object( $result_resource ) ) {
+                if ( $table_name !== $row->table_name ) {
+                    if ( $table_name !== '' ) {
+                        $this->fields_map = array_merge($this->fields_map, array($table_name => $field_types));
+                        $field_types = array();
+                    }
+                    $table_name = $row->table_name;
+                }
+                $field_types[$row->column_name] = array('type'=>$row->data_type);
+			}
+            $this->fields_map = array_merge($this->fields_map, array($table_name => $field_types));
         }
         return $this->fields_map;
     }
