@@ -25,7 +25,7 @@ class WP_User_Query {
 	public $query_vars = array();
 
 	/**
-	 * List of found user ids
+	 * List of found user IDs.
 	 *
 	 * @since 3.1.0
 	 * @var array
@@ -242,7 +242,7 @@ class WP_User_Query {
 				$this->query_fields[] = "$wpdb->users.$field";
 			}
 			$this->query_fields = implode( ',', $this->query_fields );
-		} elseif ( 'all' == $qv['fields'] ) {
+		} elseif ( 'all' === $qv['fields'] ) {
 			$this->query_fields = "$wpdb->users.*";
 		} else {
 			$this->query_fields = "$wpdb->users.ID";
@@ -316,7 +316,7 @@ class WP_User_Query {
 		$this->meta_query = new WP_Meta_Query();
 		$this->meta_query->parse_query_vars( $qv );
 
-		if ( isset( $qv['who'] ) && 'authors' == $qv['who'] && $blog_id ) {
+		if ( isset( $qv['who'] ) && 'authors' === $qv['who'] && $blog_id ) {
 			$who_query = array(
 				'key'     => $wpdb->get_blog_prefix( $blog_id ) . 'user_level',
 				'value'   => 0,
@@ -594,7 +594,7 @@ class WP_User_Query {
 
 		$this->request = "SELECT $this->query_fields $this->query_from $this->query_where $this->query_orderby $this->query_limit";
 
-		if ( is_array( $qv['fields'] ) || 'all' == $qv['fields'] ) {
+		if ( is_array( $qv['fields'] ) || 'all' === $qv['fields'] ) {
 			$this->results = $wpdb->get_results( $this->request );
 		} else {
 			$this->results = $wpdb->get_col( $this->request );
@@ -615,7 +615,7 @@ class WP_User_Query {
 		if ( !$this->results )
 			return;
 
-		if ( 'all_with_meta' == $qv['fields'] ) {
+		if ( 'all_with_meta' === $qv['fields'] ) {
 			cache_users( $this->results );
 
 			$r = array();
@@ -623,7 +623,7 @@ class WP_User_Query {
 				$r[ $userid ] = new WP_User( $userid, '', $qv['blog_id'] );
 
 			$this->results = $r;
-		} elseif ( 'all' == $qv['fields'] ) {
+		} elseif ( 'all' === $qv['fields'] ) {
 			foreach ( $this->results as $key => $user ) {
 				$this->results[ $key ] = new WP_User( $user, '', $qv['blog_id'] );
 			}
@@ -652,7 +652,7 @@ class WP_User_Query {
 	 * @since 3.5.0
 	 *
 	 * @param string $query_var Query variable key.
-	 * @param mixed $value Query variable value.
+	 * @param mixed  $value     Query variable value.
 	 */
 	public function set( $query_var, $value ) {
 		$this->query_vars[ $query_var ] = $value;
@@ -675,12 +675,12 @@ class WP_User_Query {
 		global $wpdb;
 
 		$searches      = array();
-		$leading_wild  = ( 'leading' == $wild || 'both' == $wild ) ? '%' : '';
-		$trailing_wild = ( 'trailing' == $wild || 'both' == $wild ) ? '%' : '';
+		$leading_wild  = ( 'leading' === $wild || 'both' === $wild ) ? '%' : '';
+		$trailing_wild = ( 'trailing' === $wild || 'both' === $wild ) ? '%' : '';
 		$like          = $leading_wild . $wpdb->esc_like( $string ) . $trailing_wild;
 
 		foreach ( $cols as $col ) {
-			if ( 'ID' == $col ) {
+			if ( 'ID' === $col ) {
 				$searches[] = $wpdb->prepare( "$col = %s", $string );
 			} else {
 				$searches[] = $wpdb->prepare( "$col LIKE %s", $like );
@@ -728,13 +728,13 @@ class WP_User_Query {
 		$meta_query_clauses = $this->meta_query->get_clauses();
 
 		$_orderby = '';
-		if ( in_array( $orderby, array( 'login', 'nicename', 'email', 'url', 'registered' ) ) ) {
+		if ( in_array( $orderby, array( 'login', 'nicename', 'email', 'url', 'registered' ), true ) ) {
 			$_orderby = 'user_' . $orderby;
-		} elseif ( in_array( $orderby, array( 'user_login', 'user_nicename', 'user_email', 'user_url', 'user_registered' ) ) ) {
+		} elseif ( in_array( $orderby, array( 'user_login', 'user_nicename', 'user_email', 'user_url', 'user_registered' ), true ) ) {
 			$_orderby = $orderby;
-		} elseif ( 'name' == $orderby || 'display_name' == $orderby ) {
+		} elseif ( 'name' === $orderby || 'display_name' === $orderby ) {
 			$_orderby = 'display_name';
-		} elseif ( 'post_count' == $orderby ) {
+		} elseif ( 'post_count' === $orderby ) {
 			// @todo Avoid the JOIN.
 			$where             = get_posts_by_author_sql( 'post' );
 			$this->query_from .= " LEFT OUTER JOIN (
@@ -745,11 +745,11 @@ class WP_User_Query {
 			) p ON ({$wpdb->users}.ID = p.post_author)
 			";
 			$_orderby          = 'post_count';
-		} elseif ( 'ID' == $orderby || 'id' == $orderby ) {
+		} elseif ( 'ID' === $orderby || 'id' === $orderby ) {
 			$_orderby = 'ID';
-		} elseif ( 'meta_value' == $orderby || $this->get( 'meta_key' ) == $orderby ) {
+		} elseif ( 'meta_value' === $orderby || $this->get( 'meta_key' ) === $orderby ) {
 			$_orderby = "$wpdb->usermeta.meta_value";
-		} elseif ( 'meta_value_num' == $orderby ) {
+		} elseif ( 'meta_value_num' === $orderby ) {
 			$_orderby = "CAST($wpdb->usermeta.meta_value as numeric)";
 		} elseif ( 'include' === $orderby && ! empty( $this->query_vars['include'] ) ) {
 			$include = wp_parse_id_list( $this->query_vars['include'] );
@@ -800,7 +800,7 @@ class WP_User_Query {
 	 * @return mixed Property.
 	 */
 	public function __get( $name ) {
-		if ( in_array( $name, $this->compat_fields ) ) {
+		if ( in_array( $name, $this->compat_fields, true ) ) {
 			return $this->$name;
 		}
 	}
@@ -815,7 +815,7 @@ class WP_User_Query {
 	 * @return mixed Newly-set property.
 	 */
 	public function __set( $name, $value ) {
-		if ( in_array( $name, $this->compat_fields ) ) {
+		if ( in_array( $name, $this->compat_fields, true ) ) {
 			return $this->$name = $value;
 		}
 	}
@@ -829,7 +829,7 @@ class WP_User_Query {
 	 * @return bool Whether the property is set.
 	 */
 	public function __isset( $name ) {
-		if ( in_array( $name, $this->compat_fields ) ) {
+		if ( in_array( $name, $this->compat_fields, true ) ) {
 			return isset( $this->$name );
 		}
 	}
@@ -842,7 +842,7 @@ class WP_User_Query {
 	 * @param string $name Property to unset.
 	 */
 	public function __unset( $name ) {
-		if ( in_array( $name, $this->compat_fields ) ) {
+		if ( in_array( $name, $this->compat_fields, true ) ) {
 			unset( $this->$name );
 		}
 	}
@@ -852,8 +852,8 @@ class WP_User_Query {
 	 *
 	 * @since 4.0.0
 	 *
-	 * @param string   $name      Method to call.
-	 * @param array    $arguments Arguments to pass when calling.
+	 * @param string $name      Method to call.
+	 * @param array  $arguments Arguments to pass when calling.
 	 * @return mixed Return value of the callback, false otherwise.
 	 */
 	public function __call( $name, $arguments ) {

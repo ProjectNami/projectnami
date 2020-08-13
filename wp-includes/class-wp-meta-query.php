@@ -109,7 +109,7 @@ class WP_Meta_Query {
 	 *
 	 *     @type string $relation Optional. The MySQL keyword used to join
 	 *                            the clauses of the query. Accepts 'AND', or 'OR'. Default 'AND'.
-	 *     @type array {
+	 *     @type array  ...$0 {
 	 *         Optional. An array of first-order clause parameters, or another fully-formed meta query.
 	 *
 	 *         @type string $key         Meta key to filter by.
@@ -138,7 +138,7 @@ class WP_Meta_Query {
 			return;
 		}
 
-		if ( isset( $meta_query['relation'] ) && strtoupper( $meta_query['relation'] ) == 'OR' ) {
+		if ( isset( $meta_query['relation'] ) && 'OR' === strtoupper( $meta_query['relation'] ) ) {
 			$this->relation = 'OR';
 		} else {
 			$this->relation = 'AND';
@@ -629,9 +629,9 @@ class WP_Meta_Query {
 					$this->table_aliases[] = $subquery_alias;
 
 					$meta_compare_string_start  = 'NOT EXISTS (';
-					$meta_compare_string_start .= "SELECT 1 FROM $wpdb->postmeta $subquery_alias ";
+					$meta_compare_string_start .= "SELECT TOP 1 1 FROM $wpdb->postmeta $subquery_alias ";
 					$meta_compare_string_start .= "WHERE $subquery_alias.post_ID = $alias.post_ID ";
-					$meta_compare_string_end    = 'LIMIT 1';
+					$meta_compare_string_end    = '';
 					$meta_compare_string_end   .= ')';
 				}
 
@@ -696,7 +696,7 @@ class WP_Meta_Query {
 		if ( array_key_exists( 'value', $clause ) ) {
 			$meta_value = $clause['value'];
 
-			if ( in_array( $meta_compare, array( 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN' ) ) ) {
+			if ( in_array( $meta_compare, array( 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN' ), true ) ) {
 				if ( ! is_array( $meta_value ) ) {
 					$meta_value = preg_split( '/[,\s]+/', $meta_value );
 				}
@@ -789,9 +789,9 @@ class WP_Meta_Query {
 	 *
 	 * @since 4.1.0
 	 *
-	 * @param  array       $clause       Query clause.
-	 * @param  array       $parent_query Parent query of $clause.
-	 * @return string|bool Table alias if found, otherwise false.
+	 * @param array $clause       Query clause.
+	 * @param array $parent_query Parent query of $clause.
+	 * @return string|false Table alias if found, otherwise false.
 	 */
 	protected function find_compatible_table_alias( $clause, $parent_query ) {
 		$alias = false;
@@ -820,7 +820,7 @@ class WP_Meta_Query {
 
 			$clause_compare  = strtoupper( $clause['compare'] );
 			$sibling_compare = strtoupper( $sibling['compare'] );
-			if ( in_array( $clause_compare, $compatible_compares ) && in_array( $sibling_compare, $compatible_compares ) ) {
+			if ( in_array( $clause_compare, $compatible_compares, true ) && in_array( $sibling_compare, $compatible_compares, true ) ) {
 				$alias = $sibling['alias'];
 				break;
 			}
