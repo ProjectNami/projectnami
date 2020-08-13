@@ -279,7 +279,8 @@ if ( !function_exists('wp_install_defaults') ) :
 			'comment_author_url' => $first_comment_url,
 			'comment_date' => $now,
 			'comment_date_gmt' => $now_gmt,
-			'comment_content' => $first_comment
+			'comment_content' => $first_comment,
+			'comment_type'         => 'comment',
 		));
 
 		// First page.
@@ -601,6 +602,7 @@ endif;
  */
 function upgrade_all() {
 	global $wp_current_db_version, $wp_db_version;
+
 	$wp_current_db_version = __get_option('db_version');
 
 	// We are up to date. Nothing to do.
@@ -659,6 +661,10 @@ function upgrade_all() {
 		upgrade_530();
 	}
 
+	if ( $wp_current_db_version < 48575 ) {
+		upgrade_550();
+	}
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -676,6 +682,7 @@ function upgrade_all() {
  */
 function upgrade_370() {
 	global $wp_current_db_version;
+
 	if ( $wp_current_db_version < 25824 ) {
 		wp_clear_scheduled_hook( 'wp_auto_updates_maybe_update' );
 	}
@@ -691,6 +698,7 @@ function upgrade_370() {
  */
 function upgrade_372() {
 	global $wp_current_db_version;
+
 	if ( $wp_current_db_version < 26148 ) {
 		wp_clear_scheduled_hook( 'wp_maybe_auto_update' );
 	}
@@ -705,6 +713,7 @@ function upgrade_372() {
  */
 function upgrade_380() {
 	global $wp_current_db_version;
+
 	if ( $wp_current_db_version < 26691 ) {
 		deactivate_plugins( array( 'mp6/mp6.php' ), true );
 	}
@@ -719,9 +728,10 @@ function upgrade_380() {
  */
 function upgrade_400() {
 	global $wp_current_db_version;
+
 	if ( $wp_current_db_version < 29630 ) {
 		if ( ! is_multisite() && false === get_option( 'WPLANG' ) ) {
-			if ( defined( 'WPLANG' ) && ( '' !== WPLANG ) && in_array( WPLANG, get_available_languages() ) ) {
+			if ( defined( 'WPLANG' ) && ( '' !== WPLANG ) && in_array( WPLANG, get_available_languages(), true ) ) {
 				update_option( 'WPLANG', WPLANG );
 			} else {
 				update_option( 'WPLANG', '' );
@@ -955,6 +965,44 @@ function upgrade_530() {
 }
 
 /**
+ * Executes changes made in WordPress 5.5.0.
+ *
+ * @ignore
+ * @since 5.5.0
+ */
+function upgrade_550() {
+	global $wp_current_db_version;
+
+	if ( $wp_current_db_version < 48121 ) {
+		$comment_previously_approved = get_option( 'comment_whitelist', '' );
+		update_option( 'comment_previously_approved', $comment_previously_approved );
+		delete_option( 'comment_whitelist' );
+	}
+
+	if ( $wp_current_db_version < 48575 ) {
+		// Use more clear and inclusive language.
+		$disallowed_list = get_option( 'blacklist_keys' );
+
+		/*
+		 * This option key was briefly renamed `blocklist_keys`.
+		 * Account for sites that have this key present when the original key does not exist.
+		 */
+		if ( false === $disallowed_list ) {
+			$disallowed_list = get_option( 'blocklist_keys' );
+		}
+
+		update_option( 'disallowed_keys', $disallowed_list );
+		delete_option( 'blacklist_keys' );
+		delete_option( 'blocklist_keys' );
+	}
+
+	if ( $wp_current_db_version < 48748 ) {
+		update_option( 'finished_updating_comment_type', 0 );
+		wp_schedule_single_event( time() + ( 1 * MINUTE_IN_SECONDS ), 'wp_update_comment_type_batch' );
+	}
+}
+
+/**
  * Executes network-level upgrade routines.
  *
  * @since 3.0.0
@@ -968,7 +1016,7 @@ function upgrade_network() {
 	// Always clear expired transients.
 	delete_expired_transients( true );
 
-	// 2.8
+	// 2.8.0
 	if ( $wp_current_db_version < 11549 ) {
 		$wpmu_sitewide_plugins   = get_site_option( 'wpmu_sitewide_plugins' );
 		$active_sitewide_plugins = get_site_option( 'active_sitewide_plugins' );
@@ -998,12 +1046,12 @@ function upgrade_network() {
 		}
 	}
 
-	// 3.0
+	// 3.0.0
 	if ( $wp_current_db_version < 13576 ) {
 		update_site_option( 'global_terms_enabled', '1' );
 	}
 
-	// 3.3
+	// 3.3.0
 	if ( $wp_current_db_version < 19390 ) {
 		update_site_option( 'initial_db_version', $wp_current_db_version );
 	}
@@ -1014,7 +1062,7 @@ function upgrade_network() {
 		}
 	}
 
-	// 3.4
+	// 3.4.0
 	if ( $wp_current_db_version < 20148 ) {
 		// 'allowedthemes' keys things by stylesheet. 'allowed_themes' keyed things by name.
 		$allowedthemes  = get_site_option( 'allowedthemes' );
@@ -1032,7 +1080,7 @@ function upgrade_network() {
 		}
 	}
 
-	// 3.5
+	// 3.5.0
 	if ( $wp_current_db_version < 21823 ) {
 		update_site_option( 'ms_files_rewriting', '1' );
 	}
@@ -1047,7 +1095,7 @@ function upgrade_network() {
 		}
 	}
 
-	// 5.1
+	// 5.1.0
 	if ( $wp_current_db_version < 44467 ) {
 		$network_id = get_main_network_id();
 		delete_network_option( $network_id, 'site_meta_supported' );
@@ -1060,7 +1108,7 @@ function upgrade_network() {
 //
 
 /**
- * Creates a table in the database if it doesn't already exist.
+ * Creates a table in the database, if it doesn't already exist.
  *
  * This method checks for an existing database and creates a new one if it's not
  * already present. It doesn't rely on MySQL's "IF NOT EXISTS" statement, but chooses
@@ -1071,16 +1119,16 @@ function upgrade_network() {
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
- * @param string $table_name Database table name to create.
+ * @param string $table_name Database table name.
  * @param string $create_ddl SQL statement to create table.
- * @return bool If table already exists or was created by function.
+ * @return bool True on success or if the table already exists. False on failure.
  */
 function maybe_create_table($table_name, $create_ddl) {
 	global $wpdb;
 
 	$query = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'" );
 
-	if ( $wpdb->get_var( $query ) == $table_name ) {
+	if ( $wpdb->get_var( $query ) === $table_name ) {
 		return true;
 	}
 
@@ -1088,9 +1136,10 @@ function maybe_create_table($table_name, $create_ddl) {
 	$wpdb->query($create_ddl);
 
 	// We cannot directly tell that whether this succeeded!
-	if ( $wpdb->get_var( $query ) == $table_name ) {
+	if ( $wpdb->get_var( $query ) === $table_name ) {
 		return true;
 	}
+
 	return false;
 }
 
@@ -1107,13 +1156,18 @@ function maybe_create_table($table_name, $create_ddl) {
  */
 function drop_index($table, $index) {
 	global $wpdb;
+
 	$wpdb->hide_errors();
+
 	$wpdb->query("ALTER TABLE [$table] DROP INDEX [$index]");
+
 	// Now we need to take out all the extra ones we may have created.
 	for ($i = 0; $i < 25; $i++) {
 		$wpdb->query("ALTER TABLE [$table] DROP INDEX [{$index}_$i]");
 	}
+
 	$wpdb->show_errors();
+
 	return true;
 }
 
@@ -1131,28 +1185,31 @@ function drop_index($table, $index) {
  */
 function add_clean_index($table, $index) {
 	global $wpdb;
+
 	drop_index($table, $index);
 	$wpdb->query("ALTER TABLE [$table] ADD INDEX ( [$index] )");
+
 	return true;
 }
 
 /**
- * Adds column to a database table if it doesn't already exist.
+ * Adds column to a database table, if it doesn't already exist.
  *
  * @since 1.3.0
  *
  * @ignore
  * @global wpdb $wpdb WordPress database abstraction object.
  *
- * @param string $table_name  The table name to modify.
- * @param string $column_name The column name to add to the table.
- * @param string $create_ddl  The SQL statement used to add the column.
- * @return bool True if already exists or on successful completion, false on error.
+ * @param string $table_name  Database table name.
+ * @param string $column_name Table column name.
+ * @param string $create_ddl  SQL statement to add column.
+ * @return bool True on success or if the column already exists. False on failure.
  */
 function maybe_add_column( $table_name, $column_name, $create_ddl ) {
 	global $wpdb;
+	
 	foreach ( $wpdb->get_col( "DESC $table_name", 0 ) as $column ) {
-		if ( $column == $column_name ) {
+		if ( $column === $column_name ) {
 			return true;
 		}
 	}
@@ -1162,10 +1219,11 @@ function maybe_add_column( $table_name, $column_name, $create_ddl ) {
 
 	// We cannot directly tell that whether this succeeded!
 	foreach ( $wpdb->get_col( "DESC $table_name", 0 ) as $column ) {
-		if ( $column == $column_name ) {
+		if ( $column === $column_name ) {
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -1194,11 +1252,11 @@ function __get_option( $setting ) { // phpcs:ignore WordPress.NamingConventions.
 
 	$option = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM $wpdb->options WHERE option_name = %s", $setting ) );
 
-	if ( 'home' === $setting && '' == $option ) {
+	if ( 'home' === $setting && '' === $option ) {
 		return __get_option( 'siteurl' );
 	}
 
-	if ( 'siteurl' === $setting || 'home' === $setting || 'category_base' === $setting || 'tag_base' === $setting ) {
+	if ( in_array( $setting, array( 'siteurl', 'home', 'category_base', 'tag_base' ), true ) ) {
 		$option = untrailingslashit( $option );
 	}
 
@@ -1589,8 +1647,8 @@ function maybe_disable_automattic_widgets() {
 	$plugins = __get_option( 'active_plugins' );
 
 	foreach ( (array) $plugins as $plugin ) {
-		if ( basename( $plugin ) == 'widgets.php' ) {
-			array_splice( $plugins, array_search( $plugin, $plugins ), 1 );
+		if ( 'widgets.php' === basename( $plugin ) ) {
+			array_splice( $plugins, array_search( $plugin, $plugins, true ), 1 );
 			update_option( 'active_plugins', $plugins );
 			break;
 		}
