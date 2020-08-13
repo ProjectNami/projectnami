@@ -629,9 +629,9 @@ class WP_Meta_Query {
 					$this->table_aliases[] = $subquery_alias;
 
 					$meta_compare_string_start  = 'NOT EXISTS (';
-					$meta_compare_string_start .= "SELECT 1 FROM $wpdb->postmeta $subquery_alias ";
+					$meta_compare_string_start .= "SELECT TOP 1 1 FROM $wpdb->postmeta $subquery_alias ";
 					$meta_compare_string_start .= "WHERE $subquery_alias.post_ID = $alias.post_ID ";
-					$meta_compare_string_end    = 'LIMIT 1';
+					$meta_compare_string_end    = '';
 					$meta_compare_string_end   .= ')';
 				}
 

@@ -239,14 +239,14 @@ function wp_get_post_autosave( $post_id, $user_id = 0 ) {
 
 	// Construct the autosave query.
 	$autosave_query = "
-		SELECT *
+		SELECT TOP 1 *
 		FROM $wpdb->posts
 		WHERE post_parent = %d
 		AND post_type = 'revision'
 		AND post_status = 'inherit'
 		AND post_name   = %s " . $user_id_query . '
 		ORDER BY post_date DESC
-		LIMIT 1';
+		';
 
 	$autosave = $wpdb->get_results(
 		$wpdb->prepare(

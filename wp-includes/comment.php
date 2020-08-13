@@ -3801,7 +3801,7 @@ function _wp_batch_update_comment_type() {
 	$lock_name = 'update_comment_type.lock';
 
 	// Try to lock.
-	$lock_result = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO `$wpdb->options` ( `option_name`, `option_value`, `autoload` ) VALUES (%s, %s, 'no') /* LOCK */", $lock_name, time() ) );
+	$lock_result = $wpdb->query_with_params( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] with (nolock) WHERE [option_name] = ?) INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES (?, ?, ?) else UPDATE [$wpdb->options] set [option_value] = ?, [autoload] = ? where [option_name] = ?", array( array($lock_name, SQLSRV_PARAM_IN), array($lock_name, SQLSRV_PARAM_IN), array(time(), SQLSRV_PARAM_IN), array("no", SQLSRV_PARAM_IN), array(time(), SQLSRV_PARAM_IN), array("no", SQLSRV_PARAM_IN), array($lock_name, SQLSRV_PARAM_IN) ) );
 
 	if ( ! $lock_result ) {
 		$lock_result = get_option( $lock_name );
@@ -3818,9 +3818,9 @@ function _wp_batch_update_comment_type() {
 
 	// Check if there's still an empty comment type.
 	$empty_comment_type = $wpdb->get_var(
-		"SELECT comment_ID FROM $wpdb->comments
+		"SELECT TOP 1 comment_ID FROM $wpdb->comments
 		WHERE comment_type = ''
-		LIMIT 1"
+		"
 	);
 
 	// No empty comment type, we're done here.
@@ -3845,11 +3845,11 @@ function _wp_batch_update_comment_type() {
 	// Get the IDs of the comments to update.
 	$comment_ids = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT comment_ID
+			"SELECT TOP %d comment_ID
 			FROM {$wpdb->comments}
 			WHERE comment_type = ''
 			ORDER BY comment_ID DESC
-			LIMIT %d",
+			",
 			$comment_batch_size
 		)
 	);
