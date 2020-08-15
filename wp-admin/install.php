@@ -91,7 +91,8 @@ function display_header( $body_classes = '' ) {
 function display_setup_form( $error = null ) {
 	global $wpdb;
 
-	$user_table = ( $wpdb->get_var( $wpdb->prepare( 'SELECT name FROM sysobjects WHERE type='u' AND name like %s', $wpdb->esc_like( $wpdb->users ) ) ) !== null );
+	$sql        = "SELECT name FROM sysobjects WHERE type='u' AND name = '$wpdb->users'";
+	$user_table = ( $wpdb->get_var( $sql ) !== null );
 
 	// Ensure that sites appear in search engines by default.
 	$blog_public = 1;
