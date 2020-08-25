@@ -608,7 +608,7 @@ function get_weekstartend( $mysqlstring, $start_of_week = '' ) {
  */
 function maybe_serialize( $data ) {
 	if ( is_array( $data ) || is_object( $data ) ) {
-		return serialize( $data );
+		return str_replace("\0","~[NULL]~", serialize( $data ));
 	}
 
 	/*
