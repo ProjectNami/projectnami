@@ -198,16 +198,6 @@ class Fields_map
     function update_for($qry) {
         $this->read();
         $this->fields_map = array_merge($this->fields_map, $this->extract_column_types($qry));
-        $worked = file_put_contents($this->filepath, '<?php return ' . var_export($this->fields_map, true) . "\n ?>");
-        if (false === $worked) {
-            // two directories up is our error page
-            $wp_db_ab_plugin_path = realpath(dirname(__FILE__) . DIRECTORY_SEPARATOR
-                . '..' . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-            $error_message = 'WP Database Abstraction must write to the wp-content/fields_map.parsed_types.php file located at ' . $this->filepath .
-            'Either the file does not exist, or the webserver cannot write to the file';
-            include $wp_db_ab_plugin_path . 'error_page.php';
-            die;
-        }
         return $this->fields_map;
     }
 
