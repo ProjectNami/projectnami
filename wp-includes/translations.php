@@ -933,16 +933,14 @@ class SQL_Translations extends wpdb
             $query = substr_replace($query, '(CASE WHEN ' . $stmt, $start_pos, ($end_pos - $start_pos));
         }
 		
-		/* IF in SELECT statement */
-		if ($this->select_query) {
-			$pattern = '/(IF\s*\(*((.*),(.*),(.*))\)\s*(AS\s*\w*))/is';
-			preg_match($pattern, $query, $limit_matches);
-			if (count($limit_matches) == 7) {
-				$case_stmt = ' CASE WHEN ' . $limit_matches[3] . ' THEN ' . $limit_matches[4] . ' ELSE ' . $limit_matches[5] . ' END ' . $limit_matches[6];
-				$query = preg_replace($pattern, $case_stmt, $query);
-			}
-		}
-        return $query;
+	/* IF in SELECT statement */
+	if ($this->select_query) {
+		$pattern = '/\b(I)F\s*\(.+?,.+?,.+?\)\s*(?:AS\s*\w*)/is';
+		$replacement = '$1$0';
+		$query = preg_replace($pattern, $replacement, $query);
+	}
+
+	return $query;
     }
 
     /**
