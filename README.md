@@ -36,4 +36,5 @@ Project Nami is an open source project derived from WordPress and available free
 ### CURRENT PATRONS ###
 
 #### FRIENDS ####
+Wagner Abilio
 Julio Moraes
