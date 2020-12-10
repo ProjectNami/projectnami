@@ -153,7 +153,6 @@ function wp_check_php_mysql_versions() {
  		exit( 1 );
  	}
 
-	if ( ! extension_loaded( 'sqlsrv' ) && ! file_exists( WP_CONTENT_DIR . '/db.php' ) ) {
 	if ( ! extension_loaded( 'sqlsrv' )
 		// This runs before default constants are defined, so we can't assume WP_CONTENT_DIR is set yet.
 		&& ( defined( 'WP_CONTENT_DIR' ) && ! file_exists( WP_CONTENT_DIR . '/db.php' )
