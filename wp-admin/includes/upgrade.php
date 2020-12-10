@@ -502,9 +502,9 @@ function wp_install_maybe_enable_pretty_permalinks() {
 
 if ( !function_exists('wp_new_blog_notification') ) :
 /**
- * Notifies the site admin that the setup is complete.
+ * Notifies the site admin that the installation of WordPress is complete.
  *
- * Sends an email with wp_mail to the new administrator that the site setup is complete,
+ * Sends an email to the new administrator that the installation is complete
  * and provides them with a record of their login credentials.
  *
  * @since 2.1.0
@@ -513,6 +513,10 @@ if ( !function_exists('wp_new_blog_notification') ) :
  * @param string $blog_url   Site url.
  * @param int    $user_id    User ID.
  * @param string $password   User's Password.
+ * @param string $blog_url   Site URL.
+ * @param int    $user_id    Administrator's user ID.
+ * @param string $password   Administrator's password. Note that a placeholder message is
+ *                           usually passed instead of the actual password.
  */
 function wp_new_blog_notification($blog_title, $blog_url, $user_id, $password) {
 	$user = new WP_User( $user_id );
@@ -538,6 +542,40 @@ https://wordpress.org/
 "), $blog_url, $name, $password, $login_url );
 
 	wp_mail( $email, __( 'New WordPress Site' ), $message );
+	$installed_email = array(
+		'to'      => $email,
+		'subject' => __( 'New WordPress Site' ),
+		'message' => $message,
+		'headers' => '',
+	);
+
+	/**
+	 * Filters the contents of the email sent to the site administrator when WordPress is installed.
+	 *
+	 * @since 5.6.0
+	 *
+	 * @param array $installed_email {
+	 *     Used to build wp_mail().
+	 *
+	 *     @type string $to      The email address of the recipient.
+	 *     @type string $subject The subject of the email.
+	 *     @type string $message The content of the email.
+	 *     @type string $headers Headers.
+	 * }
+	 * @param WP_User $user          The site administrator user object.
+	 * @param string  $blog_title    The site title.
+	 * @param string  $blog_url      The site URL.
+	 * @param string  $password      The site administrator's password. Note that a placeholder message
+	 *                               is usually passed instead of the user's actual password.
+	 */
+	$installed_email = apply_filters( 'wp_installed_email', $installed_email, $user, $blog_title, $blog_url, $password );
+
+	wp_mail(
+		$installed_email['to'],
+		$installed_email['subject'],
+		$installed_email['message'],
+		$installed_email['headers']
+	);
 }
 endif;
 
@@ -663,6 +701,10 @@ function upgrade_all() {
 
 	if ( $wp_current_db_version < 48575 ) {
 		upgrade_550();
+	}
+
+	if ( $wp_current_db_version < 49752 ) {
+		upgrade_560();
 	}
 
 	maybe_disable_link_manager();
@@ -999,6 +1041,51 @@ function upgrade_550() {
 	if ( $wp_current_db_version < 48748 ) {
 		update_option( 'finished_updating_comment_type', 0 );
 		wp_schedule_single_event( time() + ( 1 * MINUTE_IN_SECONDS ), 'wp_update_comment_type_batch' );
+	}
+}
+
+/**
+ * Executes changes made in WordPress 5.6.0.
+ *
+ * @ignore
+ * @since 5.6.0
+ */
+function upgrade_560() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version < 49572 ) {
+		/*
+		 * When upgrading from WP < 5.6.0 set the core major auto-updates option to `unset` by default.
+		 * This overrides the same option from populate_options() that is intended for new installs.
+		 * See https://core.trac.wordpress.org/ticket/51742.
+		 */
+		update_option( 'auto_update_core_major', 'unset' );
+	}
+
+	if ( $wp_current_db_version < 49632 ) {
+		/*
+		 * Regenerate the .htaccess file to add the `HTTP_AUTHORIZATION` rewrite rule.
+		 * See https://core.trac.wordpress.org/ticket/51723.
+		 */
+		save_mod_rewrite_rules();
+	}
+
+	if ( $wp_current_db_version < 49735 ) {
+		delete_transient( 'dirsize_cache' );
+	}
+
+	if ( $wp_current_db_version < 49752 ) {
+		$results = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT top 1 1 FROM {$wpdb->usermeta} WHERE meta_key = %s",
+				WP_Application_Passwords::USERMETA_KEY_APPLICATION_PASSWORDS
+			)
+		);
+
+		if ( ! empty( $results ) ) {
+			$network_id = get_main_network_id();
+			update_network_option( $network_id, WP_Application_Passwords::OPTION_KEY_IN_USE, 1 );
+		}
 	}
 }
 
