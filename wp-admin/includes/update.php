@@ -249,15 +249,11 @@ function core_update_footer( $msg = '' ) {
 
 	$is_development_version = preg_match( '/alpha|beta|RC/', $wp_version );
 
-	if ( $is_development_version && 'latest' === $cur->response ) {
-		$cur->response = 'development';
+	if ( $is_development_version ) {
+		return sprintf( __( 'You are using a development version ( %1$s ) of Project Nami compatible with WordPress version ( %2$s ). Cool!' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
 	}
 
 	switch ( $cur->response ) {
-		case 'development':
-			/* translators: 1: WordPress version number, 2: WordPress updates admin screen URL */
-			return sprintf( __( 'You are using a development version ( %1$s ) of Project Nami compatible with WordPress version ( %2$s ). Cool!' ), get_projectnami_version(), get_bloginfo( 'version', 'display' ) );
-
 		case 'upgrade':
 			return sprintf( __('<img src="https://pnsrc.azurewebsites.net/adminfooter/image.png" height="15" width="15" /> Version %1$s <strong>( <a href="%2$s">Get WP Version %3$s</a> )</strong>' ), get_projectnami_version(), network_admin_url( 'update-core.php' ), $cur->current );
 
