@@ -14,7 +14,6 @@ require_once(dirname(__FILE__) . '/translations.php');
  * @since 0.71
  */
 define( 'EZSQL_VERSION', 'WP1.25' );
-
 /**
  * @since 0.71
  */
@@ -2605,7 +2604,7 @@ class wpdb {
 				return null;
 			
 			$row = sqlsrv_fetch_array( $result );
-			return $row[ 0 ];
+			return sqlsrv_has_rows( $result ) ? $row[ 0 ] : null;
 		}
 
 		if ( $query ) {
