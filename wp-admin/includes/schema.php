@@ -287,16 +287,6 @@ GO
 CREATE INDEX $wpdb->blogs" . "_IDX2 on $wpdb->blogs (lang_id)
 GO
 
-CREATE TABLE $wpdb->blog_versions (
-  blog_id int NOT NULL default 0,
-  db_version nvarchar(20) NOT NULL default '',
-  last_updated datetime2(0) NOT NULL default '0001-01-01 00:00:00',
-  constraint $wpdb->blog_versions" . "_PK PRIMARY KEY  (blog_id)
-)
-GO
-CREATE INDEX $wpdb->blog_versions" . "_IDX1 on $wpdb->blog_versions (db_version)
-GO
-
 CREATE TABLE $wpdb->blogmeta (
 	meta_id int NOT NULL identity(1,1),
 	blog_id int NOT NULL default 0,
