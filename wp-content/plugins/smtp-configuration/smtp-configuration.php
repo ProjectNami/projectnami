@@ -18,7 +18,7 @@ class SMTP_Configuration {
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
 
-	public function configure_smtp( PHPMailer $phpmailer ) {
+	public function configure_smtp( $phpmailer ) {
 		$phpmailer->Host = get_option( $this->plugin_page_name . '-smtp-host' );
 		$phpmailer->Port = get_option( $this->plugin_page_name . '-smtp-port' );
 		$phpmailer->Username = get_option( $this->plugin_page_name . '-smtp-username' );
