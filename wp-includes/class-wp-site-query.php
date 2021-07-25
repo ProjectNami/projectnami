@@ -567,7 +567,7 @@ class WP_Site_Query {
 
 		if ( is_numeric( $this->query_vars['public'] ) ) {
 			$public                               = absint( $this->query_vars['public'] );
-			$this->sql_clauses['where']['public'] = $wpdb->prepare( 'public = %d ', $public );
+			$this->sql_clauses['where']['public'] = $wpdb->prepare( '[public] = %d ', $public );
 		}
 
 		if ( is_numeric( $this->query_vars['lang_id'] ) ) {
