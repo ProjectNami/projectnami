@@ -929,7 +929,7 @@ class WP_Comment_Query {
 		}
 
 		if ( $orderby ) {
-			$orderby = "ORDER BY $orderby";
+			$orderby = "ORDER BY $groupby";
 		}
 
 		$found_rows = '';
