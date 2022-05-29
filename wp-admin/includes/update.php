@@ -266,15 +266,15 @@ function core_update_footer( $msg = '' ) {
 /**
  * @since 2.3.0
  *
- * @global string $pagenow
+ * @global string $pagenow The filename of the current screen.
  * @return void|false
  */
 function update_nag() {
+	global $pagenow;
+
 	if ( is_multisite() && ! current_user_can( 'update_core' ) ) {
  		return false;
 	}
-
-	global $pagenow;
 
 	if ( 'update-core.php' === $pagenow ) {
  		return;
@@ -523,7 +523,7 @@ function wp_plugin_update_row( $file, $plugin_data ) {
 			} else {
 				printf(
 					/* translators: 1: Plugin name, 2: Details URL, 3: Additional link attributes, 4: Version number 5: URL to Update PHP page. */
-					__( 'There is a new version of %1$s available, but it doesn&#8217;t work with your version of PHP. <a href="%2$s" %3$s>View version %4$s details</a> or <a href="%5$s">learn more about updating PHP</a>.' ),
+					__( 'There is a new version of %1$s available, but it does not work with your version of PHP. <a href="%2$s" %3$s>View version %4$s details</a> or <a href="%5$s">learn more about updating PHP</a>.' ),
 					$plugin_name,
 					esc_url( $details_url ),
 					sprintf(
@@ -711,7 +711,7 @@ function wp_theme_update_row( $theme_key, $theme ) {
 		if ( ! $compatible_wp && ! $compatible_php ) {
 			printf(
 				/* translators: %s: Theme name. */
-				__( 'There is a new version of %s available, but it doesn&#8217;t work with your versions of WordPress and PHP.' ),
+				__( 'There is a new version of %s available, but it does not work with your versions of WordPress and PHP.' ),
 				$theme['Name']
 			);
 			if ( current_user_can( 'update_core' ) && current_user_can( 'update_php' ) ) {
@@ -739,7 +739,7 @@ function wp_theme_update_row( $theme_key, $theme ) {
 		} elseif ( ! $compatible_wp ) {
 			printf(
 				/* translators: %s: Theme name. */
-				__( 'There is a new version of %s available, but it doesn&#8217;t work with your version of WordPress.' ),
+				__( 'There is a new version of %s available, but it does not work with your version of WordPress.' ),
 				$theme['Name']
 			);
 			if ( current_user_can( 'update_core' ) ) {
@@ -752,7 +752,7 @@ function wp_theme_update_row( $theme_key, $theme ) {
 		} elseif ( ! $compatible_php ) {
 			printf(
 				/* translators: %s: Theme name. */
-				__( 'There is a new version of %s available, but it doesn&#8217;t work with your version of PHP.' ),
+				__( 'There is a new version of %s available, but it does not work with your version of PHP.' ),
 				$theme['Name']
 			);
 			if ( current_user_can( 'update_php' ) ) {
