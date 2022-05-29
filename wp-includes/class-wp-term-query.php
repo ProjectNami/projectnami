@@ -928,7 +928,7 @@ class WP_Term_Query {
 		} elseif ( empty( $_orderby ) || 'id' === $_orderby || 'term_id' === $_orderby ) {
 			$orderby = 't.term_id';
 		} else {
-			$orderby = 't.name';
+			//$orderby = 't.name';
 
 			// This may be a value of orderby related to meta.
 			$maybe_orderby_meta = true;
