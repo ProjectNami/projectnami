@@ -739,15 +739,19 @@ class WP_Term_Query {
 			$where = "WHERE $where";
 		}
 
-		$this->sql_clauses['select']  = "SELECT $distinct $fields $orderby_fields";
+		$this->sql_clauses['select']  = "SELECT $fields";
 		$this->sql_clauses['from']    = "FROM $wpdb->terms AS t $join";
 		$this->sql_clauses['orderby'] = $orderby ? "$orderby $order" : '';
 		$this->sql_clauses['limits']  = $limits;
+        if ( $distinct ) {
+            $groupby = "group by $fields $orderby_fields";
+        }
 
 		$this->request = "
 			{$this->sql_clauses['select']}
 			{$this->sql_clauses['from']}
 			{$where}
+			{$groupby}
 			{$this->sql_clauses['orderby']}
 			{$this->sql_clauses['limits']}
 		";
@@ -914,13 +918,13 @@ class WP_Term_Query {
 
 		if ( in_array( $_orderby, array( 'term_id', 'name', 'slug', 'term_group' ), true ) ) {
 			$orderby = "t.$_orderby";
-			//$orderby_fields = ", t.$_orderby";
+			$orderby_fields = ", t.$_orderby";
 		} elseif ( in_array( $_orderby, array( 'count', 'parent', 'taxonomy', 'term_taxonomy_id', 'description' ), true ) ) {
 			$orderby = "tt.$_orderby";
-			//$orderby_fields = ", tt.$_orderby";
+			$orderby_fields = ", tt.$_orderby";
 		} elseif ( 'term_order' === $_orderby ) {
 			$orderby = 'tr.term_order';
-			//$orderby_fields = ', tr.term_order';
+			$orderby_fields = ', tr.term_order';
 		} elseif ( 'include' === $_orderby && ! empty( $this->query_vars['include'] ) ) {
 			$include = implode( ',', wp_parse_id_list( $this->query_vars['include'] ) );
 			$orderby = "FIELD( t.term_id, $include )";
@@ -931,10 +935,10 @@ class WP_Term_Query {
 			$orderby = '';
 		} elseif ( empty( $_orderby ) || 'id' === $_orderby || 'term_id' === $_orderby ) {
 			$orderby = 't.term_id';
-			//$orderby_fields = ', t.term_id';
+			$orderby_fields = ', t.term_id';
 		} else {
-			//$orderby = 't.name';
-			//$orderby_fields = ', t.name';
+			$orderby = 't.name';
+			$orderby_fields = ', t.name';
 
 			// This may be a value of orderby related to meta.
 			$maybe_orderby_meta = true;
