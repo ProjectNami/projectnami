@@ -739,6 +739,8 @@ class WP_Term_Query {
 			$where = "WHERE $where";
 		}
 
+		$groupby = "";
+
 		$this->sql_clauses['select']  = "SELECT $fields";
 		$this->sql_clauses['from']    = "FROM $wpdb->terms AS t $join";
 		$this->sql_clauses['orderby'] = $orderby ? "$orderby $order" : '';
