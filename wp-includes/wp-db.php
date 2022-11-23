@@ -2685,64 +2685,11 @@ class wpdb {
 	public function get_var( $query = null, $x = 0, $y = 0 ) {
 		$this->func_call = "\$db->get_var(\"$query\", $x, $y)";
 
-		if ( $query && $x == 0 && $y == 0 ) {
+		if ( $query ) {
 			if ( $this->check_current_query && $this->check_safe_collation( $query ) ) {
 				$this->check_current_query = false;
 			}
 
-		
-   	        $this->_do_query( $query );
-            $result = $this->result;
-			
-            // If there is an error, first attempt to translate
-            $errors = sqlsrv_errors();
-		    if( ! empty( $errors ) && is_array( $errors ) ) {
-                switch ( $errors[ 0 ][ 'code' ] ){
-                    case 102:
-                    case 105:
-                    case 145:
-                    case 156:
-                    case 195:
-                    case 207:
-                    case 241:
-                    case 261:
-                    case 321:
-                    case 1018:
-                    case 2627:
-                    case 2812:
-					case 4145:
-                    case 8120:
-					case 8155:
-                    case 8127:
-						if ( getenv( 'ProjectNamiLogTranslate' ) ) {
-							$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin get_var translation attempt:" . PHP_EOL .  $query . PHP_EOL;
-                            error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' ); 
-						}
-						$sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
-	
-						$query = $sqltranslate->translate( $query );
-						if ( getenv( 'ProjectNamiLogTranslate' ) ) {
-							$endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
-                            error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' ); 
-						}
-
-   	                    $this->_do_query( $query );
-                        $result = $this->result;
-						break;
-					default:
-						$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-						error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' );
-				}
-		    }
-
-			if(false === $result)
-				return null;
-			
-			$row = sqlsrv_fetch_array( $result );
-			return $row[ 0 ];
-		}
-
-		if ( $query ) {
 			$this->query( $query );
 		}
 
