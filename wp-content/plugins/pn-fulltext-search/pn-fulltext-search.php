@@ -35,7 +35,7 @@ class PN_Fulltext_Search
         register_deactivation_hook( __FILE__, array( 'PN_Fulltext_Search', 'deactivate' ) );
 	}
 
-    function activate()
+    static function activate()
     {
         global $wpdb;
 
@@ -60,7 +60,7 @@ class PN_Fulltext_Search
         $wpdb->query( "ALTER FULLTEXT INDEX ON {$wpdb->get_blog_prefix()}fulltext_search ENABLE" );
     }
 
-    function deactivate()
+    static function deactivate()
     {
         global $wpdb;
 
