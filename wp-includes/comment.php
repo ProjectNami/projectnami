@@ -2960,7 +2960,7 @@ function do_all_trackbacks() {
  *
  * @param int|WP_Post $post Post ID or object to do trackbacks on.
  */
-+function do_trackbacks( $post ) {
+function do_trackbacks( $post ) {
 	global $wpdb;
 
 	$post = get_post( $post );
