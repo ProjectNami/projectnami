@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "siteName": {
@@ -3944,7 +3944,7 @@
       "name": "[parameters('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[parameters('siteLocation')]",
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2019-04-01",
       "properties": {
         "administratorLogin": "[parameters('sqlAdministratorLogin')]",
         "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
@@ -3955,7 +3955,7 @@
           "name": "[parameters('siteName')]",
           "type": "databases",
           "location": "[parameters('siteLocation')]",
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2019-04-01",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
@@ -3967,7 +3967,7 @@
           }
         },
         {
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2019-04-01",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
@@ -3982,7 +3982,7 @@
       ]
     },
     {
-      "apiVersion": "2014-06-01",
+      "apiVersion": "2019-04-01",
       "name": "[parameters('hostingPlanName')]",
       "type": "Microsoft.Web/serverFarms",
       "location": "[parameters('siteLocation')]",
@@ -3994,7 +3994,7 @@
       }
     },
     {
-      "apiVersion": "2014-06-01",
+      "apiVersion": "2019-04-01",
       "name": "[parameters('siteName')]",
       "type": "Microsoft.Web/Sites",
       "location": "[parameters('siteLocation')]",
@@ -4010,7 +4010,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2014-04-01",
+          "apiVersion": "2019-04-01",
           "type": "config",
           "name": "web",
           "dependsOn": [
@@ -4043,7 +4043,7 @@
           }
         },
         {
-          "apiVersion": "2014-04-01",
+          "apiVersion": "2019-04-01",
           "name": "web",
           "type": "sourcecontrols",
           "dependsOn": [
