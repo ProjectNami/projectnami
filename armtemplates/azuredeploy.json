@@ -13,7 +13,11 @@
     },
     "sku": {
       "type": "string",
-      "allowedValues": ["Free","Shared","Basic","Standard"
+      "allowedValues": [
+        "Free",
+        "Shared",
+        "Basic",
+        "Standard"
       ],
       "defaultValue": "Free"
     },
