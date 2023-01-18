@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-### Version: `3.0.4` ###
+### Version: `3.1.1` ###
 
 ### Description: ###
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FProjectNami%2Fprojectnami%2Fmaster%2Farmtemplates%2Fazuredeploy.json)
