@@ -4,9 +4,9 @@
   * Plugin URI: http://projectnami.org
   * Description: Search using MSSQL Full Text (requires either Azure SQL V12 or greater, or SQL Server with Full Text installed)
   * Author: Patrick Bates
-  * Version: 1.0
+  * Version: 1.1
   * Author URI: http://projectnami.org
-  * Copyright (c) 2015 Patrick Bates
+  * Copyright (c) 2015 - 2023 Patrick Bates
   * Licensed under GPLv3
   *
   * This program is free software: you can redistribute it and/or modify
@@ -135,9 +135,11 @@ class PN_Fulltext_Search
 
         $search_terms = array_map( 'strtolower', $search_terms );
 
-		$search_terms = '"' . implode( ' ', $search_terms) . '"';
-		$filtered_terms = $wpdb->get_var( "SELECT substring(STUFF((SELECT ' ~ ' + display_term FROM sys.dm_fts_parser (' " . $search_terms . " ', convert(int, SERVERPROPERTY('lcid')), 0, 0) WHERE special_term<>'Noise Word' FOR XML PATH('')), 1,1,''), 3, 255)" );
-		$pnftsearch = $filtered_terms;
+		$search_terms = '"' . implode( '*" NEAR "', $search_terms) . '*"';
+		$pnftsearch = $search_terms;
+		//$search_terms = '"' . implode( ' ', $search_terms) . '"';
+		//$filtered_terms = $wpdb->get_var( "SELECT substring(STUFF((SELECT ' ~ ' + display_term FROM sys.dm_fts_parser (' " . $search_terms . " ', convert(int, SERVERPROPERTY('lcid')), 0, 0) WHERE special_term<>'Noise Word' FOR XML PATH('')), 1,1,''), 3, 255)" );
+		//$pnftsearch = $filtered_terms;
 
 		return '';
 	}
