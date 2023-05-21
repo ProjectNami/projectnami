@@ -1,3 +1,3 @@
 <?php
 
-$pn_version = '3.2.0';
+$pn_version = '3.2.2';
