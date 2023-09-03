@@ -1,47 +1,38 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "siteName": {
-      "type": "string"
+      "value": "string"
     },
     "hostingPlanName": {
-      "type": "string"
+      "value": "string"
     },
     "siteLocation": {
-      "type": "string"
+      "value": "string"
     },
     "sku": {
-      "type": "string",
-      "allowedValues": [
-        "Free",
-        "Shared",
-        "Basic",
-        "Standard"
-      ],
+      "value": "string",
+      "allowedValues": ["Free", "Shared", "Basic", "Standard"],
       "defaultValue": "Free"
     },
     "workerSize": {
-      "type": "string",
-      "allowedValues": [
-        "0",
-        "1",
-        "2"
-      ],
+      "value": "string",
+      "allowedValues": ["0", "1", "2"],
       "defaultValue": "0"
     },
     "sqlServerName": {
-      "type": "string"
+      "value": "string"
     },
     "sqlAdministratorLogin": {
-      "type": "string"
+      "value": "string"
     },
     "sqlAdministratorPassword": {
-      "type": "securestring"
+      "value": "securestring"
     },
     "sqlCollation": {
-      "type": "string",
-        "allowedValues": [
+      "value": "string",
+      "allowedValues": [
         "Albanian_BIN",
         "Albanian_BIN2",
         "Albanian_CI_AI",
@@ -3929,134 +3920,14 @@
         "SQL_SwedishStd_Pref_CP1_CI_AS",
         "SQL_Ukrainian_CP1251_CI_AS",
         "SQL_Ukrainian_CP1251_CS_AS"
-        ],
+      ],
       "defaultValue": "SQL_Latin1_General_CP1_CI_AS"
     },
     "repoUrl": {
-      "type": "string"
+      "value": "string"
     },
     "branch": {
-      "type": "string"
+      "value": "string"
     }
-  },
-  "resources": [
-    {
-      "name": "[parameters('sqlServerName')]",
-      "type": "Microsoft.Sql/servers",
-      "location": "[parameters('siteLocation')]",
-      "apiVersion": "2014-04-01-preview",
-      "properties": {
-        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
-        "administratorLoginPassword": "[parameters('sqlAdministratorPassword')]",
-        "version": "12.0"
-      },
-      "resources": [
-        {
-          "name": "[parameters('siteName')]",
-          "type": "databases",
-          "location": "[parameters('siteLocation')]",
-          "apiVersion": "2014-04-01-preview",
-          "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
-          ],
-          "properties": {
-            "edition": "Basic",
-            "collation": "[parameters('sqlCollation')]",
-            "maxSizeBytes": "2147483648",
-            "requestedServiceObjectiveId": "dd6d99bb-f193-4ec1-86f2-43d3bccbc49c"
-          }
-        },
-        {
-          "apiVersion": "2014-04-01-preview",
-          "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
-          ],
-          "location": "[parameters('siteLocation')]",
-          "name": "AllowAllWindowsAzureIps",
-          "properties": {
-            "endIpAddress": "0.0.0.0",
-            "startIpAddress": "0.0.0.0"
-          },
-          "type": "firewallrules"
-        }
-      ]
-    },
-    {
-      "apiVersion": "2014-06-01",
-      "name": "[parameters('hostingPlanName')]",
-      "type": "Microsoft.Web/serverFarms",
-      "location": "[parameters('siteLocation')]",
-      "properties": {
-        "name": "[parameters('hostingPlanName')]",
-        "sku": "[parameters('sku')]",
-        "workerSize": "[parameters('workerSize')]",
-        "numberOfWorkers": 1
-      }
-    },
-    {
-      "apiVersion": "2014-06-01",
-      "name": "[parameters('siteName')]",
-      "type": "Microsoft.Web/Sites",
-      "location": "[parameters('siteLocation')]",
-      "dependsOn": [
-        "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
-      ],
-      "tags": {
-        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
-      },
-      "properties": {
-        "name": "[parameters('siteName')]",
-        "serverFarm": "[parameters('hostingPlanName')]"
-      },
-      "resources": [
-        {
-          "apiVersion": "2014-04-01",
-          "type": "config",
-          "name": "web",
-          "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
-          ],
-          "properties": {
-            "appSettings": [
-                {
-                    "name": "ProjectNami.DBHost",
-                    "value": "[concat(reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName'))).fullyQualifiedDomainName)]"
-                },
-                { 
-                    "name": "ProjectNami.DBName",
-                    "value": "[parameters('siteName')]"
-                },
-                { 
-                    "name": "ProjectNami.DBUser",
-                    "value": "[concat(parameters('sqlAdministratorLogin'), '@', parameters('sqlServerName'))]"
-                },
-                { 
-                    "name": "ProjectNami.DBPass",
-                    "value": "[parameters('sqlAdministratorPassword')]"
-                },
-                { 
-                    "name": "ProjectNamiLogTranslate",
-                    "value": 1
-                }
-            ],
-            "phpVersion": "7.2"
-          }
-        },
-        {
-          "apiVersion": "2014-04-01",
-          "name": "web",
-          "type": "sourcecontrols",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
-            "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/web')]"
-          ],
-          "properties": {
-            "RepoUrl": "[parameters('repoUrl')]",
-            "branch": "[parameters('branch')]",
-            "IsManualIntegration": true
-          }
-        }
-      ]
-    }
-  ]
+  }
 }
