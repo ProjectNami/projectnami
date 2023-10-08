@@ -67,11 +67,12 @@ class WP_User_Query {
 	public $query_limit;
 
 	/**
-	 * PHP5 constructor.
+	 * Constructor.
 	 *
 	 * @since 3.1.0
 	 *
 	 * @param null|string|array $query Optional. The query variables.
+	 *                                 See WP_User_Query::prepare_query() for information on accepted arguments.
 	 */
 	public function __construct( $query = null ) {
 		if ( ! empty( $query ) ) {
@@ -85,7 +86,7 @@ class WP_User_Query {
 	 *
 	 * @since 4.4.0
 	 *
-	 * @param array $args Query vars, as passed to `WP_User_Query`.
+	 * @param string|array $args Query vars, as passed to `WP_User_Query`.
 	 * @return array Complete query variables with undefined ones filled in with defaults.
 	 */
 	public static function fill_query_vars( $args ) {
@@ -119,6 +120,7 @@ class WP_User_Query {
 			'login'               => '',
 			'login__in'           => array(),
 			'login__not_in'       => array(),
+			'cache_results'       => true,
 		);
 
 		return wp_parse_args( $args, $defaults );
@@ -140,12 +142,13 @@ class WP_User_Query {
 	 * @since 5.1.0 Introduced the 'meta_compare_key' parameter.
 	 * @since 5.3.0 Introduced the 'meta_type_key' parameter.
 	 * @since 5.9.0 Added 'capability', 'capability__in', and 'capability__not_in' parameters.
+	 * @since 6.3.0 Added 'cache_results' parameter.
 	 *
 	 * @global wpdb     $wpdb     WordPress database abstraction object.
 	 * @global WP_Roles $wp_roles WordPress role management object.
 	 *
 	 * @param string|array $query {
-	 *     Optional. Array or string of Query parameters.
+	 *     Optional. Array or string of query parameters.
 	 *
 	 *     @type int             $blog_id             The site ID. Default is the current site.
 	 *     @type string|string[] $role                An array or a comma-separated list of role names that users must match
@@ -254,6 +257,7 @@ class WP_User_Query {
 	 *                                                logins will be included in results. Default empty array.
 	 *     @type string[]        $login__not_in       An array of logins to exclude. Users matching one of these
 	 *                                                logins will not be included in results. Default empty array.
+	 *     @type bool            $cache_results       Whether to cache user information. Default true.
 	 * }
 	 */
 	public function prepare_query( $query = array() ) {
@@ -685,8 +689,8 @@ class WP_User_Query {
 		}
 
 		if ( $search ) {
-			$leading_wild  = ( ltrim( $search, '*' ) != $search );
-			$trailing_wild = ( rtrim( $search, '*' ) != $search );
+			$leading_wild  = ( ltrim( $search, '*' ) !== $search );
+			$trailing_wild = ( rtrim( $search, '*' ) !== $search );
 			if ( $leading_wild && $trailing_wild ) {
 				$wild = 'both';
 			} elseif ( $leading_wild ) {
@@ -705,7 +709,7 @@ class WP_User_Query {
 				$search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename', 'display_name' ) );
 			}
 			if ( ! $search_columns ) {
-				if ( false !== strpos( $search, '@' ) ) {
+				if ( str_contains( $search, '@' ) ) {
 					$search_columns = array( 'user_email' );
 				} elseif ( is_numeric( $search ) ) {
 					$search_columns = array( 'user_login', 'ID' );
@@ -952,8 +956,7 @@ class WP_User_Query {
 				FROM $wpdb->posts
 				$where
 				GROUP BY post_author
-			) p ON ({$wpdb->users}.ID = p.post_author)
-			";
+			) p ON ({$wpdb->users}.ID = p.post_author)";
 			$_orderby          = 'post_count';
 		} elseif ( 'ID' === $orderby || 'id' === $orderby ) {
 			$_orderby = 'ID';
@@ -979,6 +982,57 @@ class WP_User_Query {
 		}
 
 		return $_orderby;
+	}
+
+	/**
+	 * Generate cache key.
+	 *
+	 * @since 6.3.0
+	 *
+	 * @global wpdb $wpdb WordPress database abstraction object.
+	 *
+	 * @param array  $args Query arguments.
+	 * @param string $sql  SQL statement.
+	 * @return string Cache key.
+	 */
+	protected function generate_cache_key( array $args, $sql ) {
+		global $wpdb;
+
+		// Replace wpdb placeholder in the SQL statement used by the cache key.
+		$sql = $wpdb->remove_placeholder_escape( $sql );
+
+		$key          = md5( $sql );
+		$last_changed = wp_cache_get_last_changed( 'users' );
+
+		if ( empty( $args['orderby'] ) ) {
+			// Default order is by 'user_login'.
+			$ordersby = array( 'user_login' => '' );
+		} elseif ( is_array( $args['orderby'] ) ) {
+			$ordersby = $args['orderby'];
+		} else {
+			// 'orderby' values may be a comma- or space-separated list.
+			$ordersby = preg_split( '/[,\s]+/', $args['orderby'] );
+		}
+
+		$blog_id = 0;
+		if ( isset( $args['blog_id'] ) ) {
+			$blog_id = absint( $args['blog_id'] );
+		}
+
+		if ( $args['has_published_posts'] || in_array( 'post_count', $ordersby, true ) ) {
+			$switch = $blog_id && get_current_blog_id() !== $blog_id;
+			if ( $switch ) {
+				switch_to_blog( $blog_id );
+			}
+
+			$last_changed .= wp_cache_get_last_changed( 'posts' );
+
+			if ( $switch ) {
+				restore_current_blog();
+			}
+		}
+
+		return "get_users:$key:$last_changed";
 	}
 
 	/**

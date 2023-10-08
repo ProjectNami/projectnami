@@ -338,7 +338,7 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 			$privacy_policy_content = get_site_option( 'default_privacy_policy_content' );
 		} else {
 			if ( ! class_exists( 'WP_Privacy_Policy_Content' ) ) {
-				include_once ABSPATH . 'wp-admin/includes/class-wp-privacy-policy-content.php';
+				require_once ABSPATH . 'wp-admin/includes/class-wp-privacy-policy-content.php';
 			}
 
 			$privacy_policy_content = WP_Privacy_Policy_Content::get_default_content();
@@ -424,8 +424,10 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 			$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'user_level') );
 			$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'capabilities') );
 
-			// Delete any caps that snuck into the previously active blog. (Hardcoded to blog 1 for now.)
-			// TODO: Get previous_blog_id.
+			/*
+			 * Delete any caps that snuck into the previously active blog. (Hardcoded to blog 1 for now.)
+			 * TODO: Get previous_blog_id.
+			 */
 			if ( ! is_super_admin( $user_id ) && 1 != $user_id ) {
 				$wpdb->delete( $wpdb->usermeta, array( 'user_id' => $user_id , 'meta_key' => $wpdb->base_prefix.'1_capabilities' ) );
 			}
@@ -622,6 +624,8 @@ function wp_upgrade() {
 			update_site_meta( get_current_blog_id(), 'db_last_updated', microtime() );
 	}
 
+		delete_transient( 'wp_core_block_css_files' );
+
 	/**
 	 * Fires after a site is fully upgraded.
 	 *
@@ -721,6 +725,10 @@ function upgrade_all() {
 
 	if ( $wp_current_db_version < 53011 ) {
 		upgrade_600();
+	}
+
+	if ( $wp_current_db_version < 55853 ) {
+		upgrade_630();
 	}
 
 	maybe_disable_link_manager();
@@ -1148,6 +1156,29 @@ function upgrade_600() {
 }
 
 /**
+ * Executes changes made in WordPress 6.3.0.
+ *
+ * @ignore
+ * @since 6.3.0
+ *
+ * @global int $wp_current_db_version The old (current) database version.
+ */
+function upgrade_630() {
+	global $wp_current_db_version;
+
+	if ( $wp_current_db_version < 55853 ) {
+		if ( ! is_multisite() ) {
+			// Replace non-autoload option can_compress_scripts with autoload option, see #55270
+			$can_compress_scripts = get_option( 'can_compress_scripts', false );
+			if ( false !== $can_compress_scripts ) {
+				delete_option( 'can_compress_scripts' );
+				add_option( 'can_compress_scripts', $can_compress_scripts, '', 'yes' );
+			}
+		}
+	}
+}
+
+/**
  * Executes network-level upgrade routines.
  *
  * @since 3.0.0
@@ -1529,8 +1560,9 @@ function make_db_current_silent( $tables = 'all' ) {
  * @return bool
  */
 function make_site_theme_from_oldschool( $theme_name, $template ) {
-	$home_path = get_home_path();
-	$site_dir  = WP_CONTENT_DIR . "/themes/$template";
+	$home_path   = get_home_path();
+	$site_dir    = WP_CONTENT_DIR . "/themes/$template";
+	$default_dir = WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME;
 
 	if ( ! file_exists( "$home_path/index.php" ) ) {
 		return false;
@@ -1557,8 +1589,8 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
 		// Check to make sure it's not a new index.
 		if ( 'index.php' === $oldfile ) {
 			$index = implode( '', file( "$oldpath/$oldfile" ) );
-			if ( strpos( $index, 'WP_USE_THEMES' ) !== false ) {
-				if ( ! copy( WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME . '/index.php', "$site_dir/$newfile" ) ) {
+			if ( str_contains( $index, 'WP_USE_THEMES' ) ) {
+				if ( ! copy( "$default_dir/$oldfile", "$site_dir/$newfile" ) ) {
 					return false;
 				}
 
@@ -1584,10 +1616,18 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
 				}
 
 				// Update stylesheet references.
-				$line = str_replace( "<?php echo __get_option('siteurl'); ?>/wp-layout.css", "<?php bloginfo('stylesheet_url'); ?>", $line );
+				$line = str_replace(
+					"<?php echo __get_option('siteurl'); ?>/wp-layout.css",
+					"<?php bloginfo('stylesheet_url'); ?>",
+					$line
+				);
 
 				// Update comments template inclusion.
-				$line = str_replace( "<?php include(ABSPATH . 'wp-comments.php'); ?>", '<?php comments_template(); ?>', $line );
+				$line = str_replace(
+					"<?php include(ABSPATH . 'wp-comments.php'); ?>",
+					'<?php comments_template(); ?>',
+					$line
+				);
 
 				fwrite( $f, "{$line}\n" );
 			}
@@ -1596,7 +1636,13 @@ function make_site_theme_from_oldschool( $theme_name, $template ) {
 	}
 
 	// Add a theme header.
-	$header = "/*\nTheme Name: $theme_name\nTheme URI: " . __get_option( 'siteurl' ) . "\nDescription: A theme automatically created by the update.\nVersion: 1.0\nAuthor: Moi\n*/\n";
+	$header = "/*\n" .
+		"Theme Name: $theme_name\n" .
+		'Theme URI: ' . __get_option( 'siteurl' ) . "\n" .
+		"Description: A theme automatically created by the update.\n" .
+		"Version: 1.0\n" .
+		"Author: Moi\n" .
+		"*/\n";
 
 	$stylelines = file_get_contents( "$site_dir/style.css" );
 	if ( $stylelines ) {
@@ -1625,8 +1671,10 @@ function make_site_theme_from_default( $theme_name, $template ) {
 	$site_dir    = WP_CONTENT_DIR . "/themes/$template";
 	$default_dir = WP_CONTENT_DIR . '/themes/' . WP_DEFAULT_THEME;
 
-	// Copy files from the default theme to the site theme.
-	// $files = array( 'index.php', 'comments.php', 'comments-popup.php', 'footer.php', 'header.php', 'sidebar.php', 'style.css' );
+	/*
+	 * Copy files from the default theme to the site theme.
+	 * $files = array( 'index.php', 'comments.php', 'comments-popup.php', 'footer.php', 'header.php', 'sidebar.php', 'style.css' );
+	 */
 
 	$theme_dir = @opendir( $default_dir );
 	if ( $theme_dir ) {
@@ -1634,9 +1682,11 @@ function make_site_theme_from_default( $theme_name, $template ) {
 			if ( is_dir( "$default_dir/$theme_file" ) ) {
 				continue;
 			}
+
 			if ( ! copy( "$default_dir/$theme_file", "$site_dir/$theme_file" ) ) {
 				return;
 			}
+
 			chmod( "$site_dir/$theme_file", 0777 );
 		}
 
@@ -1648,20 +1698,25 @@ function make_site_theme_from_default( $theme_name, $template ) {
 	if ( $stylelines ) {
 		$f = fopen( "$site_dir/style.css", 'w' );
 
+		$headers = array(
+			'Theme Name:'  => $theme_name,
+			'Theme URI:'   => __get_option( 'url' ),
+			'Description:' => 'Your theme.',
+			'Version:'     => '1',
+			'Author:'      => 'You',
+		);
+
 		foreach ( $stylelines as $line ) {
-			if ( strpos( $line, 'Theme Name:' ) !== false ) {
-				$line = 'Theme Name: ' . $theme_name;
-			} elseif ( strpos( $line, 'Theme URI:' ) !== false ) {
-				$line = 'Theme URI: ' . __get_option( 'url' );
-			} elseif ( strpos( $line, 'Description:' ) !== false ) {
-				$line = 'Description: Your theme.';
-			} elseif ( strpos( $line, 'Version:' ) !== false ) {
-				$line = 'Version: 1';
-			} elseif ( strpos( $line, 'Author:' ) !== false ) {
-				$line = 'Author: You';
+			foreach ( $headers as $header => $value ) {
+				if ( str_contains( $line, $header ) ) {
+					$line = $header . ' ' . $value;
+					break;
+				}
 			}
+
 			fwrite( $f, $line . "\n" );
 		}
+
 		fclose( $f );
 	}
 
@@ -1677,9 +1732,11 @@ function make_site_theme_from_default( $theme_name, $template ) {
 			if ( is_dir( "$default_dir/images/$image" ) ) {
 				continue;
 			}
+
 			if ( ! copy( "$default_dir/images/$image", "$site_dir/images/$image" ) ) {
 				return;
 			}
+
 			chmod( "$site_dir/images/$image", 0777 );
 		}
 
