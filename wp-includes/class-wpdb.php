@@ -2263,39 +2263,6 @@ class wpdb {
 
 		$this->_do_query( $query );
 
-		// Database server has gone away, try to reconnect.
-        /*
-		$mysql_errno = 0;
-		if ( ! empty( $this->dbh ) ) {
-			if ( $this->use_mysqli ) {
-				if ( $this->dbh instanceof mysqli ) {
-					$mysql_errno = mysqli_errno( $this->dbh );
-				} else {
-					/*
-					 * $dbh is defined, but isn't a real connection.
-					 * Something has gone horribly wrong, let's try a reconnect.
-					 */
-					$mysql_errno = 2006;
-				}
-			} else {
-				if ( is_resource( $this->dbh ) ) {
-					$mysql_errno = mysql_errno( $this->dbh );
-				} else {
-					$mysql_errno = 2006;
-				}
-			}
-		}
-
-		if ( empty( $this->dbh ) || 2006 === $mysql_errno ) {
-			if ( $this->check_connection() ) {
-				$this->_do_query( $query );
-			} else {
-				$this->insert_id = 0;
-				return false;
-			}
-		}
-        */
-
         // If there is an error, first attempt to translate
         $errors = sqlsrv_errors();
 		if( ! empty( $errors ) && is_array( $errors ) ) {
