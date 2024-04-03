@@ -535,28 +535,30 @@ function default_password_nag() {
 	if ( 'profile.php' === $pagenow || ! get_user_option( 'default_password_nag' ) ) {
 		return;
 	}
-	?>
-	<div class="error default-password-nag">
-		<p>
-			<strong><?php _e( 'Notice:' ); ?></strong>
-			<?php _e( 'You are using the auto-generated password for your account. Would you like to change it?' ); ?>
-		</p>
-		<p>
-		<?php
-		printf(
-			'<a href="%1$s">%2$s</a> | ',
-			esc_url( get_edit_profile_url() . '#password' ),
-			__( 'Yes, take me to my profile page' )
-		);
-		printf(
-			'<a href="%1$s" id="default-password-nag-no">%2$s</a>',
-			'?default_password_nag=0',
-			__( 'No thanks, do not remind me again' )
-		);
-		?>
-		</p>
-	</div>
-	<?php
+
+	$default_password_nag_message  = sprintf(
+		'<p><strong>%1$s</strong> %2$s</p>',
+		__( 'Notice:' ),
+		__( 'You are using the auto-generated password for your account. Would you like to change it?' )
+	);
+	$default_password_nag_message .= sprintf(
+		'<p><a href="%1$s">%2$s</a> | ',
+		esc_url( get_edit_profile_url() . '#password' ),
+		__( 'Yes, take me to my profile page' )
+	);
+	$default_password_nag_message .= sprintf(
+		'<a href="%1$s" id="default-password-nag-no">%2$s</a></p>',
+		'?default_password_nag=0',
+		__( 'No thanks, do not remind me again' )
+	);
+
+	wp_admin_notice(
+		$default_password_nag_message,
+		array(
+			'additional_classes' => array( 'error', 'default-password-nag' ),
+			'paragraph_wrap'     => false,
+		)
+	);
 }
 
 /**
@@ -636,7 +638,7 @@ Please click the following link to activate your user account:
  *
  * @since 5.6.0
  * @since 6.2.0 Allow insecure HTTP connections for the local environment.
- * @since 6.3.2 Validates the success and reject URLs to prevent javascript pseudo protocol being executed.
+ * @since 6.3.2 Validates the success and reject URLs to prevent `javascript` pseudo protocol from being executed.
  *
  * @param array   $request {
  *     The array of request data. All arguments are optional and may be empty.
@@ -698,12 +700,11 @@ function wp_is_authorize_application_password_request_valid( $request, $user ) {
 }
 
 /**
- * Validates the redirect URL protocol scheme. The protocol can be anything except http and javascript.
+ * Validates the redirect URL protocol scheme. The protocol can be anything except `http` and `javascript`.
  *
  * @since 6.3.2
  *
- * @param string $url - The redirect URL to be validated.
- *
+ * @param string $url The redirect URL to be validated.
  * @return true|WP_Error True if the redirect URL is valid, a WP_Error object otherwise.
  */
 function wp_is_authorize_application_redirect_url_valid( $url ) {
@@ -726,16 +727,17 @@ function wp_is_authorize_application_redirect_url_valid( $url ) {
 	 *
 	 * @since 6.3.2
 	 *
-	 * @param string[]  $bad_protocols Array of invalid protocols.
-	 * @param string    $url The redirect URL to be validated.
+	 * @param string[] $bad_protocols Array of invalid protocols.
+	 * @param string   $url The redirect URL to be validated.
 	 */
-	$invalid_protocols = array_map( 'strtolower', apply_filters( 'wp_authorize_application_redirect_url_invalid_protocols', $bad_protocols, $url ) );
+	$invalid_protocols = apply_filters( 'wp_authorize_application_redirect_url_invalid_protocols', $bad_protocols, $url );
+	$invalid_protocols = array_map( 'strtolower', $invalid_protocols );
 
 	$scheme   = wp_parse_url( $url, PHP_URL_SCHEME );
 	$host     = wp_parse_url( $url, PHP_URL_HOST );
 	$is_local = 'local' === wp_get_environment_type();
 
-	// validates if the proper URI format is applied to the $url
+	// Validates if the proper URI format is applied to the URL.
 	if ( empty( $host ) || empty( $scheme ) || in_array( strtolower( $scheme ), $invalid_protocols, true ) ) {
 		return new WP_Error(
 			'invalid_redirect_url_format',
