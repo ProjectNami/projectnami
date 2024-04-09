@@ -599,10 +599,9 @@ if ( !function_exists('wp_upgrade') ) :
  *
  * @global int  $wp_current_db_version The old (current) database version.
  * @global int  $wp_db_version         The new database version.
- * @global wpdb $wpdb                  WordPress database abstraction object.
  */
 function wp_upgrade() {
-	global $wp_current_db_version, $wp_db_version, $wpdb;
+	global $wp_current_db_version, $wp_db_version;
 
 	$wp_current_db_version = __get_option('db_version');
 
@@ -729,6 +728,14 @@ function upgrade_all() {
 
 	if ( $wp_current_db_version < 55853 ) {
 		upgrade_630();
+	}
+
+	if ( $wp_current_db_version < 56657 ) {
+		upgrade_640();
+	}
+
+	if ( $wp_current_db_version < 57155 ) {
+		upgrade_650();
 	}
 
 	maybe_disable_link_manager();
@@ -1179,6 +1186,58 @@ function upgrade_630() {
 }
 
 /**
+ * Executes changes made in WordPress 6.4.0.
+ *
+ * @ignore
+ * @since 6.4.0
+ *
+ * @global int $wp_current_db_version The old (current) database version.
+ */
+function upgrade_640() {
+	global $wp_current_db_version;
+
+	if ( $wp_current_db_version < 56657 ) {
+		// Enable attachment pages.
+		update_option( 'wp_attachment_pages_enabled', 1 );
+
+		// Remove the wp_https_detection cron. Https status is checked directly in an async Site Health check.
+		$scheduled = wp_get_scheduled_event( 'wp_https_detection' );
+		if ( $scheduled ) {
+			wp_clear_scheduled_hook( 'wp_https_detection' );
+		}
+	}
+}
+
+/**
+ * Executes changes made in WordPress 6.5.0.
+ *
+ * @ignore
+ * @since 6.5.0
+ *
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
+ */
+function upgrade_650() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version < 57155 ) {
+		$stylesheet = get_stylesheet();
+
+		// Set autoload=no for all themes except the current one.
+		$theme_mods_options = $wpdb->get_col(
+			$wpdb->prepare(
+				"SELECT option_name FROM $wpdb->options WHERE autoload = 'yes' AND option_name != %s AND option_name LIKE %s",
+				"theme_mods_$stylesheet",
+				$wpdb->esc_like( 'theme_mods_' ) . '%'
+			)
+		);
+
+		$autoload = array_fill_keys( $theme_mods_options, 'no' );
+		wp_set_option_autoload_values( $autoload );
+	}
+}
+
+/**
  * Executes network-level upgrade routines.
  *
  * @since 3.0.0
@@ -1286,7 +1345,7 @@ function upgrade_network() {
 /**
  * Creates a table in the database, if it doesn't already exist.
  *
- * This method checks for an existing database and creates a new one if it's not
+ * This method checks for an existing database table and creates a new one if it's not
  * already present. It doesn't rely on MySQL's "IF NOT EXISTS" statement, but chooses
  * to query all tables first and then run the SQL statement creating the table.
  *
