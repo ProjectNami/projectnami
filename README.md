@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-### Version: `3.5.0` ###
+### Version: `3.5.3` ###
 
 ### Description: ###
 In its current form, Project Nami is basically WordPress powered by Microsoft SQL Server. **All** WordPress core features and functions are supported.

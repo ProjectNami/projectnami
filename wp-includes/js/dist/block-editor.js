@@ -32883,7 +32883,8 @@ function layout_addAttribute(settings) {
 }
 function BlockWithLayoutStyles({
   block: BlockListBlock,
-  props
+  props,
+  layoutClasses
 }) {
   const {
     name,
@@ -32900,7 +32901,6 @@ function BlockWithLayoutStyles({
     ...layout,
     type: 'constrained'
   } : layout || defaultBlockLayout || {};
-  const layoutClasses = useLayoutClasses(attributes, name);
   const {
     kebabCase
   } = unlock(external_wp_components_namespaceObject.privateApis);
@@ -32942,7 +32942,12 @@ function BlockWithLayoutStyles({
  * @return {Function} Wrapped component.
  */
 const withLayoutStyles = (0,external_wp_compose_namespaceObject.createHigherOrderComponent)(BlockListBlock => props => {
+  const {
+    name,
+    attributes
+  } = props;
   const blockSupportsLayout = hasLayoutBlockSupport(props.name);
+  const layoutClasses = useLayoutClasses(attributes, name);
   const shouldRenderLayoutStyles = (0,external_wp_data_namespaceObject.useSelect)(select => {
     // The callback returns early to avoid block editor subscription.
     if (!blockSupportsLayout) {
@@ -32952,12 +32957,14 @@ const withLayoutStyles = (0,external_wp_compose_namespaceObject.createHigherOrde
   }, [blockSupportsLayout]);
   if (!shouldRenderLayoutStyles) {
     return (0,external_React_.createElement)(BlockListBlock, {
-      ...props
+      ...props,
+      __unstableLayoutClassNames: blockSupportsLayout ? layoutClasses : undefined
     });
   }
   return (0,external_React_.createElement)(BlockWithLayoutStyles, {
     block: BlockListBlock,
-    props: props
+    props: props,
+    layoutClasses: layoutClasses
   });
 }, 'withLayoutStyles');
 (0,external_wp_hooks_namespaceObject.addFilter)('blocks.registerBlockType', 'core/layout/addAttribute', layout_addAttribute);
@@ -41962,12 +41969,14 @@ function Pagination({
     variant: "tertiary",
     onClick: () => changePage(1),
     disabled: currentPage === 1,
-    "aria-label": (0,external_wp_i18n_namespaceObject.__)('First page')
+    "aria-label": (0,external_wp_i18n_namespaceObject.__)('First page'),
+    __experimentalIsFocusable: true
   }, (0,external_React_.createElement)("span", null, "\xAB")), (0,external_React_.createElement)(external_wp_components_namespaceObject.Button, {
     variant: "tertiary",
     onClick: () => changePage(currentPage - 1),
     disabled: currentPage === 1,
-    "aria-label": (0,external_wp_i18n_namespaceObject.__)('Previous page')
+    "aria-label": (0,external_wp_i18n_namespaceObject.__)('Previous page'),
+    __experimentalIsFocusable: true
   }, (0,external_React_.createElement)("span", null, "\u2039"))), (0,external_React_.createElement)(external_wp_components_namespaceObject.__experimentalText, {
     variant: "muted"
   }, (0,external_wp_i18n_namespaceObject.sprintf)(
@@ -41980,13 +41989,15 @@ function Pagination({
     variant: "tertiary",
     onClick: () => changePage(currentPage + 1),
     disabled: currentPage === numPages,
-    "aria-label": (0,external_wp_i18n_namespaceObject.__)('Next page')
+    "aria-label": (0,external_wp_i18n_namespaceObject.__)('Next page'),
+    __experimentalIsFocusable: true
   }, (0,external_React_.createElement)("span", null, "\u203A")), (0,external_React_.createElement)(external_wp_components_namespaceObject.Button, {
     variant: "tertiary",
     onClick: () => changePage(numPages),
     disabled: currentPage === numPages,
     "aria-label": (0,external_wp_i18n_namespaceObject.__)('Last page'),
-    size: "default"
+    size: "default",
+    __experimentalIsFocusable: true
   }, (0,external_React_.createElement)("span", null, "\xBB")))));
 }
 
@@ -42439,11 +42450,13 @@ function PatternsListHeader({
 function PatternList({
   searchValue,
   selectedCategory,
-  patternCategories
+  patternCategories,
+  rootClientId
 }) {
   const container = (0,external_wp_element_namespaceObject.useRef)();
   const debouncedSpeak = (0,external_wp_compose_namespaceObject.useDebounce)(external_wp_a11y_namespaceObject.speak, 500);
   const [destinationRootClientId, onInsertBlocks] = use_insertion_point({
+    rootClientId,
     shouldFocusBlock: true
   });
   const [patterns,, onClickPattern] = use_patterns_state(onInsertBlocks, destinationRootClientId);
@@ -42589,7 +42602,8 @@ function PatternsExplorer({
     searchValue: searchValue,
     selectedCategory: selectedCategory,
     patternCategories: patternCategories,
-    patternSourceFilter: patternSourceFilter
+    patternSourceFilter: patternSourceFilter,
+    rootClientId: rootClientId
   }));
 }
 function PatternsExplorerModal({
@@ -54045,9 +54059,14 @@ function useListViewDropZone({
   const ref = (0,external_wp_compose_namespaceObject.__experimentalUseDropZone)({
     dropZoneElement,
     onDrop(event) {
+      throttled.cancel();
       if (target) {
         onBlockDrop(event);
       }
+      // Use `undefined` value to indicate that the drag has concluded.
+      // This allows styling rules that are active only when a user is
+      // dragging to be removed.
+      setTarget(undefined);
     },
     onDragLeave() {
       throttled.cancel();
@@ -60705,7 +60724,8 @@ const ImageURLInputUI = ({
   rel,
   showLightboxSetting,
   lightboxEnabled,
-  onSetLightbox
+  onSetLightbox,
+  resetLightbox
 }) => {
   const [isOpen, setIsOpen] = (0,external_wp_element_namespaceObject.useState)(false);
   // Use internal state instead of a ref to make sure that the component
@@ -60866,8 +60886,52 @@ const ImageURLInputUI = ({
     onChange: onSetLinkClass
   }));
   const linkEditorValue = urlInput !== null ? urlInput : url;
-  const showLinkEditor = (!linkEditorValue && !lightboxEnabled) === true;
+  const hideLightboxPanel = !lightboxEnabled || lightboxEnabled && !showLightboxSetting;
+  const showLinkEditor = !linkEditorValue && hideLightboxPanel;
   const urlLabel = (getLinkDestinations().find(destination => destination.linkDestination === linkDestination) || {}).title;
+  const PopoverChildren = () => {
+    if (lightboxEnabled && showLightboxSetting && !url && !isEditingLink) {
+      return (0,external_React_.createElement)("div", {
+        className: "block-editor-url-popover__expand-on-click"
+      }, (0,external_React_.createElement)(build_module_icon, {
+        icon: library_fullscreen
+      }), (0,external_React_.createElement)("div", {
+        className: "text"
+      }, (0,external_React_.createElement)("p", null, (0,external_wp_i18n_namespaceObject.__)('Expand on click')), (0,external_React_.createElement)("p", {
+        className: "description"
+      }, (0,external_wp_i18n_namespaceObject.__)('Scales the image with a lightbox effect'))), (0,external_React_.createElement)(external_wp_components_namespaceObject.Button, {
+        icon: link_off,
+        label: (0,external_wp_i18n_namespaceObject.__)('Disable expand on click'),
+        onClick: () => {
+          onSetLightbox(false);
+        },
+        size: "compact"
+      }));
+    } else if (!url || isEditingLink) {
+      return (0,external_React_.createElement)(url_popover.LinkEditor, {
+        className: "block-editor-format-toolbar__link-container-content",
+        value: linkEditorValue,
+        onChangeInputValue: setUrlInput,
+        onSubmit: onSubmitLinkChange(),
+        autocompleteRef: autocompleteRef
+      });
+    } else if (url && !isEditingLink) {
+      return (0,external_React_.createElement)(external_React_.Fragment, null, (0,external_React_.createElement)(url_popover.LinkViewer, {
+        className: "block-editor-format-toolbar__link-container-content",
+        url: url,
+        onEditLinkClick: startEditLink,
+        urlLabel: urlLabel
+      }), (0,external_React_.createElement)(external_wp_components_namespaceObject.Button, {
+        icon: link_off,
+        label: (0,external_wp_i18n_namespaceObject.__)('Remove link'),
+        onClick: () => {
+          onLinkRemove();
+          resetLightbox();
+        },
+        size: "compact"
+      }));
+    }
+  };
   return (0,external_React_.createElement)(external_React_.Fragment, null, (0,external_React_.createElement)(external_wp_components_namespaceObject.ToolbarButton, {
     icon: library_link,
     className: "components-toolbar__control",
@@ -60875,13 +60939,13 @@ const ImageURLInputUI = ({
     "aria-expanded": isOpen,
     onClick: openLinkUI,
     ref: setPopoverAnchor,
-    isActive: !!url || lightboxEnabled
+    isActive: !!url || lightboxEnabled && showLightboxSetting
   }), isOpen && (0,external_React_.createElement)(url_popover, {
     ref: wrapperRef,
     anchor: popoverAnchor,
     onFocusOutside: onFocusOutside(),
     onClose: closeLinkUI,
-    renderSettings: !lightboxEnabled ? () => advancedOptions : null,
+    renderSettings: hideLightboxPanel ? () => advancedOptions : null,
     additionalControls: showLinkEditor && (0,external_React_.createElement)(external_wp_components_namespaceObject.NavigableMenu, null, getLinkDestinations().map(link => (0,external_React_.createElement)(external_wp_components_namespaceObject.MenuItem, {
       key: link.linkDestination,
       icon: link.icon,
@@ -60908,38 +60972,7 @@ const ImageURLInputUI = ({
       }
     }, (0,external_wp_i18n_namespaceObject.__)('Expand on click'))),
     offset: 13
-  }, (!url || isEditingLink) && !lightboxEnabled && (0,external_React_.createElement)(external_React_.Fragment, null, (0,external_React_.createElement)(url_popover.LinkEditor, {
-    className: "block-editor-format-toolbar__link-container-content",
-    value: linkEditorValue,
-    onChangeInputValue: setUrlInput,
-    onSubmit: onSubmitLinkChange(),
-    autocompleteRef: autocompleteRef
-  })), url && !isEditingLink && !lightboxEnabled && (0,external_React_.createElement)(external_React_.Fragment, null, (0,external_React_.createElement)(url_popover.LinkViewer, {
-    className: "block-editor-format-toolbar__link-container-content",
-    url: url,
-    onEditLinkClick: startEditLink,
-    urlLabel: urlLabel
-  }), (0,external_React_.createElement)(external_wp_components_namespaceObject.Button, {
-    icon: link_off,
-    label: (0,external_wp_i18n_namespaceObject.__)('Remove link'),
-    onClick: onLinkRemove,
-    size: "compact"
-  })), !url && !isEditingLink && lightboxEnabled && (0,external_React_.createElement)("div", {
-    className: "block-editor-url-popover__expand-on-click"
-  }, (0,external_React_.createElement)(build_module_icon, {
-    icon: library_fullscreen
-  }), (0,external_React_.createElement)("div", {
-    className: "text"
-  }, (0,external_React_.createElement)("p", null, (0,external_wp_i18n_namespaceObject.__)('Expand on click')), (0,external_React_.createElement)("p", {
-    className: "description"
-  }, (0,external_wp_i18n_namespaceObject.__)('Scales the image with a lightbox effect'))), (0,external_React_.createElement)(external_wp_components_namespaceObject.Button, {
-    icon: link_off,
-    label: (0,external_wp_i18n_namespaceObject.__)('Disable expand on click'),
-    onClick: () => {
-      onSetLightbox(false);
-    },
-    size: "compact"
-  }))));
+  }, PopoverChildren()));
 };
 
 
@@ -62395,12 +62428,12 @@ const DeprecatedExperimentalRecursionProvider = props => {
     ...props
   });
 };
-const DeprecatedExperimentalUseHasRecursion = props => {
+const DeprecatedExperimentalUseHasRecursion = (...args) => {
   external_wp_deprecated_default()('wp.blockEditor.__experimentalUseHasRecursion', {
     since: '6.5',
     alternative: 'wp.blockEditor.useHasRecursion'
   });
-  return useHasRecursion(...props);
+  return useHasRecursion(...args);
 };
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/icons/build-module/library/close-small.js
