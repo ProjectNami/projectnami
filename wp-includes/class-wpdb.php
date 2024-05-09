@@ -1624,7 +1624,7 @@ class wpdb {
 						 */
 						|| ( '' === $format && '%' !== substr( $split_query[ $key - 1 ], -1, 1 ) )
 					) {
-						$placeholder = "'%" . $format . "s'";
+						$placeholder = "N'%" . $format . "s'";
 					}
 				}
 			}
