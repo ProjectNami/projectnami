@@ -2,6 +2,7 @@
 /**
  * WP_Importer base class
  */
+#[AllowDynamicProperties]
 class WP_Importer {
 	/**
 	 * Class Constructor
@@ -9,7 +10,7 @@ class WP_Importer {
 	public function __construct() {}
 
 	/**
-	 * Returns array with imported permalinks from WordPress database
+	 * Returns array with imported permalinks from WordPress database.
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
@@ -46,13 +47,13 @@ class WP_Importer {
 					$hashtable[ $r->meta_value ] = (int) $r->post_id;
 				}
 			}
-		} while ( count( $results ) == $limit );
+		} while ( count( $results ) === $limit );
 
 		return $hashtable;
 	}
 
 	/**
-	 * Return count of imported permalinks from WordPress database
+	 * Returns count of imported permalinks from WordPress database.
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
@@ -79,7 +80,7 @@ class WP_Importer {
 	}
 
 	/**
-	 * Set array with imported comments from WordPress database
+	 * Sets array with imported comments from WordPress database.
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
@@ -115,12 +116,12 @@ class WP_Importer {
 					$source_comment_id = (int) $source_comment_id;
  
 					// Check if this comment came from this blog.
-					if ( $blog_id == $comment_agent_blog_id ) {
+					if ( (int) $blog_id === (int) $comment_agent_blog_id ) {
 						$hashtable[ $source_comment_id ] = (int) $r->comment_ID;
 					}
 				}
 			}
-		} while ( count( $results ) == $limit );
+		} while ( count( $results ) === $limit );
 
 		return $hashtable;
 	}
@@ -186,7 +187,7 @@ class WP_Importer {
 	}
 
 	/**
-	 * Sort by strlen, longest string first
+	 * Sorts by strlen, longest string first.
 	 *
 	 * @param string $a
 	 * @param string $b
@@ -197,7 +198,7 @@ class WP_Importer {
 	}
 
 	/**
-	 * GET URL
+	 * Gets URL.
 	 *
 	 * @param string $url
 	 * @param string $username
@@ -224,7 +225,7 @@ class WP_Importer {
 	}
 
 	/**
-	 * Bump up the request timeout for http requests
+	 * Bumps up the request timeout for http requests.
 	 *
 	 * @param int $val
 	 * @return int
@@ -234,7 +235,7 @@ class WP_Importer {
 	}
 
 	/**
-	 * Check if user has exceeded disk quota
+	 * Checks if user has exceeded disk quota.
 	 *
 	 * @return bool
 	 */
@@ -249,7 +250,7 @@ class WP_Importer {
 	}
 
 	/**
-	 * Replace newlines, tabs, and multiple spaces with a single space.
+	 * Replaces newlines, tabs, and multiple spaces with a single space.
 	 *
 	 * @param string $text
 	 * @return string

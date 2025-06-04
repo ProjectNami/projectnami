@@ -1,73 +1,603 @@
-/******/ (function() { // webpackBootstrap
-/******/ 	"use strict";
-/******/ 	// The require scope
-/******/ 	var __webpack_require__ = {};
+/******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
+
+/***/ 9681:
+/***/ ((module) => {
+
+var characterMap = {
+	"À": "A",
+	"Á": "A",
+	"Â": "A",
+	"Ã": "A",
+	"Ä": "A",
+	"Å": "A",
+	"Ấ": "A",
+	"Ắ": "A",
+	"Ẳ": "A",
+	"Ẵ": "A",
+	"Ặ": "A",
+	"Æ": "AE",
+	"Ầ": "A",
+	"Ằ": "A",
+	"Ȃ": "A",
+	"Ả": "A",
+	"Ạ": "A",
+	"Ẩ": "A",
+	"Ẫ": "A",
+	"Ậ": "A",
+	"Ç": "C",
+	"Ḉ": "C",
+	"È": "E",
+	"É": "E",
+	"Ê": "E",
+	"Ë": "E",
+	"Ế": "E",
+	"Ḗ": "E",
+	"Ề": "E",
+	"Ḕ": "E",
+	"Ḝ": "E",
+	"Ȇ": "E",
+	"Ẻ": "E",
+	"Ẽ": "E",
+	"Ẹ": "E",
+	"Ể": "E",
+	"Ễ": "E",
+	"Ệ": "E",
+	"Ì": "I",
+	"Í": "I",
+	"Î": "I",
+	"Ï": "I",
+	"Ḯ": "I",
+	"Ȋ": "I",
+	"Ỉ": "I",
+	"Ị": "I",
+	"Ð": "D",
+	"Ñ": "N",
+	"Ò": "O",
+	"Ó": "O",
+	"Ô": "O",
+	"Õ": "O",
+	"Ö": "O",
+	"Ø": "O",
+	"Ố": "O",
+	"Ṍ": "O",
+	"Ṓ": "O",
+	"Ȏ": "O",
+	"Ỏ": "O",
+	"Ọ": "O",
+	"Ổ": "O",
+	"Ỗ": "O",
+	"Ộ": "O",
+	"Ờ": "O",
+	"Ở": "O",
+	"Ỡ": "O",
+	"Ớ": "O",
+	"Ợ": "O",
+	"Ù": "U",
+	"Ú": "U",
+	"Û": "U",
+	"Ü": "U",
+	"Ủ": "U",
+	"Ụ": "U",
+	"Ử": "U",
+	"Ữ": "U",
+	"Ự": "U",
+	"Ý": "Y",
+	"à": "a",
+	"á": "a",
+	"â": "a",
+	"ã": "a",
+	"ä": "a",
+	"å": "a",
+	"ấ": "a",
+	"ắ": "a",
+	"ẳ": "a",
+	"ẵ": "a",
+	"ặ": "a",
+	"æ": "ae",
+	"ầ": "a",
+	"ằ": "a",
+	"ȃ": "a",
+	"ả": "a",
+	"ạ": "a",
+	"ẩ": "a",
+	"ẫ": "a",
+	"ậ": "a",
+	"ç": "c",
+	"ḉ": "c",
+	"è": "e",
+	"é": "e",
+	"ê": "e",
+	"ë": "e",
+	"ế": "e",
+	"ḗ": "e",
+	"ề": "e",
+	"ḕ": "e",
+	"ḝ": "e",
+	"ȇ": "e",
+	"ẻ": "e",
+	"ẽ": "e",
+	"ẹ": "e",
+	"ể": "e",
+	"ễ": "e",
+	"ệ": "e",
+	"ì": "i",
+	"í": "i",
+	"î": "i",
+	"ï": "i",
+	"ḯ": "i",
+	"ȋ": "i",
+	"ỉ": "i",
+	"ị": "i",
+	"ð": "d",
+	"ñ": "n",
+	"ò": "o",
+	"ó": "o",
+	"ô": "o",
+	"õ": "o",
+	"ö": "o",
+	"ø": "o",
+	"ố": "o",
+	"ṍ": "o",
+	"ṓ": "o",
+	"ȏ": "o",
+	"ỏ": "o",
+	"ọ": "o",
+	"ổ": "o",
+	"ỗ": "o",
+	"ộ": "o",
+	"ờ": "o",
+	"ở": "o",
+	"ỡ": "o",
+	"ớ": "o",
+	"ợ": "o",
+	"ù": "u",
+	"ú": "u",
+	"û": "u",
+	"ü": "u",
+	"ủ": "u",
+	"ụ": "u",
+	"ử": "u",
+	"ữ": "u",
+	"ự": "u",
+	"ý": "y",
+	"ÿ": "y",
+	"Ā": "A",
+	"ā": "a",
+	"Ă": "A",
+	"ă": "a",
+	"Ą": "A",
+	"ą": "a",
+	"Ć": "C",
+	"ć": "c",
+	"Ĉ": "C",
+	"ĉ": "c",
+	"Ċ": "C",
+	"ċ": "c",
+	"Č": "C",
+	"č": "c",
+	"C̆": "C",
+	"c̆": "c",
+	"Ď": "D",
+	"ď": "d",
+	"Đ": "D",
+	"đ": "d",
+	"Ē": "E",
+	"ē": "e",
+	"Ĕ": "E",
+	"ĕ": "e",
+	"Ė": "E",
+	"ė": "e",
+	"Ę": "E",
+	"ę": "e",
+	"Ě": "E",
+	"ě": "e",
+	"Ĝ": "G",
+	"Ǵ": "G",
+	"ĝ": "g",
+	"ǵ": "g",
+	"Ğ": "G",
+	"ğ": "g",
+	"Ġ": "G",
+	"ġ": "g",
+	"Ģ": "G",
+	"ģ": "g",
+	"Ĥ": "H",
+	"ĥ": "h",
+	"Ħ": "H",
+	"ħ": "h",
+	"Ḫ": "H",
+	"ḫ": "h",
+	"Ĩ": "I",
+	"ĩ": "i",
+	"Ī": "I",
+	"ī": "i",
+	"Ĭ": "I",
+	"ĭ": "i",
+	"Į": "I",
+	"į": "i",
+	"İ": "I",
+	"ı": "i",
+	"Ĳ": "IJ",
+	"ĳ": "ij",
+	"Ĵ": "J",
+	"ĵ": "j",
+	"Ķ": "K",
+	"ķ": "k",
+	"Ḱ": "K",
+	"ḱ": "k",
+	"K̆": "K",
+	"k̆": "k",
+	"Ĺ": "L",
+	"ĺ": "l",
+	"Ļ": "L",
+	"ļ": "l",
+	"Ľ": "L",
+	"ľ": "l",
+	"Ŀ": "L",
+	"ŀ": "l",
+	"Ł": "l",
+	"ł": "l",
+	"Ḿ": "M",
+	"ḿ": "m",
+	"M̆": "M",
+	"m̆": "m",
+	"Ń": "N",
+	"ń": "n",
+	"Ņ": "N",
+	"ņ": "n",
+	"Ň": "N",
+	"ň": "n",
+	"ŉ": "n",
+	"N̆": "N",
+	"n̆": "n",
+	"Ō": "O",
+	"ō": "o",
+	"Ŏ": "O",
+	"ŏ": "o",
+	"Ő": "O",
+	"ő": "o",
+	"Œ": "OE",
+	"œ": "oe",
+	"P̆": "P",
+	"p̆": "p",
+	"Ŕ": "R",
+	"ŕ": "r",
+	"Ŗ": "R",
+	"ŗ": "r",
+	"Ř": "R",
+	"ř": "r",
+	"R̆": "R",
+	"r̆": "r",
+	"Ȓ": "R",
+	"ȓ": "r",
+	"Ś": "S",
+	"ś": "s",
+	"Ŝ": "S",
+	"ŝ": "s",
+	"Ş": "S",
+	"Ș": "S",
+	"ș": "s",
+	"ş": "s",
+	"Š": "S",
+	"š": "s",
+	"Ţ": "T",
+	"ţ": "t",
+	"ț": "t",
+	"Ț": "T",
+	"Ť": "T",
+	"ť": "t",
+	"Ŧ": "T",
+	"ŧ": "t",
+	"T̆": "T",
+	"t̆": "t",
+	"Ũ": "U",
+	"ũ": "u",
+	"Ū": "U",
+	"ū": "u",
+	"Ŭ": "U",
+	"ŭ": "u",
+	"Ů": "U",
+	"ů": "u",
+	"Ű": "U",
+	"ű": "u",
+	"Ų": "U",
+	"ų": "u",
+	"Ȗ": "U",
+	"ȗ": "u",
+	"V̆": "V",
+	"v̆": "v",
+	"Ŵ": "W",
+	"ŵ": "w",
+	"Ẃ": "W",
+	"ẃ": "w",
+	"X̆": "X",
+	"x̆": "x",
+	"Ŷ": "Y",
+	"ŷ": "y",
+	"Ÿ": "Y",
+	"Y̆": "Y",
+	"y̆": "y",
+	"Ź": "Z",
+	"ź": "z",
+	"Ż": "Z",
+	"ż": "z",
+	"Ž": "Z",
+	"ž": "z",
+	"ſ": "s",
+	"ƒ": "f",
+	"Ơ": "O",
+	"ơ": "o",
+	"Ư": "U",
+	"ư": "u",
+	"Ǎ": "A",
+	"ǎ": "a",
+	"Ǐ": "I",
+	"ǐ": "i",
+	"Ǒ": "O",
+	"ǒ": "o",
+	"Ǔ": "U",
+	"ǔ": "u",
+	"Ǖ": "U",
+	"ǖ": "u",
+	"Ǘ": "U",
+	"ǘ": "u",
+	"Ǚ": "U",
+	"ǚ": "u",
+	"Ǜ": "U",
+	"ǜ": "u",
+	"Ứ": "U",
+	"ứ": "u",
+	"Ṹ": "U",
+	"ṹ": "u",
+	"Ǻ": "A",
+	"ǻ": "a",
+	"Ǽ": "AE",
+	"ǽ": "ae",
+	"Ǿ": "O",
+	"ǿ": "o",
+	"Þ": "TH",
+	"þ": "th",
+	"Ṕ": "P",
+	"ṕ": "p",
+	"Ṥ": "S",
+	"ṥ": "s",
+	"X́": "X",
+	"x́": "x",
+	"Ѓ": "Г",
+	"ѓ": "г",
+	"Ќ": "К",
+	"ќ": "к",
+	"A̋": "A",
+	"a̋": "a",
+	"E̋": "E",
+	"e̋": "e",
+	"I̋": "I",
+	"i̋": "i",
+	"Ǹ": "N",
+	"ǹ": "n",
+	"Ồ": "O",
+	"ồ": "o",
+	"Ṑ": "O",
+	"ṑ": "o",
+	"Ừ": "U",
+	"ừ": "u",
+	"Ẁ": "W",
+	"ẁ": "w",
+	"Ỳ": "Y",
+	"ỳ": "y",
+	"Ȁ": "A",
+	"ȁ": "a",
+	"Ȅ": "E",
+	"ȅ": "e",
+	"Ȉ": "I",
+	"ȉ": "i",
+	"Ȍ": "O",
+	"ȍ": "o",
+	"Ȑ": "R",
+	"ȑ": "r",
+	"Ȕ": "U",
+	"ȕ": "u",
+	"B̌": "B",
+	"b̌": "b",
+	"Č̣": "C",
+	"č̣": "c",
+	"Ê̌": "E",
+	"ê̌": "e",
+	"F̌": "F",
+	"f̌": "f",
+	"Ǧ": "G",
+	"ǧ": "g",
+	"Ȟ": "H",
+	"ȟ": "h",
+	"J̌": "J",
+	"ǰ": "j",
+	"Ǩ": "K",
+	"ǩ": "k",
+	"M̌": "M",
+	"m̌": "m",
+	"P̌": "P",
+	"p̌": "p",
+	"Q̌": "Q",
+	"q̌": "q",
+	"Ř̩": "R",
+	"ř̩": "r",
+	"Ṧ": "S",
+	"ṧ": "s",
+	"V̌": "V",
+	"v̌": "v",
+	"W̌": "W",
+	"w̌": "w",
+	"X̌": "X",
+	"x̌": "x",
+	"Y̌": "Y",
+	"y̌": "y",
+	"A̧": "A",
+	"a̧": "a",
+	"B̧": "B",
+	"b̧": "b",
+	"Ḑ": "D",
+	"ḑ": "d",
+	"Ȩ": "E",
+	"ȩ": "e",
+	"Ɛ̧": "E",
+	"ɛ̧": "e",
+	"Ḩ": "H",
+	"ḩ": "h",
+	"I̧": "I",
+	"i̧": "i",
+	"Ɨ̧": "I",
+	"ɨ̧": "i",
+	"M̧": "M",
+	"m̧": "m",
+	"O̧": "O",
+	"o̧": "o",
+	"Q̧": "Q",
+	"q̧": "q",
+	"U̧": "U",
+	"u̧": "u",
+	"X̧": "X",
+	"x̧": "x",
+	"Z̧": "Z",
+	"z̧": "z",
+	"й":"и",
+	"Й":"И",
+	"ё":"е",
+	"Ё":"Е",
+};
+
+var chars = Object.keys(characterMap).join('|');
+var allAccents = new RegExp(chars, 'g');
+var firstAccent = new RegExp(chars, '');
+
+function matcher(match) {
+	return characterMap[match];
+}
+
+var removeAccents = function(string) {
+	return string.replace(allAccents, matcher);
+};
+
+var hasAccents = function(string) {
+	return !!string.match(firstAccent);
+};
+
+module.exports = removeAccents;
+module.exports.has = hasAccents;
+module.exports.remove = removeAccents;
+
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
 /******/ 	
 /************************************************************************/
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
 /******/ 	/* webpack/runtime/define property getters */
-/******/ 	!function() {
+/******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__webpack_require__.d = function(exports, definition) {
+/******/ 		__webpack_require__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
 /******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
 /******/ 		};
-/******/ 	}();
+/******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
-/******/ 	!function() {
-/******/ 		__webpack_require__.o = function(obj, prop) { return Object.prototype.hasOwnProperty.call(obj, prop); }
-/******/ 	}();
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
-/******/ 	!function() {
+/******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__webpack_require__.r = function(exports) {
+/******/ 		__webpack_require__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
 /******/ 			Object.defineProperty(exports, '__esModule', { value: true });
 /******/ 		};
-/******/ 	}();
+/******/ 	})();
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
 // ESM COMPAT FLAG
 __webpack_require__.r(__webpack_exports__);
 
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, {
-  "addQueryArgs": function() { return /* reexport */ addQueryArgs; },
-  "buildQueryString": function() { return /* reexport */ buildQueryString; },
-  "cleanForSlug": function() { return /* reexport */ cleanForSlug; },
-  "filterURLForDisplay": function() { return /* reexport */ filterURLForDisplay; },
-  "getAuthority": function() { return /* reexport */ getAuthority; },
-  "getFilename": function() { return /* reexport */ getFilename; },
-  "getFragment": function() { return /* reexport */ getFragment; },
-  "getPath": function() { return /* reexport */ getPath; },
-  "getPathAndQueryString": function() { return /* reexport */ getPathAndQueryString; },
-  "getProtocol": function() { return /* reexport */ getProtocol; },
-  "getQueryArg": function() { return /* reexport */ getQueryArg; },
-  "getQueryArgs": function() { return /* reexport */ getQueryArgs; },
-  "getQueryString": function() { return /* reexport */ getQueryString; },
-  "hasQueryArg": function() { return /* reexport */ hasQueryArg; },
-  "isEmail": function() { return /* reexport */ isEmail; },
-  "isURL": function() { return /* reexport */ isURL; },
-  "isValidAuthority": function() { return /* reexport */ isValidAuthority; },
-  "isValidFragment": function() { return /* reexport */ isValidFragment; },
-  "isValidPath": function() { return /* reexport */ isValidPath; },
-  "isValidProtocol": function() { return /* reexport */ isValidProtocol; },
-  "isValidQueryString": function() { return /* reexport */ isValidQueryString; },
-  "normalizePath": function() { return /* reexport */ normalizePath; },
-  "prependHTTP": function() { return /* reexport */ prependHTTP; },
-  "removeQueryArgs": function() { return /* reexport */ removeQueryArgs; },
-  "safeDecodeURI": function() { return /* reexport */ safeDecodeURI; },
-  "safeDecodeURIComponent": function() { return /* reexport */ safeDecodeURIComponent; }
+  addQueryArgs: () => (/* reexport */ addQueryArgs),
+  buildQueryString: () => (/* reexport */ buildQueryString),
+  cleanForSlug: () => (/* reexport */ cleanForSlug),
+  filterURLForDisplay: () => (/* reexport */ filterURLForDisplay),
+  getAuthority: () => (/* reexport */ getAuthority),
+  getFilename: () => (/* reexport */ getFilename),
+  getFragment: () => (/* reexport */ getFragment),
+  getPath: () => (/* reexport */ getPath),
+  getPathAndQueryString: () => (/* reexport */ getPathAndQueryString),
+  getProtocol: () => (/* reexport */ getProtocol),
+  getQueryArg: () => (/* reexport */ getQueryArg),
+  getQueryArgs: () => (/* reexport */ getQueryArgs),
+  getQueryString: () => (/* reexport */ getQueryString),
+  hasQueryArg: () => (/* reexport */ hasQueryArg),
+  isEmail: () => (/* reexport */ isEmail),
+  isPhoneNumber: () => (/* reexport */ isPhoneNumber),
+  isURL: () => (/* reexport */ isURL),
+  isValidAuthority: () => (/* reexport */ isValidAuthority),
+  isValidFragment: () => (/* reexport */ isValidFragment),
+  isValidPath: () => (/* reexport */ isValidPath),
+  isValidProtocol: () => (/* reexport */ isValidProtocol),
+  isValidQueryString: () => (/* reexport */ isValidQueryString),
+  normalizePath: () => (/* reexport */ normalizePath),
+  prependHTTP: () => (/* reexport */ prependHTTP),
+  prependHTTPS: () => (/* reexport */ prependHTTPS),
+  removeQueryArgs: () => (/* reexport */ removeQueryArgs),
+  safeDecodeURI: () => (/* reexport */ safeDecodeURI),
+  safeDecodeURIComponent: () => (/* reexport */ safeDecodeURIComponent)
 });
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/is-url.js
+/* wp:polyfill */
 /**
  * Determines whether the given string looks like a URL.
  *
@@ -96,6 +626,7 @@ function isURL(url) {
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/is-email.js
 const EMAIL_REGEXP = /^(mailto:)?[a-z0-9._%+-]+@[a-z0-9][a-z0-9.-]*\.[a-z]{2,63}$/i;
+
 /**
  * Determines whether the given string looks like an email.
  *
@@ -108,9 +639,29 @@ const EMAIL_REGEXP = /^(mailto:)?[a-z0-9._%+-]+@[a-z0-9][a-z0-9.-]*\.[a-z]{2,63}
  *
  * @return {boolean} Whether or not it looks like an email.
  */
-
 function isEmail(email) {
   return EMAIL_REGEXP.test(email);
+}
+
+;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/is-phone-number.js
+const PHONE_REGEXP = /^(tel:)?(\+)?\d{6,15}$/;
+
+/**
+ * Determines whether the given string looks like a phone number.
+ *
+ * @param {string} phoneNumber The string to scrutinize.
+ *
+ * @example
+ * ```js
+ * const isPhoneNumber = isPhoneNumber('+1 (555) 123-4567'); // true
+ * ```
+ *
+ * @return {boolean} Whether or not it looks like a phone number.
+ */
+function isPhoneNumber(phoneNumber) {
+  // Remove any seperator from phone number.
+  phoneNumber = phoneNumber.replace(/[-.() ]/g, '');
+  return PHONE_REGEXP.test(phoneNumber);
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/get-protocol.js
@@ -129,7 +680,6 @@ function isEmail(email) {
  */
 function getProtocol(url) {
   const matches = /^([^\s:]+:)/.exec(url);
-
   if (matches) {
     return matches[1];
   }
@@ -153,7 +703,6 @@ function isValidProtocol(protocol) {
   if (!protocol) {
     return false;
   }
-
   return /^[a-z\-.\+]+[0-9]*:$/i.test(protocol);
 }
 
@@ -173,7 +722,6 @@ function isValidProtocol(protocol) {
  */
 function getAuthority(url) {
   const matches = /^[^\/\s:]+:(?:\/\/)?\/?([^\/\s#?]+)[\/#?]{0,1}\S*$/.exec(url);
-
   if (matches) {
     return matches[1];
   }
@@ -197,7 +745,6 @@ function isValidAuthority(authority) {
   if (!authority) {
     return false;
   }
-
   return /^[^\s#?]+$/.test(authority);
 }
 
@@ -217,7 +764,6 @@ function isValidAuthority(authority) {
  */
 function getPath(url) {
   const matches = /^[^\/\s:]+:(?:\/\/)?[^\/\s#?]+[\/]([^\s#?]+)[#?]{0,1}\S*$/.exec(url);
-
   if (matches) {
     return matches[1];
   }
@@ -241,11 +787,11 @@ function isValidPath(path) {
   if (!path) {
     return false;
   }
-
   return /^[^\s#?]+$/.test(path);
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/get-query-string.js
+/* wp:polyfill */
 /**
  * Returns the query string part of the URL.
  *
@@ -260,11 +806,9 @@ function isValidPath(path) {
  */
 function getQueryString(url) {
   let query;
-
   try {
     query = new URL(url, 'http://example.com').search.substring(1);
   } catch (error) {}
-
   if (query) {
     return query;
   }
@@ -299,18 +843,16 @@ function buildQueryString(data) {
   let string = '';
   const stack = Object.entries(data);
   let pair;
-
   while (pair = stack.shift()) {
-    let [key, value] = pair; // Support building deeply nested data, from array or object values.
+    let [key, value] = pair;
 
+    // Support building deeply nested data, from array or object values.
     const hasNestedData = Array.isArray(value) || value && value.constructor === Object;
-
     if (hasNestedData) {
       // Push array or object values onto the stack as composed of their
       // original key and nested index or key, retaining order by a
       // combination of Array#reverse and Array#unshift onto the stack.
       const valuePairs = Object.entries(value).reverse();
-
       for (const [member, memberValue] of valuePairs) {
         stack.unshift([`${key}[${member}]`, memberValue]);
       }
@@ -319,14 +861,13 @@ function buildQueryString(data) {
       if (value === null) {
         value = '';
       }
-
       string += '&' + [key, value].map(encodeURIComponent).join('=');
     }
-  } // Loop will concatenate with leading `&`, but it's only expected for all
+  }
+
+  // Loop will concatenate with leading `&`, but it's only expected for all
   // but the first query parameter. This strips the leading `&`, while still
   // accounting for the case that the string may in-fact be empty.
-
-
   return string.substr(1);
 }
 
@@ -348,7 +889,6 @@ function isValidQueryString(queryString) {
   if (!queryString) {
     return false;
   }
-
   return /^[^\s#?\/]+$/.test(queryString);
 }
 
@@ -356,6 +896,7 @@ function isValidQueryString(queryString) {
 /**
  * Internal dependencies
  */
+
 
 /**
  * Returns the path part and query string part of the URL.
@@ -370,13 +911,16 @@ function isValidQueryString(queryString) {
  *
  * @return {string} The path part and query string part of the URL.
  */
-
 function getPathAndQueryString(url) {
   const path = getPath(url);
   const queryString = getQueryString(url);
   let value = '/';
-  if (path) value += path;
-  if (queryString) value += `?${queryString}`;
+  if (path) {
+    value += path;
+  }
+  if (queryString) {
+    value += `?${queryString}`;
+  }
   return value;
 }
 
@@ -396,7 +940,6 @@ function getPathAndQueryString(url) {
  */
 function getFragment(url) {
   const matches = /^\S+?(#[^\s\?]*)/.exec(url);
-
   if (matches) {
     return matches[1];
   }
@@ -420,14 +963,32 @@ function isValidFragment(fragment) {
   if (!fragment) {
     return false;
   }
-
   return /^#[^\s#?\/]*$/.test(fragment);
+}
+
+;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/safe-decode-uri-component.js
+/**
+ * Safely decodes a URI component with `decodeURIComponent`. Returns the URI component unmodified if
+ * `decodeURIComponent` throws an error.
+ *
+ * @param {string} uriComponent URI component to decode.
+ *
+ * @return {string} Decoded URI component if possible.
+ */
+function safeDecodeURIComponent(uriComponent) {
+  try {
+    return decodeURIComponent(uriComponent);
+  } catch (uriComponentError) {
+    return uriComponent;
+  }
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/get-query-args.js
 /**
  * Internal dependencies
  */
+
+
 
 /** @typedef {import('./get-query-arg').QueryArgParsed} QueryArgParsed */
 
@@ -443,40 +1004,40 @@ function isValidFragment(fragment) {
  * @param {string[]}         path   Path segment at which to set value.
  * @param {*}                value  Value to set.
  */
-
 function setPath(object, path, value) {
   const length = path.length;
   const lastIndex = length - 1;
-
   for (let i = 0; i < length; i++) {
     let key = path[i];
-
     if (!key && Array.isArray(object)) {
       // If key is empty string and next value is array, derive key from
       // the current length of the array.
       key = object.length.toString();
     }
+    key = ['__proto__', 'constructor', 'prototype'].includes(key) ? key.toUpperCase() : key;
 
-    key = ['__proto__', 'constructor', 'prototype'].includes(key) ? key.toUpperCase() : key; // If the next key in the path is numeric (or empty string), it will be
+    // If the next key in the path is numeric (or empty string), it will be
     // created as an array. Otherwise, it will be created as an object.
-
     const isNextKeyArrayIndex = !isNaN(Number(path[i + 1]));
-    object[key] = i === lastIndex ? // If at end of path, assign the intended value.
-    value : // Otherwise, advance to the next object in the path, creating
+    object[key] = i === lastIndex ?
+    // If at end of path, assign the intended value.
+    value :
+    // Otherwise, advance to the next object in the path, creating
     // it if it does not yet exist.
     object[key] || (isNextKeyArrayIndex ? [] : {});
-
     if (Array.isArray(object[key]) && !isNextKeyArrayIndex) {
       // If we current key is non-numeric, but the next value is an
       // array, coerce the value to an object.
-      object[key] = { ...object[key]
+      object[key] = {
+        ...object[key]
       };
-    } // Update working reference object to the next in the path.
+    }
 
-
+    // Update working reference object to the next in the path.
     object = object[key];
   }
 }
+
 /**
  * Returns an object of query arguments of the given URL. If the given URL is
  * invalid or has no querystring, an empty object is returned.
@@ -491,23 +1052,21 @@ function setPath(object, path, value) {
  *
  * @return {QueryArgs} Query args object.
  */
-
-
 function getQueryArgs(url) {
-  return (getQueryString(url) || '' // Normalize space encoding, accounting for PHP URL encoding
+  return (getQueryString(url) || ''
+  // Normalize space encoding, accounting for PHP URL encoding
   // corresponding to `application/x-www-form-urlencoded`.
   //
   // See: https://tools.ietf.org/html/rfc1866#section-8.2.1
   ).replace(/\+/g, '%20').split('&').reduce((accumulator, keyValue) => {
-    const [key, value = ''] = keyValue.split('=') // Filtering avoids decoding as `undefined` for value, where
+    const [key, value = ''] = keyValue.split('=')
+    // Filtering avoids decoding as `undefined` for value, where
     // default is restored in destructuring assignment.
-    .filter(Boolean).map(decodeURIComponent);
-
+    .filter(Boolean).map(safeDecodeURIComponent);
     if (key) {
       const segments = key.replace(/\]/g, '').split('[');
       setPath(accumulator, segments, value);
     }
-
     return accumulator;
   }, Object.create(null));
 }
@@ -516,6 +1075,7 @@ function getQueryArgs(url) {
 /**
  * Internal dependencies
  */
+
 
 
 /**
@@ -534,27 +1094,22 @@ function getQueryArgs(url) {
  *
  * @return {string} URL with arguments applied.
  */
-
-function addQueryArgs() {
-  let url = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-  let args = arguments.length > 1 ? arguments[1] : undefined;
-
+function addQueryArgs(url = '', args) {
   // If no arguments are to be appended, return original URL.
   if (!args || !Object.keys(args).length) {
     return url;
   }
+  let baseUrl = url;
 
-  let baseUrl = url; // Determine whether URL already had query arguments.
-
+  // Determine whether URL already had query arguments.
   const queryStringIndex = url.indexOf('?');
-
   if (queryStringIndex !== -1) {
     // Merge into existing query arguments.
-    args = Object.assign(getQueryArgs(url), args); // Change working base URL to omit previous query arguments.
+    args = Object.assign(getQueryArgs(url), args);
 
+    // Change working base URL to omit previous query arguments.
     baseUrl = baseUrl.substr(0, queryStringIndex);
   }
-
   return baseUrl + '?' + buildQueryString(args);
 }
 
@@ -562,6 +1117,7 @@ function addQueryArgs() {
 /**
  * Internal dependencies
  */
+
 
 /**
  * @typedef {{[key: string]: QueryArgParsed}} QueryArgObject
@@ -584,7 +1140,6 @@ function addQueryArgs() {
  *
  * @return {QueryArgParsed|void} Query arg value.
  */
-
 function getQueryArg(url, arg) {
   return getQueryArgs(url)[arg];
 }
@@ -593,6 +1148,7 @@ function getQueryArg(url, arg) {
 /**
  * Internal dependencies
  */
+
 
 /**
  * Determines whether the URL contains a given query arg.
@@ -607,7 +1163,6 @@ function getQueryArg(url, arg) {
  *
  * @return {boolean} Whether or not the URL contains the query arg.
  */
-
 function hasQueryArg(url, arg) {
   return getQueryArg(url, arg) !== undefined;
 }
@@ -616,6 +1171,7 @@ function hasQueryArg(url, arg) {
 /**
  * Internal dependencies
  */
+
 
 
 /**
@@ -631,21 +1187,13 @@ function hasQueryArg(url, arg) {
  *
  * @return {string} Updated URL.
  */
-
-function removeQueryArgs(url) {
+function removeQueryArgs(url, ...args) {
   const queryStringIndex = url.indexOf('?');
-
   if (queryStringIndex === -1) {
     return url;
   }
-
   const query = getQueryArgs(url);
   const baseURL = url.substr(0, queryStringIndex);
-
-  for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-    args[_key - 1] = arguments[_key];
-  }
-
   args.forEach(arg => delete query[arg]);
   const queryString = buildQueryString(query);
   return queryString ? baseURL + '?' + queryString : baseURL;
@@ -657,6 +1205,7 @@ function removeQueryArgs(url) {
  */
 
 const USABLE_HREF_REGEXP = /^(?:[a-z]+:|#|\?|\.|\/)/i;
+
 /**
  * Prepends "http://" to a url, if it looks like something that is meant to be a TLD.
  *
@@ -669,18 +1218,14 @@ const USABLE_HREF_REGEXP = /^(?:[a-z]+:|#|\?|\.|\/)/i;
  *
  * @return {string} The updated URL.
  */
-
 function prependHTTP(url) {
   if (!url) {
     return url;
   }
-
   url = url.trim();
-
   if (!USABLE_HREF_REGEXP.test(url) && !isEmail(url)) {
     return 'http://' + url;
   }
-
   return url;
 }
 
@@ -706,23 +1251,6 @@ function safeDecodeURI(uri) {
   }
 }
 
-;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/safe-decode-uri-component.js
-/**
- * Safely decodes a URI component with `decodeURIComponent`. Returns the URI component unmodified if
- * `decodeURIComponent` throws an error.
- *
- * @param {string} uriComponent URI component to decode.
- *
- * @return {string} Decoded URI component if possible.
- */
-function safeDecodeURIComponent(uriComponent) {
-  try {
-    return decodeURIComponent(uriComponent);
-  } catch (uriComponentError) {
-    return uriComponent;
-  }
-}
-
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/filter-url-for-display.js
 /**
  * Returns a URL for display.
@@ -738,43 +1266,48 @@ function safeDecodeURIComponent(uriComponent) {
  *
  * @return {string} Displayed URL.
  */
-function filterURLForDisplay(url) {
-  let maxLength = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-  // Remove protocol and www prefixes.
-  let filteredURL = url.replace(/^(?:https?:)\/\/(?:www\.)?/, ''); // Ends with / and only has that single slash, strip it.
+function filterURLForDisplay(url, maxLength = null) {
+  if (!url) {
+    return '';
+  }
 
+  // Remove protocol and www prefixes.
+  let filteredURL = url.replace(/^[a-z\-.\+]+[0-9]*:(\/\/)?/i, '').replace(/^www\./i, '');
+
+  // Ends with / and only has that single slash, strip it.
   if (filteredURL.match(/^[^\/]+\/$/)) {
     filteredURL = filteredURL.replace('/', '');
   }
 
-  const mediaRegexp = /([\w|:])*\.(?:jpg|jpeg|gif|png|svg)/;
-
-  if (!maxLength || filteredURL.length <= maxLength || !filteredURL.match(mediaRegexp)) {
+  // capture file name from URL
+  const fileRegexp = /\/([^\/?]+)\.(?:[\w]+)(?=\?|$)/;
+  if (!maxLength || filteredURL.length <= maxLength || !filteredURL.match(fileRegexp)) {
     return filteredURL;
-  } // If the file is not greater than max length, return last portion of URL.
+  }
 
-
+  // If the file is not greater than max length, return last portion of URL.
   filteredURL = filteredURL.split('?')[0];
   const urlPieces = filteredURL.split('/');
   const file = urlPieces[urlPieces.length - 1];
-
   if (file.length <= maxLength) {
     return '…' + filteredURL.slice(-maxLength);
-  } // If the file is greater than max length, truncate the file.
+  }
 
-
+  // If the file is greater than max length, truncate the file.
   const index = file.lastIndexOf('.');
   const [fileName, extension] = [file.slice(0, index), file.slice(index + 1)];
   const truncatedFile = fileName.slice(-3) + '.' + extension;
   return file.slice(0, maxLength - truncatedFile.length - 1) + '…' + truncatedFile;
 }
 
-;// CONCATENATED MODULE: external "lodash"
-var external_lodash_namespaceObject = window["lodash"];
+// EXTERNAL MODULE: ./node_modules/remove-accents/index.js
+var remove_accents = __webpack_require__(9681);
+var remove_accents_default = /*#__PURE__*/__webpack_require__.n(remove_accents);
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/clean-for-slug.js
 /**
  * External dependencies
  */
+
 
 /**
  * Performs some basic cleanup of a string for use as a post slug.
@@ -792,16 +1325,25 @@ var external_lodash_namespaceObject = window["lodash"];
  *
  * @return {string} Processed string.
  */
-
 function cleanForSlug(string) {
   if (!string) {
     return '';
   }
-
-  return (0,external_lodash_namespaceObject.trim)((0,external_lodash_namespaceObject.deburr)(string).replace(/[\s\./]+/g, '-').replace(/[^\p{L}\p{N}_-]+/gu, '').toLowerCase(), '-');
+  return remove_accents_default()(string)
+  // Convert each group of whitespace, periods, and forward slashes to a hyphen.
+  .replace(/[\s\./]+/g, '-')
+  // Remove anything that's not a letter, number, underscore or hyphen.
+  .replace(/[^\p{L}\p{N}_-]+/gu, '')
+  // Convert to lowercase
+  .toLowerCase()
+  // Replace multiple hyphens with a single one.
+  .replace(/-+/g, '-')
+  // Remove any remaining leading or trailing hyphens.
+  .replace(/(^-+)|(-+$)/g, '');
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/get-filename.js
+/* wp:polyfill */
 /**
  * Returns the filename part of the URL.
  *
@@ -817,11 +1359,12 @@ function cleanForSlug(string) {
  */
 function getFilename(url) {
   let filename;
-
+  if (!url) {
+    return;
+  }
   try {
     filename = new URL(url, 'http://example.com').pathname.split('/').pop();
   } catch (error) {}
-
   if (filename) {
     return filename;
   }
@@ -841,20 +1384,59 @@ function normalizePath(path) {
   const splitted = path.split('?');
   const query = splitted[1];
   const base = splitted[0];
-
   if (!query) {
     return base;
-  } // 'b=1%2C2&c=2&a=5'
+  }
 
-
-  return base + '?' + query // [ 'b=1%2C2', 'c=2', 'a=5' ]
-  .split('&') // [ [ 'b, '1%2C2' ], [ 'c', '2' ], [ 'a', '5' ] ]
-  .map(entry => entry.split('=')) // [ [ 'b', '1,2' ], [ 'c', '2' ], [ 'a', '5' ] ]
-  .map(pair => pair.map(decodeURIComponent)) // [ [ 'a', '5' ], [ 'b, '1,2' ], [ 'c', '2' ] ]
-  .sort((a, b) => a[0].localeCompare(b[0])) // [ [ 'a', '5' ], [ 'b, '1%2C2' ], [ 'c', '2' ] ]
-  .map(pair => pair.map(encodeURIComponent)) // [ 'a=5', 'b=1%2C2', 'c=2' ]
-  .map(pair => pair.join('=')) // 'a=5&b=1%2C2&c=2'
+  // 'b=1%2C2&c=2&a=5'
+  return base + '?' + query
+  // [ 'b=1%2C2', 'c=2', 'a=5' ]
+  .split('&')
+  // [ [ 'b, '1%2C2' ], [ 'c', '2' ], [ 'a', '5' ] ]
+  .map(entry => entry.split('='))
+  // [ [ 'b', '1,2' ], [ 'c', '2' ], [ 'a', '5' ] ]
+  .map(pair => pair.map(decodeURIComponent))
+  // [ [ 'a', '5' ], [ 'b, '1,2' ], [ 'c', '2' ] ]
+  .sort((a, b) => a[0].localeCompare(b[0]))
+  // [ [ 'a', '5' ], [ 'b, '1%2C2' ], [ 'c', '2' ] ]
+  .map(pair => pair.map(encodeURIComponent))
+  // [ 'a=5', 'b=1%2C2', 'c=2' ]
+  .map(pair => pair.join('='))
+  // 'a=5&b=1%2C2&c=2'
   .join('&');
+}
+
+;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/prepend-https.js
+/**
+ * Internal dependencies
+ */
+
+
+/**
+ * Prepends "https://" to a url, if it looks like something that is meant to be a TLD.
+ *
+ * Note: this will not replace "http://" with "https://".
+ *
+ * @param {string} url The URL to test.
+ *
+ * @example
+ * ```js
+ * const actualURL = prependHTTPS( 'wordpress.org' ); // https://wordpress.org
+ * ```
+ *
+ * @return {string} The updated URL.
+ */
+function prependHTTPS(url) {
+  if (!url) {
+    return url;
+  }
+
+  // If url starts with http://, return it as is.
+  if (url.startsWith('http://')) {
+    return url;
+  }
+  url = prependHTTP(url);
+  return url.replace(/^http:/, 'https:');
 }
 
 ;// CONCATENATED MODULE: ./node_modules/@wordpress/url/build-module/index.js
@@ -884,6 +1466,10 @@ function normalizePath(path) {
 
 
 
+
+
+
+})();
 
 (window.wp = window.wp || {}).url = __webpack_exports__;
 /******/ })()
