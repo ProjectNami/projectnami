@@ -8,6 +8,11 @@
  * @since MU (3.0.0)
  */
 
+// Don't load directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	die( '-1' );
+}
+
 require_once ABSPATH . WPINC . '/ms-site.php';
 require_once ABSPATH . WPINC . '/ms-network.php';
 
@@ -823,7 +828,7 @@ function get_last_updated( $deprecated = '', $start = 0, $quantity = 40 ) {
 
 	if ( ! empty( $deprecated ) ) {
 		_deprecated_argument( __FUNCTION__, 'MU' ); // Never used.
- 	}
+	}
 
 	return $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM $wpdb->blogs WHERE site_id = %d AND [public] = '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' AND last_updated != '0001-01-01 00:00:00' ORDER BY last_updated DESC limit %d, %d", get_current_network_id(), $start, $quantity ), ARRAY_A );
 }

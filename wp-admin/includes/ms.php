@@ -469,10 +469,10 @@ function format_code_lang( $code = '' ) {
 		'ng' => 'Ndonga',
 		'ne' => 'Nepali',
 		'nn' => 'Norwegian Nynorsk; Nynorsk, Norwegian',
-		'nb' => 'Bokm├Ñl, Norwegian, Norwegian Bokm├Ñl',
+		'nb' => 'Bokmål, Norwegian, Norwegian Bokmål',
 		'no' => 'Norwegian',
 		'ny' => 'Chichewa; Chewa; Nyanja',
-		'oc' => 'Occitan, Proven├ºal',
+		'oc' => 'Occitan, Provençal',
 		'oj' => 'Ojibwa',
 		'or' => 'Oriya',
 		'om' => 'Oromo',
@@ -528,7 +528,7 @@ function format_code_lang( $code = '' ) {
 		'uz' => 'Uzbek',
 		've' => 'Venda',
 		'vi' => 'Vietnamese',
-		'vo' => 'Volap├╝k',
+		'vo' => 'Volapük',
 		'cy' => 'Welsh',
 		'wa' => 'Walloon',
 		'wo' => 'Wolof',
@@ -1171,4 +1171,18 @@ function get_site_screen_help_sidebar_content() {
 	return '<p><strong>' . __( 'For more information:' ) . '</strong></p>' .
 		'<p>' . __( '<a href="https://developer.wordpress.org/advanced-administration/multisite/admin/#network-admin-sites-screen">Documentation on Site Management</a>' ) . '</p>' .
 		'<p>' . __( '<a href="https://wordpress.org/support/forum/multisite/">Support forums</a>' ) . '</p>';
+}
+
+/**
+ * Stop execution if the role can not be assigned by the current user.
+ *
+ * @since 6.8.0
+ *
+ * @param string $role Role the user is attempting to assign.
+ */
+function wp_ensure_editable_role( $role ) {
+	$roles = get_editable_roles();
+	if ( ! isset( $roles[ $role ] ) ) {
+		wp_die( __( 'Sorry, you are not allowed to give users that role.' ), 403 );
+	}
 }

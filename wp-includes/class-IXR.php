@@ -39,6 +39,11 @@
  * @license    http://www.opensource.org/licenses/bsd-license.php BSD
  */
 
+// Don't load directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	die( '-1' );
+}
+
 require_once ABSPATH . WPINC . '/IXR/class-IXR-server.php';
 
 require_once ABSPATH . WPINC . '/IXR/class-IXR-base64.php';
@@ -57,4 +62,4 @@ require_once ABSPATH . WPINC . '/IXR/class-IXR-message.php';
 
 require_once ABSPATH . WPINC . '/IXR/class-IXR-request.php';
 
-require_once ABSPATH . WPINC . '/IXR/class-IXR-value.php';
+require_once ABSPATH . WPINC . '/IXR/class-IXR-value.php';

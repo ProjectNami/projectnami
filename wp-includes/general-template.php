@@ -19,9 +19,9 @@
  * @since 5.5.0 A return value was added.
  * @since 5.5.0 The `$args` parameter was added.
  *
- * @param string $name The name of the specialized header.
- * @param array  $args Optional. Additional arguments passed to the header template.
- *                     Default empty array.
+ * @param string|null $name The name of the specialized header. Default null.
+ * @param array       $args Optional. Additional arguments passed to the header template.
+ *                          Default empty array.
  * @return void|false Void on success, false if the template does not exist.
  */
 function get_header( $name = null, $args = array() ) {
@@ -63,9 +63,9 @@ function get_header( $name = null, $args = array() ) {
  * @since 5.5.0 A return value was added.
  * @since 5.5.0 The `$args` parameter was added.
  *
- * @param string $name The name of the specialized footer.
- * @param array  $args Optional. Additional arguments passed to the footer template.
- *                     Default empty array.
+ * @param string|null $name The name of the specialized footer. Default null.
+ * @param array       $args Optional. Additional arguments passed to the footer template.
+ *                          Default empty array.
  * @return void|false Void on success, false if the template does not exist.
  */
 function get_footer( $name = null, $args = array() ) {
@@ -107,9 +107,9 @@ function get_footer( $name = null, $args = array() ) {
  * @since 5.5.0 A return value was added.
  * @since 5.5.0 The `$args` parameter was added.
  *
- * @param string $name The name of the specialized sidebar.
- * @param array  $args Optional. Additional arguments passed to the sidebar template.
- *                     Default empty array.
+ * @param string|null $name The name of the specialized sidebar. Default null.
+ * @param array       $args Optional. Additional arguments passed to the sidebar template.
+ *                          Default empty array.
  * @return void|false Void on success, false if the template does not exist.
  */
 function get_sidebar( $name = null, $args = array() ) {
@@ -159,7 +159,7 @@ function get_sidebar( $name = null, $args = array() ) {
  * @since 5.5.0 The `$args` parameter was added.
  *
  * @param string      $slug The slug name for the generic template.
- * @param string|null $name Optional. The name of the specialized template.
+ * @param string|null $name Optional. The name of the specialized template. Default null.
  * @param array       $args Optional. Additional arguments passed to the template.
  *                          Default empty array.
  * @return void|false Void on success, false if the template does not exist.
@@ -175,8 +175,8 @@ function get_template_part( $slug, $name = null, $args = array() ) {
 	 * @since 5.5.0 The `$args` parameter was added.
 	 *
 	 * @param string      $slug The slug name for the generic template.
-	 * @param string|null $name The name of the specialized template or null if
-	 *                          there is none.
+	 * @param string|null $name The name of the specialized template
+	 *                          or null if there is none.
 	 * @param array       $args Additional arguments passed to the template.
 	 */
 	do_action( "get_template_part_{$slug}", $slug, $name, $args );
@@ -196,8 +196,8 @@ function get_template_part( $slug, $name = null, $args = array() ) {
 	 * @since 5.5.0 The `$args` parameter was added.
 	 *
 	 * @param string   $slug      The slug name for the generic template.
-	 * @param string   $name      The name of the specialized template or an empty
-	 *                            string if there is none.
+	 * @param string   $name      The name of the specialized template
+	 *                            or an empty string if there is none.
 	 * @param string[] $templates Array of template files to search for, in order.
 	 * @param array    $args      Additional arguments passed to the template.
 	 */
@@ -1124,7 +1124,7 @@ function get_custom_logo( $blog_id = 0 ) {
 					$image
 				);
 			} else {
-				$aria_current = is_front_page() && ! is_paged() ? ' aria-current="page"' : '';
+				$aria_current = ! is_paged() && ( is_front_page() || is_home() && ( (int) get_option( 'page_for_posts' ) !== get_queried_object_id() ) ) ? ' aria-current="page"' : '';
 
 				$html = sprintf(
 					'<a href="%1$s" class="custom-logo-link" rel="home"%2$s>%3$s</a>',
@@ -1922,7 +1922,7 @@ function get_the_post_type_description() {
  * @param string $format   Optional. Can be 'link', 'option', 'html', or custom. Default 'html'.
  * @param string $before   Optional. Content to prepend to the description. Default empty.
  * @param string $after    Optional. Content to append to the description. Default empty.
- * @param bool   $selected Optional. Set to true if the current page is the selected archive page.
+ * @param bool   $selected Optional. Set to true if the current page is the selected archive page. Default false.
  * @return string HTML link content for archive.
  */
 function get_archives_link( $url, $text, $format = 'html', $before = '', $after = '', $selected = false ) {
@@ -2160,7 +2160,7 @@ function wp_get_archives( $args = '' ) {
 		if ( $results ) {
 			$after = $parsed_args['after'];
 			foreach ( (array) $results as $result ) {
-				if ( $result->week != $arc_w_last ) {
+				if ( $result->week !== $arc_w_last ) {
 					$arc_year       = $result->yr;
 					$arc_w_last     = $result->week;
 					$arc_week       = get_weekstartend( $result->yyyymmdd, get_option( 'start_of_week' ) );
@@ -2239,6 +2239,8 @@ function calendar_week_mod( $num ) {
  * no posts for the month, then it will not be displayed.
  *
  * @since 1.0.0
+ * @since 6.8.0 Added the `$args` parameter, with backward compatibility
+ *              for the replaced `$initial` and `$display` parameters.
  *
  * @global wpdb      $wpdb      WordPress database abstraction object.
  * @global int       $m
@@ -2247,21 +2249,96 @@ function calendar_week_mod( $num ) {
  * @global WP_Locale $wp_locale WordPress date and time locale object.
  * @global array     $posts
  *
- * @param bool $initial Optional. Whether to use initial calendar names. Default true.
- * @param bool $display Optional. Whether to display the calendar output. Default true.
+ * @param array $args {
+ *     Optional. Arguments for the `get_calendar` function.
+ *
+ *     @type bool   $initial   Whether to use initial calendar names. Default true.
+ *     @type bool   $display   Whether to display the calendar output. Default true.
+ *     @type string $post_type Optional. Post type. Default 'post'.
+ * }
  * @return void|string Void if `$display` argument is true, calendar HTML if `$display` is false.
  */
-function get_calendar( $initial = true, $display = true ) {
+function get_calendar( $args = array() ) {
 	global $wpdb, $m, $monthnum, $year, $wp_locale, $posts;
 
-	$key   = md5( $m . $monthnum . $year );
+	$defaults = array(
+		'initial'   => true,
+		'display'   => true,
+		'post_type' => 'post',
+	);
+
+	$original_args = func_get_args();
+	$args          = array();
+
+	if ( ! empty( $original_args ) ) {
+		if ( ! is_array( $original_args[0] ) ) {
+			if ( isset( $original_args[0] ) && is_bool( $original_args[0] ) ) {
+				$defaults['initial'] = $original_args[0];
+			}
+			if ( isset( $original_args[1] ) && is_bool( $original_args[1] ) ) {
+				$defaults['display'] = $original_args[1];
+			}
+		} else {
+			$args = $original_args[0];
+		}
+	}
+
+	/**
+	 * Filter the `get_calendar` function arguments before they are used.
+	 *
+	 * @since 6.8.0
+	 *
+	 * @param array $args {
+	 *     Optional. Arguments for the `get_calendar` function.
+	 *
+	 *     @type bool   $initial   Whether to use initial calendar names. Default true.
+	 *     @type bool   $display   Whether to display the calendar output. Default true.
+	 *     @type string $post_type Optional. Post type. Default 'post'.
+	 * }
+	 * @return array The arguments for the `get_calendar` function.
+	 */
+	$args = apply_filters( 'get_calendar_args', wp_parse_args( $args, $defaults ) );
+
+	if ( ! post_type_exists( $args['post_type'] ) ) {
+		$args['post_type'] = 'post';
+	}
+
+	$w = 0;
+	if ( isset( $_GET['w'] ) ) {
+		$w = (int) $_GET['w'];
+	}
+
+	/*
+	 * Normalize the cache key.
+	 *
+	 * The following ensures the same cache key is used for the same parameter
+	 * and parameter equivalents. This prevents `post_type > post, initial > true`
+	 * from generating a different key from the same values in the reverse order.
+	 *
+	 * `display` is excluded from the cache key as the cache contains the same
+	 * HTML regardless of this function's need to echo or return the output.
+	 *
+	 * The global values contain data generated by the URL query string variables.
+	 */
+	$cache_args = $args;
+	unset( $cache_args['display'] );
+
+	$cache_args['globals'] = array(
+		'm'        => $m,
+		'monthnum' => $monthnum,
+		'year'     => $year,
+		'week'     => $w,
+	);
+
+	wp_recursive_ksort( $cache_args );
+	$key   = md5( serialize( $cache_args ) );
 	$cache = wp_cache_get( 'get_calendar', 'calendar' );
 
 	if ( $cache && is_array( $cache ) && isset( $cache[ $key ] ) ) {
 		/** This filter is documented in wp-includes/general-template.php */
-		$output = apply_filters( 'get_calendar', $cache[ $key ] );
+		$output = apply_filters( 'get_calendar', $cache[ $key ], $args );
 
-		if ( $display ) {
+		if ( $args['display'] ) {
 			echo $output;
 			return;
 		}

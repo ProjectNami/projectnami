@@ -746,7 +746,7 @@ if ( ! CUSTOM_TAGS ) {
  */
 function wp_kses( $content, $allowed_html, $allowed_protocols = array() ) {
 	if ( empty( $allowed_protocols ) ) {
- 		$allowed_protocols = wp_allowed_protocols();
+		$allowed_protocols = wp_allowed_protocols();
 	}
 
 	$content = wp_kses_no_null( $content, array( 'slash_zero' => 'keep' ) );
@@ -895,9 +895,11 @@ function wp_kses_allowed_html( $context = '' ) {
 			return $tags;
 
 		case 'user_description':
+		case 'pre_term_description':
 		case 'pre_user_description':
-			$tags             = $allowedtags;
-			$tags['a']['rel'] = true;
+			$tags                = $allowedtags;
+			$tags['a']['rel']    = true;
+			$tags['a']['target'] = true;
 			/** This filter is documented in wp-includes/kses.php */
 			return apply_filters( 'wp_kses_allowed_html', $tags, $context );
 
@@ -1128,7 +1130,7 @@ function wp_kses_split2( $content, $allowed_html, $allowed_protocols ) {
 	 */
 	if ( 1 === preg_match( '~^(?:</[^a-zA-Z][^>]*>|<![a-z][^>]*>)$~', $content ) ) {
 		/**
-		 * Since the pattern matches `</ΓÇª>` and also `<!ΓÇª>`, this will
+		 * Since the pattern matches `</…>` and also `<!…>`, this will
 		 * preserve the type of the cleaned-up token in the output.
 		 */
 		$opener  = $content[1];
@@ -1942,7 +1944,7 @@ function wp_kses_bad_protocol_once2( $scheme, $allowed_protocols ) {
  * `AT&amp;T`, `&#00058;` to `&#058;`, `&#XYZZY;` to `&amp;#XYZZY;` and so on.
  *
  * When `$context` is set to 'xml', HTML entities are converted to their code points.  For
- * example, `AT&T&hellip;&#XYZZY;` is converted to `AT&amp;TΓÇª&amp;#XYZZY;`.
+ * example, `AT&T&hellip;&#XYZZY;` is converted to `AT&amp;T…&amp;#XYZZY;`.
  *
  * @since 1.0.0
  * @since 5.5.0 Added `$context` parameter.

@@ -5,6 +5,11 @@
  * @package WordPress
  */
 
+// Don't load directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	die( '-1' );
+}
+
 function mssql_escape( $string ) {
 	return str_replace( "'", "''", $string );
 }
@@ -33,7 +38,7 @@ require ABSPATH . WPINC . '/option.php';
  */
 function mysql2date( $format, $date, $translate = true ) {
 	if ( empty( $date ) ) {
- 		return false;
+		return false;
 	}
 
 	if( is_object( $date ) && get_class( $date ) == 'DateTime' )
@@ -145,7 +150,7 @@ function wp_timezone_string() {
 /**
  * Retrieves the timezone of the site as a `DateTimeZone` object.
  *
- * Timezone can be based on a PHP timezone string or a ┬▒HH:MM offset.
+ * Timezone can be based on a PHP timezone string or a ±HH:MM offset.
  *
  * @since 5.3.0
  *
@@ -621,6 +626,7 @@ function get_weekstartend( $mysqlstring, $start_of_week = '' ) {
 
 	// $start + 1 week - 1 second.
 	$end = $start + WEEK_IN_SECONDS - 1;
+
 	return compact( 'start', 'end' );
 }
 
