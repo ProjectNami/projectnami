@@ -407,7 +407,7 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
  			)
  		);
 		update_option(
-			'sidebars_widgets', 
+			'sidebars_widgets',
  			array(
  				'wp_inactive_widgets' => array(),
  				'sidebar-1'           => array(
@@ -622,7 +622,7 @@ function wp_upgrade() {
 	$wp_current_db_version = (int) __get_option( 'db_version' );
 
 	// We are up to date. Nothing to do.
-	if ( $wp_db_version === $wp_current_db_version ) {
+	if ( $wp_db_version === $wp_current_db_version )
 		return;
 
 	if ( ! is_blog_installed() )
@@ -671,7 +671,7 @@ function upgrade_all() {
 	$wp_current_db_version = (int) __get_option( 'db_version' );
 
 	// We are up to date. Nothing to do.
-	if ( $wp_db_version === $wp_current_db_version ) {
+	if ( $wp_db_version === $wp_current_db_version )
 		return;
 
 	if ( empty($wp_current_db_version) )
@@ -1490,7 +1490,7 @@ function add_clean_index($table, $index) {
  */
 function maybe_add_column( $table_name, $column_name, $create_ddl ) {
 	global $wpdb;
-	
+
 	foreach ( $wpdb->get_col( "DESC $table_name", 0 ) as $column ) {
 		if ( $column === $column_name ) {
 			return true;
@@ -1613,7 +1613,7 @@ function dbDelta( $queries = '', $execute = true ) { // phpcs:ignore WordPress.N
 	foreach( $queries as $query ) {
 		$wpdb->query($query);
 	}
- 
+
 	return array();
 
 }
