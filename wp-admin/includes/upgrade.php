@@ -725,6 +725,7 @@ function upgrade_all() {
 	// If the version is not set in the DB, try to guess the version.
 	if ( empty( $wp_current_db_version ) ) {
 		$wp_current_db_version = 0;
+	}
 
 	populate_options();
 
@@ -862,6 +863,7 @@ function upgrade_380() {
 /**
  * Execute changes made in WordPress 4.0.0.
  *
+ * @ignore
  * @since 4.0.0
  *
  * @global int $wp_current_db_version The old (current) database version.
@@ -931,6 +933,7 @@ function upgrade_430() {
 /**
  * Executes comments changes made in WordPress 4.3.0.
  *
+ * @ignore
  * @since 4.3.0
  *
  * @global wpdb $wpdb WordPress database abstraction object.
@@ -953,6 +956,7 @@ function upgrade_430_fix_comments() {
 /**
  * Execute changes as required by PN post WP 4.3.0.
  *
+ * @ignore
  * @since 4.3.1
  */
 function upgrade_431() {
@@ -1368,8 +1372,9 @@ function upgrade_network() {
 		while( $rows = $wpdb->get_results( "SELECT meta_key, meta_value FROM {$wpdb->sitemeta} ORDER BY meta_id OFFSET $start ROWS FETCH NEXT 20 ROWS ONLY" ) ) {
 			foreach( $rows as $row ) {
 				$value = $row->meta_value;
-				if ( !@unserialize( $value ) )
+				if ( ! @unserialize( $value ) ) {
 					$value = stripslashes( $value );
+				}
 				if ( $value !== $row->meta_value ) {
 					update_site_option( $row->meta_key, $value );
 				}
@@ -1446,7 +1451,6 @@ function upgrade_network() {
  * already present. It doesn't rely on MySQL's "IF NOT EXISTS" statement, but chooses
  * to query all tables first and then run the SQL statement creating the table.
  *
- * @ignore
  * @since 1.0.0
  *
  * @global wpdb $wpdb WordPress database abstraction object.
@@ -1455,7 +1459,7 @@ function upgrade_network() {
  * @param string $create_ddl SQL statement to create table.
  * @return bool True on success or if the table already exists. False on failure.
  */
-function maybe_create_table($table_name, $create_ddl) {
+function maybe_create_table( $table_name, $create_ddl ) {
 	global $wpdb;
 
 	$query = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name = '$table_name'" );
@@ -1465,7 +1469,7 @@ function maybe_create_table($table_name, $create_ddl) {
 	}
 
 	// Didn't find it, so try to create it.
-	$wpdb->query($create_ddl);
+	$wpdb->query( $create_ddl );
 
 	// We cannot directly tell that whether this succeeded!
 	if ( $wpdb->get_var( $query ) === $table_name ) {
@@ -1486,7 +1490,7 @@ function maybe_create_table($table_name, $create_ddl) {
  * @param string $index Index name to drop.
  * @return true True, when finished.
  */
-function drop_index($table, $index) {
+function drop_index( $table, $index ) {
 	global $wpdb;
 
 	$wpdb->hide_errors();
@@ -1529,7 +1533,6 @@ function add_clean_index($table, $index) {
  *
  * @since 1.3.0
  *
- * @ignore
  * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param string $table_name  Database table name.
@@ -1598,7 +1601,6 @@ function __get_option( $setting ) { // phpcs:ignore WordPress.NamingConventions.
 /**
  * Filters for content to remove unnecessary slashes.
  *
- * @ignore
  * @since 1.5.0
  *
  * @param string $content The content to modify.
@@ -1636,18 +1638,19 @@ function deslash( $content ) {
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
- * @param string|array $queries Optional. The query to run. Can be multiple queries
- *                              in an array, or a string of queries separated by
- *                              semicolons. Default empty.
- * @param bool         $execute Optional. Whether or not to execute the query right away.
- *                              Default true.
- * @return array Strings containing the results of the various update queries.
+ * @param string[]|string $queries Optional. The query to run. Can be multiple queries
+ *                                 in an array, or a string of queries separated by
+ *                                 semicolons. Default empty string.
+ * @param bool            $execute Optional. Whether or not to execute the query right away.
+ *                                 Default true.
+ * @return string[] Strings containing the results of the various update queries.
  */
 function dbDelta( $queries = '', $execute = true ) { // phpcs:ignore WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid
 	global $wpdb;
 
-	if ( in_array( $queries, array( '', 'all', 'blog', 'global', 'ms_global' ), true ) )
+	if ( in_array( $queries, array( '', 'all', 'blog', 'global', 'ms_global' ), true ) ) {
 		$queries = wp_get_db_schema( $queries );
+	}
 
 	// Separate individual queries into an array.
 	if ( !is_array($queries) ) {
