@@ -1,5 +1,5 @@
 {
-    "name": "denissonleal/projectnami",
+    "name": "projectnami/projectnami",
     "description": "WordPress powered by Microsoft SQL Server",
     "require": {
         "php": ">=7.0"
