@@ -19,7 +19,7 @@ require_once ABSPATH . 'wp-admin/includes/admin.php';
 /** WordPress Schema API */
 require_once ABSPATH . 'wp-admin/includes/schema.php';
 
-if ( !function_exists('wp_install') ) :
+if ( ! function_exists( 'wp_install' ) ) :
 	/**
 	 * Installs the site.
 	 *
@@ -44,8 +44,17 @@ if ( !function_exists('wp_install') ) :
 	 *     @type string $password_message The explanatory message regarding the password.
 	 * }
 	 */
-	function wp_install( $blog_title, $user_name, $user_email, $is_public, $deprecated = '', $user_password = '', $language = '' ) {
-		if ( !empty( $deprecated ) ) {
+	function wp_install(
+		$blog_title,
+		$user_name,
+		$user_email,
+		$is_public,
+		$deprecated = '',
+		#[\SensitiveParameter]
+		$user_password = '',
+		$language = ''
+	) {
+		if ( ! empty( $deprecated ) ) {
 			_deprecated_argument( __FUNCTION__, '2.6.0' );
 		}
 
@@ -70,8 +79,8 @@ if ( !function_exists('wp_install') ) :
 		populate_options();
 		populate_roles();
 
-		update_option('blogname', $blog_title);
-		update_option('admin_email', $user_email);
+		update_option( 'blogname', $blog_title );
+		update_option( 'admin_email', $user_email );
 		update_option( 'blog_public', $is_public );
 
 		// Freshness of site - in the future, this could get more specific about actions taken, perhaps.
@@ -83,26 +92,26 @@ if ( !function_exists('wp_install') ) :
 
 		$guessurl = wp_guess_url();
 
-		update_option('siteurl', $guessurl);
+		update_option( 'siteurl', $guessurl );
 
 		// If not a public site, don't ping.
 		if ( ! $is_public ) {
-			update_option('default_pingback_flag', 0);
+			update_option( 'default_pingback_flag', 0 );
 		}
 
 		/*
 		 * Create default user. If the user already exists, the user tables are
 		 * being shared among sites. Just set the role in that case.
 		 */
-		$user_id = username_exists($user_name);
-		$user_password = trim($user_password);
+		$user_id        = username_exists( $user_name );
+		$user_password  = trim( $user_password );
 		$email_password = false;
 		$user_created   = false;
 
-		if ( !$user_id && empty($user_password) ) {
+		if ( ! $user_id && empty( $user_password ) ) {
 			$user_password = wp_generate_password( 12, false );
-			$message = __('<strong><em>Note that password</em></strong> carefully! It is a <em>random</em> password that was generated just for you.');
-			$user_id = wp_create_user($user_name, $user_password, $user_email);
+			$message       = __( '<strong><em>Note that password</em></strong> carefully! It is a <em>random</em> password that was generated just for you.' );
+			$user_id       = wp_create_user( $user_name, $user_password, $user_email );
 			update_user_meta( $user_id, 'default_password_nag', true );
 			$email_password = true;
 			$user_created   = true;
@@ -112,24 +121,24 @@ if ( !function_exists('wp_install') ) :
 			$user_id      = wp_create_user( $user_name, $user_password, $user_email );
 			$user_created = true;
 		} else {
-			$message = __('User already exists. Password inherited.');
+			$message = __( 'User already exists. Password inherited.' );
 		}
 
-		$user = new WP_User($user_id);
-		$user->set_role('administrator');
+		$user = new WP_User( $user_id );
+		$user->set_role( 'administrator' );
 
 		if ( $user_created ) {
 			$user->user_url = $guessurl;
 			wp_update_user( $user );
 		}
 
-		wp_install_defaults($user_id);
+		wp_install_defaults( $user_id );
 
 		wp_install_maybe_enable_pretty_permalinks();
 
 		flush_rewrite_rules();
 
-		wp_new_blog_notification($blog_title, $guessurl, $user_id, ($email_password ? $user_password : __('The password you chose during installation.') ) );
+		wp_new_blog_notification( $blog_title, $guessurl, $user_id, ( $email_password ? $user_password : __( 'The password you chose during installation.' ) ) );
 
 		wp_cache_flush();
 
@@ -151,7 +160,7 @@ if ( !function_exists('wp_install') ) :
 	}
 endif;
 
-if ( !function_exists('wp_install_defaults') ) :
+if ( ! function_exists( 'wp_install_defaults' ) ) :
 	/**
 	 * Creates the initial content for a newly-installed site.
 	 *
@@ -160,8 +169,8 @@ if ( !function_exists('wp_install_defaults') ) :
 	 *
 	 * @since 2.1.0
 	 *
-		 * @global wpdb       $wpdb         WordPress database abstraction object.
-		 * @global WP_Rewrite $wp_rewrite   WordPress rewrite component.
+	 * @global wpdb       $wpdb         WordPress database abstraction object.
+	 * @global WP_Rewrite $wp_rewrite   WordPress rewrite component.
 	 * @global string     $table_prefix The database table prefix.
 	 *
 	 * @param int $user_id User ID.
@@ -170,26 +179,25 @@ if ( !function_exists('wp_install_defaults') ) :
 		global $wpdb, $wp_rewrite, $table_prefix;
 
 		// Default category.
-		$cat_name = __('Uncategorized');
+		$cat_name = __( 'Uncategorized' );
 		/* translators: Default category slug. */
-		$cat_slug = sanitize_title(_x('Uncategorized', 'Default category slug'));
+		$cat_slug = sanitize_title( _x( 'Uncategorized', 'Default category slug' ) );
 
 		$cat_id = 1;
 
 		$wpdb->insert(
 			$wpdb->terms,
 			array(
-				//'term_id'    => $cat_id,
+				'term_id'    => $cat_id,
 				'name'       => $cat_name,
 				'slug'       => $cat_slug,
 				'term_group' => 0,
 			)
 		);
-		$term_id = $wpdb->insert_id;
 		$wpdb->insert(
 			$wpdb->term_taxonomy,
 			array(
-				'term_id'     => $term_id,
+				'term_id'     => $cat_id,
 				'taxonomy'    => 'category',
 				'description' => '',
 				'parent'      => 0,
@@ -199,8 +207,8 @@ if ( !function_exists('wp_install_defaults') ) :
 		$cat_tt_id = $wpdb->insert_id;
 
 		// First post.
-		$now = current_time( 'mysql' );
-		$now_gmt = current_time( 'mysql', 1 );
+		$now             = current_time( 'mysql' );
+		$now_gmt         = current_time( 'mysql', 1 );
 		$first_post_guid = get_option( 'home' ) . '/?p=1';
 
 		if ( is_multisite() ) {
@@ -208,9 +216,9 @@ if ( !function_exists('wp_install_defaults') ) :
 
 			if ( ! $first_post ) {
 				$first_post = "<!-- wp:paragraph -->\n<p>" .
-					/* translators: First post content. %s: Site link. */
-					__( 'Welcome to %s. This is your first post. Edit or delete it, then start writing!' ) .
-					"</p>\n<!-- /wp:paragraph -->";
+				/* translators: First post content. %s: Site link. */
+				__( 'Welcome to %s. This is your first post. Edit or delete it, then start writing!' ) .
+				"</p>\n<!-- /wp:paragraph -->";
 			}
 
 			$first_post = sprintf(
@@ -223,28 +231,28 @@ if ( !function_exists('wp_install_defaults') ) :
 			$first_post = str_replace( 'SITE_NAME', get_network()->site_name, $first_post );
 		} else {
 			$first_post = "<!-- wp:paragraph -->\n<p>" .
-				/* translators: First post content. %s: Site link. */
-				__( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' ) .
-				"</p>\n<!-- /wp:paragraph -->";
+			/* translators: First post content. %s: Site link. */
+			__( 'Welcome to WordPress. This is your first post. Edit or delete it, then start writing!' ) .
+			"</p>\n<!-- /wp:paragraph -->";
 		}
 
 		$wpdb->insert(
 			$wpdb->posts,
 			array(
-				'post_author' => $user_id,
-				'post_date' => $now,
-				'post_date_gmt' => $now_gmt,
-				'post_content' => $first_post,
-				'post_excerpt' => '',
-				'post_title' => __('Hello world!'),
+				'post_author'           => $user_id,
+				'post_date'             => $now,
+				'post_date_gmt'         => $now_gmt,
+				'post_content'          => $first_post,
+				'post_excerpt'          => '',
+				'post_title'            => __( 'Hello world!' ),
 				/* translators: Default post slug. */
-				'post_name' => sanitize_title( _x('hello-world', 'Default post slug') ),
-				'post_modified' => $now,
-				'post_modified_gmt' => $now_gmt,
-				'guid' => $first_post_guid,
-				'comment_count' => 1,
-				'to_ping' => '',
-				'pinged' => '',
+				'post_name'             => sanitize_title( _x( 'hello-world', 'Default post slug' ) ),
+				'post_modified'         => $now,
+				'post_modified_gmt'     => $now_gmt,
+				'guid'                  => $first_post_guid,
+				'comment_count'         => 1,
+				'to_ping'               => '',
+				'pinged'                => '',
 				'post_content_filtered' => '',
 			)
 		);
@@ -264,89 +272,103 @@ if ( !function_exists('wp_install_defaults') ) :
 		// Default comment.
 		if ( is_multisite() ) {
 			$first_comment_author = get_site_option( 'first_comment_author' );
-			$first_comment_email = get_site_option( 'first_comment_email' );
-			$first_comment_url = get_site_option( 'first_comment_url', network_home_url() );
-			$first_comment = get_site_option( 'first_comment' );
+			$first_comment_email  = get_site_option( 'first_comment_email' );
+			$first_comment_url    = get_site_option( 'first_comment_url', network_home_url() );
+			$first_comment        = get_site_option( 'first_comment' );
 		}
 
 		$first_comment_author = ! empty( $first_comment_author ) ? $first_comment_author : __( 'A WordPress Commenter' );
-		$first_comment_email = ! empty( $first_comment_email ) ? $first_comment_email : 'wapuu@wordpress.example';
+		$first_comment_email  = ! empty( $first_comment_email ) ? $first_comment_email : 'wapuu@wordpress.example';
 		$first_comment_url    = ! empty( $first_comment_url ) ? $first_comment_url : esc_url( __( 'https://wordpress.org/' ) );
 		$first_comment        = ! empty( $first_comment ) ? $first_comment : sprintf(
 			/* translators: %s: Gravatar URL. */
 			__(
 				'Hi, this is a comment.
-	To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.
+To get started with moderating, editing, and deleting comments, please visit the Comments screen in the dashboard.
 Commenter avatars come from <a href="%s">Gravatar</a>.'
 			),
 			/* translators: The localized Gravatar URL. */
 			esc_url( __( 'https://gravatar.com/' ) )
- 		);
-		$wpdb->insert( $wpdb->comments, array(
-			'comment_post_ID' => 1,
-			'comment_author' => $first_comment_author,
-			'comment_author_email' => $first_comment_email,
-			'comment_author_url' => $first_comment_url,
-			'comment_date' => $now,
-			'comment_date_gmt' => $now_gmt,
-			'comment_content' => $first_comment,
-			'comment_type'         => 'comment',
-		));
+		);
+		$wpdb->insert(
+			$wpdb->comments,
+			array(
+				'comment_post_ID'      => 1,
+				'comment_author'       => $first_comment_author,
+				'comment_author_email' => $first_comment_email,
+				'comment_author_url'   => $first_comment_url,
+				'comment_date'         => $now,
+				'comment_date_gmt'     => $now_gmt,
+				'comment_content'      => $first_comment,
+				'comment_type'         => 'comment',
+			)
+		);
 
 		// First page.
-		if ( is_multisite() )
+		if ( is_multisite() ) {
 			$first_page = get_site_option( 'first_page' );
+		}
 
 		if ( empty( $first_page ) ) {
 			$first_page = "<!-- wp:paragraph -->\n<p>";
-				/* translators: First page content. */
+			/* translators: First page content. */
 			$first_page .= __( "This is an example page. It's different from a blog post because it will stay in one place and will show up in your site navigation (in most themes). Most people start with an About page that introduces them to potential site visitors. It might say something like this:" );
 			$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
 
 			$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
-				/* translators: First page content. */
+			/* translators: First page content. */
 			$first_page .= __( "Hi there! I'm a bike messenger by day, aspiring actor by night, and this is my website. I live in Los Angeles, have a great dog named Jack, and I like pi&#241;a coladas. (And gettin' caught in the rain.)" );
 			$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
 
 			$first_page .= "<!-- wp:paragraph -->\n<p>";
-				/* translators: First page content. */
+			/* translators: First page content. */
 			$first_page .= __( '...or something like this:' );
 			$first_page .= "</p>\n<!-- /wp:paragraph -->\n\n";
 
 			$first_page .= "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><p>";
-				/* translators: First page content. */
+			/* translators: First page content. */
 			$first_page .= __( 'The XYZ Doohickey Company was founded in 1971, and has been providing quality doohickeys to the public ever since. Located in Gotham City, XYZ employs over 2,000 people and does all kinds of awesome things for the Gotham community.' );
 			$first_page .= "</p></blockquote>\n<!-- /wp:quote -->\n\n";
 
 			$first_page .= "<!-- wp:paragraph -->\n<p>";
 			$first_page .= sprintf(
-					/* translators: First page content. %s: Site admin URL. */
+				/* translators: First page content. %s: Site admin URL. */
 				__( 'As a new WordPress user, you should go to <a href="%s">your dashboard</a> to delete this page and create new pages for your content. Have fun!' ),
 				admin_url()
 			);
 			$first_page .= "</p>\n<!-- /wp:paragraph -->";
 		}
 
-		$first_post_guid = get_option('home') . '/?page_id=2';
-		$wpdb->insert( $wpdb->posts, array(
-			'post_author' => $user_id,
-			'post_date' => $now,
-			'post_date_gmt' => $now_gmt,
-			'post_content' => $first_page,
-			'post_excerpt' => '',
-			'comment_status' => 'closed',
-			'post_title' => __( 'Sample Page' ),
-					/* translators: Default page slug. */
-			'post_name' => __( 'sample-page' ),
-			'post_modified' => $now,
-			'post_modified_gmt' => $now_gmt,
-			'guid' => $first_post_guid,
-			'post_type' => 'page',
-			'to_ping' => '',
-			'pinged' => '',
-			'post_content_filtered' => ''
-		));
-		$wpdb->insert( $wpdb->postmeta, array( 'post_id' => 2, 'meta_key' => '_wp_page_template', 'meta_value' => 'default' ) );
+		$first_post_guid = get_option( 'home' ) . '/?page_id=2';
+		$wpdb->insert(
+			$wpdb->posts,
+			array(
+				'post_author'           => $user_id,
+				'post_date'             => $now,
+				'post_date_gmt'         => $now_gmt,
+				'post_content'          => $first_page,
+				'post_excerpt'          => '',
+				'comment_status'        => 'closed',
+				'post_title'            => __( 'Sample Page' ),
+				/* translators: Default page slug. */
+				'post_name'             => __( 'sample-page' ),
+				'post_modified'         => $now,
+				'post_modified_gmt'     => $now_gmt,
+				'guid'                  => $first_post_guid,
+				'post_type'             => 'page',
+				'to_ping'               => '',
+				'pinged'                => '',
+				'post_content_filtered' => '',
+			)
+		);
+		$wpdb->insert(
+			$wpdb->postmeta,
+			array(
+				'post_id'    => 2,
+				'meta_key'   => '_wp_page_template',
+				'meta_value' => 'default',
+			)
+		);
 
 		// Privacy Policy page.
 		if ( is_multisite() ) {
@@ -364,7 +386,8 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 			$privacy_policy_guid = get_option( 'home' ) . '/?page_id=3';
 
 			$wpdb->insert(
-				$wpdb->posts, array(
+				$wpdb->posts,
+				array(
 					'post_author'           => $user_id,
 					'post_date'             => $now,
 					'post_date_gmt'         => $now_gmt,
@@ -372,7 +395,7 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 					'post_excerpt'          => '',
 					'comment_status'        => 'closed',
 					'post_title'            => __( 'Privacy Policy' ),
-						/* translators: Privacy Policy page slug. */
+					/* translators: Privacy Policy page slug. */
 					'post_name'             => __( 'privacy-policy' ),
 					'post_modified'         => $now,
 					'post_modified_gmt'     => $now_gmt,
@@ -385,7 +408,8 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 				)
 			);
 			$wpdb->insert(
-				$wpdb->postmeta, array(
+				$wpdb->postmeta,
+				array(
 					'post_id'    => 3,
 					'meta_key'   => '_wp_page_template',
 					'meta_value' => 'default',
@@ -395,46 +419,47 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 		}
 
 		// Set up default widgets for default theme.
- 		update_option(
+		update_option(
 			'widget_block',
- 			array(
+			array(
 				2              => array( 'content' => '<!-- wp:search /-->' ),
 				3              => array( 'content' => '<!-- wp:group --><div class="wp-block-group"><!-- wp:heading --><h2>' . __( 'Recent Posts' ) . '</h2><!-- /wp:heading --><!-- wp:latest-posts /--></div><!-- /wp:group -->' ),
 				4              => array( 'content' => '<!-- wp:group --><div class="wp-block-group"><!-- wp:heading --><h2>' . __( 'Recent Comments' ) . '</h2><!-- /wp:heading --><!-- wp:latest-comments {"displayAvatar":false,"displayDate":false,"displayExcerpt":false} /--></div><!-- /wp:group -->' ),
 				5              => array( 'content' => '<!-- wp:group --><div class="wp-block-group"><!-- wp:heading --><h2>' . __( 'Archives' ) . '</h2><!-- /wp:heading --><!-- wp:archives /--></div><!-- /wp:group -->' ),
 				6              => array( 'content' => '<!-- wp:group --><div class="wp-block-group"><!-- wp:heading --><h2>' . __( 'Categories' ) . '</h2><!-- /wp:heading --><!-- wp:categories /--></div><!-- /wp:group -->' ),
- 				'_multiwidget' => 1,
- 			)
- 		);
+				'_multiwidget' => 1,
+			)
+		);
 		update_option(
 			'sidebars_widgets',
- 			array(
- 				'wp_inactive_widgets' => array(),
- 				'sidebar-1'           => array(
+			array(
+				'wp_inactive_widgets' => array(),
+				'sidebar-1'           => array(
 					0 => 'block-2',
 					1 => 'block-3',
 					2 => 'block-4',
- 				),
- 				'sidebar-2'           => array(
+				),
+				'sidebar-2'           => array(
 					0 => 'block-5',
 					1 => 'block-6',
- 				),
- 				'array_version'       => 3,
- 			)
- 		);
+				),
+				'array_version'       => 3,
+			)
+		);
 
-		if ( ! is_multisite() )
+		if ( ! is_multisite() ) {
 			update_user_meta( $user_id, 'show_welcome_panel', 1 );
-		elseif ( ! is_super_admin( $user_id ) && ! metadata_exists( 'user', $user_id, 'show_welcome_panel' ) )
+		} elseif ( ! is_super_admin( $user_id ) && ! metadata_exists( 'user', $user_id, 'show_welcome_panel' ) ) {
 			update_user_meta( $user_id, 'show_welcome_panel', 2 );
+		}
 
 		if ( is_multisite() ) {
 			// Flush rules to pick up the new page.
 			$wp_rewrite->init();
 			$wp_rewrite->flush_rules();
 
-			$user = new WP_User($user_id);
-			$wpdb->update( $wpdb->options, array('option_value' => $user->user_email), array('option_name' => 'admin_email') );
+			$user = new WP_User( $user_id );
+			$wpdb->update( $wpdb->options, array( 'option_value' => $user->user_email ), array( 'option_name' => 'admin_email' ) );
 
 			// Remove all perms except for the login user.
 			$wpdb->query( $wpdb->prepare("DELETE FROM $wpdb->usermeta WHERE user_id != %d AND meta_key = %s", $user_id, $table_prefix.'user_level') );
@@ -445,7 +470,13 @@ Commenter avatars come from <a href="%s">Gravatar</a>.'
 			 * TODO: Get previous_blog_id.
 			 */
 			if ( ! is_super_admin( $user_id ) && 1 !== $user_id ) {
-				$wpdb->delete( $wpdb->usermeta, array( 'user_id' => $user_id , 'meta_key' => $wpdb->base_prefix.'1_capabilities' ) );
+				$wpdb->delete(
+					$wpdb->usermeta,
+					array(
+						'user_id'  => $user_id,
+						'meta_key' => $wpdb->base_prefix . '1_capabilities',
+					)
+				);
 			}
 		}
 	}
@@ -526,131 +557,147 @@ function wp_install_maybe_enable_pretty_permalinks() {
 	return false;
 }
 
-if ( !function_exists('wp_new_blog_notification') ) :
-/**
- * Notifies the site admin that the installation of WordPress is complete.
- *
- * Sends an email to the new administrator that the installation is complete
- * and provides them with a record of their login credentials.
- *
- * @since 2.1.0
- *
- * @param string $blog_title Site title.
- * @param string $blog_url   Site url.
- * @param int    $user_id    User ID.
- * @param string $password   User's Password.
- * @param string $blog_url   Site URL.
- * @param int    $user_id    Administrator's user ID.
- * @param string $password   Administrator's password. Note that a placeholder message is
- *                           usually passed instead of the actual password.
- */
-function wp_new_blog_notification($blog_title, $blog_url, $user_id, $password) {
-	$user = new WP_User( $user_id );
-	$email = $user->user_email;
-	$name = $user->user_login;
-	$login_url = wp_login_url();
+if ( ! function_exists( 'wp_new_blog_notification' ) ) :
+	/**
+	 * Notifies the site admin that the installation of WordPress is complete.
+	 *
+	 * Sends an email to the new administrator that the installation is complete
+	 * and provides them with a record of their login credentials.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @param string $blog_title Site title.
+	 * @param string $blog_url   Site URL.
+	 * @param int    $user_id    Administrator's user ID.
+	 * @param string $password   Administrator's password. Note that a placeholder message is
+	 *                           usually passed instead of the actual password.
+	 */
+	function wp_new_blog_notification(
+		$blog_title,
+		$blog_url,
+		$user_id,
+		#[\SensitiveParameter]
+		$password
+	) {
+		$user      = new WP_User( $user_id );
+		$email     = $user->user_email;
+		$name      = $user->user_login;
+		$login_url = wp_login_url();
 
-	/* translators: New site notification email. 1: New site URL, 2: User login, 3: User password or password reset link, 4: Login URL. */
-	$message = sprintf( __( "Your new WordPress site has been successfully set up at:
+		$message = sprintf(
+			/* translators: New site notification email. 1: New site URL, 2: User login, 3: User password or password reset link, 4: Login URL. */
+			__(
+				'Your new WordPress site has been successfully set up at:
 
-%1\$s
+%1$s
 
 You can log in to the administrator account with the following information:
 
-Username: %2\$s
-Password: %3\$s
-Log in here: %4\$s
+Username: %2$s
+Password: %3$s
+Log in here: %4$s
 
 We hope you enjoy your new site. Thanks!
 
 --The WordPress Team
 https://wordpress.org/
-"), $blog_url, $name, $password, $login_url );
+'
+			),
+			$blog_url,
+			$name,
+			$password,
+			$login_url
+		);
 
-	wp_mail( $email, __( 'New WordPress Site' ), $message );
-	$installed_email = array(
-		'to'      => $email,
-		'subject' => __( 'New WordPress Site' ),
-		'message' => $message,
-		'headers' => '',
-	);
+		$installed_email = array(
+			'to'      => $email,
+			'subject' => __( 'New WordPress Site' ),
+			'message' => $message,
+			'headers' => '',
+		);
 
-	/**
-	 * Filters the contents of the email sent to the site administrator when WordPress is installed.
-	 *
-	 * @since 5.6.0
-	 *
-	 * @param array $installed_email {
-	 *     Used to build wp_mail().
-	 *
-	 *     @type string $to      The email address of the recipient.
-	 *     @type string $subject The subject of the email.
-	 *     @type string $message The content of the email.
-	 *     @type string $headers Headers.
-	 * }
-	 * @param WP_User $user          The site administrator user object.
-	 * @param string  $blog_title    The site title.
-	 * @param string  $blog_url      The site URL.
-	 * @param string  $password      The site administrator's password. Note that a placeholder message
-	 *                               is usually passed instead of the user's actual password.
-	 */
-	$installed_email = apply_filters( 'wp_installed_email', $installed_email, $user, $blog_title, $blog_url, $password );
+		/**
+		 * Filters the contents of the email sent to the site administrator when WordPress is installed.
+		 *
+		 * @since 5.6.0
+		 *
+		 * @param array $installed_email {
+		 *     Used to build wp_mail().
+		 *
+		 *     @type string $to      The email address of the recipient.
+		 *     @type string $subject The subject of the email.
+		 *     @type string $message The content of the email.
+		 *     @type string $headers Headers.
+		 * }
+		 * @param WP_User $user          The site administrator user object.
+		 * @param string  $blog_title    The site title.
+		 * @param string  $blog_url      The site URL.
+		 * @param string  $password      The site administrator's password. Note that a placeholder message
+		 *                               is usually passed instead of the user's actual password.
+		 */
+		$installed_email = apply_filters( 'wp_installed_email', $installed_email, $user, $blog_title, $blog_url, $password );
 
-	wp_mail(
-		$installed_email['to'],
-		$installed_email['subject'],
-		$installed_email['message'],
-		$installed_email['headers']
-	);
-}
+		wp_mail(
+			$installed_email['to'],
+			$installed_email['subject'],
+			$installed_email['message'],
+			$installed_email['headers']
+		);
+	}
 endif;
 
-if ( !function_exists('wp_upgrade') ) :
-/**
- * Runs WordPress Upgrade functions.
- *
- * Upgrades the database if needed during a site update.
- *
- * @since 2.1.0
- *
- * @global int $wp_current_db_version The old (current) database version.
- * @global int $wp_db_version         The new database version.
- */
-function wp_upgrade() {
-	global $wp_current_db_version, $wp_db_version;
+if ( ! function_exists( 'wp_upgrade' ) ) :
+	/**
+	 * Runs WordPress Upgrade functions.
+	 *
+	 * Upgrades the database if needed during a site update.
+	 *
+	 * @since 2.1.0
+	 *
+	 * @global int $wp_current_db_version The old (current) database version.
+	 * @global int $wp_db_version         The new database version.
+	 */
+	function wp_upgrade() {
+		global $wp_current_db_version, $wp_db_version;
 
-	$wp_current_db_version = (int) __get_option( 'db_version' );
+		$wp_current_db_version = (int) __get_option( 'db_version' );
 
-	// We are up to date. Nothing to do.
-	if ( $wp_db_version === $wp_current_db_version )
-		return;
+		// We are up to date. Nothing to do.
+		if ( $wp_db_version === $wp_current_db_version ) {
+			return;
+		}
 
-	if ( ! is_blog_installed() )
-		return;
+		if ( ! is_blog_installed() ) {
+			return;
+		}
 
-	wp_cache_flush();
-	upgrade_all();
-	if ( is_multisite() && is_main_site() )
-		upgrade_network();
-	wp_cache_flush();
+		wp_check_mysql_version();
+		wp_cache_flush();
+		pre_schema_upgrade();
+		make_db_current_silent();
+		upgrade_all();
+		if ( is_multisite() && is_main_site() ) {
+			upgrade_network();
+		}
+		wp_cache_flush();
 
-	if ( is_multisite() ) {
+		if ( is_multisite() ) {
 			update_site_meta( get_current_blog_id(), 'db_version', $wp_db_version );
 			update_site_meta( get_current_blog_id(), 'db_last_updated', microtime() );
-	}
+		}
 
 		delete_transient( 'wp_core_block_css_files' );
 
-	/**
-	 * Fires after a site is fully upgraded.
-	 *
-	 * @since 3.9.0
-	 *
-	 * @param int $wp_db_version         The new $wp_db_version.
-	 * @param int $wp_current_db_version The old (current) $wp_db_version.
-	 */
-	do_action( 'wp_upgrade', $wp_db_version, $wp_current_db_version );
-}
+		/**
+		 * Fires after a site is fully upgraded.
+		 *
+		 * @since 3.9.0
+		 *
+		 * @param int $wp_db_version         The new $wp_db_version.
+		 * @param int $wp_current_db_version The old (current) $wp_db_version.
+		 */
+		do_action( 'wp_upgrade', $wp_db_version, $wp_current_db_version );
+	}
 endif;
 
 /**
@@ -671,10 +718,12 @@ function upgrade_all() {
 	$wp_current_db_version = (int) __get_option( 'db_version' );
 
 	// We are up to date. Nothing to do.
-	if ( $wp_db_version === $wp_current_db_version )
+	if ( $wp_db_version === $wp_current_db_version ) {
 		return;
+	}
 
-	if ( empty($wp_current_db_version) )
+	// If the version is not set in the DB, try to guess the version.
+	if ( empty( $wp_current_db_version ) ) {
 		$wp_current_db_version = 0;
 
 	populate_options();

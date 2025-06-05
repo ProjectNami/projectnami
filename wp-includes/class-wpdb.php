@@ -763,9 +763,15 @@ class wpdb {
 	 * @param string $dbname     Database name.
 	 * @param string $dbhost     Database host.
 	 */
-	public function __construct( $dbuser, $dbpassword, $dbname, $dbhost ) {
+	public function __construct(
+		$dbuser,
+		#[\SensitiveParameter]
+		$dbpassword,
+		$dbname,
+		$dbhost
+	) {
 		if ( WP_DEBUG && WP_DEBUG_DISPLAY ) {
- 			$this->show_errors();
+			$this->show_errors();
 		}
 
 		// Use the `mysqli` extension if it exists unless `WP_USE_EXT_MYSQL` is defined as true.
@@ -927,10 +933,10 @@ class wpdb {
 	 */
 	public function set_charset( $dbh, $charset = null, $collate = null ) {
 		if ( ! isset( $charset ) ) {
- 			$charset = $this->charset;
+			$charset = $this->charset;
 		}
 		if ( ! isset( $collate ) ) {
- 			$collate = $this->collate;
+			$collate = $this->collate;
 		}
 		if ( $this->has_cap( 'collation', $dbh ) && !empty( $charset ) && false ) {
 			$set_charset_succeeded = true;
@@ -1319,11 +1325,11 @@ class wpdb {
 	 */
 	public function _escape( $data ) {
 		if ( is_array( $data ) ) {
-			foreach ( (array) $data as $k => $v ) {
+			foreach ( $data as $k => $v ) {
 				if ( is_array( $v ) ) {
-					$data[$k] = $this->_escape( $v );
+					$data[ $k ] = $this->_escape( $v );
 				} else {
-					$data[$k] = $this->_real_escape( $v );
+					$data[ $k ] = $this->_real_escape( $v );
 				}
 			}
 		} else {
@@ -1348,10 +1354,10 @@ class wpdb {
 	 */
 	public function escape( $data ) {
 		if ( func_num_args() === 1 && function_exists( '_deprecated_function' ) ) {
- 			_deprecated_function( __METHOD__, '3.6.0', 'wpdb::prepare() or esc_sql()' );
+			_deprecated_function( __METHOD__, '3.6.0', 'wpdb::prepare() or esc_sql()' );
 		}
 		if ( is_array( $data ) ) {
-			foreach ( (array) $data as $k => $v ) {
+			foreach ( $data as $k => $v ) {
 				if ( is_array( $v ) ) {
 					$data[ $k ] = $this->escape( $v, 'recursive' );
 				} else {
@@ -1469,7 +1475,7 @@ class wpdb {
 	 */
 	public function prepare( $query, ...$args ) {
 		if ( is_null( $query ) ) {
- 			return;
+			return;
 		}
 
 		/*
@@ -1817,12 +1823,12 @@ class wpdb {
 
 			if( ! empty( $errors ) && is_array( $errors ) )
 				$str = $errors[ 0 ][ 'message' ] . ' Code - ' . $errors[ 0 ][ 'code' ];
-				
+
 		}
 		$EZSQL_ERROR[] = array( 'query' => $this->last_query, 'error_str' => $str );
 
 		if ( $this->suppress_errors ) {
- 			return false;
+			return false;
 		}
 
 		$caller = $this->get_caller();
@@ -1930,9 +1936,9 @@ class wpdb {
 	 * @since 0.71
 	 */
 	public function flush() {
-		$this->last_result = array();
-		$this->col_info    = null;
-		$this->last_query  = null;
+		$this->last_result   = array();
+		$this->col_info      = null;
+		$this->last_query    = null;
 		$this->rows_affected = 0;
 		$this->num_rows      = 0;
 		$this->last_error  = '';
@@ -2259,14 +2265,14 @@ class wpdb {
                 case 8127:
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			            $begintransmsg = date("Y-m-d H:i:s") . " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin Query translation attempt:" . PHP_EOL .  $query . PHP_EOL;
-                        error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' ); 
+                        error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' );
                      }
 			        $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 
                     $query = $sqltranslate->translate( $query );
                     if ( getenv( 'ProjectNamiLogTranslate' ) ){
 			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
-                        error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' ); 
+                        error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' );
                     }
     		        $this->last_query = $query;
 
@@ -2277,16 +2283,16 @@ class wpdb {
 					break;
 				default:
 					$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-					error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' );				
+					error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' );
             }
 		}
-		
+
 		if( ! empty( $errors ) && is_array( $errors ) ) {
 			$this->last_error = $errors[ 0 ][ 'message' ];
 
-			// Clear insert_id on a subsequent failed insert. 
-			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) ) 
-				$this->insert_id = 0; 
+			// Clear insert_id on a subsequent failed insert.
+			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) )
+				$this->insert_id = 0;
 
 			$this->print_error();
 			return false;
@@ -2301,7 +2307,7 @@ class wpdb {
 				$this->insert_id = sqlsrv_query($this->dbh, 'SELECT isnull(scope_identity(), 0)');
 
 				$row = sqlsrv_fetch_array( $this->insert_id );
-					
+
 				$this->insert_id = $row[0];
 			}
 
@@ -2341,9 +2347,9 @@ class wpdb {
 		}
 
 		$this->result = sqlsrv_query( $this->dbh, $query );
- 
+
 		$this->query_statement_resource = $this->result;
-		
+
 		++$this->num_queries;
 
 		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
@@ -2405,12 +2411,10 @@ class wpdb {
 		static $placeholder;
 
 		if ( ! $placeholder ) {
-			// If ext/hash is not present, compat.php's hash_hmac() does not support sha256.
-			$algo = function_exists( 'hash' ) ? 'sha256' : 'sha1';
 			// Old WP installs may not have AUTH_SALT defined.
 			$salt = defined( 'AUTH_SALT' ) && AUTH_SALT ? AUTH_SALT : (string) rand();
 
-			$placeholder = '{' . hash_hmac( $algo, uniqid( $salt, true ), $salt ) . '}';
+			$placeholder = '{' . hash_hmac( 'sha256', uniqid( $salt, true ), $salt ) . '}';
 		}
 
 		/*
@@ -2587,7 +2591,7 @@ class wpdb {
 		if ( false === $data ) {
 			return false;
 		}
-		
+
 		$formats = array();
 		$values  = array();
 		foreach ( $data as $value ) {
@@ -2597,35 +2601,35 @@ class wpdb {
 
 		$fields  = '[' . implode( '], [', array_keys( $data ) ) . ']';
 		$formats = implode( ', ', $formats );
-	
+
 		if ($type == 'REPLACE') {
 			$columnNames = "'" . implode( "', '", array_keys($data)) . "'";
-			//Gets the key columns for the table		
+			//Gets the key columns for the table
 			$keyColQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
 							WHERE TABLE_NAME = '$table' AND COLUMN_NAME IN ($columnNames)";
 			$this->query($keyColQuery);
-			
+
 			$keyNames = array();
 			$keyValues = array();
-			$keyFormats = array();		
+			$keyFormats = array();
 			$on = array();
-			
+
 			foreach($this->last_result as $row) {
-				$keyNames[] = $row->COLUMN_NAME;        
+				$keyNames[] = $row->COLUMN_NAME;
 			}
-		
-			foreach($keyNames as $keyCol) {				
+
+			foreach($keyNames as $keyCol) {
 				$keyValues[] = $data[$keyCol]['value'];
 				$keyFormats[] = $data[$keyCol]['format'];
 				$on[] = "sourceTable.[$keyCol] = targetTable.[$keyCol]";
-			}			
-			
-					
-			$set = array();		
-			foreach($data as $field => $value) {			
-				$set[] = "[$field] = " . $value['format'];			
 			}
-			//exa:		
+
+
+			$set = array();
+			foreach($data as $field => $value) {
+				$set[] = "[$field] = " . $value['format'];
+			}
+			//exa:
 			//$on[0] == "sourceTable.[keyCol1] = targetTable.[keyCol1]"
 			//$on[1] == "sourceTable.[keyCol2] = targetTable.[keyCol2]"
 			//$set[0] == "[field1] = %s"
@@ -2642,8 +2646,8 @@ class wpdb {
     			$sql .= " WHEN MATCHED THEN UPDATE SET $set ";
             }
 			$sql .= " WHEN NOT MATCHED THEN INSERT ($fields) VALUES ($formats);";
-			//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT, 
-			//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up		
+			//Since there are the keyFormat and two sets of the original formats one for the UPDATE and one for the INSERT,
+			//we need to concatenate the $keyFormats with 2 x $formats and $keyValues with 2 x $values arrays so that prepare can correctly match them up
 			$values = array_merge($keyValues, $values, $values);
 		} else {
 			//INSERT
@@ -3058,12 +3062,12 @@ class wpdb {
 
 		// Extract var out of cached results based on x,y vals.
 		if ( !empty( $this->last_result[$y] ) ) {
-			
+
 			if( is_object( $this->last_result [$y]) )
 				$values = array_values( get_object_vars( $this->last_result[$y] ) );
 			else
 				$values = array_values( $this->last_result[$y] );
-		
+
 		}
 
 		// If there is a value return it, else return null.
@@ -4217,9 +4221,9 @@ class wpdb {
 		}
 
 		$this->result = sqlsrv_query( $this->dbh, $query, $params );
- 
+
 		$this->query_statement_resource = $this->result;
-		
+
 		$this->num_queries++;
 
 		if ( defined( 'SAVEQUERIES' ) && SAVEQUERIES ) {
@@ -4227,13 +4231,13 @@ class wpdb {
 		}
 
         $errors = sqlsrv_errors();
-		
+
 		if( ! empty( $errors ) && is_array( $errors ) ) {
 			$this->last_error = $errors[ 0 ][ 'message' ];
 
-			// Clear insert_id on a subsequent failed insert. 
-			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) ) 
-				$this->insert_id = 0; 
+			// Clear insert_id on a subsequent failed insert.
+			if ( $this->insert_id && preg_match( '/^\s*(insert|replace)\s/i', $query ) )
+				$this->insert_id = 0;
 
 			$this->print_error();
 			return false;
@@ -4248,7 +4252,7 @@ class wpdb {
 				$this->insert_id = sqlsrv_query($this->dbh, 'SELECT isnull(scope_identity(), 0)');
 
 				$row = sqlsrv_fetch_array( $this->insert_id );
-					
+
 				$this->insert_id = $row[0];
 			}
 			// Return number of rows affected

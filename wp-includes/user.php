@@ -221,6 +221,10 @@ function wp_authenticate_username_password(
 		);
 	}
 
+	if ( wp_password_needs_rehash( $user->user_pass, $user->ID ) ) {
+		wp_set_password( $password, $user->ID );
+	}
+
 	return $user;
 }
 
@@ -235,7 +239,12 @@ function wp_authenticate_username_password(
  * @param string                $password Password for authentication.
  * @return WP_User|WP_Error WP_User on success, WP_Error on failure.
  */
-function wp_authenticate_email_password( $user, $email, $password ) {
+function wp_authenticate_email_password(
+	$user,
+	$email,
+	#[\SensitiveParameter]
+	$password
+) {
 	if ( $user instanceof WP_User ) {
 		return $user;
 	}
@@ -279,7 +288,9 @@ function wp_authenticate_email_password( $user, $email, $password ) {
 		return $user;
 	}
 
-	if ( ! wp_check_password( $password, $user->user_pass, $user->ID ) ) {
+	$valid = wp_check_password( $password, $user->user_pass, $user->ID );
+
+	if ( ! $valid ) {
 		return new WP_Error(
 			'incorrect_password',
 			sprintf(
@@ -291,6 +302,10 @@ function wp_authenticate_email_password( $user, $email, $password ) {
 			__( 'Lost your password?' ) .
 			'</a>'
 		);
+	}
+
+	if ( wp_password_needs_rehash( $user->user_pass, $user->ID ) ) {
+		wp_set_password( $password, $user->ID );
 	}
 
 	return $user;
@@ -308,7 +323,12 @@ function wp_authenticate_email_password( $user, $email, $password ) {
  * @param string                $password Password. If not empty, cancels the cookie authentication.
  * @return WP_User|WP_Error WP_User on success, WP_Error on failure.
  */
-function wp_authenticate_cookie( $user, $username, $password ) {
+function wp_authenticate_cookie(
+	$user,
+	$username,
+	#[\SensitiveParameter]
+	$password
+) {
 	global $auth_secure_cookie;
 
 	if ( $user instanceof WP_User ) {
@@ -349,7 +369,12 @@ function wp_authenticate_cookie( $user, $username, $password ) {
  * @return WP_User|WP_Error|null WP_User on success, WP_Error on failure, null if
  *                               null is passed in and this isn't an API request.
  */
-function wp_authenticate_application_password( $input_user, $username, $password ) {
+function wp_authenticate_application_password(
+	$input_user,
+	$username,
+	#[\SensitiveParameter]
+	$password
+) {
 	if ( $input_user instanceof WP_User ) {
 		return $input_user;
 	}
@@ -432,7 +457,7 @@ function wp_authenticate_application_password( $input_user, $username, $password
 	$hashed_passwords = WP_Application_Passwords::get_user_application_passwords( $user->ID );
 
 	foreach ( $hashed_passwords as $key => $item ) {
-		if ( ! wp_check_password( $password, $item['password'], $user->ID ) ) {
+		if ( ! WP_Application_Passwords::check_password( $password, $item['password'] ) ) {
 			continue;
 		}
 
@@ -591,6 +616,9 @@ function wp_validate_logged_in_cookie( $user_id ) {
 function count_user_posts( $userid, $post_type = 'post', $public_only = false ) {
 	global $wpdb;
 
+	$post_type = array_unique( (array) $post_type );
+	sort( $post_type );
+
 	$where = get_posts_by_author_sql( $post_type, true, $userid, $public_only );
 
 	$count = $wpdb->get_var( "SELECT COUNT(*) as qty FROM $wpdb->posts $where" );
@@ -627,7 +655,25 @@ function count_many_users_posts( $users, $post_type = 'post', $public_only = fal
 
 	$count = array();
 	if ( empty( $users ) || ! is_array( $users ) ) {
- 		return $count;
+		return array();
+	}
+
+	/**
+	 * Filters whether to short-circuit performing the post counts.
+	 *
+	 * When filtering, return an array of posts counts as strings, keyed
+	 * by the user ID.
+	 *
+	 * @since 6.8.0
+	 *
+	 * @param string[]|null   $count       The post counts. Return a non-null value to short-circuit.
+	 * @param int[]           $users       Array of user IDs.
+	 * @param string|string[] $post_type   Single post type or array of post types to check.
+	 * @param bool            $public_only Whether to only return counts for public posts.
+	 */
+	$pre = apply_filters( 'pre_count_many_users_posts', null, $users, $post_type, $public_only );
+	if ( null !== $pre ) {
+		return $pre;
 	}
 
 	$userlist = implode( ',', array_map( 'absint', $users ) );

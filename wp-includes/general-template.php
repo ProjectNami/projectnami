@@ -2434,9 +2434,9 @@ function get_calendar( $args = array() ) {
 	}
 
 	foreach ( $myweek as $wd ) {
-		$day_name         = $initial ? $wp_locale->get_weekday_initial( $wd ) : $wp_locale->get_weekday_abbrev( $wd );
+		$day_name         = $args['initial'] ? $wp_locale->get_weekday_initial( $wd ) : $wp_locale->get_weekday_abbrev( $wd );
 		$wd               = esc_attr( $wd );
-		$calendar_output .= "\n\t\t<th scope=\"col\" title=\"$wd\">$day_name</th>";
+		$calendar_output .= "\n\t\t<th scope=\"col\" aria-label=\"$wd\">$day_name</th>";
 	}
 
 	$calendar_output .= '
@@ -2463,8 +2463,8 @@ function get_calendar( $args = array() ) {
 	}
 
 	// See how much we should pad in the beginning.
-	$pad = calendar_week_mod( gmdate( 'w', $unixmonth ) - $week_begins );
-	if ( 0 != $pad ) {
+	$pad = calendar_week_mod( (int) gmdate( 'w', $unixmonth ) - $week_begins );
+	if ( $pad > 0 ) {
 		$calendar_output .= "\n\t\t" . '<td colspan="' . esc_attr( $pad ) . '" class="pad">&nbsp;</td>';
 	}
 
@@ -2475,11 +2475,13 @@ function get_calendar( $args = array() ) {
 		if ( isset( $newrow ) && $newrow ) {
 			$calendar_output .= "\n\t</tr>\n\t<tr>\n\t\t";
 		}
+
 		$newrow = false;
 
-		if ( current_time( 'j' ) == $day &&
-			current_time( 'm' ) == $thismonth &&
-			current_time( 'Y' ) == $thisyear ) {
+		if ( (int) current_time( 'j' ) === $day
+			&& (int) current_time( 'm' ) === $thismonth
+			&& (int) current_time( 'Y' ) === $thisyear
+		) {
 			$calendar_output .= '<td id="today">';
 		} else {
 			$calendar_output .= '<td>';
@@ -2502,13 +2504,13 @@ function get_calendar( $args = array() ) {
 
 		$calendar_output .= '</td>';
 
-		if ( 6 == calendar_week_mod( gmdate( 'w', mktime( 0, 0, 0, $thismonth, $day, $thisyear ) ) - $week_begins ) ) {
+		if ( 6 === (int) calendar_week_mod( (int) gmdate( 'w', mktime( 0, 0, 0, $thismonth, $day, $thisyear ) ) - $week_begins ) ) {
 			$newrow = true;
 		}
 	}
 
-	$pad = 7 - calendar_week_mod( gmdate( 'w', mktime( 0, 0, 0, $thismonth, $day, $thisyear ) ) - $week_begins );
-	if ( 0 != $pad && 7 != $pad ) {
+	$pad = 7 - calendar_week_mod( (int) gmdate( 'w', mktime( 0, 0, 0, $thismonth, $day, $thisyear ) ) - $week_begins );
+	if ( 0 < $pad && $pad < 7 ) {
 		$calendar_output .= "\n\t\t" . '<td class="pad" colspan="' . esc_attr( $pad ) . '">&nbsp;</td>';
 	}
 
@@ -2519,9 +2521,11 @@ function get_calendar( $args = array() ) {
 	$calendar_output .= '<nav aria-label="' . __( 'Previous and next months' ) . '" class="wp-calendar-nav">';
 
 	if ( $previous ) {
-		$calendar_output .= "\n\t\t" . '<span class="wp-calendar-nav-prev"><a href="' . get_month_link( $previous->year, $previous->month ) . '">&laquo; ' .
-			$wp_locale->get_month_abbrev( $wp_locale->get_month( $previous->month ) ) .
-		'</a></span>';
+		$calendar_output .= "\n\t\t" . sprintf(
+			'<span class="wp-calendar-nav-prev"><a href="%1$s">&laquo; %2$s</a></span>',
+			get_month_link( $previous->year, $previous->month ),
+			$wp_locale->get_month_abbrev( $wp_locale->get_month( $previous->month ) )
+		);
 	} else {
 		$calendar_output .= "\n\t\t" . '<span class="wp-calendar-nav-prev">&nbsp;</span>';
 	}
@@ -2529,9 +2533,11 @@ function get_calendar( $args = array() ) {
 	$calendar_output .= "\n\t\t" . '<span class="pad">&nbsp;</span>';
 
 	if ( $next ) {
-		$calendar_output .= "\n\t\t" . '<span class="wp-calendar-nav-next"><a href="' . get_month_link( $next->year, $next->month ) . '">' .
-			$wp_locale->get_month_abbrev( $wp_locale->get_month( $next->month ) ) .
-		' &raquo;</a></span>';
+		$calendar_output .= "\n\t\t" . sprintf(
+			'<span class="wp-calendar-nav-next"><a href="%1$s">%2$s &raquo;</a></span>',
+			get_month_link( $next->year, $next->month ),
+			$wp_locale->get_month_abbrev( $wp_locale->get_month( $next->month ) )
+		);
 	} else {
 		$calendar_output .= "\n\t\t" . '<span class="wp-calendar-nav-next">&nbsp;</span>';
 	}
@@ -2542,19 +2548,29 @@ function get_calendar( $args = array() ) {
 	$cache[ $key ] = $calendar_output;
 	wp_cache_set( 'get_calendar', $cache, 'calendar' );
 
-	if ( $display ) {
-		/**
-		 * Filters the HTML calendar output.
-		 *
-		 * @since 3.0.0
-		 *
-		 * @param string $calendar_output HTML output of the calendar.
-		 */
-		echo apply_filters( 'get_calendar', $calendar_output );
+	/**
+	 * Filters the HTML calendar output.
+	 *
+	 * @since 3.0.0
+	 * @since 6.8.0 Added the `$args` parameter.
+	 *
+	 * @param string $calendar_output HTML output of the calendar.
+	 * @param array  $args {
+	 *     Optional. Array of display arguments.
+	 *
+	 *     @type bool   $initial   Whether to use initial calendar names. Default true.
+	 *     @type bool   $display   Whether to display the calendar output. Default true.
+	 *     @type string $post_type Optional. Post type. Default 'post'.
+	 * }
+	 */
+	$calendar_output = apply_filters( 'get_calendar', $calendar_output, $args );
+
+	if ( $args['display'] ) {
+		echo $calendar_output;
 		return;
 	}
-	/** This filter is documented in wp-includes/general-template.php */
-	return apply_filters( 'get_calendar', $calendar_output );
+
+	return $calendar_output;
 }
 
 /**
@@ -3882,7 +3898,7 @@ function user_can_richedit() {
  * Finds out which editor should be displayed by default.
  *
  * Works out which of the editors to display as the current editor for a
- * user. The 'html' setting is for the "Text" editor tab.
+ * user. The 'html' setting is for the "Code" editor tab.
  *
  * @since 2.5.0
  *
