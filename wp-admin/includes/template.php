@@ -461,7 +461,7 @@ function wp_comment_reply( $position = 1, $checkbox = false, $mode = 'single', $
 	<legend>
 		<span class="hidden" id="editlegend"><?php _e( 'Edit Comment' ); ?></span>
 		<span class="hidden" id="replyhead"><?php _e( 'Reply to Comment' ); ?></span>
-		<span class="hidden" id="addhead"><?php _e( 'Add New Comment' ); ?></span>
+		<span class="hidden" id="addhead"><?php _e( 'Add Comment' ); ?></span>
 	</legend>
 
 	<div id="replycontainer">
@@ -728,7 +728,7 @@ function meta_form( $post = null ) {
 		natcasesort( $keys );
 	}
 	?>
-<p><strong><?php _e( 'Add New Custom Field:' ); ?></strong></p>
+<p><strong><?php _e( 'Add Custom Field:' ); ?></strong></p>
 <table id="newmeta">
 <thead>
 <tr>
@@ -807,7 +807,7 @@ function touch_time( $edit = 1, $for_post = 1, $tab_index = 0, $multi = 0 ) {
 
 	$tab_index_attribute = '';
 	if ( (int) $tab_index > 0 ) {
- 		$tab_index_attribute = " tabindex=\"$tab_index\"";
+		$tab_index_attribute = " tabindex=\"$tab_index\"";
 	}
 
 	// @todo Remove this?

@@ -6,6 +6,11 @@
  * @subpackage Administration
  */
 
+// Don't load directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	die( '-1' );
+}
+
 header( 'Content-Type: ' . get_option( 'html_type' ) . '; charset=' . get_option( 'blog_charset' ) );
 if ( ! defined( 'WP_ADMIN' ) ) {
 	require_once __DIR__ . '/admin.php';
@@ -19,7 +24,6 @@ if ( ! defined( 'WP_ADMIN' ) ) {
  * @global WP_Screen $current_screen     WordPress current screen object.
  * @global WP_Locale $wp_locale          WordPress date and time locale object.
  * @global string    $pagenow            The filename of the current screen.
- * @global string    $wp_version
  * @global string    $update_title
  * @global int       $total_update_count
  * @global string    $parent_file
@@ -43,7 +47,7 @@ if ( is_network_admin() ) {
 	/* translators: User dashboard screen title. %s: Network title. */
 	$admin_title = sprintf( __( 'User Dashboard: %s' ), get_network()->site_name );
 } else {
- 	$admin_title = get_bloginfo( 'name' );
+	$admin_title = get_bloginfo( 'name' );
 }
 
 if ( $admin_title === $title ) {
@@ -208,6 +212,11 @@ $admin_body_class .= ' no-customize-support svg';
 
 if ( $current_screen->is_block_editor() ) {
 	$admin_body_class .= ' block-editor-page wp-embed-responsive';
+}
+
+$admin_body_class .= ' wp-theme-' . sanitize_html_class( get_template() );
+if ( is_child_theme() ) {
+	$admin_body_class .= ' wp-child-theme-' . sanitize_html_class( get_stylesheet() );
 }
 
 $error_get_last = error_get_last();

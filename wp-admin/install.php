@@ -275,30 +275,53 @@ if ( !$mysql_compat || !$php_compat ) {
 	die( '<h1>' . __( 'Requirements Not Met' ) . '</h1><p>' . $compat . '</p></body></html>' );
 }
 
+if ( isset( $required_php_extensions ) && is_array( $required_php_extensions ) ) {
+	$missing_extensions = array();
+
+	foreach ( $required_php_extensions as $extension ) {
+		if ( extension_loaded( $extension ) ) {
+			continue;
+		}
+
+		$missing_extensions[] = sprintf(
+			/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: The PHP extension name needed. */
+			__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires the %3$s PHP extension.' ),
+			$version_url,
+			$wp_version,
+			$extension
+		);
+	}
+
+	if ( count( $missing_extensions ) > 0 ) {
+		display_header();
+		die( '<h1>' . __( 'Requirements Not Met' ) . '</h1><p>' . implode( '</p><p>', $missing_extensions ) . '</p></body></html>' );
+	}
+}
+
 if ( ! is_string( $wpdb->base_prefix ) || '' === $wpdb->base_prefix ) {
 	display_header();
-	die( 
-		'<h1>' . __( 'Configuration Error' ) . '</h1>' . 
-		'<p>' . sprintf( 
-			/* translators: %s: wp-config.php */ 
-			__( 'Your %s file has an empty database table prefix, which is not supported.' ), 
-			'<code>wp-config.php</code>' 
-		) . '</p></body></html>' 
-	); 
+	die(
+		'<h1>' . __( 'Configuration Error' ) . '</h1>' .
+		'<p>' . sprintf(
+			/* translators: %s: wp-config.php */
+			__( 'Your %s file has an empty database table prefix, which is not supported.' ),
+			'<code>wp-config.php</code>'
+		) . '</p></body></html>'
+	);
 }
 
 // Set error message if DO_NOT_UPGRADE_GLOBAL_TABLES isn't set as it will break install.
 if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
 	display_header();
 	die( '<h1>' . __( 'Configuration Error' ) . '</h1><p>' . __( 'The constant DO_NOT_UPGRADE_GLOBAL_TABLES cannot be defined when installing WordPress.' ) . '</p></body></html>' );
-	die( 
-		'<h1>' . __( 'Configuration Error' ) . '</h1>' . 
-		'<p>' . sprintf( 
-			/* translators: %s: DO_NOT_UPGRADE_GLOBAL_TABLES */ 
-			__( 'The constant %s cannot be defined when installing WordPress.' ), 
-			'<code>DO_NOT_UPGRADE_GLOBAL_TABLES</code>' 
-		) . '</p></body></html>' 
-	); 
+	die(
+		'<h1>' . __( 'Configuration Error' ) . '</h1>' .
+		'<p>' . sprintf(
+			/* translators: %s: DO_NOT_UPGRADE_GLOBAL_TABLES */
+			__( 'The constant %s cannot be defined when installing WordPress.' ),
+			'<code>DO_NOT_UPGRADE_GLOBAL_TABLES</code>'
+		) . '</p></body></html>'
+	);
 }
 
 /**

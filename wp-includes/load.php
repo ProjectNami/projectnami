@@ -147,26 +147,51 @@ function wp_populate_basic_auth_from_authorization_header() {
  * @since 3.0.0
  * @access private
  *
- * @global string $required_php_version The required PHP version string.
- * @global string $wp_version           The WordPress version string.
+ * @global string   $required_php_version    The required PHP version string.
+ * @global string[] $required_php_extensions The names of required PHP extensions.
+ * @global string   $wp_version              The WordPress version string.
  */
 function wp_check_php_mysql_versions() {
-	global $required_php_version, $wp_version;
+	global $required_php_version, $required_php_extensions, $wp_version;
 
 	$php_version = PHP_VERSION;
 
- 	if ( version_compare( $required_php_version, $php_version, '>' ) ) {
- 		$protocol = wp_get_server_protocol();
- 		header( sprintf( '%s 500 Internal Server Error', $protocol ), true, 500 );
- 		header( 'Content-Type: text/html; charset=utf-8' );
+	if ( version_compare( $required_php_version, $php_version, '>' ) ) {
+		$protocol = wp_get_server_protocol();
+		header( sprintf( '%s 500 Internal Server Error', $protocol ), true, 500 );
+		header( 'Content-Type: text/html; charset=utf-8' );
 		printf(
 			'Your server is running PHP version %1$s but Project Nami %2$s requires at least %3$s.',
 			$php_version,
 			$wp_version,
 			$required_php_version
 		);
- 		exit( 1 );
- 	}
+		exit( 1 );
+	}
+
+	$missing_extensions = array();
+
+	if ( isset( $required_php_extensions ) && is_array( $required_php_extensions ) ) {
+		foreach ( $required_php_extensions as $extension ) {
+			if ( extension_loaded( $extension ) ) {
+				continue;
+			}
+
+			$missing_extensions[] = sprintf(
+				'WordPress %1$s requires the <code>%2$s</code> PHP extension.',
+				$wp_version,
+				$extension
+			);
+		}
+	}
+
+	if ( count( $missing_extensions ) > 0 ) {
+		$protocol = wp_get_server_protocol();
+		header( sprintf( '%s 500 Internal Server Error', $protocol ), true, 500 );
+		header( 'Content-Type: text/html; charset=utf-8' );
+		echo implode( '<br>', $missing_extensions );
+		exit( 1 );
+	}
 
 	// This runs before default constants are defined, so we can't assume WP_CONTENT_DIR is set yet.
 	$wp_content_dir = defined( 'WP_CONTENT_DIR' ) ? WP_CONTENT_DIR : ABSPATH . 'wp-content';
@@ -176,6 +201,21 @@ function wp_check_php_mysql_versions() {
 	) {
 		require_once ABSPATH . WPINC . '/functions.php';
 		wp_load_translations_early();
+
+		$message = '<p>' . __( 'Your PHP installation appears to be missing the MSSQL extension which is required by WordPress.' ) . "</p>\n";
+
+		$message .= '<p>' . sprintf(
+			/* translators: %s: sqlsrv. */
+			__( 'Please check that the %s PHP extension is installed and enabled.' ),
+			'<code>sqlsrv</code>'
+		) . "</p>\n";
+
+		$message .= '<p>' . sprintf(
+			/* translators: %s: Support forums URL. */
+			__( 'If you are unsure what these terms mean you should probably contact your host. If you still need help you can always visit the <a href="%s">WordPress support forums</a>.' ),
+			__( 'https://wordpress.org/support/forums/' )
+		) . "</p>\n";
+
 		$args = array(
 			'exit' => false,
 			'code' => 'sqlsrv_not_found',

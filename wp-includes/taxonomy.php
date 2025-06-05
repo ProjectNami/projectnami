@@ -3046,7 +3046,7 @@ function wp_remove_object_terms( $object_id, $terms, $taxonomy ) {
 
 		$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM $wpdb->term_relationships WHERE object_id = %d AND term_taxonomy_id IN ($in_tt_ids)", $object_id ) );
 
- 		wp_cache_delete( $object_id, $taxonomy . '_relationships' );
+		wp_cache_delete( $object_id, $taxonomy . '_relationships' );
 		wp_cache_set_terms_last_changed();
 
 		/**
@@ -4154,7 +4154,7 @@ function _update_post_term_count( $terms, $taxonomy ) {
 	}
 
 	if ( $object_types ) {
- 		$object_types = esc_sql( array_filter( $object_types, 'post_type_exists' ) );
+		$object_types = esc_sql( array_filter( $object_types, 'post_type_exists' ) );
 	}
 
 	$post_statuses = array( 'publish' );
@@ -4177,12 +4177,12 @@ function _update_post_term_count( $terms, $taxonomy ) {
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.QuotedDynamicPlaceholderGeneration
 			$count += (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) as qty FROM $wpdb->term_relationships, $wpdb->posts p1 WHERE p1.ID = $wpdb->term_relationships.object_id AND ( post_status IN ('" . implode( "', '", $post_statuses ) . "') OR ( post_status = 'inherit' AND post_parent > 0 AND ( SELECT post_status FROM $wpdb->posts WHERE ID = p1.post_parent ) IN ('" . implode( "', '", $post_statuses ) . "') ) ) AND post_type = 'attachment' AND term_taxonomy_id = %d", $term ) );
 		}
-		
+
 		if ( $object_types ) {
 			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.QuotedDynamicPlaceholderGeneration
 			$count += (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) as qty FROM $wpdb->term_relationships, $wpdb->posts WHERE $wpdb->posts.ID = $wpdb->term_relationships.object_id AND post_status IN ('" . implode( "', '", $post_statuses ) . "') AND post_type IN ('" . implode( "', '", $object_types ) . "') AND term_taxonomy_id = %d", $term ) );
 		}
-		
+
 		/** This action is documented in wp-includes/taxonomy.php */
 		do_action( 'edit_term_taxonomy', $term, $taxonomy->name );
 		$wpdb->update( $wpdb->term_taxonomy, compact( 'count' ), array( 'term_taxonomy_id' => $term ) );

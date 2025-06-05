@@ -202,7 +202,7 @@ class WP_User_Query {
 	 *                                                - 'login__in'
 	 *                                                - 'user_nicename' (or 'nicename')
 	 *                                                - 'nicename__in'
-	 *                                                - 'user_email (or 'email')
+	 *                                                - 'user_email' (or 'email')
 	 *                                                - 'user_url' (or 'url')
 	 *                                                - 'user_registered' (or 'registered')
 	 *                                                - 'post_count'
@@ -324,8 +324,12 @@ class WP_User_Query {
 			$this->query_fields = "$wpdb->users.$field";
 		}
 
+		if ( isset( $qv['count_total'] ) && $qv['count_total'] ) {
+			$this->query_fields = 'SQL_CALC_FOUND_ROWS ' . $this->query_fields;
+		}
+
 		$this->query_from = "FROM $wpdb->users";
-		$this->query_where = "WHERE 1=1";
+		$this->query_where = 'WHERE 1=1';
 
 		// Parse and sanitize 'include', for use by 'orderby' as well as 'include' below.
 		if ( ! empty( $qv['include'] ) ) {
@@ -679,9 +683,9 @@ class WP_User_Query {
 		// Limit.
 		if ( isset( $qv['number'] ) && $qv['number'] > 0 ) {
 			if ( $qv['offset'] ) {
-				$this->query_limit = $wpdb->prepare("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $qv['offset'], $qv['number']);
+				$this->query_limit = $wpdb->prepare( 'LIMIT %d, %d', $qv['offset'], $qv['number'] );
 			} else {
-				$this->query_limit = $wpdb->prepare("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $qv['number'] * ( $qv['paged'] - 1 ), $qv['number']);
+				$this->query_limit = $wpdb->prepare( 'LIMIT %d, %d', $qv['number'] * ( $qv['paged'] - 1 ), $qv['number'] );
 			}
 		}
 
@@ -795,7 +799,7 @@ class WP_User_Query {
 		$wpdb->query( "SELECT COUNT(*) as [found_rows] $this->query_from $this->query_where" );
 
 		// Beginning of the string is on a new line to prevent leading whitespace. See https://core.trac.wordpress.org/ticket/56841.
-		$this->request = 
+		$this->request =
 			"SELECT {$this->query_fields}
 			{$this->query_from}
 			{$this->query_where}
@@ -967,9 +971,9 @@ class WP_User_Query {
 		} elseif ( 'meta_value_num' === $orderby ) {
 			$_orderby = "CAST($wpdb->usermeta.meta_value as numeric)";
 		} elseif ( 'include' === $orderby && ! empty( $this->query_vars['include'] ) ) {
-			$include = wp_parse_id_list( $this->query_vars['include'] );
+			$include     = wp_parse_id_list( $this->query_vars['include'] );
 			$include_sql = implode( ',', $include );
-			$_orderby = "FIELD( $wpdb->users.ID, $include_sql )";
+			$_orderby    = "FIELD( $wpdb->users.ID, $include_sql )";
 		} elseif ( 'nicename__in' === $orderby ) {
 			$sanitized_nicename__in = array_map( 'esc_sql', $this->query_vars['nicename__in'] );
 			$nicename__in = implode( "','", $sanitized_nicename__in );

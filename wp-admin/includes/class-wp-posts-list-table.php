@@ -1208,13 +1208,6 @@ class WP_Posts_List_Table extends WP_List_Table {
 
 			$time      = get_post_timestamp( $post );
 			$time_diff = time() - $time;
-
-			if ( $time && $time_diff > 0 && $time_diff < DAY_IN_SECONDS ) {
-				/* translators: %s: Human-readable time difference. */
-				$h_time = sprintf( __( '%s ago' ), human_time_diff( $time ) );
-			} else {
-				$h_time = get_the_time( __( 'Y/m/d' ), $post );
-			}
 		}
 
 		if ( 'publish' === $post->post_status ) {
@@ -1284,15 +1277,22 @@ class WP_Posts_List_Table extends WP_List_Table {
 	 * Handles the post author column output.
 	 *
 	 * @since 4.3.0
+	 * @since 6.8.0 Added fallback text when author's name is unknown.
 	 *
 	 * @param WP_Post $post The current WP_Post object.
 	 */
 	public function column_author( $post ) {
-		$args = array(
-			'post_type' => $post->post_type,
-			'author'    => get_the_author_meta( 'ID' ),
-		);
-		echo $this->get_edit_link( $args, get_the_author() );
+		$author = get_the_author();
+
+		if ( ! empty( $author ) ) {
+			$args = array(
+				'post_type' => $post->post_type,
+				'author'    => get_the_author_meta( 'ID' ),
+			);
+			echo $this->get_edit_link( $args, esc_html( $author ) );
+		} else {
+			echo '<span aria-hidden="true">&#8212;</span><span class="screen-reader-text">' . __( '(no author)' ) . '</span>';
+		}
 	}
 
 	/**

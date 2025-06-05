@@ -179,7 +179,6 @@ function wp_print_media_templates() {
 			<span class="dashicons dashicons-arrow-down" aria-hidden="true"></span>
 		</button>
 		<div class="media-frame-menu"></div>
-		<div class="media-frame-title"></div>
 		<div class="media-frame-tab-panel">
 			<div class="media-frame-router"></div>
 			<div class="media-frame-content"></div>
@@ -224,7 +223,7 @@ function wp_print_media_templates() {
 		</div>
 	</script>
 
-	<?php // Template for the inline uploader, used for example in the Media Library admin page - Add New. ?>
+	<?php // Template for the inline uploader, used for example in the Media Library admin page - Add. ?>
 	<script type="text/html" id="tmpl-uploader-inline">
 		<# var messageClass = data.message ? 'has-upload-message' : 'no-upload-message'; #>
 		<# if ( data.canClose ) { #>
@@ -357,7 +356,7 @@ function wp_print_media_templates() {
 
 	<?php // Template for the uploading status errors. ?>
 	<script type="text/html" id="tmpl-uploader-status-error">
-		<span class="upload-error-filename">{{{ data.filename }}}</span>
+		<span class="upload-error-filename word-wrap-break-word">{{{ data.filename }}}</span>
 		<span class="upload-error-message">{{ data.message }}</span>
 	</script>
 

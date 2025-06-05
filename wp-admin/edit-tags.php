@@ -216,12 +216,15 @@ if ( $location ) {
 	if ( $pagenum > 1 ) {
 		$location = add_query_arg( 'paged', $pagenum, $location ); // $pagenum takes care of $total_pages.
 	}
+	if ( 1 === $pagenum ) {
+		$location = remove_query_arg( 'paged', $location );
+	}
 
 	/**
 	 * Filters the taxonomy redirect destination URL.
 	 *
 	 * @since 4.6.0
-	 * 
+	 *
 	 * @param string      $location The destination URL.
 	 * @param WP_Taxonomy $tax      The taxonomy object.
 	 */

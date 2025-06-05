@@ -2350,9 +2350,21 @@ function get_calendar( $args = array() ) {
 		$cache = array();
 	}
 
+	$post_type = $args['post_type'];
+
 	// Quick check. If we have no posts at all, abort!
 	if ( !$posts ) {
-		$gotsome = $wpdb->get_var( "SELECT TOP 1 1 as test FROM $wpdb->posts WHERE post_type = 'post' AND post_status = 'publish'" );
+		$gotsome = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT TOP 1 1 as test
+				FROM $wpdb->posts
+				WHERE post_type = '%s'
+				AND post_status = 'publish'
+				LIMIT 1",
+				$post_type
+			)
+		);
+
 		if ( !$gotsome ) {
 			$cache[ $key ] = '';
 			wp_cache_set( 'get_calendar', $cache, 'calendar' );
@@ -2360,15 +2372,12 @@ function get_calendar( $args = array() ) {
 		}
 	}
 
-	if ( isset( $_GET['w'] ) ) {
-		$w = (int) $_GET['w'];
-	}
 	// week_begins = 0 stands for Sunday.
 	$week_begins = (int) get_option( 'start_of_week' );
 
 	// Let's figure out when we are.
 	if ( ! empty( $monthnum ) && ! empty( $year ) ) {
-		$thismonth = zeroise( (int) $monthnum, 2 );
+		$thismonth = (int) $monthnum;
 		$thisyear  = (int) $year;
 	} elseif ( ! empty( $w ) ) {
 		// We need to get the month from MySQL.
@@ -2598,7 +2607,7 @@ function the_date_xml() {
 }
 
 /**
- * Displays or retrieves the date the current post was written (once per date)
+ * Displays or retrieves the date of the post (once per date).
  *
  * Will only output the date if the current post's date is different from the
  * previous one output.
@@ -2606,8 +2615,8 @@ function the_date_xml() {
  * i.e. Only one date listing will show per day worth of posts shown in the loop, even if the
  * function is called several times for each post.
  *
- * HTML output can be filtered with 'the_date'.
- * Date string output can be filtered with 'get_the_date'.
+ * HTML output can be filtered with {@see 'the_date'}.
+ * Date string output can be filtered with {@see 'get_the_date'}.
  *
  * @since 0.71
  *
@@ -2631,7 +2640,7 @@ function the_date( $format = '', $before = '', $after = '', $display = true ) {
 	}
 
 	/**
-	 * Filters the date a post was published for display.
+	 * Filters the date of the post, for display.
 	 *
 	 * @since 0.71
 	 *
@@ -2650,7 +2659,7 @@ function the_date( $format = '', $before = '', $after = '', $display = true ) {
 }
 
 /**
- * Retrieves the date on which the post was written.
+ * Retrieves the date of the post.
  *
  * Unlike the_date() this function will always return the date.
  * Modify output with the {@see 'get_the_date'} filter.
@@ -2673,13 +2682,13 @@ function get_the_date( $format = '', $post = null ) {
 	$the_date = get_post_time( $_format, false, $post, true );
 
 	/**
-	 * Filters the date a post was published.
+	 * Filters the date of the post.
 	 *
 	 * @since 3.0.0
 	 *
-	 * @param string|int  $the_date Formatted date string or Unix timestamp if `$format` is 'U' or 'G'.
-	 * @param string      $format   PHP date format.
-	 * @param WP_Post     $post     The post object.
+	 * @param string|int $the_date Formatted date string or Unix timestamp if `$format` is 'U' or 'G'.
+	 * @param string     $format   PHP date format.
+	 * @param WP_Post    $post     The post object.
 	 */
 	return apply_filters( 'get_the_date', $the_date, $format, $post );
 }
@@ -2699,14 +2708,14 @@ function the_modified_date( $format = '', $before = '', $after = '', $display = 
 	$the_modified_date = $before . get_the_modified_date( $format ) . $after;
 
 	/**
-	 * Filters the date a post was last modified for display.
+	 * Filters the date a post was last modified, for display.
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param string|false $the_modified_date The last modified date or false if no post is found.
-	 * @param string       $format            PHP date format.
-	 * @param string       $before            HTML output before the date.
-	 * @param string       $after             HTML output after the date.
+	 * @param string $the_modified_date The last modified date.
+	 * @param string $format            PHP date format.
+	 * @param string $before            HTML output before the date.
+	 * @param string $after             HTML output after the date.
 	 */
 	$the_modified_date = apply_filters( 'the_modified_date', $the_modified_date, $format, $before, $after );
 
@@ -2753,7 +2762,7 @@ function get_the_modified_date( $format = '', $post = null ) {
 }
 
 /**
- * Displays the time at which the post was written.
+ * Displays the time of the post.
  *
  * @since 0.71
  *
@@ -2763,7 +2772,7 @@ function get_the_modified_date( $format = '', $post = null ) {
  */
 function the_time( $format = '' ) {
 	/**
-	 * Filters the time a post was written for display.
+	 * Filters the time of the post, for display.
 	 *
 	 * @since 0.71
 	 *
@@ -2775,7 +2784,7 @@ function the_time( $format = '' ) {
 }
 
 /**
- * Retrieves the time at which the post was written.
+ * Retrieves the time of the post.
  *
  * @since 1.5.0
  *
@@ -2798,20 +2807,20 @@ function get_the_time( $format = '', $post = null ) {
 	$the_time = get_post_time( $_format, false, $post, true );
 
 	/**
-	 * Filters the time a post was written.
+	 * Filters the time of the post.
 	 *
 	 * @since 1.5.0
 	 *
-	 * @param string|int  $the_time Formatted date string or Unix timestamp if `$format` is 'U' or 'G'.
-	 * @param string      $format   Format to use for retrieving the time the post
-	 *                              was written. Accepts 'G', 'U', or PHP date format.
-	 * @param WP_Post     $post     Post object.
+	 * @param string|int $the_time Formatted date string or Unix timestamp if `$format` is 'U' or 'G'.
+	 * @param string     $format   Format to use for retrieving the time the post
+	 *                             was written. Accepts 'G', 'U', or PHP date format.
+	 * @param WP_Post    $post     Post object.
 	 */
 	return apply_filters( 'get_the_time', $the_time, $format, $post );
 }
 
 /**
- * Retrieves the time at which the post was written.
+ * Retrieves the localized time of the post.
  *
  * @since 2.0.0
  *
@@ -2855,12 +2864,12 @@ function get_post_time( $format = 'U', $gmt = false, $post = null, $translate = 
 	}
 
 	/**
-	 * Filters the localized time a post was written.
+	 * Filters the localized time of the post.
 	 *
 	 * @since 2.6.0
 	 *
 	 * @param string|int $time   Formatted date string or Unix timestamp if `$format` is 'U' or 'G'.
-	 * @param string     $format Format to use for retrieving the time the post was written.
+	 * @param string     $format Format to use for retrieving the date of the post.
 	 *                           Accepts 'G', 'U', or PHP date format.
 	 * @param bool       $gmt    Whether to retrieve the GMT time.
 	 */
@@ -3057,7 +3066,7 @@ function get_post_modified_time( $format = 'U', $gmt = false, $post = null, $tra
 }
 
 /**
- * Displays the weekday on which the post was written.
+ * Displays the localized weekday for the post.
  *
  * @since 0.71
  *
@@ -3075,7 +3084,7 @@ function the_weekday() {
 	$the_weekday = $wp_locale->get_weekday( get_post_time( 'w', false, $post ) );
 
 	/**
-	 * Filters the weekday on which the post was written, for display.
+	 * Filters the localized weekday of the post, for display.
 	 *
 	 * @since 0.71
 	 *
@@ -3085,7 +3094,7 @@ function the_weekday() {
 }
 
 /**
- * Displays the weekday on which the post was written.
+ * Displays the localized weekday for the post.
  *
  * Will only output the weekday if the current post's weekday is different from
  * the previous one output.
@@ -3118,7 +3127,7 @@ function the_weekday_date( $before = '', $after = '' ) {
 	}
 
 	/**
-	 * Filters the localized date on which the post was written, for display.
+	 * Filters the localized weekday of the post, for display.
 	 *
 	 * @since 0.71
 	 *
@@ -4432,7 +4441,7 @@ function get_search_query( $escaped = true ) {
  */
 function the_search_query() {
 	/**
-	 * Filters the contents of the search query variable for display.
+	 * Filters the contents of the search query variable, for display.
 	 *
 	 * @since 2.3.0
 	 *
@@ -4660,7 +4669,7 @@ function paginate_links( $args = '' ) {
 	$dots       = false;
 
 	if ( $args['prev_next'] && $current && 1 < $current ) :
-		$link = str_replace( '%_%', 2 == $current ? '' : $args['format'], $args['base'] );
+		$link = str_replace( '%_%', 2 === $current ? '' : $args['format'], $args['base'] );
 		$link = str_replace( '%#%', $current - 1, $link );
 		if ( $add_args ) {
 			$link = add_query_arg( $add_args, $link );
@@ -4682,7 +4691,7 @@ function paginate_links( $args = '' ) {
 	endif;
 
 	for ( $n = 1; $n <= $total; $n++ ) :
-		if ( $n == $current ) :
+		if ( $n === $current ) :
 			$page_links[] = sprintf(
 				'<span aria-current="%s" class="page-numbers current">%s</span>',
 				esc_attr( $args['aria_current'] ),
@@ -4692,7 +4701,7 @@ function paginate_links( $args = '' ) {
 			$dots = true;
 		else :
 			if ( $args['show_all'] || ( $n <= $end_size || ( $current && $n >= $current - $mid_size && $n <= $current + $mid_size ) || $n > $total - $end_size ) ) :
-				$link = str_replace( '%_%', 1 == $n ? '' : $args['format'], $args['base'] );
+				$link = str_replace( '%_%', 1 === $n ? '' : $args['format'], $args['base'] );
 				$link = str_replace( '%#%', $n, $link );
 				if ( $add_args ) {
 					$link = add_query_arg( $add_args, $link );
@@ -4843,7 +4852,7 @@ function register_admin_color_schemes() {
 		'modern',
 		_x( 'Modern', 'admin color scheme' ),
 		admin_url( "css/colors/modern/colors$suffix.css" ),
-		array( '#1e1e1e', '#3858e9', '#33f078' ),
+		array( '#1e1e1e', '#3858e9', '#7b90ff' ),
 		array(
 			'base'    => '#f3f1f1',
 			'focus'   => '#fff',
@@ -5065,7 +5074,7 @@ function wp_generator() {
  */
 function the_generator( $type ) {
 	/**
-	 * Filters the output of the XHTML generator tag for display.
+	 * Filters the output of the XHTML generator tag, for display.
 	 *
 	 * @since 2.5.0
 	 *
@@ -5123,7 +5132,6 @@ function get_the_generator( $type = '' ) {
 			break;
 		case 'xhtml':
 			$gen = '<meta name="generator" content="WordPress ' . esc_attr( get_bloginfo( 'version' ) ) . '" />';
-            $gen .= '<meta name="projectnami:version" content="' . esc_attr( get_projectnami_version() ) . '" />';
 			break;
 		case 'atom':
 			$gen = '<generator uri="https://wordpress.org/" version="' . esc_attr( get_bloginfo_rss( 'version' ) ) . '">WordPress</generator>';
