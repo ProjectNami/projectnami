@@ -622,7 +622,7 @@ function wp_upgrade() {
 	$wp_current_db_version = (int) __get_option( 'db_version' );
 
 	// We are up to date. Nothing to do.
-	if ( $wp_db_version === $wp_current_db_version ) {
+	if ( $wp_db_version === $wp_current_db_version )
 		return;
 
 	if ( ! is_blog_installed() )
@@ -671,7 +671,7 @@ function upgrade_all() {
 	$wp_current_db_version = (int) __get_option( 'db_version' );
 
 	// We are up to date. Nothing to do.
-	if ( $wp_db_version === $wp_current_db_version ) {
+	if ( $wp_db_version === $wp_current_db_version )
 		return;
 
 	if ( empty($wp_current_db_version) )
