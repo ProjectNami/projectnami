@@ -33,8 +33,6 @@ __webpack_require__.d(__webpack_exports__, {
 /**
  * Object map tracking messages which have been logged, for use in ensuring a
  * message is only logged once.
- *
- * @type {Set<string>}
  */
 const logged = new Set();
 
@@ -44,13 +42,14 @@ const logged = new Set();
  */
 
 function isDev() {
-  return  true && true === true;
+  // eslint-disable-next-line @wordpress/wp-global-usage
+  return true === true;
 }
 
 /**
  * Shows a warning with `message` if environment is not `production`.
  *
- * @param {string} message Message to show in the warning.
+ * @param message Message to show in the warning.
  *
  * @example
  * ```js

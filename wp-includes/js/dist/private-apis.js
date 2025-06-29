@@ -54,7 +54,7 @@ __webpack_require__.d(__webpack_exports__, {
 /**
  * The list of core modules allowed to opt-in to the private APIs.
  */
-const CORE_MODULES_USING_PRIVATE_APIS = ['@wordpress/block-directory', '@wordpress/block-editor', '@wordpress/block-library', '@wordpress/blocks', '@wordpress/commands', '@wordpress/components', '@wordpress/core-commands', '@wordpress/core-data', '@wordpress/customize-widgets', '@wordpress/data', '@wordpress/edit-post', '@wordpress/edit-site', '@wordpress/edit-widgets', '@wordpress/editor', '@wordpress/format-library', '@wordpress/interface', '@wordpress/patterns', '@wordpress/preferences', '@wordpress/reusable-blocks', '@wordpress/router', '@wordpress/dataviews'];
+const CORE_MODULES_USING_PRIVATE_APIS = ['@wordpress/block-directory', '@wordpress/block-editor', '@wordpress/block-library', '@wordpress/blocks', '@wordpress/commands', '@wordpress/components', '@wordpress/core-commands', '@wordpress/core-data', '@wordpress/customize-widgets', '@wordpress/data', '@wordpress/edit-post', '@wordpress/edit-site', '@wordpress/edit-widgets', '@wordpress/editor', '@wordpress/format-library', '@wordpress/interface', '@wordpress/patterns', '@wordpress/preferences', '@wordpress/reusable-blocks', '@wordpress/router', '@wordpress/dataviews', '@wordpress/fields'];
 
 /**
  * A list of core modules that already opted-in to
@@ -78,7 +78,7 @@ const registeredPrivateApis = [];
  * WITHOUT NOTICE. THIS CHANGE WILL BREAK EXISTING THIRD-PARTY CODE. SUCH A
  * CHANGE MAY OCCUR IN EITHER A MAJOR OR MINOR RELEASE.
  */
-const requiredConsent = 'I know using unstable features means my theme or plugin will inevitably break in the next version of WordPress.';
+const requiredConsent = 'I acknowledge private features are not for use in themes or plugins and doing so will break in the next version of WordPress.';
 
 /** @type {boolean} */
 let allowReRegistration;
