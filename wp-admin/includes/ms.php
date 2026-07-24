@@ -469,10 +469,10 @@ function format_code_lang( $code = '' ) {
 		'ng' => 'Ndonga',
 		'ne' => 'Nepali',
 		'nn' => 'Norwegian Nynorsk; Nynorsk, Norwegian',
-		'nb' => 'Bokm├Ñl, Norwegian, Norwegian Bokm├Ñl',
+		'nb' => 'Bokmål, Norwegian, Norwegian Bokmål',
 		'no' => 'Norwegian',
 		'ny' => 'Chichewa; Chewa; Nyanja',
-		'oc' => 'Occitan, Proven├ºal',
+		'oc' => 'Occitan, Provençal',
 		'oj' => 'Ojibwa',
 		'or' => 'Oriya',
 		'om' => 'Oromo',
@@ -528,7 +528,7 @@ function format_code_lang( $code = '' ) {
 		'uz' => 'Uzbek',
 		've' => 'Venda',
 		'vi' => 'Vietnamese',
-		'vo' => 'Volap├╝k',
+		'vo' => 'Volapük',
 		'cy' => 'Welsh',
 		'wa' => 'Walloon',
 		'wo' => 'Wolof',
@@ -854,6 +854,8 @@ var tb_pathToImage = "<?php echo esc_js( includes_url( 'js/thickbox/loadingAnima
 }
 
 /**
+ * @since 3.0.0
+ *
  * @param array $users
  * @return bool
  */

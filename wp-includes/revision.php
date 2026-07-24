@@ -297,7 +297,7 @@ function wp_get_post_autosave( $post_id, $user_id = 0 ) {
 		return false;
 	}
 
-	return get_post( $autosave[0] );
+	return get_post( $query->posts[0] );
 }
 
 /**

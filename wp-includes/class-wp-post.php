@@ -233,7 +233,7 @@ final class WP_Post {
 		global $wpdb;
 
 		$post_id = (int) $post_id;
-		if ( ! $post_id ) {
+		if ( $post_id <= 0 ) {
 			return false;
 		}
 
@@ -243,7 +243,7 @@ final class WP_Post {
 			$_post = $wpdb->get_row( $wpdb->prepare( "SELECT TOP 1 * FROM $wpdb->posts WHERE ID = %d", $post_id ) );
 
 			if ( ! $_post ) {
- 				return false;
+				return false;
 			}
 
 			$_post = sanitize_post( $_post, 'raw' );

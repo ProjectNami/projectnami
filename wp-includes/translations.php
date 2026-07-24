@@ -5,7 +5,7 @@ require_once(dirname(__FILE__) . '/fields_map.php');
  * SQL Dialect Translations
  *
  * original authors A.Garcia & A.Gentile
- * 
+ *
  * extended by Project Nami team
  * */
 class SQL_Translations extends wpdb
@@ -36,7 +36,7 @@ class SQL_Translations extends wpdb
      * @var bool
      */
     var $update_query = false;
-    
+
     /**
      * Select query?
      *
@@ -45,7 +45,7 @@ class SQL_Translations extends wpdb
      * @var bool
      */
     var $select_query = false;
-    
+
     /**
      * Create query?
      *
@@ -54,7 +54,7 @@ class SQL_Translations extends wpdb
      * @var bool
      */
     var $create_query = false;
-    
+
     /**
      * Alter query?
      *
@@ -72,7 +72,7 @@ class SQL_Translations extends wpdb
      * @var bool
      */
     var $insert_query = false;
-    
+
     /**
      * Delete query?
      *
@@ -99,7 +99,7 @@ class SQL_Translations extends wpdb
      * @var array
      */
     var $update_data = array();
-    
+
     /**
      * Limit Info
      *
@@ -127,22 +127,22 @@ class SQL_Translations extends wpdb
      * @var bool
      */
     var $azure = true;
-    
+
     /**
      * Preceeding query
      * Sometimes we need to issue a query
-     * before the original query 
+     * before the original query
      *
      * @since 2.8.5
      * @access public
      * @var mixed
      */
     var $preceeding_query = false;
-    
+
     /**
      * Following query
      * Sometimes we need to issue a query
-     * right after the original query 
+     * right after the original query
      *
      * @since 2.8.5
      * @access public
@@ -254,7 +254,7 @@ class SQL_Translations extends wpdb
             } else {
                 $this->fields_map = new Fields_map();
             }
-            
+
         }
 
         $this->limit = array();
@@ -328,7 +328,7 @@ class SQL_Translations extends wpdb
             /* on_duplicate_key() and split_insert_values() functions may be deleted if on_update_to_merge() works properly. */
             $query = $this->on_update_to_merge($query);
         }
-        
+
         if (!empty($this->preg_data)) {
             $query = vsprintf($query, $this->preg_data);
         }
@@ -336,7 +336,7 @@ class SQL_Translations extends wpdb
 
         return $query;
     }
-    
+
     function set_query_type($query)
     {
         $this->insert_query = false;
@@ -345,7 +345,7 @@ class SQL_Translations extends wpdb
         $this->select_query = false;
         $this->alter_query  = false;
         $this->create_query = false;
-        
+
         if ( stripos($query, 'INSERT') === 0 ) {
             $this->insert_query = true;
         } else if ( stripos($query, 'SELECT') === 0 ) {
@@ -361,7 +361,7 @@ class SQL_Translations extends wpdb
         }
     }
 
-    
+
 	/**
 	* Additions made by the PN team to the translators.
 	*
@@ -373,14 +373,14 @@ class SQL_Translations extends wpdb
 	* @return string Translate query
 	*/
         function pre_translate_query( $query ) {
-		
+
 		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
         	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
 
 		// Handle NULL-safe equal to operator.
         	$query = str_replace( "<=>", "=", $query );
-         
-		/**        
+
+		/**
 		* Symposium Pro
 		*/
 		if ($start_pos = stripos($query, '(t.topic_parent = 0 || p.topic_parent = 0)')) {
@@ -389,14 +389,14 @@ class SQL_Translations extends wpdb
 
 		/* Detect plugin. For use on Front End only. */
 		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
-		
+
         /**
          * Akismet
          */
 		if ( is_plugin_active( 'akismet/akismet.php' ) ) {
 			if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
 				$query = str_ireplace(
-					'USING(comment_id)', 
+					'USING(comment_id)',
 					'ON c.comment_id = m.comment_id', $query);
 			}
 		}
@@ -411,7 +411,7 @@ class SQL_Translations extends wpdb
 			$query = str_ireplace('GROUP BY links.link_id', '', $query);
             $query = preg_replace('/(where\s*1\s*and)/is', 'WHERE 1=1 AND', $query);
             $query = preg_replace('/(where\s*1\s*and)/is', 'WHERE 1=1 AND', $query);
-			
+
 			$pattern = '/((select)\s*(\d*)\s*(from))/is';
 			preg_match($pattern, $query, $match);
 			if (sizeof($match) == 5) {
@@ -425,7 +425,7 @@ class SQL_Translations extends wpdb
 		if ( is_plugin_active( 'jetpack/jetpack.php' ) ) {
 			if (stristr($query, " AS UNSIGNED") !== FALSE) {
 				$query = str_ireplace(
-					' AS UNSIGNED', 
+					' AS UNSIGNED',
 					' AS BIGINT', $query);
 			}
 		}
@@ -436,28 +436,28 @@ class SQL_Translations extends wpdb
 		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
 			if (stristr($query, " && meta_key = ") !== FALSE) {
 				$query = str_ireplace(
-					' && meta_key = ', 
+					' && meta_key = ',
 					' AND meta_key = ', $query);
 			}
-		
+
 			if (stristr($query, "ORDER BY wp_posts.menu_order, wp_posts.post_date") !== FALSE) {
 				$query = str_ireplace(
-					'ORDER BY wp_posts.menu_order, wp_posts.post_date', 
+					'ORDER BY wp_posts.menu_order, wp_posts.post_date',
 					'ORDER BY wp_posts.post_date', $query);
 			}
-	
+
 			$searchstr = '/(SELECT\s+post_type\s*,\s*MAX\(post_modified_gmt\)\s+as\s+date\s+from)/is';
 			preg_match( $searchstr, $query, $groups );
-	
+
 			/* You should an array of size 2 */
 			if (sizeof($groups) == 2) {
 				/* Get groupings */
 				preg_match( '/(GROUP\s+BY\s+post_type\s+ORDER\s+BY\s+post_modified_gmt)/is', $query, $groups );
-			
+
 				/* You should an array of size 2 */
 				if (sizeof($groups) == 2) {
 					$query = str_ireplace(
-					'ORDER BY post_modified_gmt', 
+					'ORDER BY post_modified_gmt',
 					'ORDER BY max(post_modified_gmt)', $query);
 				}
 			}
@@ -469,44 +469,44 @@ class SQL_Translations extends wpdb
 		if ( is_plugin_active( 'the-events-calendar/the-events-calendar.php' ) ) {
 			if (stristr($query, "DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC") !== FALSE) {
 				$query = str_ireplace(
-					'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC', 
+					'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC',
 					'CONVERT(VARCHAR(19),tribe_event_start.meta_value,120) ASC', $query);
 			}
 			if (stristr($query, "SELECT DISTINCT wp_posts.*, MIN(wp_postmeta.meta_value) as EventStartDate, MIN(tribe_event_end_date.meta_value) as EventEndDate") !== FALSE) {
 				$query = str_ireplace(
-					'WHERE 1=1  AND (((wp_posts.post_title', 
+					'WHERE 1=1  AND (((wp_posts.post_title',
 					'WHERE 1=1  AND (wp_posts.post_title', $query);
 			}
-            if (stristr($query, 'SELECT comment_approved, COUNT( * ) AS num_comments FROM {$this->prefix}comments WHERE comment_type != "tribe-ea-error" GROUP BY comment_approved') !== FALSE) { 
-                $query = str_ireplace( 
-                '"', 
-                "'", $query); 
-            } 
-            if (stristr($query, 'ORDER BY CASE') !== FALSE) { 
-                $query = str_ireplace( 
-                'ORDER BY CASE', 
-                "--", $query); 
-            } 
+            if (stristr($query, 'SELECT comment_approved, COUNT( * ) AS num_comments FROM {$this->prefix}comments WHERE comment_type != "tribe-ea-error" GROUP BY comment_approved') !== FALSE) {
+                $query = str_ireplace(
+                '"',
+                "'", $query);
+            }
+            if (stristr($query, 'ORDER BY CASE') !== FALSE) {
+                $query = str_ireplace(
+                'ORDER BY CASE',
+                "--", $query);
+            }
 		}
-		
+
         /**
          * Booking
          */
         if (stristr($query, "COLLATE utf8_general_ci") !== FALSE) {
             $query = str_ireplace(
-                'COLLATE utf8_general_ci', 
+                'COLLATE utf8_general_ci',
                 ' ', $query);
         }
 
         if (stristr($query, "ORDER BY dt, bkBY dt.booking_date") !== FALSE) {
             $query = str_ireplace(
-                'ORDER BY dt, bkBY dt.booking_date', 
+                'ORDER BY dt, bkBY dt.booking_date',
                 'ORDER BY dt.booking_date', $query);
         }
 
         if (stristr($query, "bookingdates WHERE Key_name = 'booking_id_dates'") !== FALSE) {
             $query = str_ireplace(
-                "bookingdates WHERE Key_name = 'booking_id_dates'", 
+                "bookingdates WHERE Key_name = 'booking_id_dates'",
                 "bookingdates' and ind.name = 'booking_id_dates", $query);
         }
 
@@ -515,31 +515,31 @@ class SQL_Translations extends wpdb
          */
         if (stristr($query, "CURDATE()+ INTERVAL 2 day") !== FALSE) {
             $query = str_ireplace(
-                'CURDATE()+ INTERVAL 2 day', 
+                'CURDATE()+ INTERVAL 2 day',
                 'CAST(dateadd(d,2,GETDATE()) AS DATE)', $query);
         }
 
         if (stristr($query, "CURDATE()+ INTERVAL 3 day") !== FALSE) {
             $query = str_ireplace(
-                'CURDATE()+ INTERVAL 3 day', 
+                'CURDATE()+ INTERVAL 3 day',
                 'CAST(dateadd(d,3,GETDATE()) AS DATE)', $query);
         }
 
         if (stristr($query, "CURDATE()+ INTERVAL 4 day") !== FALSE) {
             $query = str_ireplace(
-                'CURDATE()+ INTERVAL 4 day', 
+                'CURDATE()+ INTERVAL 4 day',
                 'CAST(dateadd(d,4,GETDATE()) AS DATE)', $query);
         }
 
         if (stristr($query, "CURDATE() - INTERVAL 1 day") !== FALSE) {
             $query = str_ireplace(
-                'CURDATE() - INTERVAL 1 day', 
+                'CURDATE() - INTERVAL 1 day',
                 'CAST(dateadd(d,-1,GETDATE()) AS DATE)', $query);
         }
 
         if (stristr($query, "CURDATE()") !== FALSE) {
             $query = str_ireplace(
-                'CURDATE()', 
+                'CURDATE()',
                 'CAST(GETDATE() AS DATE)', $query);
         }
 
@@ -548,32 +548,32 @@ class SQL_Translations extends wpdb
          */
         if (stristr($query, "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'") !== FALSE) {
             $query = str_ireplace(
-                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'", 
+                "COMMENT '1 - Upload, 2 - Delete, 3 - Purge'",
                 '', $query);
         }
 
         if ( (stristr($query, "REPLACE INTO") !== FALSE) && (stristr($query, "w3tc_cdn_queue") !== FALSE) ) {
             $query = str_ireplace(
-                'REPLACE INTO', 
+                'REPLACE INTO',
                 'INSERT', $query);
         }
 
         if (stristr($query, "w3tc_cdn_queue") !== FALSE) {
             $query = str_ireplace(
-                '"', 
+                '"',
                 "'", $query);
         }
 
         if ( (stristr($query, 'pm.meta_value AS file') !== FALSE) && (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
             $query = str_ireplace(
-                'pm.meta_value AS file', 
+                'pm.meta_value AS file',
                 "pm.meta_value AS [file]", $query);
             $query = $query . ", pm.meta_value, pm2.meta_value";
         }
 
         if ( (stristr($query, '"_wp_attached_file"') !== FALSE) || (stristr($query, '"_wp_attachment_metadata"') !== FALSE) ) {
             $query = str_ireplace(
-                '"', 
+                '"',
                 "'", $query);
         }
 
@@ -586,16 +586,16 @@ class SQL_Translations extends wpdb
          */
 		if (stristr($query, "ORDER BY tm.meta_value+0") !== FALSE) {
 			$query = str_ireplace(
-				'tm.meta_value+0', 
+				'tm.meta_value+0',
 				'CAST(tm.meta_value as numeric)', $query);
 		}
 
         /**
          * Comments
          */
-        $query = str_ireplace("WHERE ( post_status = 'publish' OR ( post_status = 'inherit' && post_type = 'attachment' ) )", 
+        $query = str_ireplace("WHERE ( post_status = 'publish' OR ( post_status = 'inherit' && post_type = 'attachment' ) )",
 		"WHERE ( post_status = 'publish' OR ( post_status = 'inherit' AND post_type = 'attachment' ) )", $query);
-			
+
         /**
          * Misc Queries
          */
@@ -608,13 +608,13 @@ class SQL_Translations extends wpdb
 		if (sizeof($groups) == 2) {
 			$pattern =  '/(ORDER\s*BY\s*p\.post_date_gmt\s*DESC)/is';
 			preg_match( $pattern, $query, $groups );
-		
+
 			/* You should an array of size 2 */
 			if (sizeof($groups) == 2) {
 				$query = preg_replace($pattern, 'ORDER BY YEAR(p.post_date_gmt), MONTH(p.post_date_gmt) DESC', $query);
 			}
 		}
-		 
+
 
         /**
          * End Project Nami specific translations
@@ -701,7 +701,7 @@ class SQL_Translations extends wpdb
                 $query = $query . " AND COLUMN_NAME " . $like_match[0];
             }
         }
-        
+
         // SHOW INDEXES - issue with sql azure trying to fix....sys.sysindexes is coming back as invalid onject name
         if ( stripos($query, 'SHOW INDEXES FROM ') === 0 ) {
             return $query;
@@ -712,7 +712,7 @@ class SQL_Translations extends wpdb
                        JOIN sys.sysindexes ON sys.sysindexes.id = sys.sysobjects.id and sys.key_constraints.unique_index_id = sys.sysindexes.indid
                        JOIN sys.index_columns ON sys.index_columns.object_id = sys.sysindexes.id  and sys.index_columns.index_id = sys.sysindexes.indid
                        JOIN sys.syscolumns ON sys.syscolumns.id = sys.sysindexes.id AND sys.index_columns.column_id = sys.syscolumns.colid
-                      WHERE sys.sysobjects.type = 'u'   
+                      WHERE sys.sysobjects.type = 'u'
                        AND sys.sysobjects.name = '{$table}'";
         }
 
@@ -721,26 +721,26 @@ class SQL_Translations extends wpdb
             $table = rtrim(substr($query, 16), ';');
             $query = "select
                     t.name AS [Table],
-                    CASE 
+                    CASE
                                 WHEN ind.is_unique = 1 THEN 0
                                 ELSE 1
                         END AS Non_unique,
-                        CASE 
+                        CASE
                             WHEN ind.is_primary_key = 1 THEN 'PRIMARY'
                             ELSE ind.name
                         END AS Key_name,
                         col.name AS Column_name,
                    NULL as Sub_part
-                from 
+                from
                     sys.indexes ind
-                inner join 
-                    sys.index_columns ic on 
+                inner join
+                    sys.index_columns ic on
                       ind.object_id = ic.object_id and ind.index_id = ic.index_id
                 inner join
                     sys.columns col on
-                      ic.object_id = col.object_id and ic.column_id = col.column_id 
+                      ic.object_id = col.object_id and ic.column_id = col.column_id
                 inner join
-                    sys.tables t on 
+                    sys.tables t on
                       ind.object_id = t.object_id
                 where
                     t.name = '{$table}'
@@ -796,7 +796,7 @@ class SQL_Translations extends wpdb
 
         // DATALENGTH == sql servers length == length in bytes
         $query = str_replace('LENGTH(', 'DATALENGTH(', $query);
-        $query = str_replace('LENGTH (', 'DATALENGTH(', $query); 
+        $query = str_replace('LENGTH (', 'DATALENGTH(', $query);
 
         // TICKS
         $query = str_replace('`', '', $query);
@@ -804,7 +804,7 @@ class SQL_Translations extends wpdb
         // avoiding some nested as Computed issues
         if (stristr($query, 'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID))') !== FALSE) {
             $query = str_ireplace(
-                'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID))', 
+                'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID))',
                 'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID)) as Computed ', $query);
         }
 
@@ -821,7 +821,7 @@ class SQL_Translations extends wpdb
             $query = preg_replace('/(ORDER BY RAND\(\))(.*)$/i', 'ORDER BY NEWID()\2', $query);
         }
 
-        // Remove uncessary ORDER BY clauses as ORDER BY fields needs to 
+        // Remove uncessary ORDER BY clauses as ORDER BY fields needs to
         // be contained in either an aggregate function or the GROUP BY clause.
         // something that isn't enforced in mysql
         if (preg_match('/SELECT COUNT\((.*?)\) as Computed FROM/i', $query)) {
@@ -830,7 +830,7 @@ class SQL_Translations extends wpdb
                 $query = substr($query, 0, $order_pos);
             }
         }
-        
+
         // Project Nami
         // Remove ORDER BY clauses from DELETE commands
         if ( $this->delete_query ) {
@@ -840,12 +840,12 @@ class SQL_Translations extends wpdb
             }
         }
 
-        // Turn on IDENTITY_INSERT for Importing inserts or category/tag adds that are 
+        // Turn on IDENTITY_INSERT for Importing inserts or category/tag adds that are
         // trying to explicitly set an IDENTITY column
         if ($this->insert_query) {
             $tables = array(
-                $this->get_blog_prefix() . 'posts' => 'id', 
-                $this->get_blog_prefix() . 'terms' => 'term_id', 
+                $this->get_blog_prefix() . 'posts' => 'id',
+                $this->get_blog_prefix() . 'terms' => 'term_id',
             );
             foreach ($tables as $table => $pid) {
                 if (stristr($query, 'INTO ' . $table) !== FALSE) {
@@ -859,9 +859,9 @@ class SQL_Translations extends wpdb
                     foreach ($params as $k => $v) {
                         if (strtolower($v) === $pid) {
                             $found = true;
-                        }   
+                        }
                     }
-                    
+
                     if ($found) {
                         $this->preceeding_query = "SET IDENTITY_INSERT $table ON";
                         $this->following_query = "SET IDENTITY_INSERT $table OFF";
@@ -869,12 +869,12 @@ class SQL_Translations extends wpdb
                 }
             }
         }
-        
+
         // UPDATE queries trying to change an IDENTITY column this happens
         // for cat/tag adds (WPMU) e.g. UPDATE wp_1_terms SET term_id = 5 WHERE term_id = 3330
         if ($this->update_query) {
             $tables = array(
-                $this->prefix . 'terms' => 'term_id', 
+                $this->prefix . 'terms' => 'term_id',
             );
             foreach ($tables as $table => $pid) {
                 if (stristr($query, $table . ' SET ' . $pid) !== FALSE) {
@@ -890,7 +890,7 @@ class SQL_Translations extends wpdb
                 }
             }
         }
-        
+
         return $query;
     }
 
@@ -932,7 +932,7 @@ class SQL_Translations extends wpdb
             $end_pos = $this->get_matching_paren($query, ($start_pos+6))+1;
             $query = substr_replace($query, '(CASE WHEN ' . $stmt, $start_pos, ($end_pos - $start_pos));
         }
-		
+
 	/* IF in SELECT statement */
 	if ($this->select_query) {
 		$pattern = '/\b(I)F\s*\(.+?,.+?,.+?\)\s*(?:AS\s*\w*)/is';
@@ -970,7 +970,7 @@ class SQL_Translations extends wpdb
         }
         return $query;
     }
-    
+
     /**
      * Translate specific queries
      *
@@ -988,25 +988,25 @@ class SQL_Translations extends wpdb
                         . "COUNT(NULLIF(`meta_value` LIKE '%contributor%', FALSE)), "
                         . "COUNT(NULLIF(`meta_value` LIKE '%subscriber%', FALSE)), "
                         . "COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities'") {
-            $query = "SELECT 
-    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%administrator%') as ca, 
-    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%editor%') as cb, 
-    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%author%') as cc, 
-    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%contributor%') as cd, 
-    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%subscriber%') as ce, 
+            $query = "SELECT
+    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%administrator%') as ca,
+    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%editor%') as cb,
+    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%author%') as cc,
+    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%contributor%') as cd,
+    (SELECT COUNT(*) FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities' AND meta_value LIKE '%subscriber%') as ce,
     COUNT(*) as c FROM " . $this->prefix . "usermeta WHERE meta_key = '" . $this->prefix . "capabilities'";
             $this->preg_data = array();
         }
 
         if (stristr($query, "SELECT DISTINCT TOP 50 (" . $this->prefix . "users.ID) FROM " . $this->prefix . "users") !== FALSE) {
             $query = str_ireplace(
-                "SELECT DISTINCT TOP 50 (" . $this->prefix . "users.ID) FROM", 
+                "SELECT DISTINCT TOP 50 (" . $this->prefix . "users.ID) FROM",
                 "SELECT DISTINCT TOP 50 (" . $this->prefix . "users.ID), user_login FROM", $query);
         }
-        
+
         if (stristr($query, 'INNER JOIN ' . $this->prefix . 'terms USING (term_id)') !== FALSE) {
             $query = str_ireplace(
-                'USING (term_id)', 
+                'USING (term_id)',
                 'ON ' . $this->prefix . 'terms.term_id = ' . $this->prefix . 'term_taxonomy.term_id', $query);
         }
 
@@ -1016,7 +1016,7 @@ class SQL_Translations extends wpdb
     /**
      * Changing LIMIT to TOP...mimicking offset while possible with rownum, it has turned
      * out to be very problematic as depending on the original query, the derived table
-     * will have a lot of problems with columns names, ordering and what not. 
+     * will have a lot of problems with columns names, ordering and what not.
      *
      * @since 2.7.1
      *
@@ -1029,7 +1029,7 @@ class SQL_Translations extends wpdb
         if ( (stripos($query,'SELECT') !== 0 && stripos($query,'SELECT') !== FALSE)
             && (stripos($query,'UPDATE') !== 0  && stripos($query,'UPDATE') !== FALSE) )
             return $query;
-		
+
 		/* Search for LIMIT OFFSET first */
 		$pattern = '/LIMIT\s*(\d+)((\s*offset?\s*)(\d+)*);{0,1}/is';
 		preg_match($pattern, $query, $limit_matches);
@@ -1037,7 +1037,7 @@ class SQL_Translations extends wpdb
 			if ( $this->delete_query ) {
 				return $query;
 			}
-			
+
 			// Check for true offset
 			if ($limit_matches[4] > 0 ) {
 				$true_offset = true;
@@ -1049,7 +1049,7 @@ class SQL_Translations extends wpdb
 			if ( $true_offset === false ) {
 				/* Get position of LIMIT Statement */
 				$limit_pos = stripos($query, $limit_matches[0]);
-				
+
 				if ( stripos($query, 'DISTINCT') > 0 ) {
 					$query = $this->strReplaceNearest('DISTINCT ', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
 				} else {
@@ -1067,13 +1067,13 @@ class SQL_Translations extends wpdb
 				/* Replace the OFFSET command in its current location. */
 				$pretranslate = $query;
 				$query = preg_replace($pattern, " OFFSET " . $limit_matches[4] . " ROWS FETCH NEXT " . $limit_matches[1] . " ROWS ONLY", $query);
-				
+
 				$this->limit = array(
-					'from' => $limit_matches[4], 
+					'from' => $limit_matches[4],
 					'to' => $limit_matches[1]
 				);
 			}
-			
+
 		} else {
 			/* Search for LIMIT without OFFSET. */
 			$pattern = '/LIMIT\s*(\d+)((\s*,?\s*)(\d+)*);{0,1}/is';
@@ -1089,45 +1089,45 @@ class SQL_Translations extends wpdb
 				} elseif ( count($limit_matches) >= 5 && $limit_matches[1] == '0' ) {
 					$limit_matches[1] = $limit_matches[4];
 				}
-	
+
 				// Rewrite the query.
 				if ( $true_offset === false ) {
-					
+
 					/* Get position of LIMIT Statement */
 					$limit_pos = stripos($query, $limit_matches[0]);
-					
+
 					if ( stripos($query, 'DISTINCT') > 0 ) {
 						$query = $this->strReplaceNearest('DISTINCT ', 'DISTINCT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
 					} else {
 						$query = $this->strReplaceNearest('DELETE ', 'DELETE TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
 						$query = $this->strReplaceNearest('SELECT ', 'SELECT TOP ' . $limit_matches[1] . ' ', $query, $limit_pos);
 					}
-	
+
 					/* Remove the LIMIT statement */
 					 $query = preg_replace($pattern, '', $query);
 
 				} else {
 					$limit_matches[1] = (int) $limit_matches[1];
 					$limit_matches[4] = (int) $limit_matches[4];
-	
+
 					/* Replace the OFFSET command in its current location. */
 					$pretranslate = $query;
 					$query = preg_replace($pattern, " OFFSET " . $limit_matches[1] . " ROWS FETCH NEXT " . $limit_matches[4] . " ROWS ONLY", $query);
-	
+
 					$this->limit = array(
-						'from' => $limit_matches[1], 
+						'from' => $limit_matches[1],
 						'to' => $limit_matches[4]
 					);
 				}
 			}
 		}
-		
+
         return $query;
     }
 
 
     /**
-     * Changing FIND_IN_SET to PATINDEX 
+     * Changing FIND_IN_SET to PATINDEX
      *
      * @since PN 0.10.3
      *
@@ -1399,7 +1399,7 @@ class SQL_Translations extends wpdb
                 $this->preg_data[$df['pos']] = $v;
             }
         }
- 
+
         return $query;
     }
 
@@ -1443,7 +1443,7 @@ class SQL_Translations extends wpdb
                 }
             }
         }
- 
+
         return $query;
     }
 
@@ -1462,13 +1462,13 @@ class SQL_Translations extends wpdb
         if ( !$this->select_query && !$this->delete_query ) {
             return $query;
         }
-        
+
         $operators = array(
             '='  => 'LIKE',
             '!=' => 'NOT LIKE',
             '<>' => 'NOT LIKE'
         );
-        
+
         $field_types = array('ntext', 'nvarchar', 'text', 'varchar');
 
         foreach($this->fields_map->read() as $table => $table_fields) {
@@ -1486,9 +1486,9 @@ class SQL_Translations extends wpdb
                     $query = preg_replace('/\s+LIKE\s*(-?\d+)/i', " {$val} cast($1 as nvarchar(max))", $query);
                 }
             }
-            
+
         }
-        
+
         return $query;
     }
 
@@ -1536,10 +1536,10 @@ class SQL_Translations extends wpdb
                 }
             }
         }
-        
+
         // remove IF NOT EXISTS as that doesn't exist in T-SQL
         $query = str_ireplace(' IF NOT EXISTS', '', $query);
-    
+
         // save array to file_maps
         $this->fields_map->update_for($query);
 
@@ -1616,7 +1616,7 @@ class SQL_Translations extends wpdb
         if ( ! empty($this->collate) ) {
             $query = str_ireplace("COLLATE {$this->collate}", '', $query);
         }
-        
+
         // add collation
         $ac_types = array('tinytext', 'longtext', 'mediumtext', 'text', 'varchar');
         foreach ($ac_types as $ac_type) {
@@ -1791,13 +1791,13 @@ class SQL_Translations extends wpdb
                             $this->following_query = array($this->following_query);
                         }
                         if ( $this->azure && !$primary_key_found ) {
-                            $this->following_query[] = 'CREATE CLUSTERED INDEX ' . 
-                            $table . '_' . implode('_', $keys[$i]['field']) . 
+                            $this->following_query[] = 'CREATE CLUSTERED INDEX ' .
+                            $table . '_' . implode('_', $keys[$i]['field']) .
                             ' ON '.$table.'('.implode(',', $keys[$i]['field']).')';
                             $primary_key_found = TRUE;
                         } else {
-                            $this->following_query[] = 'CREATE NONCLUSTERED INDEX ' . 
-                            $table . '_' . implode('_', $keys[$i]['field']) . 
+                            $this->following_query[] = 'CREATE NONCLUSTERED INDEX ' .
+                            $table . '_' . implode('_', $keys[$i]['field']) .
                             ' ON '.$table.'('.implode(',', $keys[$i]['field']).')';
                         }
                     }
@@ -1921,7 +1921,7 @@ class SQL_Translations extends wpdb
                 }
             }
         }
-        
+
         $map_fields = $this->fields_map->by_type('ntext');
         foreach ( $result_set as $key => $result ) {
             foreach ( $map_fields as $text_field ) {
@@ -1932,23 +1932,23 @@ class SQL_Translations extends wpdb
         }
         return $result_set;
     }
-    
+
     /**
      * Check to see if INSERT has an ON DUPLICATE KEY statement
-     * This is MySQL specific and will be removed and put into 
+     * This is MySQL specific and will be removed and put into
      * a following_query MERGE STATEMENT
      *
      * @param string $query Query coming in
      * @return string query without ON DUPLICATE KEY statement
      */
 	function on_update_to_merge($query) {
-	
-		if (strpos($query, 'ON DUPLICATE KEY UPDATE') === false) 
+
+		if (strpos($query, 'ON DUPLICATE KEY UPDATE') === false)
 			return $query;
-			
+
 		/* Get groupings before 'ON DUPLICATE KEY UPDATE' */
 		preg_match( '/insert\s+into([\[\]\s0-9,a-z$_]*)\s*\(*([\[\]\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
-		
+
 		/* You should get something like this:
 			array(4) {
 			  [0]=>
@@ -1959,22 +1959,22 @@ class SQL_Translations extends wpdb
 			  string(50) " container_id, container_type, synched, last_synch"
 			  [3]=>
 			  string(41) " 17839, 'post', 0, '0001-01-01 00:00:00' "
-			}	
+			}
 		*/
-		
+
 		if (sizeof($insertgroups) < 4)
 			return $query;
-		
+
 		$newsql = 'MERGE INTO ' . $insertgroups[1] . ' WITH (HOLDLOCK) AS target USING ';
-	
+
 		$insertfieldlist = $insertgroups[2];
 		$insertfields = explode(",", $insertfieldlist);
 		$insertvalueslist = $insertgroups[3];
 		$insertvalues = explode(",", $insertvalueslist);
-		
+
 		/* Get groupings after 'ON DUPLICATE KEY UPDATE' */
 		preg_match( '/ON DUPLICATE KEY UPDATE(\s*.*)/is', $query, $updatefields );
-		
+
 		/* You should get something like this:
 			array(2) {
 			  [0]=>
@@ -1983,12 +1983,12 @@ class SQL_Translations extends wpdb
 			  string(60) " synched = VALUES(1234), last_synch = VALUES(5678))"
 			}
 		*/
-		
+
 		if (sizeof($updatefields) < 2)
 			return $query;
-		
+
 		preg_match_all( '/([\[\]0-9a-z$_]*)\s*=\s*VALUES\s*\((.*?)\)/is', $updatefields[1], $updatefieldvalues );
-		
+
 		/* You should get something like this:
 			array(3) {
 			  [0]=>
@@ -2014,14 +2014,14 @@ class SQL_Translations extends wpdb
 			  }
 			}
 		*/
-		
+
 		if (sizeof($updatefieldvalues) < 3)
 			return $query;
-	
+
 		$fieldnamessize = sizeof($insertfields);
 		$valuessize = sizeof($insertvalues);
 		$updatefieldssize = sizeof($updatefieldvalues[1]);
-		
+
 		/* Create Insert part of command. */
 		$insertcmd = '';
 		for ($i=0; $i<$fieldnamessize; $i++) {
@@ -2029,10 +2029,10 @@ class SQL_Translations extends wpdb
 				$insertcmd  .= trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
 			else
 				$insertcmd  .= "," . trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
-			
+
 		}
 		$newsql .= "(SELECT " . $insertcmd . ") AS source (" . trim($insertgroups[2]) . ")";
-		
+
 		/* Create ON part of command. */
 		$on = '';
 		for ($i=0; $i<$fieldnamessize; $i++) {
@@ -2040,13 +2040,13 @@ class SQL_Translations extends wpdb
 				$on  .= "source." . trim($insertfields[$i]) . "=target." . trim($insertfields[$i]);
 			else
 				$on  .= " AND source." . trim($insertfields[$i]) . "=target." . trim($insertfields[$i]);
-			
+
 		}
-		
+
 		$on = ' ON (' . $on . ')';
 		$newsql .= $on;
-	
-		
+
+
 		/* Create UPDATE part of command. */
 		$update = '';
 		for ($i=0; $i<$updatefieldssize; $i++) {
@@ -2057,7 +2057,7 @@ class SQL_Translations extends wpdb
 							if (trim($insertfields[$j]) == trim($updatefieldvalues[1][$i]))
 
 								$update  .= trim($updatefieldvalues[1][$i]) . "=" . trim($insertvalues[$j]);
-			
+
 						}
 				} else
 					$update  .= trim($updatefieldvalues[1][$i]) . "=" . trim($updatefieldvalues[2][$i]);
@@ -2067,13 +2067,13 @@ class SQL_Translations extends wpdb
 						for ($j=0; $j<$fieldnamessize; $j++) {
 							if (trim($insertfields[$j]) == trim($updatefieldvalues[1][$i]))
 								$update  .= "," . trim($updatefieldvalues[1][$i]) . "=" . trim($insertvalues[$j]);
-			
+
 						}
 				} else
 					$update  .= "," . trim($updatefieldvalues[1][$i]) . "=" . trim($updatefieldvalues[2][$i]);
-				
+
 			}
-			
+
 		}
         if ( trim( $update ) != '' ){
     		$newsql .= ' WHEN MATCHED THEN UPDATE SET ' . $update;
@@ -2081,7 +2081,7 @@ class SQL_Translations extends wpdb
 		$newsql .= ' WHEN NOT MATCHED THEN INSERT (' . $insertgroups[2] . ') VALUES(' . $insertgroups[3] . ');';
 		return $newsql;
 	}
-	
+
 	/**
 	* Replace the last occurrence of a string nearest to $lenOfSubject position
 	*
@@ -2092,51 +2092,51 @@ class SQL_Translations extends wpdb
 	* @return string
 	*/
 	function strReplaceNearest ( $search, $replace, $subject, $lenOfSubject = null ) {
-	 
+
 		$lenOfSearch = strlen( $search );
 		$posOfSearch = strpos( $subject, $search );
-		
+
 		if ($posOfSearch === false)
 			return $subject;
-			
+
 		if ($lenOfSubject === null)
 			$lenOfSubject = strlen($subject);
-	 
+
 	 	$valid_pos = $posOfSearch;
 	 	while ($posOfSearch <= $lenOfSubject) {
 			$valid_pos = $posOfSearch;
 			$posOfSearch = strpos( $subject, $search, $valid_pos + 1);
-			
+
 			if ($posOfSearch === false)
 				break;
 		}
-		
-		return substr_replace( $subject, $replace, $valid_pos, $lenOfSearch );	 
-	}	
+
+		return substr_replace( $subject, $replace, $valid_pos, $lenOfSearch );
+	}
 
     /**
      * Check to see if INSERT has an IF NOT EXISTS statement
-     * This is MySQL specific and will be removed and put into 
+     * This is MySQL specific and will be removed and put into
      * a following_query MERGE STATEMENT
      *
      * @param string $query Query coming in
      * @return string query without ON DUPLICATE KEY statement
 	 *
 	 *  Example:
-	 *  IF NOT EXISTS (SELECT * FROM [wp_options] WHERE [option_name] = '_transient_doing_cron') 
-	 *  INSERT INTO [wp_options] ([option_name], [option_value], [autoload]) VALUES ('_transient_doing_cron', '1465291530.3025040626525878906250', 'yes') 
-	 *  else UPDATE [wp_options] set [option_value] = '1465291530.3025040626525878906250', [autoload] = 'yes' 
+	 *  IF NOT EXISTS (SELECT * FROM [wp_options] WHERE [option_name] = '_transient_doing_cron')
+	 *  INSERT INTO [wp_options] ([option_name], [option_value], [autoload]) VALUES ('_transient_doing_cron', '1465291530.3025040626525878906250', 'yes')
+	 *  else UPDATE [wp_options] set [option_value] = '1465291530.3025040626525878906250', [autoload] = 'yes'
 	 *  where [option_name] = '_transient_doing_cron'
 
      */
 	function translate_if_not_exists_insert_merge($query) {
-	
+
 		if (strpos($query, 'IF NOT EXISTS') === false)
 			return $query;
-			
+
 		/* Get groupings for INSERT INTO */
 		preg_match( '/insert\s+into([\[\]\s0-9,a-z$_]*)\s*\(*([\[\]\s0-9,a-z$_]*)\s*\)*\s*VALUES\s*\((.*?)\)/is', $query, $insertgroups );
-		
+
 		/* You should get something like this:
 			array(4) {
 			  [0]=>
@@ -2147,20 +2147,20 @@ class SQL_Translations extends wpdb
 			  string(50) " container_id, container_type, synched, last_synch"
 			  [3]=>
 			  string(41) " 17839, 'post', 0, '0001-01-01 00:00:00' "
-			}	
+			}
 		*/
-		
-		if (sizeof($insertgroups) < 4) 
+
+		if (sizeof($insertgroups) < 4)
 			return $query;
-			
+
 		$insertfieldlist = $insertgroups[2];
 		$insertfields = explode(",", $insertfieldlist);
 		$insertvalueslist = $insertgroups[3];
 		$insertvalues = explode(",", $insertvalueslist);
-		
+
 		/* Get groupings for WHERE clause  */
 		preg_match( '/WHERE(.*)INSERT\s*INTO/is', $query, $whereclause );
-		
+
 		/* You should get something like this:
 			array(2) {
 			  [0]=>
@@ -2169,16 +2169,16 @@ class SQL_Translations extends wpdb
 			  string(60) " [option_name] = '_transient_doing_cron')"
 			}
 		*/
-		
+
 		if (sizeof($whereclause) < 2)
 			return $query;
-		
+
 		/* strip out the last right paren. */
 		$whereclause[1] = $this->strReplaceNearest(')', '', $whereclause[1]);
 		$whereclause[1] = trim($whereclause[1]);
 		$fieldnamessize = sizeof($insertfields);
 		$valuessize = sizeof($insertvalues);
-		
+
 		$insertcmd = '';
 		$update = '';
 		for ($i=0; $i<$fieldnamessize; $i++) {
@@ -2187,7 +2187,7 @@ class SQL_Translations extends wpdb
 				$insertcmd  .= trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
 			else
 				$insertcmd  .= "," . trim($insertvalues[$i]) . " as " . trim($insertfields[$i]);
-			
+
 			/* Create UPDATE part of command. */
 			if ($update == '') {
 				$update  .= trim($insertfields[$i]) . "=" . trim($insertvalues[$i]);
@@ -2195,7 +2195,7 @@ class SQL_Translations extends wpdb
 				$update  .= "," . trim($insertfields[$i]) . "=" . trim($insertvalues[$i]);
 			}
 		}
-		
+
 		$newsql = 'MERGE INTO ' . $insertgroups[1] . ' WITH (HOLDLOCK) AS target USING ';
 		$newsql .= "(SELECT " . $insertcmd . ") AS source (" . trim($insertgroups[2]) . ")";
 		$newsql .= ' ON (target.' . $whereclause[1] . ') WHEN MATCHED THEN UPDATE SET ';
@@ -2203,10 +2203,10 @@ class SQL_Translations extends wpdb
 
 		return $newsql;
 	}
-	
+
     /**
      * Check to see if INSERT has an ON DUPLICATE KEY statement
-     * This is MySQL specific and will be removed and put into 
+     * This is MySQL specific and will be removed and put into
      * a following_query UPDATE STATEMENT
      *
      * @param string $query Query coming in
@@ -2231,7 +2231,7 @@ class SQL_Translations extends wpdb
                     $values[2] = 'no';
                 }
                 // change this to use mapped fields
-                $update = 'UPDATE ' . $table . ' SET option_value = ' . $values[1] . ', autoload = ' . $values[2] . 
+                $update = 'UPDATE ' . $table . ' SET option_value = ' . $values[1] . ', autoload = ' . $values[2] .
                     ' WHERE option_name = ' . $values[0];
                 $this->following_query = $update;
             }
@@ -2259,11 +2259,11 @@ class SQL_Translations extends wpdb
                 if (substr($v, -1) !== ')') {
                     $v = $v . ')';
                 }
-                
+
                 if (substr($v, 0, 1) !== '(') {
                     $v = '(' . $v;
                 }
-                
+
                 $arr[$k] = $first . $v;
             }
         }
@@ -2278,7 +2278,7 @@ class SQL_Translations extends wpdb
      * an equivalent WITH (INDEX (index_name)) query hint, but that uses the name
      * of the index rather than the columns, which we don't have here, so just
      * drop the hint instead.
-     * 
+     *
      * TODO: Perhaps map known index names?
      *
      * @param string $query Query coming in
@@ -2298,7 +2298,7 @@ class SQL_Translations extends wpdb
 
         // Pattern constructed from grammar at https://dev.mysql.com/doc/refman/8.0/en/index-hints.html
         $query = preg_replace('/(FORCE|IGNORE|USE)\s+(INDEX|KEY)\s+(FOR.*)?\(.*\)/iU', "", $query);
-        
+
         return $query;
     }
 
@@ -2321,7 +2321,7 @@ class SQL_Translations extends wpdb
         $query = substr_replace($query, " COLLATE $collation", $pos, 0);
         return $query;
     }
-    
+
     /**
      * Describe wrapper
      *

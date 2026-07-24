@@ -152,8 +152,8 @@ class AtomParser {
         array_unshift($this->ns_contexts, array());
 
         if ( ! function_exists( 'xml_parser_create_ns' ) ) {
-		trigger_error( __( "PHP's XML extension is not available. Please contact your hosting provider to enable PHP's XML extension." ) );
-		return false;
+        	trigger_error( __( "PHP's XML extension is not available. Please contact your hosting provider to enable PHP's XML extension." ) );
+        	return false;
         }
 
         $parser = xml_parser_create_ns();
@@ -184,7 +184,10 @@ class AtomParser {
         }
         fclose($fp);
 
-        xml_parser_free($parser);
+        if (PHP_VERSION_ID < 80000) { // xml_parser_free() has no effect as of PHP 8.0.
+            xml_parser_free($parser);
+        }
+
         unset($parser);
 
         restore_error_handler();

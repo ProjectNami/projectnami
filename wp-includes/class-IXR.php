@@ -62,4 +62,4 @@ require_once ABSPATH . WPINC . '/IXR/class-IXR-message.php';
 
 require_once ABSPATH . WPINC . '/IXR/class-IXR-request.php';
 
-require_once ABSPATH . WPINC . '/IXR/class-IXR-value.php';
+require_once ABSPATH . WPINC . '/IXR/class-IXR-value.php';

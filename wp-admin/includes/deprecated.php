@@ -53,7 +53,7 @@ function wp_shrink_dimensions( $width, $height, $wmax = 128, $hmax = 96 ) {
 }
 
 /**
- * Calculated the new dimensions for a downsampled image.
+ * Calculates the new dimensions for a downsampled image.
  *
  * @since 2.0.0
  * @deprecated 3.5.0 Use wp_constrain_dimensions()
@@ -521,21 +521,19 @@ class WP_User_Search {
 	}
 
 	/**
-	 * {@internal Missing Short Description}}
-	 *
-	 * {@internal Missing Long Description}}
+	 * Prepares the user search query (legacy).
 	 *
 	 * @since 2.1.0
 	 * @access public
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 */
-	function prepare_query() {
+	public function prepare_query() {
 		global $wpdb;
 		$this->first_user = ($this->page - 1) * $this->users_per_page;
 
 		$this->query_limit = $wpdb->prepare(" ORDER BY user_login DESC OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $this->first_user, $this->users_per_page);
-		
+
 		/* mssql rewrite note: ORDER BY and LIMIT are handled by mssql OFFSET in the above line. */
 		//$this->query_orderby = ' ORDER BY user_login';
 

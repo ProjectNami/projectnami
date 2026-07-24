@@ -261,9 +261,6 @@ class WP_Community_Events {
 				 */
 				$address_chain = explode( ',', $_SERVER[ $header ] );
 				$client_ip     = trim( $address_chain[0] );
-                if ( (strlen($client_ip) < 25) && (stristr($client_ip, ":") !== FALSE) ) {
-                    $client_ip = substr($client_ip, 0, strpos($client_ip, ":"));
-                }
 
 				break;
 			}
@@ -378,17 +375,13 @@ class WP_Community_Events {
 	 * of the user who triggered the cache refresh, rather than their own.
 	 *
 	 * @since 4.8.0
-	 * @deprecated 5.6.0 No longer used in core.
+	 * @deprecated 5.5.2 No longer used in core.
 	 *
 	 * @param array $response_body The response which contains the events.
 	 * @return array The response with dates and times formatted.
 	 */
 	protected function format_event_data_time( $response_body ) {
-		_deprecated_function(
-			__METHOD__,
-			'5.5.2',
-			'This is no longer used by core, and only kept for backward compatibility.'
-		);
+		_deprecated_function( __METHOD__, '5.5.2' );
 
 		if ( isset( $response_body['events'] ) ) {
 			foreach ( $response_body['events'] as $key => $event ) {
@@ -416,7 +409,7 @@ class WP_Community_Events {
 						if ( $start_month === $end_month ) {
 							$formatted_date = sprintf(
 								/* translators: Date string for upcoming events. 1: Month, 2: Starting day, 3: Ending day, 4: Year. */
-								__( '%1$s %2$dΓÇô%3$d, %4$d' ),
+								__( '%1$s %2$d–%3$d, %4$d' ),
 								$start_month,
 								/* translators: Upcoming events day format. See https://www.php.net/manual/datetime.format.php */
 								date_i18n( _x( 'j', 'upcoming events day format' ), $timestamp ),
@@ -427,7 +420,7 @@ class WP_Community_Events {
 						} else {
 							$formatted_date = sprintf(
 								/* translators: Date string for upcoming events. 1: Starting month, 2: Starting day, 3: Ending month, 4: Ending day, 5: Year. */
-								__( '%1$s %2$d ΓÇô %3$s %4$d, %5$d' ),
+								__( '%1$s %2$d – %3$s %4$d, %5$d' ),
 								$start_month,
 								date_i18n( _x( 'j', 'upcoming events day format' ), $timestamp ),
 								$end_month,

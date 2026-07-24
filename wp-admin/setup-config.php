@@ -253,7 +253,7 @@ switch ( $step ) {
 			<td><input name="dbhost" id="dbhost" type="text" aria-describedby="dbhost-desc" size="25" value="<?php echo ( getenv("ProjectNami.DBHost") ? getenv("ProjectNami.DBHost") : "localhost" ); ?>" />
 			<p id="dbhost-desc">
 			<?php
- 				/* translators: %s: localhost */
+				/* translators: %s: localhost */
 				printf( __( 'You should be able to get this info from your web host, if %s does not work.' ), '<code>localhost</code>' );
 			?>
 			</p></td>

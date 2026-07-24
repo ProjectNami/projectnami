@@ -23,6 +23,7 @@ function network_domain_check() {
 	if ( $wpdb->get_var( $sql ) ) {
 		return $wpdb->get_var( "SELECT TOP 1 domain FROM $wpdb->site ORDER BY id ASC" );
 	}
+
 	return false;
 }
 
@@ -67,12 +68,12 @@ function allow_subdirectory_install() {
 	}
 
 	if ( defined( 'ALLOW_SUBDIRECTORY_INSTALL' ) && ALLOW_SUBDIRECTORY_INSTALL ) {
- 		return true;
+		return true;
 	}
 
 	$post = $wpdb->get_row( "SELECT ID FROM $wpdb->posts WHERE post_date < DATEADD(MONTH, -1, GETDATE()) AND post_status = 'publish'" );
 	if ( empty( $post ) ) {
- 		return true;
+		return true;
 	}
 
 	return false;
@@ -629,10 +630,10 @@ define( 'BLOG_ID_CURRENT_SITE', 1 );
                 </rule>
                 <rule name="WordPress Rule 4" stopProcessing="true">
                     <match url="^' . $iis_subdir_match . '(wp-(content|admin|includes).*)" ignoreCase="false" />
-                    <action type="Rewrite" url="' . $iis_rewrite_base . '{R:2}" />
+                    <action type="Rewrite" url="' . $iis_rewrite_base . '{R:1}" />
                 </rule>
                 <rule name="WordPress Rule 5" stopProcessing="true">
-                    <match url="^' . $iis_subdir_match . '(.*\.php)$" ignoreCase="false" />
+                    <match url="^' . $iis_subdir_match . '([_0-9a-zA-Z-]+/)?(.*\.php)$" ignoreCase="false" />
                     <action type="Rewrite" url="' . $iis_rewrite_base . '{R:2}" />
                 </rule>
                 <rule name="WordPress Rule 6" stopProcessing="true">

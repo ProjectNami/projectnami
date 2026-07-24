@@ -326,16 +326,12 @@ printf(
 </p>
 <table class="form-table permalink-structure" role="presentation">
 <tbody>
+<?php $permalink_structure_title = __( 'Permalink structure' ); ?>
 <tr>
-	<th scope="row"><?php _e( 'Permalink structure' ); ?></th>
+	<th scope="row"><?php echo $permalink_structure_title; ?></th>
 	<td>
 		<fieldset class="structure-selection">
-			<legend class="screen-reader-text">
-				<?php
-				/* translators: Hidden accessibility text. */
-				_e( 'Permalink structure' );
-				?>
-			</legend>
+			<legend class="screen-reader-text"><?php echo $permalink_structure_title; ?></legend>
 			<?php foreach ( $default_structures as $input ) : ?>
 			<div class="row">
 				<input id="permalink-input-<?php echo esc_attr( $input['id'] ); ?>"
@@ -462,12 +458,12 @@ printf(
 				<p id="iis-description-a">
 				<?php
 				printf(
-					/* translators: 1: web.config, 2: Documentation URL, 3: Ctrl + A, 4: Γîÿ + A, 5: Element code. */
+					/* translators: 1: web.config, 2: Documentation URL, 3: Ctrl + A, 4: ⌘ + A, 5: Element code. */
 					__( '<strong>Error:</strong> Your %1$s file is not <a href="%2$s">writable</a>, so updating it automatically was not possible. This is the URL rewrite rule you should have in your %1$s file. Click in the field and press %3$s (or %4$s on Mac) to select all. Then insert this rule inside of the %5$s element in %1$s file.' ),
 					'<code>web.config</code>',
 					__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' ),
 					'<kbd>Ctrl + A</kbd>',
-					'<kbd>Γîÿ + A</kbd>',
+					'<kbd>⌘ + A</kbd>',
 					'<code>/&lt;configuration&gt;/&lt;system.webServer&gt;/&lt;rewrite&gt;/&lt;rules&gt;</code>'
 				);
 				?>
@@ -495,12 +491,12 @@ printf(
 				<p id="iis-description-b">
 				<?php
 				printf(
-					/* translators: 1: Documentation URL, 2: web.config, 3: Ctrl + A, 4: Γîÿ + A */
+					/* translators: 1: Documentation URL, 2: web.config, 3: Ctrl + A, 4: ⌘ + A */
 					__( '<strong>Error:</strong> The root directory of your site is not <a href="%1$s">writable</a>, so creating a file automatically was not possible. This is the URL rewrite rule you should have in your %2$s file. Create a new file called %2$s in the root directory of your site. Click in the field and press %3$s (or %4$s on Mac) to select all. Then insert this code into the %2$s file.' ),
 					__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' ),
 					'<code>web.config</code>',
 					'<kbd>Ctrl + A</kbd>',
-					'<kbd>Γîÿ + A</kbd>'
+					'<kbd>⌘ + A</kbd>'
 				);
 				?>
 				</p>
@@ -530,12 +526,12 @@ printf(
 			<p id="htaccess-description">
 			<?php
 			printf(
-				/* translators: 1: .htaccess, 2: Documentation URL, 3: Ctrl + A, 4: Γîÿ + A */
+				/* translators: 1: .htaccess, 2: Documentation URL, 3: Ctrl + A, 4: ⌘ + A */
 				__( '<strong>Error:</strong> Your %1$s file is not <a href="%2$s">writable</a>, so updating it automatically was not possible. These are the mod_rewrite rules you should have in your %1$s file. Click in the field and press %3$s (or %4$s on Mac) to select all.' ),
 				'<code>.htaccess</code>',
 				__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' ),
 				'<kbd>Ctrl + A</kbd>',
-				'<kbd>Γîÿ + A</kbd>'
+				'<kbd>⌘ + A</kbd>'
 			);
 			?>
 			</p>

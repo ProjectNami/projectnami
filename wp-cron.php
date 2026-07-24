@@ -93,7 +93,7 @@ $doing_cron_transient = get_transient( 'doing_cron' );
 
 // Use global $doing_wp_cron lock, otherwise use the GET lock. If no lock, try to grab a new lock.
 if ( empty( $doing_wp_cron ) ) {
-	if ( empty( $_GET[ 'doing_wp_cron' ] ) ) {
+	if ( empty( $_GET['doing_wp_cron'] ) ) {
 		// Called from external script/job. Try setting a lock.
 		if ( $doing_cron_transient && ( $doing_cron_transient + WP_CRON_LOCK_TIMEOUT > $gmt_time ) ) {
 			return;

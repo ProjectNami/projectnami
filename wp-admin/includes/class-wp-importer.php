@@ -29,7 +29,7 @@ class WP_Importer {
 		// Grab all posts in chunks.
 		do {
 			$meta_key = $importer_name . '_' . $blog_id . '_permalink';
-			
+
 			/*
 			 * PN Mod: Start
 			 * Replace MySQL LIMIT with MSSQL's OFFSET FETCH.
@@ -42,7 +42,7 @@ class WP_Importer {
 			$offset = ( $limit + $offset );
 
 			if ( ! empty( $results ) ) {
- 				foreach ( $results as $r ) {
+				foreach ( $results as $r ) {
 					// Set permalinks into array.
 					$hashtable[ $r->meta_value ] = (int) $r->post_id;
 				}
@@ -109,12 +109,12 @@ class WP_Importer {
 			$offset = ( $limit + $offset );
 
 			if ( ! empty( $results ) ) {
- 				foreach ( $results as $r ) {
+				foreach ( $results as $r ) {
 					// Explode comment_agent key.
 					list ( $comment_agent_blog_id, $source_comment_id ) = explode( '-', $r->comment_agent );
 
 					$source_comment_id = (int) $source_comment_id;
- 
+
 					// Check if this comment came from this blog.
 					if ( (int) $blog_id === (int) $comment_agent_blog_id ) {
 						$hashtable[ $source_comment_id ] = (int) $r->comment_ID;

@@ -411,7 +411,7 @@ class WP_Automatic_Updater {
 			case 'theme':
 				$upgrader_item = $item->theme;
 				$theme         = wp_get_theme( $upgrader_item );
-				$item_name     = $theme->Get( 'Name' );
+				$item_name     = $theme->get( 'Name' );
 				// Add the current version so that it can be reported in the notification email.
 				$item->current_version = $theme->get( 'Version' );
 				if ( empty( $item->current_version ) ) {
@@ -1342,7 +1342,7 @@ class WP_Automatic_Updater {
 
 		if ( in_array( $type, array( 'fail', 'mixed' ), true ) ) {
 			$body[] = "\n";
-			$body[] = __( 'Please check your site now. ItΓÇÖs possible that everything is working. If there are updates available, you should update.' );
+			$body[] = __( 'Please check your site now. It’s possible that everything is working. If there are updates available, you should update.' );
 			$body[] = "\n";
 
 			// List failed plugin updates.

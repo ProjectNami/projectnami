@@ -308,12 +308,16 @@ class WP_REST_Revisions_Controller extends WP_REST_Controller {
 			$total_revisions = $revisions_query->found_posts;
 
 			if ( $total_revisions < 1 ) {
-				// Out-of-bounds, run the query again without LIMIT for total count.
+				// Out-of-bounds, run the query without pagination/offset to get the total count.
 				unset( $query_args['paged'], $query_args['offset'] );
 
-				$count_query = new WP_Query();
-				$count_query->query( $query_args );
+				$count_query                          = new WP_Query();
+				$query_args['fields']                 = 'ids';
+				$query_args['posts_per_page']         = 1;
+				$query_args['update_post_meta_cache'] = false;
+				$query_args['update_post_term_cache'] = false;
 
+				$count_query->query( $query_args );
 				$total_revisions = $count_query->found_posts;
 			}
 
@@ -698,7 +702,7 @@ class WP_REST_Revisions_Controller extends WP_REST_Controller {
 	 * @return string|null ISO8601/RFC3339 formatted datetime, otherwise null.
 	 */
 	protected function prepare_date_response( $date_gmt, $date = null ) {
-		if ( '0000-00-00 00:00:00' === $date_gmt ) {
+		if ( '0001-01-01 00:00:00' === $date_gmt ) {
 			return null;
 		}
 

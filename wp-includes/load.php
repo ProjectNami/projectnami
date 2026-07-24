@@ -139,15 +139,18 @@ function wp_populate_basic_auth_from_authorization_header() {
 }
 
 /**
- * Checks for the required PHP version, and the mysqli extension or
- * a database drop-in.
+ * Checks the server requirements.
+ *
+ *   - PHP version
+ *   - PHP extensions
+ *   - MySQL or MariaDB version (unless a database drop-in is present)
  *
  * Dies if requirements are not met.
  *
  * @since 3.0.0
  * @access private
  *
- * @global string   $required_php_version    The required PHP version string.
+ * @global string   $required_php_version    The minimum required PHP version string.
  * @global string[] $required_php_extensions The names of required PHP extensions.
  * @global string   $wp_version              The WordPress version string.
  */
@@ -156,18 +159,18 @@ function wp_check_php_mysql_versions() {
 
 	$php_version = PHP_VERSION;
 
- 	if ( version_compare( $required_php_version, $php_version, '>' ) ) {
- 		$protocol = wp_get_server_protocol();
- 		header( sprintf( '%s 500 Internal Server Error', $protocol ), true, 500 );
- 		header( 'Content-Type: text/html; charset=utf-8' );
+	if ( version_compare( $required_php_version, $php_version, '>' ) ) {
+		$protocol = wp_get_server_protocol();
+		header( sprintf( '%s 500 Internal Server Error', $protocol ), true, 500 );
+		header( 'Content-Type: text/html; charset=utf-8' );
 		printf(
 			'Your server is running PHP version %1$s but Project Nami %2$s requires at least %3$s.',
 			$php_version,
 			$wp_version,
 			$required_php_version
 		);
- 		exit( 1 );
- 	}
+		exit( 1 );
+	}
 
 	$missing_extensions = array();
 
@@ -477,8 +480,9 @@ function timer_float() {
  * @since 0.71
  * @access private
  *
- * @global float $timestart Unix timestamp set at the beginning of the page load.
  * @see timer_stop()
+ *
+ * @global float $timestart Unix timestamp set at the beginning of the page load.
  *
  * @return bool Always returns true.
  */

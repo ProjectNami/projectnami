@@ -16,7 +16,6 @@ if ( false ) {
 	<title>Error: PHP is not running</title>
 </head>
 <body class="wp-core-ui">
-	<p id="logo"><a href="https://wordpress.org/">WordPress</a></p>
 	<h1>Error: PHP is not running</h1>
 	<p>WordPress requires that your web server is running PHP. Your server does not have PHP installed, or PHP is turned off.</p>
 </body>
@@ -181,19 +180,12 @@ function display_setup_form( $error = null ) {
 			<td><input name="admin_email" type="email" id="admin_email" size="25" aria-describedby="admin-email-desc" value="<?php echo esc_attr( $admin_email ); ?>" />
 			<p id="admin-email-desc"><?php _e( 'Double-check your email address before continuing.' ); ?></p></td>
 		</tr>
+		<?php $blog_privacy_selector_title = has_action( 'blog_privacy_selector' ) ? __( 'Site visibility' ) : __( 'Search engine visibility' ); ?>
 		<tr>
-			<th scope="row"><?php has_action( 'blog_privacy_selector' ) ? _e( 'Site visibility' ) : _e( 'Search engine visibility' ); ?></th>
+			<th scope="row"><?php echo $blog_privacy_selector_title; ?></th>
 			<td>
 				<fieldset>
-					<legend class="screen-reader-text"><span>
-						<?php
-						has_action( 'blog_privacy_selector' )
-							/* translators: Hidden accessibility text. */
-							? _e( 'Site visibility' )
-							/* translators: Hidden accessibility text. */
-							: _e( 'Search engine visibility' );
-						?>
-					</span></legend>
+					<legend class="screen-reader-text"><span><?php echo $blog_privacy_selector_title; ?></span></legend>
 					<?php
 					if ( has_action( 'blog_privacy_selector' ) ) {
 						?>
@@ -234,44 +226,68 @@ if ( is_blog_installed() ) {
 
 /**
  * @global string   $wp_version              The WordPress version string.
- * @global string   $required_php_version    The required PHP version string.
+ * @global string   $required_php_version    The minimum required PHP version string.
  * @global string[] $required_php_extensions The names of required PHP extensions.
- * @global string   $required_mysql_version  The required MySQL version string.
+ * @global string   $required_mysql_version  The minimum required MySQL version string.
  * @global wpdb     $wpdb                    WordPress database abstraction object.
  */
 global $wp_version, $required_php_version, $required_php_extensions, $required_mysql_version, $wpdb;
 
 $php_version   = PHP_VERSION;
-$mysql_version  = $wpdb->db_version();
-$php_compat     = version_compare( $php_version, $required_php_version, '>=' );
-$mysql_compat   = version_compare( $mysql_version, $required_mysql_version, '>=' ) || file_exists( WP_CONTENT_DIR . '/db.php' );
+$mysql_version = $wpdb->db_version();
+$php_compat    = version_compare( $php_version, $required_php_version, '>=' );
+$mysql_compat  = version_compare( $mysql_version, $required_mysql_version, '>=' ) || file_exists( WP_CONTENT_DIR . '/db.php' );
 
- $version_url = sprintf(
+$version_url = sprintf(
 	/* translators: %s: WordPress version. */
 	esc_url( __( 'https://wordpress.org/documentation/wordpress-version/version-%s/' ) ),
- 	sanitize_title( $wp_version )
- );
+	sanitize_title( $wp_version )
+);
 
-/* translators: %s: URL to Update PHP page. */
-$php_update_message = '</p><p>' . sprintf( __( '<a href="%s">Learn more about updating PHP</a>.' ), esc_url( wp_get_update_php_url() ) );
+$php_update_message = '</p><p>' . sprintf(
+	/* translators: %s: URL to Update PHP page. */
+	__( '<a href="%s">Learn more about updating PHP</a>.' ),
+	esc_url( wp_get_update_php_url() )
+);
 
 $annotation = wp_get_update_php_annotation();
+
 if ( $annotation ) {
 	$php_update_message .= '</p><p><em>' . $annotation . '</em>';
 }
 
-if ( !$mysql_compat && !$php_compat ) {
-	/* translators: 1: PN version number, 2: Minimum required PHP version number, 3: Minimum required MSSQL version number, 4: Current PHP version number, 5: Current MSSQL version number */
-	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher and MSSQL version %2$s or higher. You are running PHP version %3$s and MSSQL version %4$s.' ), $required_php_version, $required_mysql_version, $php_version, $mysql_version ) . $php_update_message;
-} elseif ( !$php_compat ) {
-	/* translators: 1: PN version number, 2: Minimum required PHP version number, 3: Current PHP version number */
-	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher. You are running version %2$s.' ), $required_php_version, $php_version ) . $php_update_message;
-} elseif ( !$mysql_compat ) {
-	/* translators: 1: PN version number, 2: Minimum required MSSQL version number, 3: Current MSSQL version number */
-	$compat = sprintf( __( 'You cannot install because Project Nami requires MSSQL version %1$s or higher. You are running version %2$s.' ), $required_mysql_version, $mysql_version );
+if ( ! $mysql_compat && ! $php_compat ) {
+	$compat = sprintf(
+		/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: Minimum required PHP version number, 4: Minimum required MySQL version number, 5: Current PHP version number, 6: Current MySQL version number. */
+		__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires PHP version %3$s or higher and MySQL version %4$s or higher. You are running PHP version %5$s and MySQL version %6$s.' ),
+		$version_url,
+		$wp_version,
+		$required_php_version,
+		$required_mysql_version,
+		$php_version,
+		$mysql_version
+	) . $php_update_message;
+} elseif ( ! $php_compat ) {
+	$compat = sprintf(
+		/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: Minimum required PHP version number, 4: Current PHP version number. */
+		__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires PHP version %3$s or higher. You are running version %4$s.' ),
+		$version_url,
+		$wp_version,
+		$required_php_version,
+		$php_version
+	) . $php_update_message;
+} elseif ( ! $mysql_compat ) {
+	$compat = sprintf(
+		/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: Minimum required MySQL version number, 4: Current MySQL version number. */
+		__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires MySQL version %3$s or higher. You are running version %4$s.' ),
+		$version_url,
+		$wp_version,
+		$required_mysql_version,
+		$mysql_version
+	);
 }
 
-if ( !$mysql_compat || !$php_compat ) {
+if ( ! $mysql_compat || ! $php_compat ) {
 	display_header();
 	die( '<h1>' . __( 'Requirements Not Met' ) . '</h1><p>' . $compat . '</p></body></html>' );
 }
@@ -301,28 +317,27 @@ if ( isset( $required_php_extensions ) && is_array( $required_php_extensions ) )
 
 if ( ! is_string( $wpdb->base_prefix ) || '' === $wpdb->base_prefix ) {
 	display_header();
-	die( 
-		'<h1>' . __( 'Configuration Error' ) . '</h1>' . 
-		'<p>' . sprintf( 
-			/* translators: %s: wp-config.php */ 
-			__( 'Your %s file has an empty database table prefix, which is not supported.' ), 
-			'<code>wp-config.php</code>' 
-		) . '</p></body></html>' 
-	); 
+	die(
+		'<h1>' . __( 'Configuration Error' ) . '</h1>' .
+		'<p>' . sprintf(
+			/* translators: %s: wp-config.php */
+			__( 'Your %s file has an empty database table prefix, which is not supported.' ),
+			'<code>wp-config.php</code>'
+		) . '</p></body></html>'
+	);
 }
 
 // Set error message if DO_NOT_UPGRADE_GLOBAL_TABLES isn't set as it will break install.
 if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
 	display_header();
-	die( '<h1>' . __( 'Configuration Error' ) . '</h1><p>' . __( 'The constant DO_NOT_UPGRADE_GLOBAL_TABLES cannot be defined when installing WordPress.' ) . '</p></body></html>' );
-	die( 
-		'<h1>' . __( 'Configuration Error' ) . '</h1>' . 
-		'<p>' . sprintf( 
-			/* translators: %s: DO_NOT_UPGRADE_GLOBAL_TABLES */ 
-			__( 'The constant %s cannot be defined when installing WordPress.' ), 
-			'<code>DO_NOT_UPGRADE_GLOBAL_TABLES</code>' 
-		) . '</p></body></html>' 
-	); 
+	die(
+		'<h1>' . __( 'Configuration Error' ) . '</h1>' .
+		'<p>' . sprintf(
+			/* translators: %s: DO_NOT_UPGRADE_GLOBAL_TABLES */
+			__( 'The constant %s cannot be defined when installing WordPress.' ),
+			'<code>DO_NOT_UPGRADE_GLOBAL_TABLES</code>'
+		) . '</p></body></html>'
+	);
 }
 
 /**

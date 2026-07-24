@@ -1430,9 +1430,15 @@ function wp_title( $sep = '&raquo;', $display = true, $seplocation = '' ) {
 		$title = __( 'Page not found' );
 	}
 
-	$prefix = '';
-	if ( ! empty( $title ) ) {
-		$prefix = " $sep ";
+	if ( ! is_string( $title ) ) {
+		$title = '';
+	}
+
+	$prefix      = '';
+	$title_array = array();
+	if ( '' !== $title ) {
+		$prefix      = " $sep ";
+		$title_array = explode( $t_sep, $title );
 	}
 
 	/**
@@ -1442,7 +1448,7 @@ function wp_title( $sep = '&raquo;', $display = true, $seplocation = '' ) {
 	 *
 	 * @param string[] $title_array Array of parts of the page title.
 	 */
-	$title_array = apply_filters( 'wp_title_parts', explode( $t_sep, $title ) );
+	$title_array = apply_filters( 'wp_title_parts', $title_array );
 
 	// Determines position of the separator and direction of the breadcrumb.
 	if ( 'right' === $seplocation ) { // Separator on right, so reverse the order.
@@ -2033,7 +2039,7 @@ function wp_get_archives( $args = '' ) {
 
 	if ( ! empty( $parsed_args['limit'] ) ) {
 		$parsed_args['limit'] = absint( $parsed_args['limit'] );
-		$parsed_args['limit'] = ' OFFSET 0 ROWS FETCH NEXT '. $parsed_args['limit'] . ' ROWS ONLY';
+		$parsed_args['limit'] = ' LIMIT ' . $parsed_args['limit'];
 	}
 
 	$order = strtoupper( $parsed_args['order'] );
@@ -2075,11 +2081,11 @@ function wp_get_archives( $args = '' ) {
 	if ( 'monthly' === $parsed_args['type'] ) {
 		$query   = "SELECT YEAR(post_date) AS [year], MONTH(post_date) AS [month], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date), MONTH(post_date) ORDER BY [year] $order , [month] $order $limit";
 		$key     = md5( $query );
-		$key     = "wp_get_archives:$key:$last_changed";
-		$results = wp_cache_get( $key, 'post-queries' );
+		$key     = "wp_get_archives:$key";
+		$results = wp_cache_get_salted( $key, 'post-queries', $last_changed );
 		if ( ! $results ) {
 			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'post-queries' );
+			wp_cache_set_salted( $key, $results, 'post-queries', $last_changed );
 		}
 		if ( $results ) {
 			$after = $parsed_args['after'];
@@ -2100,11 +2106,11 @@ function wp_get_archives( $args = '' ) {
 	} elseif ( 'yearly' === $parsed_args['type'] ) {
 		$query   = "SELECT YEAR(post_date) AS [year], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date) ORDER BY YEAR(post_date) $order $limit";
 		$key     = md5( $query );
-		$key     = "wp_get_archives:$key:$last_changed";
-		$results = wp_cache_get( $key, 'post-queries' );
+		$key     = "wp_get_archives:$key";
+		$results = wp_cache_get_salted( $key, 'post-queries', $last_changed );
 		if ( ! $results ) {
 			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'post-queries' );
+			wp_cache_set_salted( $key, $results, 'post-queries', $last_changed );
 		}
 		if ( $results ) {
 			$after = $parsed_args['after'];
@@ -2124,11 +2130,11 @@ function wp_get_archives( $args = '' ) {
 	} elseif ( 'daily' === $parsed_args['type'] ) {
 		$query   = "SELECT YEAR(post_date) AS [year], MONTH(post_date) AS [month], DAY(post_date) AS [dayofmonth], count(ID) as posts FROM $wpdb->posts $join $where GROUP BY YEAR(post_date), MONTH(post_date), DAY(post_date) ORDER BY YEAR(post_date) $order, MONTH(post_date) $order, DAY(post_date) $order $limit";
 		$key     = md5( $query );
-		$key     = "wp_get_archives:$key:$last_changed";
-		$results = wp_cache_get( $key, 'post-queries' );
+		$key     = "wp_get_archives:$key";
+		$results = wp_cache_get_salted( $key, 'post-queries', $last_changed );
 		if ( ! $results ) {
 			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'post-queries' );
+			wp_cache_set_salted( $key, $results, 'post-queries', $last_changed );
 		}
 		if ( $results ) {
 			$after = $parsed_args['after'];
@@ -2150,11 +2156,11 @@ function wp_get_archives( $args = '' ) {
 		$week    = _wp_mysql_week( '`post_date`' );
 		$query   = "SELECT DISTINCT $week AS [week], YEAR( [post_date] ) AS [yr], DATE_FORMAT( [post_date], '%Y-%m-%d' ) AS [yyyymmdd], count( [ID] ) AS [posts] FROM [$wpdb->posts] $join $where GROUP BY $week, YEAR( [post_date] ) ORDER BY [post_date] $order $limit";
 		$key     = md5( $query );
-		$key     = "wp_get_archives:$key:$last_changed";
-		$results = wp_cache_get( $key, 'post-queries' );
+		$key     = "wp_get_archives:$key";
+		$results = wp_cache_get_salted( $key, 'post-queries', $last_changed );
 		if ( ! $results ) {
 			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'post-queries' );
+			wp_cache_set_salted( $key, $results, 'post-queries', $last_changed );
 		}
 		$arc_w_last = '';
 		if ( $results ) {
@@ -2189,11 +2195,11 @@ function wp_get_archives( $args = '' ) {
 		$orderby = ( 'alpha' === $parsed_args['type'] ) ? 'post_title ASC ' : 'post_date DESC, ID DESC ';
 		$query   = "SELECT * FROM $wpdb->posts $join $where ORDER BY $orderby $limit";
 		$key     = md5( $query );
-		$key     = "wp_get_archives:$key:$last_changed";
-		$results = wp_cache_get( $key, 'post-queries' );
+		$key     = "wp_get_archives:$key";
+		$results = wp_cache_get_salted( $key, 'post-queries', $last_changed );
 		if ( ! $results ) {
 			$results = $wpdb->get_results( $query );
-			wp_cache_set( $key, $results, 'post-queries' );
+			wp_cache_set_salted( $key, $results, 'post-queries', $last_changed );
 		}
 		if ( $results ) {
 			foreach ( (array) $results as $result ) {
@@ -2295,7 +2301,6 @@ function get_calendar( $args = array() ) {
 	 *     @type bool   $display   Whether to display the calendar output. Default true.
 	 *     @type string $post_type Optional. Post type. Default 'post'.
 	 * }
-	 * @return array The arguments for the `get_calendar` function.
 	 */
 	$args = apply_filters( 'get_calendar_args', wp_parse_args( $args, $defaults ) );
 
@@ -2353,7 +2358,7 @@ function get_calendar( $args = array() ) {
 	$post_type = $args['post_type'];
 
 	// Quick check. If we have no posts at all, abort!
-	if ( !$posts ) {
+	if ( ! $posts ) {
 		$gotsome = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT TOP 1 1 as test
@@ -2365,7 +2370,7 @@ function get_calendar( $args = array() ) {
 			)
 		);
 
-		if ( !$gotsome ) {
+		if ( ! $gotsome ) {
 			$cache[ $key ] = '';
 			wp_cache_set( 'get_calendar', $cache, 'calendar' );
 			return;
@@ -2494,7 +2499,7 @@ function get_calendar( $args = array() ) {
 	$daysinmonth = (int) gmdate( 't', $unixmonth );
 
 	for ( $day = 1; $day <= $daysinmonth; ++$day ) {
-		if ( isset( $newrow ) && $newrow ) {
+		if ( $newrow ) {
 			$calendar_output .= "\n\t</tr>\n\t<tr>\n\t\t";
 		}
 
@@ -2950,7 +2955,7 @@ function get_post_datetime( $post = null, $field = 'date', $source = 'local' ) {
 		$timezone = $wp_timezone;
 	}
 
-	if ( empty( $time ) || '0000-00-00 00:00:00' === $time ) {
+	if ( empty( $time ) || '0001-01-01 00:00:00' === $time ) {
 		return false;
 	}
 
@@ -3327,9 +3332,13 @@ function feed_links_extra( $args = array() ) {
 	 */
 	$args = apply_filters( 'feed_links_extra_args', $args );
 
-	if ( is_singular() ) {
-		$id   = 0;
-		$post = get_post( $id );
+	/*
+	 * The template conditionals are referring to the global query, so the queried object is used rather than
+	 * depending on a global $post being set.
+	 */
+	$queried_object = get_queried_object();
+	if ( is_singular() && $queried_object instanceof WP_Post ) {
+		$post = $queried_object;
 
 		/** This filter is documented in wp-includes/general-template.php */
 		$show_comments_feed = apply_filters( 'feed_links_show_comments_feed', true );
@@ -3349,12 +3358,17 @@ function feed_links_extra( $args = array() ) {
 		 */
 		$show_post_comments_feed = apply_filters( 'feed_links_extra_show_post_comments_feed', $show_comments_feed );
 
-		if ( $show_post_comments_feed && ( comments_open() || pings_open() || $post->comment_count > 0 ) ) {
+		if ( $show_post_comments_feed && ( comments_open( $post ) || pings_open( $post ) || (int) $post->comment_count > 0 ) ) {
 			$title = sprintf(
 				$args['singletitle'],
 				get_bloginfo( 'name' ),
 				$args['separator'],
-				the_title_attribute( array( 'echo' => false ) )
+				the_title_attribute(
+					array(
+						'echo' => false,
+						'post' => $post,
+					)
+				)
 			);
 
 			$feed_link = get_post_comments_feed_link( $post->ID );
@@ -4067,7 +4081,7 @@ function wp_enqueue_code_editor( $args ) {
 		}
 	}
 
-	wp_add_inline_script( 'code-editor', sprintf( 'jQuery.extend( wp.codeEditor.defaultSettings, %s );', wp_json_encode( $settings ) ) );
+	wp_add_inline_script( 'code-editor', sprintf( 'jQuery.extend( wp.codeEditor.defaultSettings, %s );', wp_json_encode( $settings, JSON_HEX_TAG | JSON_UNESCAPED_SLASHES ) ) );
 
 	/**
 	 * Fires when scripts and styles are enqueued for the code editor.

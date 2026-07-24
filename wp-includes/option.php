@@ -132,10 +132,10 @@ function get_option( $option, $default_value = false ) {
 	$pre = apply_filters( "pre_option_{$option}", false, $option, $default_value );
 
 	/**
-	 * Filters the value of all existing options before it is retrieved.
+	 * Filters the value of any existing option before it is retrieved.
 	 *
-	 * Returning a truthy value from the filter will effectively short-circuit retrieval
-	 * and return the passed value instead.
+	 * Returning a value other than false from the filter will short-circuit retrieval
+	 * and return that value instead.
 	 *
 	 * @since 6.1.0
 	 *
@@ -1629,9 +1629,9 @@ function set_transient( $transient, $value, $expiration = 0 ) {
  * The multi-table delete syntax is used to delete the transient record
  * from table a, and the corresponding transient_timeout record from table b.
  *
- * @global wpdb $wpdb WordPress database abstraction object.
- *
  * @since 4.9.0
+ *
+ * @global wpdb $wpdb WordPress database abstraction object.
  *
  * @param bool $force_db Optional. Force cleanup to run against the database even when an external object cache is used.
  */
@@ -1644,7 +1644,7 @@ function delete_expired_transients( $force_db = false ) {
 
 	$dbtransients = $wpdb->get_results( $wpdb->prepare(
 		"SELECT TOP 1000 * from {$wpdb->options}
-			WHERE option_name LIKE %s 
+			WHERE option_name LIKE %s
 			AND option_value < %d",
 		$wpdb->esc_like( '_transient_timeout_' ) . '%',
 		time()
@@ -1662,7 +1662,7 @@ function delete_expired_transients( $force_db = false ) {
 
 	$dbsitetransients = $wpdb->get_results( $wpdb->prepare(
 		"SELECT TOP 1000 * from {$wpdb->options}
-			WHERE option_name LIKE %s 
+			WHERE option_name LIKE %s
 			AND option_value < %d",
 		$wpdb->esc_like( '_site_transient_timeout_' ) . '%',
 		time()
@@ -1682,7 +1682,7 @@ function delete_expired_transients( $force_db = false ) {
 		// Multisite stores site transients in the sitemeta table.
 		$mssitetransients = $wpdb->get_results( $wpdb->prepare(
 			"SELECT TOP 1000 * from {$wpdb->sitemeta}
-				WHERE meta_key LIKE %s 
+				WHERE meta_key LIKE %s
 				AND meta_value < %d",
 			$wpdb->esc_like( '_site_transient_timeout_' ) . '%',
 			time()
@@ -1722,7 +1722,7 @@ function wp_user_settings() {
 	}
 
 	if ( ! is_user_member_of_blog() ) {
-		return;
+		return null;
 	}
 
 	$settings = (string) get_user_option( 'user-settings', $user_id );
@@ -1895,7 +1895,7 @@ function wp_set_all_user_settings( $user_settings ) {
 	}
 
 	if ( ! is_user_member_of_blog() ) {
-		return;
+		return null;
 	}
 
 	$settings = '';
@@ -2051,6 +2051,25 @@ function get_network_option( $network_id, $option, $default_value = false ) {
 	 *                                Default false.
 	 */
 	$pre = apply_filters( "pre_site_option_{$option}", false, $option, $network_id, $default_value );
+
+	/**
+	 * Filters the value of any existing network option before it is retrieved.
+	 *
+	 * Returning a value other than false from the filter will short-circuit retrieval
+	 * and return that value instead.
+	 *
+	 * @since 6.9.0
+	 *
+	 * @param mixed  $pre_option    The value to return instead of the network option value. This differs
+	 *                              from `$default_value`, which is used as the fallback value in the event
+	 *                              the option doesn't exist elsewhere in get_network_option().
+	 *                              Default false (to skip past the short-circuit).
+	 * @param string $option        Name of the option.
+	 * @param int    $network_id    ID of the network.
+	 * @param mixed  $default_value The fallback value to return if the option does not exist.
+	 *                              Default false.
+	 */
+	$pre = apply_filters( 'pre_site_option', $pre, $option, $network_id, $default_value );
 
 	if ( false !== $pre ) {
 		return $pre;
@@ -3191,7 +3210,23 @@ function unregister_setting( $option_group, $option_name, $deprecated = '' ) {
  *
  * @global array $wp_registered_settings
  *
- * @return array List of registered settings, keyed by option name.
+ * @return array {
+ *     List of registered settings, keyed by option name.
+ *
+ *     @type array ...$0 {
+ *         Data used to describe the setting when registered.
+ *
+ *         @type string     $type              The type of data associated with this setting.
+ *                                             Valid values are 'string', 'boolean', 'integer', 'number', 'array', and 'object'.
+ *         @type string     $label             A label of the data attached to this setting.
+ *         @type string     $description       A description of the data attached to this setting.
+ *         @type callable   $sanitize_callback A callback function that sanitizes the option's value.
+ *         @type bool|array $show_in_rest      Whether data associated with this setting should be included in the REST API.
+ *                                             When registering complex settings, this argument may optionally be an
+ *                                             array with a 'schema' key.
+ *         @type mixed      $default           Default value when calling `get_option()`.
+ *     }
+ * }
  */
 function get_registered_settings() {
 	global $wp_registered_settings;

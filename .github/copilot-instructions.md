@@ -1,0 +1,5 @@
+- it's a php project, so the instructions should be related to php code style and best practices.
+- use WordPress coding standards.
+- this project is basically a WordPress using Microsoft SQL Server, so the changes should be in sql queries and not in the WordPress code itself.
+- try to avoid changing the WordPress code itself, unless it's extremely necessary to fix a bug or improve performance.
+- add a flag in modified code to indicate that the code was modified for Microsoft SQL Server compatibility, so that it can be easily identified and reverted if necessary.

@@ -754,7 +754,7 @@ final class WP_Screen {
 	 *                                      Default 'Filter items list'.
 	 *     @type string $heading_pagination Screen reader text for the pagination heading.
 	 *                                      Default 'Items list navigation'.
-	 *     @type string $heading_list        Screen reader text for the items list heading.
+	 *     @type string $heading_list       Screen reader text for the items list heading.
 	 *                                      Default 'Items list'.
 	 * }
 	 */
@@ -984,6 +984,8 @@ final class WP_Screen {
 	}
 
 	/**
+	 * @since 3.3.0
+	 *
 	 * @global array $wp_meta_boxes Global meta box state.
 	 *
 	 * @return bool
@@ -1084,7 +1086,7 @@ final class WP_Screen {
 		 * Filters whether to show the Screen Options submit button.
 		 *
 		 * @since 4.4.0
-		 * 
+		 *
 		 * @param bool      $show_button Whether to show Screen Options submit button.
 		 *                               Default false.
 		 * @param WP_Screen $screen      Current WP_Screen instance.

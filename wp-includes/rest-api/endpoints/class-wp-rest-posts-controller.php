@@ -463,7 +463,13 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			}
 
 			foreach ( $query_result as $post ) {
-				if ( ! $this->check_read_permission( $post ) ) {
+				if ( 'edit' === $request['context'] ) {
+					$permission = $this->check_update_permission( $post );
+				} else {
+					$permission = $this->check_read_permission( $post );
+				}
+
+				if ( ! $permission ) {
 					continue;
 				}
 
@@ -481,10 +487,15 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		$total_posts = $posts_query->found_posts;
 
 		if ( $total_posts < 1 && $page > 1 ) {
-			// Out-of-bounds, run the query again without LIMIT for total count.
+			// Out-of-bounds, run the query without pagination/offset to get the total count.
 			unset( $query_args['paged'] );
 
-			$count_query = new WP_Query();
+			$count_query                          = new WP_Query();
+			$query_args['fields']                 = 'ids';
+			$query_args['posts_per_page']         = 1;
+			$query_args['update_post_meta_cache'] = false;
+			$query_args['update_post_term_cache'] = false;
+
 			$count_query->query( $query_args );
 			$total_posts = $count_query->found_posts;
 		}
@@ -1252,7 +1263,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 		}
 
 		// Return null if $date_gmt is empty/zeros.
-		if ( '0000-00-00 00:00:00' === $date_gmt ) {
+		if ( '0001-01-01 00:00:00' === $date_gmt ) {
 			return null;
 		}
 
@@ -1359,7 +1370,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 
 		/*
 		 * Sending a null date or date_gmt value resets date and date_gmt to their
-		 * default values (`0000-00-00 00:00:00`).
+		 * default values (`0001-01-01 00:00:00`).
 		 */
 		if (
 			( ! empty( $schema['properties']['date_gmt'] ) && $request->has_param( 'date_gmt' ) && null === $request['date_gmt'] ) ||
@@ -1870,7 +1881,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			 * In this case, shim the value based on the `post_date` field
 			 * with the site's timezone offset applied.
 			 */
-			if ( '0000-00-00 00:00:00' === $post->post_date_gmt ) {
+			if ( '0001-01-01 00:00:00' === $post->post_date_gmt ) {
 				$post_date_gmt = get_gmt_from_date( $post->post_date );
 			} else {
 				$post_date_gmt = $post->post_date_gmt;
@@ -1896,7 +1907,7 @@ class WP_REST_Posts_Controller extends WP_REST_Controller {
 			 * above). In this case, shim the value based on the `post_modified` field
 			 * with the site's timezone offset applied.
 			 */
-			if ( '0000-00-00 00:00:00' === $post->post_modified_gmt ) {
+			if ( '0001-01-01 00:00:00' === $post->post_modified_gmt ) {
 				$post_modified_gmt = gmdate( 'Y-m-d H:i:s', strtotime( $post->post_modified ) - (int) ( (float) get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) );
 			} else {
 				$post_modified_gmt = $post->post_modified_gmt;
