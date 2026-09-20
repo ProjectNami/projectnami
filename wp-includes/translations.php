@@ -246,6 +246,24 @@ class SQL_Translations extends wpdb
     }
 
     /**
+     * Put quoted strings back. Do not use vsprintf — leftover % (modulo, LIKE)
+     * is a format specifier and fatals (Yoast sitemap MOD → (n % 1000)).
+     *
+     * @param string $query
+     * @return string
+     */
+    function restore_strings( $query ) {
+        if ( empty( $this->preg_data ) ) {
+            return $query;
+        }
+        $repl = array();
+        foreach ( $this->preg_data as $i => $s ) {
+            $repl[ '%' . $i . '$s' ] = $s;
+        }
+        return strtr( $query, $repl );
+    }
+
+    /**
      * MySQL > MSSQL Query Translation
      * Processes smaller translation sub-functions
      *
@@ -299,7 +317,7 @@ class SQL_Translations extends wpdb
 				$query = $this->on_update_to_merge($query);
             }
             $query = $this->translate_general($query);
-            $query = vsprintf($query, $this->preg_data);
+            $query = $this->restore_strings( $query );
             $this->preg_data = array();
             return $query;
         }
@@ -351,7 +369,7 @@ class SQL_Translations extends wpdb
         }
         
         if (!empty($this->preg_data)) {
-            $query = vsprintf($query, $this->preg_data);
+            $query = $this->restore_strings( $query );
         }
         $this->preg_data = array();
 
@@ -1548,7 +1566,7 @@ class SQL_Translations extends wpdb
 
         // This needs all the data to work with
         if (!empty($this->preg_data)) {
-            $query = vsprintf($query, $this->preg_data);
+            $query = $this->restore_strings( $query );
         }
         $this->preg_data = array();
 
@@ -2418,6 +2436,10 @@ class SQL_Translations extends wpdb
      */
     function mysql_type_to_tsql( $sql ) {
         $sql = preg_replace( '/\bCURRENT_TIMESTAMP(?:\(\))?/i', 'GETDATE()', $sql );
+        // MySQL display widths: int(11), tinyint(1), integer(3). Illegal on SQL Server.
+        $sql = preg_replace( '/\b(tinyint|smallint|mediumint|bigint|integer|int)\s*\(\s*\d+\s*\)/i', '$1', $sql );
+        $sql = preg_replace( '/\bmediumint\b/i', 'int', $sql );
+        $sql = preg_replace( '/\binteger\b/i', 'int', $sql );
         $sql = preg_replace( '/\blongblob\b/i', 'varbinary(max)', $sql );
         $sql = preg_replace( '/\bmediumblob\b/i', 'varbinary(max)', $sql );
         $sql = preg_replace( '/\btinyblob\b/i', 'varbinary(256)', $sql );

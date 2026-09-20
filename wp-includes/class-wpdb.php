@@ -1822,7 +1822,7 @@ class wpdb {
 		global $EZSQL_ERROR;
 
 		if ( ! $str ) {
-			$errors = sqlsrv_errors();
+			$errors = $this->pn_sqlsrv_errors();
 
 			if( ! empty( $errors ) && is_array( $errors ) )
 				$str = $errors[ 0 ][ 'message' ] . ' Code - ' . $errors[ 0 ][ 'code' ];
@@ -2265,6 +2265,33 @@ class wpdb {
 	}
 
 	/**
+	 * sqlsrv_errors() includes informational messages (SQLSTATE 01xxx).
+	 * 9927 "full-text search condition contained noise word(s)" is informational;
+	 * treating it as failure emptied FTS searches that actually returned rows.
+	 *
+	 * @return array
+	 */
+	protected function pn_sqlsrv_errors() {
+		$errors = sqlsrv_errors( SQLSRV_ERR_ALL );
+		if ( empty( $errors ) || ! is_array( $errors ) ) {
+			return array();
+		}
+		$real = array();
+		foreach ( $errors as $e ) {
+			$code  = isset( $e['code'] ) ? (int) $e['code'] : 0;
+			$state = isset( $e['SQLSTATE'] ) ? (string) $e['SQLSTATE'] : '';
+			if ( 9927 === $code ) {
+				continue;
+			}
+			if ( $state !== '' && ( str_starts_with( $state, '00' ) || str_starts_with( $state, '01' ) ) ) {
+				continue;
+			}
+			$real[] = $e;
+		}
+		return $real;
+	}
+
+	/**
 	 * Whether translator tracing is enabled.
 	 *
 	 * Azure ARM historically sets ProjectNamiLogTranslate=1. "0" / "false" / empty are off.
@@ -2447,7 +2474,7 @@ class wpdb {
 
 		$this->_do_query( $query );
 
-		$errors = sqlsrv_errors();
+		$errors = $this->pn_sqlsrv_errors();
 
 		// If preflight produced following_query (e.g. CREATE INDEX from KEY), run it.
 		if ( empty( $errors ) && $sqltranslate && ! empty( $sqltranslate->following_query ) ) {
@@ -2456,7 +2483,7 @@ class wpdb {
 					sqlsrv_query( $this->dbh, $fol_q );
 				}
 			}
-			$errors = sqlsrv_errors();
+			$errors = $this->pn_sqlsrv_errors();
 		}
 
 		// Safety net: unsniffed MySQL that still failed. Do not re-translate
@@ -2484,14 +2511,14 @@ class wpdb {
 			        list( $query, $sqltranslate ) = $this->apply_sql_translation( $query, 'retry ' . $errors[ 0 ][ 'code' ] );
     		        $this->last_query = $query;
 	    	        $this->_do_query( $query );
-			        $errors = sqlsrv_errors();
+			        $errors = $this->pn_sqlsrv_errors();
 			        if ( empty( $errors ) && $sqltranslate && ! empty( $sqltranslate->following_query ) ) {
 			            foreach ( (array) $sqltranslate->following_query as $fol_q ) {
 			                if ( $fol_q ) {
 			                    sqlsrv_query( $this->dbh, $fol_q );
 			                }
 			            }
-			            $errors = sqlsrv_errors();
+			            $errors = $this->pn_sqlsrv_errors();
 			        }
 					break;
 				default:
@@ -4461,7 +4488,7 @@ class wpdb {
 			$this->queries[] = array( $query, $this->timer_stop(), $this->get_caller() );
 		}
 
-        $errors = sqlsrv_errors();
+        $errors = $this->pn_sqlsrv_errors();
 		
 		if( ! empty( $errors ) && is_array( $errors ) ) {
 			$this->last_error = $errors[ 0 ][ 'message' ];

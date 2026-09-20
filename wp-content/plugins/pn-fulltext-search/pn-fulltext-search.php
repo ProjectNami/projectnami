@@ -4,7 +4,7 @@
  * Plugin URI: http://projectnami.org
  * Description: Search using SQL Server / Azure SQL Full-Text Search. Replaces LIKE '%term%' on post_content with CONTAINSTABLE, with core WP term parsing and a LIKE fallback.
  * Author: Patrick Bates
- * Version: 2.0.6
+ * Version: 2.1.0
  * Author URI: http://projectnami.org
  * License: GPLv3
  * Requires at least: 6.0
@@ -20,6 +20,8 @@ class PN_Fulltext_Search {
 	const SCHEMA_VERSION = 2;
 	const OPTION_SCHEMA  = 'pn_fts_schema_version';
 	const OPTION_FLAVOR  = 'pn_fts_view_flavor';
+	const OPTION_MATCH   = 'pn_fts_match';
+	const OPTION_NEAR    = 'pn_fts_near_distance';
 	const CATALOG        = 'ftCatalog';
 
 	/**
@@ -443,10 +445,93 @@ class PN_Fulltext_Search {
 	}
 
 	/**
-	 * @param WP_Query $query Query.
+	 * @param WP_Query|null $query Query.
+	 * @return string and|or|near|and_then_or
+	 */
+	protected function match_mode( $query = null ) {
+		$allowed = array( 'and', 'or', 'near', 'and_then_or' );
+		$mode    = (string) get_option( self::OPTION_MATCH, 'and' );
+		if ( $query instanceof WP_Query ) {
+			$q = $query->get( 'pn_fts_match' );
+			if ( is_string( $q ) && '' !== $q ) {
+				$mode = $q;
+			}
+		}
+		$mode = strtolower( $mode );
+		if ( ! in_array( $mode, $allowed, true ) ) {
+			$mode = 'and';
+		}
+		return apply_filters( 'pn_fts_match', $mode, $query );
+	}
+
+	/**
+	 * @return int
+	 */
+	protected function near_distance() {
+		$n = (int) get_option( self::OPTION_NEAR, 10 );
+		if ( $n < 1 ) {
+			$n = 1;
+		}
+		if ( $n > 50 ) {
+			$n = 50;
+		}
+		return $n;
+	}
+
+	/**
+	 * @param string[] $atoms Positive CONTAINS atoms (already quoted).
+	 * @param string   $mode  and|or|near
 	 * @return string
 	 */
-	protected function build_predicate( $query ) {
+	protected function combine_positive( array $atoms, $mode ) {
+		$atoms = array_values( array_filter( $atoms ) );
+		if ( empty( $atoms ) ) {
+			return '';
+		}
+		if ( 1 === count( $atoms ) ) {
+			return $atoms[0];
+		}
+		if ( 'or' === $mode ) {
+			return implode( ' OR ', $atoms );
+		}
+		if ( 'near' === $mode ) {
+			return 'NEAR((' . implode( ', ', $atoms ) . '), ' . (int) $this->near_distance() . ', FALSE)';
+		}
+		return implode( ' AND ', $atoms );
+	}
+
+	/**
+	 * @param string[] $positive Positive atoms.
+	 * @param string[] $negative Negative atoms (already NOT wrapped or raw).
+	 * @param string   $mode     and|or|near
+	 * @return string
+	 */
+	protected function combine_parts( array $positive, array $negative, $mode ) {
+		$core = $this->combine_positive( $positive, $mode );
+		if ( '' === $core ) {
+			return '';
+		}
+		if ( empty( $negative ) ) {
+			return $core;
+		}
+		$nots = array();
+		foreach ( $negative as $n ) {
+			if ( '' !== $n ) {
+				$nots[] = 'NOT (' . $n . ')';
+			}
+		}
+		if ( empty( $nots ) ) {
+			return $core;
+		}
+		return '(' . $core . ') AND ' . implode( ' AND ', $nots );
+	}
+
+	/**
+	 * @param WP_Query $query Query.
+	 * @param string   $mode  and|or|near (and_then_or resolved by caller).
+	 * @return string
+	 */
+	protected function build_predicate( $query, $mode = 'and' ) {
 		$qv = $query->query_vars;
 		$s  = isset( $qv['s'] ) ? (string) $qv['s'] : '';
 		$s  = str_replace( array( "\r", "\n" ), '', $s );
@@ -470,7 +555,8 @@ class PN_Fulltext_Search {
 					$atoms[] = $a;
 				}
 			}
-			return implode( ' AND ', $atoms );
+			$atoms = array_slice( $atoms, 0, 9 );
+			return $this->combine_positive( $atoms, $mode );
 		}
 
 		$terms = isset( $qv['search_terms'] ) ? (array) $qv['search_terms'] : array();
@@ -479,7 +565,10 @@ class PN_Fulltext_Search {
 		}
 
 		$exclusion_prefix = apply_filters( 'wp_query_search_exclusion_prefix', '-' );
-		$parts            = array();
+		$positive         = array();
+		$negative         = array();
+		$near_words       = array();
+		$near_phrases     = array();
 
 		foreach ( $terms as $term ) {
 			$term    = (string) $term;
@@ -511,20 +600,43 @@ class PN_Fulltext_Search {
 						$atoms[] = $a;
 					}
 				}
-				$atom = implode( ' AND ', $atoms );
+				if ( 'near' === $mode && ! $exclude ) {
+					foreach ( $atoms as $a ) {
+						$near_words[] = $a;
+					}
+					continue;
+				}
+				$atom = $this->combine_positive( $atoms, 'or' === $mode ? 'or' : 'and' );
 			}
 			if ( '' === $atom ) {
 				continue;
 			}
-			$parts[] = $exclude ? ( 'NOT (' . $atom . ')' ) : $atom;
+			if ( $exclude ) {
+				$negative[] = $atom;
+			} elseif ( 'near' === $mode && $is_phrase ) {
+				$near_phrases[] = $atom;
+			} else {
+				$positive[] = $atom;
+			}
 		}
 
-		$parts = array_slice( $parts, 0, 9 );
-		if ( empty( $parts ) ) {
-			return '';
+		if ( 'near' === $mode ) {
+			$chunks = array();
+			$nw     = array_slice( $near_words, 0, 9 );
+			if ( count( $nw ) >= 2 ) {
+				$chunks[] = $this->combine_positive( $nw, 'near' );
+			} elseif ( 1 === count( $nw ) ) {
+				$chunks[] = $nw[0];
+			}
+			foreach ( $near_phrases as $p ) {
+				$chunks[] = $p;
+			}
+			$positive = $chunks;
+			$mode     = 'and';
 		}
 
-		return implode( ' AND ', $parts );
+		$positive = array_slice( $positive, 0, 9 );
+		return $this->combine_parts( $positive, $negative, $mode );
 	}
 
 	/**
@@ -538,16 +650,37 @@ class PN_Fulltext_Search {
 		$term  = trim( $term );
 		$term  = trim( $term, "\"'" );
 		$parts = preg_split( '/\s+/', $term, -1, PREG_SPLIT_NO_EMPTY );
+		// Align with SQL Server English system stoplist. Tokens left in CONTAINS
+		// as AND terms raise 9927 (noise word) which ODBC reports as an error.
 		$stop  = array(
-			'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'c',
-			'com', 'for', 'from', 'how', 'i', 'in', 'is', 'it', 'not', 'of',
-			'on', 'or', 's', 't', 'that', 'the', 'this', 'to', 'was', 'what',
-			'when', 'where', 'who', 'will', 'with', 'www',
+			'a', 'about', 'after', 'all', 'also', 'an', 'and', 'another', 'any', 'are', 'as', 'at',
+			'be', 'because', 'been', 'before', 'being', 'between', 'both', 'but', 'by',
+			'c', 'came', 'can', 'come', 'could',
+			'did', 'do', 'does', 'doing', 'done', 'down',
+			'each', 'few', 'for', 'from',
+			'get', 'got',
+			'had', 'has', 'have', 'he', 'her', 'here', 'him', 'his', 'how',
+			'i', 'if', 'in', 'into', 'is', 'it', 'its',
+			'just',
+			'like',
+			'make', 'many', 'me', 'might', 'more', 'most', 'much', 'must', 'my',
+			'never', 'no', 'not', 'now',
+			'of', 'on', 'only', 'or', 'other', 'our', 'out', 'over',
+			's', 'said', 'same', 'see', 'she', 'should', 'since', 'so', 'some', 'still', 'such',
+			't', 'take', 'than', 'that', 'the', 'their', 'them', 'then', 'there', 'these', 'they',
+			'this', 'those', 'through', 'to', 'too',
+			'under', 'up',
+			'very',
+			'was', 'way', 'we', 'well', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'will', 'with', 'would',
+			'www',
+			'you', 'your',
+			'com',
 		);
 		$stop = apply_filters( 'pn_fts_noise_tokens', $stop );
 		$out  = array();
 		foreach ( $parts as $p ) {
 			$p = trim( $p, "\"'" );
+			$p = str_replace( array( "'", "\xE2\x80\x99", "\xC2\xB4" ), '', $p );
 			if ( '' === $p ) {
 				continue;
 			}
@@ -615,10 +748,19 @@ class PN_Fulltext_Search {
 			return $search;
 		}
 
-		$pred = $this->build_predicate( $query );
+		$mode = $this->match_mode( $query );
+		$use  = ( 'and_then_or' === $mode ) ? 'and' : $mode;
+		$pred = $this->build_predicate( $query, $use );
 		if ( '' === $pred ) {
 			$query->pn_fts_pred = '';
 			return $search;
+		}
+
+		if ( 'and_then_or' === $mode && ! $this->fts_has_hit( $pred ) ) {
+			$or = $this->build_predicate( $query, 'or' );
+			if ( '' !== $or ) {
+				$pred = $or;
+			}
 		}
 
 		$query->pn_fts_pred = $pred;
@@ -715,6 +857,32 @@ class PN_Fulltext_Search {
 	}
 
 	public function admin_init() {
+		if ( isset( $_POST['pn_fts_save_settings'] ) && current_user_can( 'manage_options' ) ) {
+			check_admin_referer( 'pn_fts_settings' );
+			$mode = isset( $_POST['pn_fts_match'] ) ? sanitize_key( wp_unslash( $_POST['pn_fts_match'] ) ) : 'and';
+			if ( ! in_array( $mode, array( 'and', 'or', 'near', 'and_then_or' ), true ) ) {
+				$mode = 'and';
+			}
+			$near = isset( $_POST['pn_fts_near_distance'] ) ? (int) $_POST['pn_fts_near_distance'] : 10;
+			if ( $near < 1 ) {
+				$near = 1;
+			}
+			if ( $near > 50 ) {
+				$near = 50;
+			}
+			update_option( self::OPTION_MATCH, $mode, true );
+			update_option( self::OPTION_NEAR, $near, true );
+			wp_safe_redirect(
+				add_query_arg(
+					array(
+						'page'           => 'pn-fulltext-search',
+						'pn_fts_saved'   => '1',
+					),
+					admin_url( 'tools.php' )
+				)
+			);
+			exit;
+		}
 		if ( isset( $_POST['pn_fts_rebuild'] ) && current_user_can( 'manage_options' ) ) {
 			check_admin_referer( 'pn_fts_rebuild' );
 			$result   = self::ensure_schema();
@@ -782,6 +950,28 @@ class PN_Fulltext_Search {
 		return $row;
 	}
 
+	/**
+	 * Database-wide TRANSFORM_NOISE_WORDS. Read-only; WP usually cannot ALTER DATABASE.
+	 *
+	 * @return string on|off|unknown
+	 */
+	protected function transform_noise_status() {
+		global $wpdb;
+		$wpdb->last_error = '';
+		$v                = $wpdb->get_var( "SELECT CAST(value AS nvarchar(20)) AS v FROM sys.database_scoped_configurations WHERE name = N'TRANSFORM_NOISE_WORDS'" );
+		if ( $wpdb->last_error || null === $v || false === $v ) {
+			return 'unknown';
+		}
+		$v = strtolower( trim( (string) $v ) );
+		if ( in_array( $v, array( '1', 'on', 'true' ), true ) ) {
+			return 'on';
+		}
+		if ( in_array( $v, array( '0', 'off', 'false' ), true ) ) {
+			return 'off';
+		}
+		return 'unknown';
+	}
+
 	public function render_tools() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -800,6 +990,9 @@ class PN_Fulltext_Search {
 			9 => 'Change tracking',
 		);
 		$pop_l = $pop[ (int) $status['populate'] ] ?? (string) $status['populate'];
+		if ( isset( $_GET['pn_fts_saved'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			echo '<div class="notice notice-success is-dismissible"><p>Search matching saved.</p></div>';
+		}
 		if ( isset( $_GET['pn_fts_built'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( '1' === $_GET['pn_fts_built'] ) {
 				echo '<div class="notice notice-success is-dismissible"><p>Full-text catalog rebuilt. Population has started.</p></div>';
@@ -808,6 +1001,14 @@ class PN_Fulltext_Search {
 				echo '<div class="notice notice-error"><p>' . esc_html( $msg ) . '</p></div>';
 			}
 		}
+		$mode = $this->match_mode();
+		$near = $this->near_distance();
+		$tnw  = $this->transform_noise_status();
+		$tnw_l = array(
+			'on'      => 'ON',
+			'off'     => 'OFF (Azure default)',
+			'unknown' => 'Unknown (this login cannot read database-scoped configuration)',
+		);
 		?>
 		<div class="wrap">
 			<h1>PN Full Text Search</h1>
@@ -825,6 +1026,46 @@ class PN_Fulltext_Search {
 			</table>
 			<p>Indexed view uses <code>INNER JOIN</code> to <code>users</code> (SQL Server indexed-view rule). Posts whose author is missing are not FTS-searchable; LIKE fallback still finds them.</p>
 			<p>Force core LIKE on one request: add <code>?pn_fts=off</code> (administrators). Or <code>'pn_fts' => 'off'</code> on a WP_Query.</p>
+
+			<h2>Search matching</h2>
+			<p>Quoted phrases still match as a phrase. English stoplist words (do, the, they…) are omitted. <code>-term</code> still excludes. Default is AND (same as WordPress).</p>
+			<form method="post">
+				<?php wp_nonce_field( 'pn_fts_settings' ); ?>
+				<fieldset>
+					<label style="display:block;margin:.4em 0">
+						<input type="radio" name="pn_fts_match" value="and" <?php checked( $mode, 'and' ); ?> />
+						All words (AND) — same as WordPress
+					</label>
+					<label style="display:block;margin:.4em 0">
+						<input type="radio" name="pn_fts_match" value="or" <?php checked( $mode, 'or' ); ?> />
+						Any word (OR)
+					</label>
+					<label style="display:block;margin:.4em 0">
+						<input type="radio" name="pn_fts_match" value="and_then_or" <?php checked( $mode, 'and_then_or' ); ?> />
+						All words, then any word if nothing matches
+					</label>
+					<label style="display:block;margin:.4em 0">
+						<input type="radio" name="pn_fts_match" value="near" <?php checked( $mode, 'near' ); ?> />
+						Words near each other (NEAR) — <strong>stricter than AND</strong>; use for 2–3 words, not a sentence
+					</label>
+				</fieldset>
+				<p>
+					<label>
+						NEAR distance
+						<input type="number" name="pn_fts_near_distance" value="<?php echo esc_attr( (string) $near ); ?>" min="1" max="50" step="1" />
+					</label>
+					<span class="description">Intervening words allowed (1–50). Ignored unless NEAR is selected.</span>
+				</p>
+				<?php submit_button( 'Save matching', 'primary', 'pn_fts_save_settings' ); ?>
+			</form>
+
+			<h2>Noise words (database)</h2>
+			<p>TRANSFORM_NOISE_WORDS is <strong><?php echo esc_html( $tnw_l[ $tnw ] ); ?></strong>. This flag is database-wide (every site on this Azure SQL database). The WordPress login usually cannot change it. The plugin already strips the English stoplist, and informational 9927 is not treated as a failed query.</p>
+			<p>Query Editor as a server admin, if you want the engine to skip leftover noise instead of raising 9927:</p>
+			<pre style="max-width:720px;overflow:auto;background:#fff;border:1px solid #c3c4c7;padding:8px 12px">ALTER DATABASE SCOPED CONFIGURATION SET TRANSFORM_NOISE_WORDS = ON;
+-- revert:
+-- ALTER DATABASE SCOPED CONFIGURATION SET TRANSFORM_NOISE_WORDS = OFF;</pre>
+
 			<form method="post">
 				<?php wp_nonce_field( 'pn_fts_rebuild' ); ?>
 				<?php submit_button( 'Rebuild catalog', 'secondary', 'pn_fts_rebuild' ); ?>
