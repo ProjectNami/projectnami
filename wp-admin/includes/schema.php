@@ -224,6 +224,8 @@ GO
 CREATE INDEX $wpdb->posts" . "_IDX3 on $wpdb->posts (post_parent)
 GO
 CREATE INDEX $wpdb->posts" . "_IDX4 on $wpdb->posts (post_author)
+GO
+CREATE INDEX $wpdb->posts" . "_IDX5 on $wpdb->posts (post_type,post_status,post_author)
 GO\n";
 
 	// Users table
@@ -493,7 +495,7 @@ function populate_options( array $options = array() ) {
 	'moderation_keys' => '',
 	'active_plugins' => array(),
 	'category_base' => '',
-	'ping_sites' => 'http://rpc.pingomatic.com/',
+	'ping_sites' => 'https://rpc.pingomatic.com/',
 	'advanced_edit' => 0,
 	'comment_max_links' => 2,
 	'gmt_offset' => $gmt_offset,
@@ -607,6 +609,9 @@ function populate_options( array $options = array() ) {
 
 		// 6.4.0
 		'wp_attachment_pages_enabled'     => 0,
+
+		// 6.9.0
+		'wp_notes_notify'                 => 1,
 	);
 
 	// 3.3.0
@@ -767,6 +772,12 @@ function populate_options( array $options = array() ) {
  * @since 2.0.0
  */
 function populate_roles() {
+	$wp_roles = wp_roles();
+
+	// Disable role updates to the database while populating roles.
+	$original_use_db  = $wp_roles->use_db;
+	$wp_roles->use_db = false;
+
 	populate_roles_160();
 	populate_roles_210();
 	populate_roles_230();
@@ -775,6 +786,14 @@ function populate_roles() {
 	populate_roles_270();
 	populate_roles_280();
 	populate_roles_300();
+
+	// Save the updated roles to the database.
+	if ( $original_use_db ) {
+		update_option( $wp_roles->role_key, $wp_roles->roles, true );
+	}
+
+	// Restore original value for writing to database.
+	$wp_roles->use_db = $original_use_db;
 }
 
 /**
@@ -1049,6 +1068,20 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 
 	$network_id = (int) $network_id;
 
+	/**
+	 * Fires before a network is populated.
+	 *
+	 * @since 6.9.0
+	 *
+	 * @param int    $network_id        ID of network to populate.
+	 * @param string $domain            The domain name for the network.
+	 * @param string $email             Email address for the network administrator.
+	 * @param string $site_name         The name of the network.
+	 * @param string $path              The path to append to the network's domain name.
+	 * @param bool   $subdomain_install Whether the network is a subdomain installation or a subdirectory installation.
+	 */
+	do_action( 'before_populate_network', $network_id, $domain, $email, $site_name, $path, $subdomain_install );
+
 	$errors = new WP_Error();
 	if ( '' === $domain ) {
 		$errors->add( 'empty_domain', __( 'You must provide a domain name.' ) );
@@ -1170,6 +1203,20 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 
 		flush_rewrite_rules();
 
+		/**
+		 * Fires after a network is created when converting a single site to multisite.
+		 *
+		 * @since 6.9.0
+		 *
+		 * @param int    $network_id        ID of network created.
+		 * @param string $domain            The domain name for the network.
+		 * @param string $email             Email address for the network administrator.
+		 * @param string $site_name         The name of the network.
+		 * @param string $path              The path to append to the network's domain name.
+		 * @param bool   $subdomain_install Whether the network is a subdomain installation or a subdirectory installation.
+		 */
+		do_action( 'after_upgrade_to_multisite', $network_id, $domain, $email, $site_name, $path, $subdomain_install );
+
 		if ( ! $subdomain_install ) {
 			return true;
 		}
@@ -1215,6 +1262,20 @@ function populate_network( $network_id = 1, $domain = '', $email = '', $site_nam
 			return new WP_Error( 'no_wildcard_dns', $msg );
 		}
 	}
+
+	/**
+	 * Fires after a network is fully populated.
+	 *
+	 * @since 6.9.0
+	 *
+	 * @param int    $network_id        ID of network created.
+	 * @param string $domain            The domain name for the network.
+	 * @param string $email             Email address for the network administrator.
+	 * @param string $site_name         The name of the network.
+	 * @param string $path              The path to append to the network's domain name.
+	 * @param bool   $subdomain_install Whether the network is a subdomain installation or a subdirectory installation.
+	 */
+	do_action( 'after_populate_network', $network_id, $domain, $email, $site_name, $path, $subdomain_install );
 
 	return true;
 }

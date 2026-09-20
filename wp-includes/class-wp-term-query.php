@@ -471,14 +471,11 @@ class WP_Term_Query {
 		$exclude_tree = $args['exclude_tree'];
 		$include      = $args['include'];
 
-		$inclusions = '';
 		if ( ! empty( $include ) ) {
 			$exclude      = '';
 			$exclude_tree = '';
 			$inclusions   = implode( ',', wp_parse_id_list( $include ) );
-		}
 
-		if ( ! empty( $inclusions ) ) {
 			$this->sql_clauses['where']['inclusions'] = 't.term_id IN ( ' . $inclusions . ' )';
 		}
 
@@ -734,13 +731,13 @@ class WP_Term_Query {
 		 */
 		$clauses = apply_filters( 'terms_clauses', compact( $pieces ), $taxonomies, $args );
 
-		$fields   = isset( $clauses['fields'] ) ? $clauses['fields'] : '';
-		$join     = isset( $clauses['join'] ) ? $clauses['join'] : '';
-		$where    = isset( $clauses['where'] ) ? $clauses['where'] : '';
-		$distinct = isset( $clauses['distinct'] ) ? $clauses['distinct'] : '';
-		$orderby  = isset( $clauses['orderby'] ) ? $clauses['orderby'] : '';
-		$order    = isset( $clauses['order'] ) ? $clauses['order'] : '';
-		$limits   = isset( $clauses['limits'] ) ? $clauses['limits'] : '';
+		$fields   = $clauses['fields'] ?? '';
+		$join     = $clauses['join'] ?? '';
+		$where    = $clauses['where'] ?? '';
+		$distinct = $clauses['distinct'] ?? '';
+		$orderby  = $clauses['orderby'] ?? '';
+		$order    = $clauses['order'] ?? '';
+		$limits   = $clauses['limits'] ?? '';
 
 		$fields_is_filtered = implode( ', ', $selects ) !== $fields;
 
@@ -787,8 +784,9 @@ class WP_Term_Query {
 		}
 
 		if ( $args['cache_results'] ) {
-			$cache_key = $this->generate_cache_key( $args, $this->request );
-			$cache     = wp_cache_get( $cache_key, 'term-queries' );
+			$cache_key    = $this->generate_cache_key( $args, $this->request );
+			$last_changed = wp_cache_get_last_changed( 'terms' );
+			$cache        = wp_cache_get_salted( $cache_key, 'term-queries', $last_changed );
 
 			if ( false !== $cache ) {
 				if ( 'ids' === $_fields ) {
@@ -816,7 +814,7 @@ class WP_Term_Query {
 		if ( 'count' === $_fields ) {
 			$count = $wpdb->get_var( $this->request ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			if ( $args['cache_results'] ) {
-				wp_cache_set( $cache_key, $count, 'term-queries' );
+				wp_cache_set_salted( $cache_key, $count, 'term-queries', $last_changed );
 			}
 			return $count;
 		}
@@ -824,10 +822,13 @@ class WP_Term_Query {
 		$terms = $wpdb->get_results( $this->request ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 
 		if ( empty( $terms ) ) {
+			$this->terms = array();
+
 			if ( $args['cache_results'] ) {
-				wp_cache_add( $cache_key, array(), 'term-queries' );
+				wp_cache_set_salted( $cache_key, $this->terms, 'term-queries', $last_changed );
 			}
-			return array();
+
+			return $this->terms;
 		}
 
 		$term_ids = wp_list_pluck( $terms, 'term_id' );
@@ -859,7 +860,8 @@ class WP_Term_Query {
 					if ( is_array( $children ) ) {
 						foreach ( $children as $child_id ) {
 							$child = get_term( $child_id, $term->taxonomy );
-							if ( $child->count ) {
+
+							if ( $child instanceof WP_Term && $child->count ) {
 								continue 2;
 							}
 						}
@@ -909,7 +911,7 @@ class WP_Term_Query {
 		}
 
 		if ( $args['cache_results'] ) {
-			wp_cache_add( $cache_key, $term_cache, 'term-queries' );
+			wp_cache_set_salted( $cache_key, $term_cache, 'term-queries', $last_changed );
 		}
 
 		$this->terms = $this->format_terms( $term_objects, $_fields );
@@ -939,11 +941,11 @@ class WP_Term_Query {
 			$orderby = 'tr.term_order';
 			$orderby_fields = ', tr.term_order';
 		} elseif ( 'include' === $_orderby && ! empty( $this->query_vars['include'] ) ) {
-			$include = implode( ',', wp_parse_id_list( $this->query_vars['include'] ) );
-			$orderby = "FIELD( t.term_id, $include )";
+			$orderby        = pn_sql_order_by_list( 't.term_id', wp_parse_id_list( $this->query_vars['include'] ) );
+			$orderby_fields = ', ' . $orderby;
 		} elseif ( 'slug__in' === $_orderby && ! empty( $this->query_vars['slug'] ) && is_array( $this->query_vars['slug'] ) ) {
-			$slugs   = implode( "', '", array_map( 'sanitize_title_for_query', $this->query_vars['slug'] ) );
-			$orderby = "FIELD( t.slug, '" . $slugs . "')";
+			$orderby        = pn_sql_order_by_list( 't.slug', array_map( 'sanitize_title_for_query', $this->query_vars['slug'] ), true );
+			$orderby_fields = ', ' . $orderby;
 		} elseif ( 'none' === $_orderby ) {
 			$orderby = '';
 		} elseif ( empty( $_orderby ) || 'id' === $_orderby || 'term_id' === $_orderby ) {
@@ -1186,8 +1188,8 @@ class WP_Term_Query {
 		// Replace wpdb placeholder in the SQL statement used by the cache key.
 		$sql = $wpdb->remove_placeholder_escape( $sql );
 
-		$key          = md5( serialize( $cache_args ) . $sql );
-		$last_changed = wp_cache_get_last_changed( 'terms' );
-		return "get_terms:$key:$last_changed";
+		$key = md5( serialize( $cache_args ) . $sql );
+
+		return "get_terms:$key";
 	}
 }

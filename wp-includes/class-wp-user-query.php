@@ -324,8 +324,8 @@ class WP_User_Query {
 			$this->query_fields = "$wpdb->users.$field";
 		}
 
-		$this->query_from = "FROM $wpdb->users";
-		$this->query_where = "WHERE 1=1";
+		$this->query_from  = "FROM $wpdb->users";
+		$this->query_where = 'WHERE 1=1';
 
 		// Parse and sanitize 'include', for use by 'orderby' as well as 'include' below.
 		if ( ! empty( $qv['include'] ) ) {
@@ -676,12 +676,21 @@ class WP_User_Query {
 
 		$this->query_orderby = 'ORDER BY ' . implode( ', ', $orderby_array );
 
+		if ( 0 === strncasecmp( ltrim( $this->query_fields ), 'DISTINCT ', 9 ) ) {
+			foreach ( $orderby_array as $ob ) {
+				$expr = preg_replace( '/\s+(ASC|DESC)\s*$/i', '', $ob );
+				if ( $expr && 0 === strncasecmp( ltrim( $expr ), 'CASE ', 5 ) && false === stripos( $this->query_fields, $expr ) ) {
+					$this->query_fields .= ', ' . $expr;
+				}
+			}
+		}
+
 		// Limit.
 		if ( isset( $qv['number'] ) && $qv['number'] > 0 ) {
 			if ( $qv['offset'] ) {
-				$this->query_limit = $wpdb->prepare("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $qv['offset'], $qv['number']);
+				$this->query_limit = $wpdb->prepare( 'OFFSET %d ROWS FETCH NEXT %d ROWS ONLY', $qv['offset'], $qv['number'] );
 			} else {
-				$this->query_limit = $wpdb->prepare("OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $qv['number'] * ( $qv['paged'] - 1 ), $qv['number']);
+				$this->query_limit = $wpdb->prepare( 'OFFSET %d ROWS FETCH NEXT %d ROWS ONLY', $qv['number'] * ( $qv['paged'] - 1 ), $qv['number'] );
 			}
 		}
 
@@ -792,36 +801,90 @@ class WP_User_Query {
 
 		$qv =& $this->query_vars;
 
-		$wpdb->query( "SELECT COUNT(*) as [found_rows] $this->query_from $this->query_where" );
-
-		// Beginning of the string is on a new line to prevent leading whitespace. See https://core.trac.wordpress.org/ticket/56841.
-		$this->request = 
-			"SELECT {$this->query_fields}
-			{$this->query_from}
-			{$this->query_where}
-			{$this->query_orderby}
-			{$this->query_limit}";
-
-			if ( is_array( $qv['fields'] ) ) {
-			$this->results = $wpdb->get_results( $this->request );
-		} else {
-			$this->results = $wpdb->get_col( $this->request );
+		// Do not cache results if more than 3 fields are requested.
+		if ( is_array( $qv['fields'] ) && count( $qv['fields'] ) > 3 ) {
+			$qv['cache_results'] = false;
 		}
 
 		/**
-		 * Filters SELECT FOUND_ROWS() query for the current WP_User_Query instance.
+		 * Filters the users array before the query takes place.
 		 *
-		 * @since 3.2.0
+		 * Return a non-null value to bypass WordPress' default user queries.
 		 *
-		 * @global wpdb $wpdb WordPress database abstraction object.
+		 * Filtering functions that require pagination information are encouraged to set
+		 * the `total_users` property of the WP_User_Query object, passed to the filter
+		 * by reference. If WP_User_Query does not perform a database query, it will not
+		 * have enough information to generate these values itself.
 		 *
-		 * @param string $sql The SELECT FOUND_ROWS() query for the current WP_User_Query.
+		 * @since 5.1.0
+		 *
+		 * @param array|null    $results Return an array of user data to short-circuit WP's user query
+		 *                               or null to allow WP to run its normal queries.
+		 * @param WP_User_Query $query   The WP_User_Query instance (passed by reference).
 		 */
-		if ( isset( $qv['count_total'] ) && $qv['count_total'] )
-			$this->total_users = $wpdb->last_query_total_rows;
+		$this->results = apply_filters_ref_array( 'users_pre_query', array( null, &$this ) );
 
-		if ( !$this->results )
+		if ( null === $this->results ) {
+			// Beginning of the string is on a new line to prevent leading whitespace. See https://core.trac.wordpress.org/ticket/56841.
+			$this->request =
+				"SELECT {$this->query_fields}
+				 {$this->query_from}
+				 {$this->query_where}
+				 {$this->query_orderby}
+				 {$this->query_limit}";
+			$cache_value   = false;
+			$cache_key     = $this->generate_cache_key( $qv, $this->request );
+			$cache_group   = 'user-queries';
+			$last_changed  = $this->get_cache_last_changed( $qv );
+
+			if ( $qv['cache_results'] ) {
+				$cache_value = wp_cache_get_salted( $cache_key, $cache_group, $last_changed );
+			}
+			if ( false !== $cache_value ) {
+				$this->results     = $cache_value['user_data'];
+				$this->total_users = $cache_value['total_users'];
+			} else {
+
+				if ( isset( $qv['count_total'] ) && $qv['count_total'] ) {
+					$wpdb->query( "SELECT COUNT(*) as [found_rows] $this->query_from $this->query_where" );
+				}
+
+				if ( is_array( $qv['fields'] ) ) {
+					$this->results = $wpdb->get_results( $this->request );
+				} else {
+					$this->results = $wpdb->get_col( $this->request );
+				}
+
+				if ( isset( $qv['count_total'] ) && $qv['count_total'] ) {
+					/**
+					 * Filters SELECT FOUND_ROWS() query for the current WP_User_Query instance.
+					 *
+					 * @since 3.2.0
+					 * @since 5.1.0 Added the `$query` parameter.
+					 *
+					 * @global wpdb $wpdb WordPress database abstraction object.
+					 *
+					 * @param string        $sql   The SELECT FOUND_ROWS() query for the current WP_User_Query.
+					 * @param WP_User_Query $query The current WP_User_Query instance.
+					 */
+					apply_filters( 'found_users_query', '', $this );
+
+					$this->total_users = (int) $wpdb->last_query_total_rows;
+				}
+
+				if ( $qv['cache_results'] ) {
+					$cache_value = array(
+						'user_data'   => $this->results,
+						'total_users' => $this->total_users,
+					);
+					wp_cache_set_salted( $cache_key, $cache_value, $cache_group, $last_changed );
+				}
+			}
+		}
+
+		if ( ! $this->results ) {
 			return;
+		}
 		if (
 			is_array( $qv['fields'] ) &&
 			isset( $this->results[0]->ID )
@@ -835,12 +898,13 @@ class WP_User_Query {
 			}
 
 			$r = array();
-			foreach ( $this->results as $userid )
+			foreach ( $this->results as $userid ) {
 				if ( 'all_with_meta' === $qv['fields'] ) {
 					$r[ $userid ] = new WP_User( $userid, '', $qv['blog_id'] );
 				} else {
 					$r[] = new WP_User( $userid, '', $qv['blog_id'] );
 				}
+			}
 
 			$this->results = $r;
 		}
@@ -855,11 +919,7 @@ class WP_User_Query {
 	 * @return mixed
 	 */
 	public function get( $query_var ) {
-		if ( isset( $this->query_vars[ $query_var ] ) ) {
-			return $this->query_vars[ $query_var ];
-		}
-
-		return null;
+		return $this->query_vars[ $query_var ] ?? null;
 	}
 
 	/**
@@ -967,20 +1027,14 @@ class WP_User_Query {
 		} elseif ( 'meta_value_num' === $orderby ) {
 			$_orderby = "CAST($wpdb->usermeta.meta_value as numeric)";
 		} elseif ( 'include' === $orderby && ! empty( $this->query_vars['include'] ) ) {
-			$include = wp_parse_id_list( $this->query_vars['include'] );
-			$include_sql = implode( ',', $include );
-			$_orderby = "FIELD( $wpdb->users.ID, $include_sql )";
+			$_orderby = pn_sql_order_by_list( "$wpdb->users.ID", wp_parse_id_list( $this->query_vars['include'] ) );
 		} elseif ( 'nicename__in' === $orderby ) {
-			$sanitized_nicename__in = array_map( 'esc_sql', $this->query_vars['nicename__in'] );
-			$nicename__in = implode( "','", $sanitized_nicename__in );
-			$_orderby = "FIELD( user_nicename, '$nicename__in' )";
+			$_orderby = pn_sql_order_by_list( 'user_nicename', $this->query_vars['nicename__in'], true );
 		} elseif ( 'login__in' === $orderby ) {
-			$sanitized_login__in = array_map( 'esc_sql', $this->query_vars['login__in'] );
-			$login__in = implode( "','", $sanitized_login__in );
-			$_orderby = "FIELD( user_login, '$login__in' )";
+			$_orderby = pn_sql_order_by_list( 'user_login', $this->query_vars['login__in'], true );
 		} elseif ( isset( $meta_query_clauses[ $orderby ] ) ) {
 			$meta_clause = $meta_query_clauses[ $orderby ];
-			$_orderby = sprintf( "CAST(%s.meta_value AS %s)", esc_sql( $meta_clause['alias'] ), esc_sql( $meta_clause['cast'] ) );
+			$_orderby    = sprintf( 'CAST(%s.meta_value AS %s)', esc_sql( $meta_clause['alias'] ), esc_sql( $meta_clause['cast'] ) );
 		}
 
 		return $_orderby;
@@ -990,21 +1044,35 @@ class WP_User_Query {
 	 * Generate cache key.
 	 *
 	 * @since 6.3.0
+	 * @since 6.9.0 The `$args` parameter was deprecated and renamed to `$deprecated`.
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
-	 * @param array  $args Query arguments.
-	 * @param string $sql  SQL statement.
+	 * @param array  $deprecated Unused.
+	 * @param string $sql        SQL statement.
 	 * @return string Cache key.
 	 */
-	protected function generate_cache_key( array $args, $sql ) {
+	protected function generate_cache_key( array $deprecated, $sql ) {
 		global $wpdb;
 
 		// Replace wpdb placeholder in the SQL statement used by the cache key.
 		$sql = $wpdb->remove_placeholder_escape( $sql );
 
-		$key          = md5( $sql );
-		$last_changed = wp_cache_get_last_changed( 'users' );
+		$key = md5( $sql );
+
+		return "get_users:$key";
+	}
+
+	/**
+	 * Retrieves the last changed cache timestamp for users and optionally posts.
+	 *
+	 * @since 6.9.0
+	 *
+	 * @param array $args Query arguments.
+	 * @return string[] The last changed timestamp string for the relevant cache groups.
+	 */
+	protected function get_cache_last_changed( array $args ) {
+		$last_changed = (array) wp_cache_get_last_changed( 'users' );
 
 		if ( empty( $args['orderby'] ) ) {
 			// Default order is by 'user_login'.
@@ -1027,14 +1095,14 @@ class WP_User_Query {
 				switch_to_blog( $blog_id );
 			}
 
-			$last_changed .= wp_cache_get_last_changed( 'posts' );
+			$last_changed[] = wp_cache_get_last_changed( 'posts' );
 
 			if ( $switch ) {
 				restore_current_blog();
 			}
 		}
 
-		return "get_users:$key:$last_changed";
+		return $last_changed;
 	}
 
 	/**

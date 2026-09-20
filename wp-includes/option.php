@@ -951,7 +951,7 @@ function update_option( $option, $value, $autoload = null ) {
 		$update_args['autoload'] = wp_determine_option_autoload_value( $option, $value, $serialized_value, $autoload );
 	} else {
 		// Retrieve the current autoload value to reevaluate it in case it was set automatically.
-		$raw_autoload = $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s LIMIT 1", $option ) );
+		$raw_autoload = $wpdb->get_var( $wpdb->prepare( "SELECT TOP 1 autoload FROM $wpdb->options WHERE option_name = %s", $option ) );
 		$allow_values = array( 'auto-on', 'auto-off', 'auto' );
 		if ( in_array( $raw_autoload, $allow_values, true ) ) {
 			$autoload = wp_determine_option_autoload_value( $option, $value, $serialized_value, $autoload );

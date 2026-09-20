@@ -58,6 +58,13 @@ class wpdb {
 	var $last_query_total_rows = null;
 
 	/**
+	 * Cached MySQL→T-SQL translator. String-only; does not open a connection.
+	 *
+	 * @var SQL_Translations|null
+	 */
+	protected $pn_translator = null;
+
+	/**
 	 * Whether to show SQL/DB errors.
 	 *
 	 * Default is to show errors if both WP_DEBUG and WP_DEBUG_DISPLAY evaluate to true.
@@ -1395,25 +1402,21 @@ class wpdb {
 	 * @return string Escaped identifier.
 	 */
 	public function quote_identifier( $identifier ) {
-		return '`' . $this->_escape_identifier_value( $identifier ) . '`';
+		return '[' . $this->_escape_identifier_value( $identifier ) . ']';
 	}
 
 	/**
 	 * Escapes an identifier value without adding the surrounding quotes.
 	 *
-	 * - Permitted characters in quoted identifiers include the full Unicode
-	 *   Basic Multilingual Plane (BMP), except U+0000.
-	 * - To quote the identifier itself, you need to double the character, e.g. `a``b`.
+	 * SQL Server quoted identifiers use []. A literal ] is escaped by doubling.
 	 *
 	 * @since 6.2.0
-	 *
-	 * @link https://dev.mysql.com/doc/refman/8.0/en/identifiers.html
 	 *
 	 * @param string $identifier Identifier to escape.
 	 * @return string Escaped identifier.
 	 */
 	private function _escape_identifier_value( $identifier ) {
-		return str_replace( '`', '``', $identifier );
+		return str_replace( ']', ']]', $identifier );
 	}
 
 	/**
@@ -1966,7 +1969,6 @@ class wpdb {
 
 		$new_link = true;
 
-		ini_set( 'display_errors', 1 );
 		if ( getenv('ProjectNami.UTF8') ) {
 			$this->dbh = sqlsrv_connect( $this->dbhost, array( "Database"=> $this->dbname, "UID"=> $this->dbuser, "PWD"=> $this->dbpassword, 'ReturnDatesAsStrings'=>true, 'MultipleActiveResultSets'=> false, 'CharacterSet'=> 'UTF-8') );
  		} else {
@@ -2176,6 +2178,198 @@ class wpdb {
 	}
 
 	/**
+	 * Cheap sniff for MySQL dialect that SQL Server will reject (or mis-handle).
+	 *
+	 * PN core is already T-SQL (TOP, [], IDENTITY, GETDATE). This must not
+	 * match those queries — running the translator on valid T-SQL can mangle
+	 * COUNT(), identifiers, etc. Only trip on tokens core does not emit.
+	 *
+	 * @param string $query SQL.
+	 * @return bool
+	 */
+	protected function query_looks_like_mysql( $query ) {
+		if ( ! is_string( $query ) || $query === '' ) {
+			return false;
+		}
+		if ( strpos( $query, '`' ) !== false ) {
+			return true;
+		}
+		if ( strpos( $query, '&&' ) !== false || strpos( $query, '<=>' ) !== false ) {
+			return true;
+		}
+		if ( strpos( $query, '0000-00-00' ) !== false ) {
+			return true;
+		}
+		if ( strpos( $query, '@rownum' ) !== false || strpos( $query, ':=' ) !== false ) {
+			return true;
+		}
+		return (bool) preg_match(
+			'/\bLIMIT\s+\d' .
+			'|\bINSERT\s+IGNORE\b' .
+			'|\bREPLACE\s+INTO\b' .
+			'|\bSTART\s+TRANSACTION\b' .
+			'|\bON\s+DUPLICATE\s+KEY\b' .
+			'|\bAUTO_INCREMENT\b' .
+			'|\bUNSIGNED\b' .
+			'|\bZEROFILL\b' .
+			'|\b(?:USE|FORCE|IGNORE)\s+(?:INDEX|KEY)\b' .
+			'|\bSQL_CALC_FOUND_ROWS\b' .
+			'|\bFOUND_ROWS\s*\(' .
+			'|\bLAST_INSERT_ID\s*\(' .
+			'|\bGROUP_CONCAT\s*\(' .
+			'|\bIFNULL\s*\(' .
+			'|\bFIND_IN_SET\s*\(' .
+			'|\bCHAR_LENGTH\s*\(' .
+			'|\bDATE_ADD\s*\(' .
+			'|\bDATE_SUB\s*\(' .
+			'|\bFROM_UNIXTIME\s*\(' .
+			'|\bUNIX_TIMESTAMP\s*\(' .
+			'|\bCURDATE\s*\(' .
+			'|\bFIELD\s*\(' .
+			'|\bMOD\s*\(' .
+			'|\bNOW\s*\(' .
+			'|\bSHOW\s+(?:TABLES|COLUMNS|FULL\s+COLUMNS|KEYS|INDEX|INDEXES|DATABASES|VARIABLES)\b' .
+			'|\bDESCRIBE\s+' .
+			'|\bDEFAULT\s+CHARSET\b' .
+			'|\bCHARACTER\s+SET\b' .
+			'|\bENGINE\s*=' .
+			'|\bON\s+UPDATE\s+CURRENT_TIMESTAMP\b' .
+			'|\bDROP\s+TABLE\s+IF\s+EXISTS\b' .
+			'|\bCREATE\s+TABLE\s+IF\s+NOT\s+EXISTS\b' .
+			'|\bREGEXP\b' .
+			'/i',
+			$query
+		);
+	}
+
+	/**
+	 * Reuse a string-only translator, copying prefix/charset from this handle.
+	 *
+	 * @return SQL_Translations
+	 */
+	protected function get_sql_translator() {
+		if ( ! ( $this->pn_translator instanceof SQL_Translations ) ) {
+			$this->pn_translator = new SQL_Translations();
+		}
+		$t = $this->pn_translator;
+		$t->prefix      = $this->prefix;
+		$t->base_prefix = $this->base_prefix;
+		$t->blogid      = $this->blogid;
+		if ( isset( $this->charset ) ) {
+			$t->charset = $this->charset;
+		}
+		if ( isset( $this->collate ) ) {
+			$t->collate = $this->collate;
+		}
+		return $t;
+	}
+
+	/**
+	 * Whether translator tracing is enabled.
+	 *
+	 * Azure ARM historically sets ProjectNamiLogTranslate=1. "0" / "false" / empty are off.
+	 *
+	 * @return bool
+	 */
+	protected function pn_translate_log_enabled() {
+		$flag = getenv( 'ProjectNamiLogTranslate' );
+		if ( false === $flag || '' === $flag ) {
+			return false;
+		}
+		return ! in_array( strtolower( (string) $flag ), array( '0', 'false', 'off', 'no' ), true );
+	}
+
+	/**
+	 * Writable path for translate.log, or empty to use PHP's default error_log (stderr / Log Stream).
+	 *
+	 * Azure's error_log is often /dev/stderr; dirname() of that is /dev, which is not writable
+	 * and used to emit warnings that broke setup-config.php headers.
+	 *
+	 * @return string
+	 */
+	protected function pn_translate_log_path() {
+		static $path = null;
+		if ( null !== $path ) {
+			return $path;
+		}
+
+		$candidates = array();
+		$custom     = getenv( 'ProjectNamiTranslateLog' );
+		if ( $custom ) {
+			$candidates[] = $custom;
+		}
+		$home = getenv( 'HOME' );
+		if ( $home ) {
+			$candidates[] = rtrim( $home, '/\\' ) . '/LogFiles/translate.log';
+		}
+		if ( defined( 'WP_CONTENT_DIR' ) && WP_CONTENT_DIR ) {
+			$candidates[] = WP_CONTENT_DIR . '/translate.log';
+		}
+
+		$php_log = ini_get( 'error_log' );
+		if ( $php_log && ! preg_match( '#^(/dev/|syslog)#i', $php_log ) ) {
+			$dir = dirname( $php_log );
+			if ( $dir && '.' !== $dir && is_dir( $dir ) ) {
+				$candidates[] = $dir . DIRECTORY_SEPARATOR . 'translate.log';
+			}
+		}
+
+		foreach ( $candidates as $candidate ) {
+			$dir = dirname( $candidate );
+			if ( $dir && is_dir( $dir ) && is_writable( $dir ) ) {
+				$path = $candidate;
+				return $path;
+			}
+		}
+
+		$path = '';
+		return $path;
+	}
+
+	/**
+	 * Write a translator trace line without risking "headers already sent".
+	 *
+	 * @param string $message
+	 */
+	protected function pn_log_translate( $message ) {
+		if ( ! $this->pn_translate_log_enabled() ) {
+			return;
+		}
+		$path = $this->pn_translate_log_path();
+		if ( $path ) {
+			@error_log( $message, 3, $path );
+			return;
+		}
+		@error_log( str_replace( array( "\r\n", "\n", "\r" ), ' ', rtrim( $message ) ) );
+	}
+
+	/**
+	 * Translate $query to T-SQL and run any preceding_query the translator staged.
+	 *
+	 * @param string $query  Incoming SQL.
+	 * @param string $reason Log label (preflight / retry N).
+	 * @return array { translated SQL, SQL_Translations }
+	 */
+	protected function apply_sql_translation( $query, $reason = 'translate' ) {
+		$sqltranslate = $this->get_sql_translator();
+		$this->pn_log_translate(
+			date( 'Y-m-d H:i:s' ) . " -- {$reason} begin:" . PHP_EOL . $query . PHP_EOL
+		);
+		$translated = $sqltranslate->translate( $query );
+		$this->pn_log_translate(
+			date( 'Y-m-d H:i:s' ) . " -- {$reason} result:" . PHP_EOL . $translated . PHP_EOL . PHP_EOL
+		);
+		if ( ! empty( $sqltranslate->preceeding_query ) ) {
+			foreach ( (array) $sqltranslate->preceeding_query as $pre_q ) {
+				if ( $pre_q ) {
+					sqlsrv_query( $this->dbh, $pre_q );
+				}
+			}
+		}
+		return array( $translated, $sqltranslate );
+	}
+
+	/**
 	 * Performs a database query, using current database connection.
 	 *
 	 * More information can be found on the documentation page.
@@ -2238,19 +2432,43 @@ class wpdb {
 
 		$this->check_current_query = true;
 
+		// Rewrite MySQL dialect before the first sqlsrv call so plugins
+		// (Yoast, etc.) never generate a syntax error. PN core is already
+		// T-SQL and is skipped by query_looks_like_mysql().
+		$preflighted   = false;
+		$sqltranslate  = null;
+		if ( $this->query_looks_like_mysql( $query ) ) {
+			list( $query, $sqltranslate ) = $this->apply_sql_translation( $query, 'preflight' );
+			$preflighted = true;
+		}
+
 		// Keep track of the last query for debug.
 		$this->last_query = $query;
 
 		$this->_do_query( $query );
 
-        // If there is an error, first attempt to translate
-        $errors = sqlsrv_errors();
-		if( ! empty( $errors ) && is_array( $errors ) ) {
+		$errors = sqlsrv_errors();
+
+		// If preflight produced following_query (e.g. CREATE INDEX from KEY), run it.
+		if ( empty( $errors ) && $sqltranslate && ! empty( $sqltranslate->following_query ) ) {
+			foreach ( (array) $sqltranslate->following_query as $fol_q ) {
+				if ( $fol_q ) {
+					sqlsrv_query( $this->dbh, $fol_q );
+				}
+			}
+			$errors = sqlsrv_errors();
+		}
+
+		// Safety net: unsniffed MySQL that still failed. Do not re-translate
+		// a query we already rewrote — a second pass can mangle T-SQL.
+		if ( ! $preflighted && ! empty( $errors ) && is_array( $errors ) ) {
             switch ( $errors[ 0 ][ 'code' ] ){
                 case 102:
                 case 105:
+                case 107:
                 case 145:
                 case 156:
+                case 170:
                 case 195:
                 case 207:
                 case 241:
@@ -2263,27 +2481,23 @@ class wpdb {
                 case 8120:
 				case 8155:
                 case 8127:
-                    if ( getenv( 'ProjectNamiLogTranslate' ) ){
-			            $begintransmsg = date("Y-m-d H:i:s") . " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Begin Query translation attempt:" . PHP_EOL .  $query . PHP_EOL;
-                        error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' ); 
-                     }
-			        $sqltranslate = new SQL_Translations( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
-
-                    $query = $sqltranslate->translate( $query );
-                    if ( getenv( 'ProjectNamiLogTranslate' ) ){
-			            $endtransmsg = date("Y-m-d H:i:s") . " -- Translation result:" . PHP_EOL .  $query . PHP_EOL . PHP_EOL;
-                        error_log( $endtransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' ); 
-                    }
+			        list( $query, $sqltranslate ) = $this->apply_sql_translation( $query, 'retry ' . $errors[ 0 ][ 'code' ] );
     		        $this->last_query = $query;
-
 	    	        $this->_do_query( $query );
-
-		            // If there is an error then take note of it..
-		            $errors = sqlsrv_errors();
+			        $errors = sqlsrv_errors();
+			        if ( empty( $errors ) && $sqltranslate && ! empty( $sqltranslate->following_query ) ) {
+			            foreach ( (array) $sqltranslate->following_query as $fol_q ) {
+			                if ( $fol_q ) {
+			                    sqlsrv_query( $this->dbh, $fol_q );
+			                }
+			            }
+			            $errors = sqlsrv_errors();
+			        }
 					break;
 				default:
-					$begintransmsg = date("Y-m-d H:i:s") .  " Error Code: " . $errors[ 0 ][ 'code' ] . " -- Query NOT translated due to non-defined error code." . PHP_EOL .  $query . PHP_EOL;
-					error_log( $begintransmsg, 3, dirname( ini_get('error_log') ) . DIRECTORY_SEPARATOR . 'translate.log' );				
+					$this->pn_log_translate(
+						date( 'Y-m-d H:i:s' ) . ' Error Code: ' . $errors[0]['code'] . ' -- Query NOT translated due to non-defined error code.' . PHP_EOL . $query . PHP_EOL
+					);
             }
 		}
 		
@@ -2300,10 +2514,12 @@ class wpdb {
 
 		if ( preg_match( '/^\s*(create|alter|truncate|drop)\s/i', $query ) ) {
 			$return_val = $this->result;
-		} elseif ( preg_match( '/^\s*(insert|delete|update|replace)\s/i', $query ) && $this->query_statement_resource != false ) {
+		} elseif ( ( preg_match( '/^\s*(insert|delete|update|replace|merge)\s/i', $query )
+				|| preg_match( '/^\s*begin\s+try\b/i', $query ) )
+			&& $this->query_statement_resource != false ) {
 			$this->rows_affected = sqlsrv_rows_affected( $this->query_statement_resource );
 			// Take note of the insert_id.
-			if ( preg_match( '/^\s*(insert|replace)\s/i', $query ) ) {
+			if ( preg_match( '/^\s*(insert|replace)\s/i', $query ) || preg_match( '/^\s*begin\s+try\s+insert\b/i', $query ) ) {
 				$this->insert_id = sqlsrv_query($this->dbh, 'SELECT isnull(scope_identity(), 0)');
 
 				$row = sqlsrv_fetch_array( $this->insert_id );
@@ -4177,6 +4393,21 @@ class wpdb {
 	 * @return string|null Version number on success, null on failure.
 	 */
 	public function db_version() {
+		$version = $this->db_server_info();
+		if ( empty( $version ) ) {
+			return null;
+		}
+		return preg_replace( '/[^0-9.].*/', '', $version );
+	}
+
+	/**
+	 * Returns the raw version string of the database server.
+	 *
+	 * @since 5.5.0
+	 *
+	 * @return string Database server version as a string.
+	 */
+	public function db_server_info() {
 		return $this->get_var( "SELECT convert(varchar,SERVERPROPERTY('productversion')) as 'version'" );
 	}
 

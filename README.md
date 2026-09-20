@@ -1,7 +1,9 @@
 Project Nami
 ===============
 
-### Version: `3.8.1` ###
+### Version: `4.1.1` ###
+
+Tracks WordPress **7.1.1** (`$wp_db_version` 61833) on SQL Server 2012+ / Azure SQL.
 
 ### Description: ###
 In its current form, Project Nami is basically WordPress powered by Microsoft SQL Server. **All** WordPress core features and functions are supported.
@@ -18,7 +20,7 @@ We needed a version of WordPress powered by SQL Server in the cloud on Microsoft
 ### Plugin Compatibility ###
 We make no attempts to maintain an exhaustive list of WordPress plugins which do or do not work with Project Nami.  There are simply too many plugins available.  But we can offer some guidance on evaluating the plugins you want to use.
 
-Plugins fall into four basic categories…
+Plugins fall into four basic categoriesÂ…
 
 * Plugins which use the WordPress APIs.  These plugins should always work.  If something is broken, then it is most likely a bug in Project Nami that has not been seen before and needs to be corrected.
 * Plugins which query the database directly.  These plugins may work.  Many times the SQL statement will execute successfully.  If it produces an error, we attempt to translate the query and resubmit it to the database.  Translation efforts are not guaranteed to work, and they may introduce slight performance reductions as the query will have to be resubmitted with every failed execution attempt.  We welcome pull requests which help to improve and expand the translation support.  The translation functions are found in /wp-includes/translations.php

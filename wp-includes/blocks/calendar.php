@@ -134,7 +134,7 @@ function block_core_calendar_has_published_posts() {
  */
 function block_core_calendar_update_has_published_posts() {
 	global $wpdb;
-	$has_published_posts = (bool) $wpdb->get_var( "SELECT 1 as test FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish' LIMIT 1" );
+	$has_published_posts = (bool) $wpdb->get_var( "SELECT TOP 1 1 as test FROM {$wpdb->posts} WHERE post_type = 'post' AND post_status = 'publish'" );
 	update_option( 'wp_calendar_block_has_published_posts', $has_published_posts );
 	return $has_published_posts;
 }

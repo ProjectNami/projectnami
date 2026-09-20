@@ -772,6 +772,16 @@ function upgrade_all() {
 	if ( $wp_current_db_version < 58975 ) {
 		upgrade_670();
 	}
+
+	if ( $wp_current_db_version < 60421 ) {
+		upgrade_682();
+	}
+
+	if ( $wp_current_db_version < 61644 ) {
+		upgrade_690();
+		upgrade_700();
+	}
+
 	maybe_disable_link_manager();
 
 	maybe_disable_automattic_widgets();
@@ -1300,6 +1310,97 @@ function upgrade_670() {
 		wp_set_options_autoload( $options, false );
 	}
 }
+
+/**
+ * Executes changes made in WordPress 6.8.2.
+ *
+ * @ignore
+ * @since 6.8.2
+ *
+ * @global int $wp_current_db_version The old (current) database version.
+ */
+function upgrade_682() {
+	global $wp_current_db_version;
+
+	if ( $wp_current_db_version < 60421 ) {
+		// Upgrade Ping-O-Matic and Twingly to use HTTPS.
+		$ping_sites_value = get_option( 'ping_sites' );
+		$ping_sites_value = explode( "\n", $ping_sites_value );
+		$ping_sites_value = array_map(
+			function ( $url ) {
+				$url = trim( $url );
+				$url = sanitize_url( $url );
+				if (
+					str_ends_with( trailingslashit( $url ), '://rpc.pingomatic.com/' )
+					|| str_ends_with( trailingslashit( $url ), '://rpc.twingly.com/' )
+				) {
+					$url = set_url_scheme( $url, 'https' );
+				}
+				return $url;
+			},
+			$ping_sites_value
+		);
+		$ping_sites_value = array_filter( $ping_sites_value );
+		$ping_sites_value = implode( "\n", $ping_sites_value );
+		update_option( 'ping_sites', $ping_sites_value );
+	}
+}
+
+/**
+ * Executes changes made in WordPress 6.9 (Project Nami).
+ *
+ * WP 6.9 added KEY type_status_author via dbDelta. PN's dbDelta stub cannot
+ * ALTER existing tables, so create the index explicitly when missing.
+ *
+ * @ignore
+ * @since 6.9.0
+ *
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
+ */
+function upgrade_690() {
+	global $wp_current_db_version, $wpdb;
+
+	if ( $wp_current_db_version < 61644 ) {
+		$index_name = $wpdb->posts . '_IDX5';
+		$exists     = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT 1 FROM sys.indexes WHERE name = %s AND object_id = OBJECT_ID(%s)",
+				$index_name,
+				$wpdb->posts
+			)
+		);
+		if ( ! $exists ) {
+			$wpdb->query( "CREATE INDEX {$index_name} ON {$wpdb->posts} (post_type, post_status, post_author)" );
+		}
+	}
+}
+
+/**
+ * Executes changes made in WordPress 7.0.
+ *
+ * @ignore
+ * @since 7.0.0
+ *
+ * @global int  $wp_current_db_version The old (current) database version.
+ * @global wpdb $wpdb                  WordPress database abstraction object.
+ */
+function upgrade_700() {
+	global $wp_current_db_version, $wpdb;
+
+	// Migrate users with 'fresh' admin color to 'modern'.
+	if ( $wp_current_db_version < 61644 ) {
+		$wpdb->update(
+			$wpdb->usermeta,
+			array( 'meta_value' => 'modern' ),
+			array(
+				'meta_key'   => 'admin_color',
+				'meta_value' => 'fresh',
+			)
+		);
+	}
+}
+
 /**
  * Executes network-level upgrade routines.
  *

@@ -203,6 +203,21 @@ class SQL_Translations extends wpdb
                                 'writetext');
 
     /**
+     * Translator-only constructor.
+     *
+     * SQL_Translations is instantiated on query error to rewrite MySQL dialect.
+     * Opening a second sqlsrv connection here is wasteful and can disturb
+     * an in-flight transaction on the live $wpdb handle, so we skip connect.
+     */
+    function __construct( $dbuser = '', $dbpassword = '', $dbname = '', $dbhost = '' ) {
+        $this->dbuser     = $dbuser;
+        $this->dbpassword = $dbpassword;
+        $this->dbname     = $dbname;
+        $this->dbhost     = $dbhost;
+        $this->use_mysqli = false;
+    }
+
+    /**
      * Sets blog id.
      *
      * @since 3.0.0
@@ -290,6 +305,7 @@ class SQL_Translations extends wpdb
         }
 
         $sub_funcs = array(
+            'translate_delete_limit',
             'translate_general',
             'translate_date_add',
             'translate_if_stmt',
@@ -306,8 +322,13 @@ class SQL_Translations extends wpdb
             'translate_incompat_data_type',
             'translate_create_queries',
             'translate_specific',
-			'translate_if_not_exists_insert_merge',
+            'translate_if_not_exists_insert_merge',
             'translate_index_hints',
+            'translate_insert_ignore',
+            'translate_replace_into',
+            'translate_field_function',
+            'translate_group_concat',
+            'translate_mod_ifnull',
         );
 
         // Perform translations and record query changes.
@@ -345,19 +366,33 @@ class SQL_Translations extends wpdb
         $this->select_query = false;
         $this->alter_query  = false;
         $this->create_query = false;
+
+        $trimmed = ltrim( $query );
         
-        if ( stripos($query, 'INSERT') === 0 ) {
+        if ( stripos($trimmed, 'INSERT') === 0 ) {
             $this->insert_query = true;
-        } else if ( stripos($query, 'SELECT') === 0 ) {
+        } else if ( stripos($trimmed, 'REPLACE') === 0 ) {
+            $this->insert_query = true;
+        } else if ( stripos($trimmed, 'WITH') === 0 ) {
+            if ( preg_match( '/\bDELETE\b/i', $query ) ) {
+                $this->delete_query = true;
+            } else if ( preg_match( '/\bUPDATE\b/i', $query ) ) {
+                $this->update_query = true;
+            } else {
+                $this->select_query = true;
+            }
+        } else if ( stripos($trimmed, 'SELECT') === 0 ) {
             $this->select_query = true;
-        } else if ( stripos($query, 'DELETE') === 0 ) {
+        } else if ( stripos($trimmed, 'DELETE') === 0 ) {
             $this->delete_query = true;
-        } else if ( stripos($query, 'UPDATE') === 0 ) {
+        } else if ( stripos($trimmed, 'UPDATE') === 0 ) {
             $this->update_query = true;
-        } else if ( stripos($query, 'ALTER') === 0 ) {
+        } else if ( stripos($trimmed, 'ALTER') === 0 ) {
             $this->alter_query = true;
-        } else if ( stripos($query, 'CREATE') === 0 ) {
+        } else if ( stripos($trimmed, 'CREATE') === 0 ) {
             $this->create_query = true;
+        } else if ( stripos($trimmed, 'RENAME') === 0 ) {
+            $this->alter_query = true;
         }
     }
 
@@ -376,9 +411,19 @@ class SQL_Translations extends wpdb
 		
 		// Handle zeroed out dates from MySQL. SQL Server chokes on these.
         	$query = str_replace( "0000-00-00 00:00:00", "0001-01-01 00:00:00", $query );
+		$query = str_replace( "0000-00-00", "0001-01-01", $query );
 
 		// Handle NULL-safe equal to operator.
         	$query = str_replace( "<=>", "=", $query );
+
+		// Transaction start: MySQL vs T-SQL.
+		if ( preg_match( '/^\s*START\s+TRANSACTION\b/i', $query ) ) {
+			$query = preg_replace( '/^\s*START\s+TRANSACTION\b/i', 'BEGIN TRANSACTION', $query );
+		}
+
+		// Generic boolean operator that some plugins emit.
+		$query = preg_replace( '/\s+&&\s+/', ' AND ', $query );
+		$query = preg_replace( '/\s+\|\|\s+/', ' OR ', $query );
          
 		/**        
 		* Symposium Pro
@@ -388,12 +433,17 @@ class SQL_Translations extends wpdb
 		}
 
 		/* Detect plugin. For use on Front End only. */
-		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		if ( ! function_exists( 'is_plugin_active' ) && defined( 'ABSPATH' ) ) {
+			$plugin_file = ABSPATH . 'wp-admin/includes/plugin.php';
+			if ( file_exists( $plugin_file ) ) {
+				include_once( $plugin_file );
+			}
+		}
 		
         /**
          * Akismet
          */
-		if ( is_plugin_active( 'akismet/akismet.php' ) ) {
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'akismet/akismet.php' ) ) {
 			if (stristr($query, " as c USING(comment_id) WHERE m.meta_key = 'akismet_as_submitted'") !== FALSE) {
 				$query = str_ireplace(
 					'USING(comment_id)', 
@@ -404,7 +454,7 @@ class SQL_Translations extends wpdb
         /**
          * Broken Link Checker
          */
-		if ( is_plugin_active( 'broken-link-checker/broken-link-checker.php' ) ) {
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'broken-link-checker/broken-link-checker.php' ) ) {
 			if (stristr($query, " INNER JOIN wp_blc_instances AS instances USING(link_id)") !== FALSE) {
 				$query = str_ireplace('USING(link_id)', 'ON links.link_id = instances.link_id', $query);
 			}
@@ -422,7 +472,7 @@ class SQL_Translations extends wpdb
         /**
          * Jetpack
          */
-		if ( is_plugin_active( 'jetpack/jetpack.php' ) ) {
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'jetpack/jetpack.php' ) ) {
 			if (stristr($query, " AS UNSIGNED") !== FALSE) {
 				$query = str_ireplace(
 					' AS UNSIGNED', 
@@ -433,7 +483,7 @@ class SQL_Translations extends wpdb
         /**
          * Yoast SEO
          */
-		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'wordpress-seo/wp-seo.php' ) ) {
 			if (stristr($query, " && meta_key = ") !== FALSE) {
 				$query = str_ireplace(
 					' && meta_key = ', 
@@ -466,7 +516,7 @@ class SQL_Translations extends wpdb
         /**
          * The Events Calendar
          */
-		if ( is_plugin_active( 'the-events-calendar/the-events-calendar.php' ) ) {
+		if ( function_exists( 'is_plugin_active' ) && is_plugin_active( 'the-events-calendar/the-events-calendar.php' ) ) {
 			if (stristr($query, "DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC") !== FALSE) {
 				$query = str_ireplace(
 					'DATE(tribe_event_start.meta_value) ASC, TIME(tribe_event_start.meta_value) ASC', 
@@ -599,7 +649,7 @@ class SQL_Translations extends wpdb
         /**
          * Misc Queries
          */
-        $query = str_ireplace('WHERE 1=1 AND 0', '', $query);
+        $query = str_ireplace('WHERE 1=1 AND 0', 'WHERE 1=1 AND 1=0', $query);
 
 		$searchstr = '/(SELECT\s*YEAR\(p\.post_date_gmt\)\s*AS\s*`year`,\s*MONTH\(p\.post_date_gmt\)\s*AS\s*`month`,\s*COUNT\(p\.ID\)\s*AS\s*`numposts`,\s*MAX\(p\.post_modified_gmt\)\s*as\s*`last_mod`\s*FROM\s*\w*\s*p)/is';
 		preg_match( $searchstr, $query, $groups );
@@ -654,25 +704,19 @@ class SQL_Translations extends wpdb
         if ( stripos($query, 'show tables like ') === 0 ) {
             $end_pos = strlen($query);
             $param = substr($query, 17, $end_pos - 17);
-            // quoted with double quotes instead of single?
-            // $param = trim($param, '"');
             $param = str_ireplace('"', "'", $param);
-            /*
-            if($param[0] !== "'") {
-                $param = "'$param'";
-            }
-            */
             $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE ' . $param;
         }
         if ( stripos($query, 'show tables where ') === 0 ) {
           $end_pos = strlen($query);
           $param = substr($query, 18, $end_pos - 18);
-          // quoted with double quotes instead of single?
           $param = str_ireplace('"', "'", $param);
-          // Used by plugins like WP Statistics
-          // Replace `Tables_in_THEDATABASE` parameter syntax with INFORMATION_SCHEMA.TABLES a compatible one.
           $param = preg_replace('/.?Tables_in_.*?(=|LIKE|NOT\\ LIKE)\s?(.*?)/i', 'TABLE_NAME ${1} ${2}', $param);
           $query = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE ' . $param;
+        }
+        // SHOW DATABASES
+        if ( stripos($query, 'SHOW DATABASES') === 0 ) {
+            $query = "SELECT name AS [Database] FROM sys.databases";
         }
         // DESCRIBE - this is pretty darn close to mysql equiv, however it will need to have a flag to modify the result set
         // this and SHOW INDEX FROM are used in WP upgrading. The problem is that WP will see the different data types and try
@@ -687,38 +731,35 @@ class SQL_Translations extends wpdb
         if ( stristr($query, "set names 'utf8'") !== FALSE ) {
             $query = "";
         }
-        // SHOW COLUMNS
-        if ( stripos($query, 'SHOW COLUMNS FROM ') === 0 ) {
-            $like_matched = preg_match("/ like '(.*?)'/i", $query, $like_match);
-            if ($like_matched) {
-                $query = str_ireplace($like_match[0], '', $query);
+        // SHOW COLUMNS / SHOW FULL COLUMNS
+        if ( preg_match( '/^SHOW\s+(FULL\s+)?COLUMNS\s+FROM\s+/i', $query ) ) {
+            $like_clause = null;
+            if ( preg_match( "/\\s+like\\s+('[^']*'|%\\d+\\\$s)/i", $query, $like_match ) ) {
+                $like_clause = $like_match[1];
+                $query = str_ireplace( $like_match[0], '', $query );
             }
-            $end_pos = strlen($query);
-            $param = substr($query, 18, $end_pos - 18);
-            $param = "'". trim($param, "'") . "'";
-            $query = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ' . $param;
-            if ($like_matched) {
-                $query = $query . " AND COLUMN_NAME " . $like_match[0];
+            $query = preg_replace('/^SHOW\s+(FULL\s+)?COLUMNS\s+FROM\s+/i', '', $query);
+            $param = trim( $query, " ;`[]" );
+            $param = trim( $param, "'" );
+            $query = "SELECT COLUMN_NAME AS Field, DATA_TYPE AS Type, IS_NULLABLE AS [Null], COLUMN_DEFAULT AS [Default], '' AS Extra FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '" . $param . "'";
+            if ( $like_clause ) {
+                $query .= " AND COLUMN_NAME LIKE " . $like_clause;
             }
         }
         
         // SHOW INDEXES - issue with sql azure trying to fix....sys.sysindexes is coming back as invalid onject name
         if ( stripos($query, 'SHOW INDEXES FROM ') === 0 ) {
-            return $query;
-            $table = substr($query, 18);
-            $query = "SELECT sys.sysindexes.name AS IndexName
-                      FROM sysobjects
-                       JOIN sys.key_constraints ON parent_object_id = sys.sysobjects.id
-                       JOIN sys.sysindexes ON sys.sysindexes.id = sys.sysobjects.id and sys.key_constraints.unique_index_id = sys.sysindexes.indid
-                       JOIN sys.index_columns ON sys.index_columns.object_id = sys.sysindexes.id  and sys.index_columns.index_id = sys.sysindexes.indid
-                       JOIN sys.syscolumns ON sys.syscolumns.id = sys.sysindexes.id AND sys.index_columns.column_id = sys.syscolumns.colid
-                      WHERE sys.sysobjects.type = 'u'   
-                       AND sys.sysobjects.name = '{$table}'";
+            $query = 'SHOW INDEX FROM ' . substr($query, 18);
         }
 
-        // SHOW INDEX FROM tablename
-        if ( stripos($query, 'SHOW INDEX FROM ') === 0 ) {
-            $table = rtrim(substr($query, 16), ';');
+        // SHOW INDEX FROM tablename / SHOW KEYS FROM tablename
+        if ( stripos($query, 'SHOW INDEX FROM ') === 0 || stripos($query, 'SHOW KEYS FROM ') === 0 ) {
+            if ( stripos($query, 'SHOW INDEX FROM ') === 0 ) {
+                $table = rtrim(substr($query, 16), ';');
+            } else {
+                $table = rtrim(substr($query, 15), ';');
+            }
+            $table = trim( $table, ' `"[]' );
             $query = "select
                     t.name AS [Table],
                     CASE 
@@ -748,32 +789,16 @@ class SQL_Translations extends wpdb
                     t.name, ind.name, ind.index_id, ic.index_column_id";
         }
 
-        // USE INDEX
-        if ( stripos($query, 'USE INDEX (') !== FALSE) {
-            $start_pos = stripos($query, 'USE INDEX (');
-            $end_pos = $this->get_matching_paren($query, $start_pos + 11);
-            $params = substr($query, $start_pos + 11, $end_pos - ($start_pos + 11));
-            $params = explode(',', $params);
-            foreach ($params as $k => $v) {
-                $params[$k] = trim($v);
-                foreach ($this->fields_map->read() as $table => $fields) {
-                    if ( is_array($fields) ) {
-                        foreach ($fields as $field_name => $field_meta) {
-                            if ( $field_name == $params[$k] ) {
-                                $params[$k] = $table . '_' . $params[$k];
-                            }
-                        }
-                    }
-                }
-            }
-            $params = implode(',', $params);
-            $query = substr_replace($query, 'WITH (INDEX(' . $params . '))', $start_pos, ($end_pos + 1) - $start_pos);
-        }
+        // USE INDEX / FORCE INDEX / IGNORE INDEX — drop the hint.
+        // Mapping the MySQL index *name* to a T-SQL index is unsafe (PN names
+        // indexes {prefix}posts_IDX2, not type_status_date). The optimizer will
+        // pick the clustered/secondary index on its own.
+        $query = preg_replace('/\s*(FORCE|IGNORE|USE)\s+(INDEX|KEY)\s*(FOR\s+\w+\s*)?\([^)]*\)/i', '', $query);
 
         // DROP TABLES
         if ( stripos($query, 'DROP TABLE IF EXISTS ') === 0 ) {
-            $table = substr($query, 21, strlen($query) - 21);
-            $query = 'DROP TABLE ' . $table;
+            $table = trim( substr($query, 21), " ;`[]" );
+            $query = "IF OBJECT_ID(N'{$table}', N'U') IS NOT NULL DROP TABLE [{$table}]";
         } elseif ( stripos($query, 'DROP TABLE ') === 0 ) {
             $table = substr($query, 11, strlen($query) - 11);
             $query = 'DROP TABLE ' . $table;
@@ -800,6 +825,9 @@ class SQL_Translations extends wpdb
 
         // TICKS
         $query = str_replace('`', '', $query);
+
+        // IFNULL is MySQL; T-SQL uses ISNULL
+        $query = preg_replace('/\bIFNULL\s*\(/i', 'ISNULL(', $query);
 
         // avoiding some nested as Computed issues
         if (stristr($query, 'SELECT COUNT(DISTINCT(' . $this->prefix . 'users.ID))') !== FALSE) {
@@ -1266,6 +1294,11 @@ class SQL_Translations extends wpdb
                 }
 
                 $params = substr($query, ((int)$ob + 3), ((int)$ord - ((int)$ob + 3)));
+                // Expressions (* / + - or nested parens) are not a column list.
+                // Splitting on whitespace turned FTS "RANK * 2 + RANK" into "RANK, *, 2, +, RANK".
+                if ( preg_match( '/[()*+\-\/]|\bLIKE\b/i', $params ) ) {
+                    return $query;
+                }
                 $params = preg_split('/[\s,]+/', $params);
                 $p = array();
                 foreach ( $params as $value ) {
@@ -1338,7 +1371,13 @@ class SQL_Translations extends wpdb
      */
     function translate_remove_groupby($query)
     {
-        $query = str_ireplace("GROUP BY {$this->prefix}posts.ID ", ' ', $query);
+        // WP 6.8+ pretty-prints clauses with newlines (core.trac #56841).
+        // Old replace required "GROUP BY {prefix}posts.ID " (trailing space) and
+        // missed "GROUP BY wp_4_posts.ID\n". Only strip when SELECT is * —
+        // SELECT ID … GROUP BY ID is legal T-SQL (the split-query path).
+        if ( preg_match( '/SELECT\s+(?:DISTINCT\s+)?(?:[\w.]+)?\*/i', $query ) ) {
+            $query = preg_replace( '/GROUP BY\s+[\w.]*posts\.ID\b/i', ' ', $query );
+        }
         // Fixed query for archives widgets.
         $query = str_ireplace(
             'GROUP BY YEAR(post_date), MONTH(post_date) ORDER BY post_date DESC',
@@ -1513,6 +1552,12 @@ class SQL_Translations extends wpdb
         }
         $this->preg_data = array();
 
+        // Generic MySQL DDL → T-SQL (types, AFTER, CHANGE, CONVERT TO, RENAME, ...)
+        $query = $this->normalize_mysql_ddl( $query );
+        if ( $query === 'SELECT 1' || preg_match( '/^EXEC sp_rename/i', $query ) ) {
+            return $query;
+        }
+
         // fix enum as it doesn't exist in T-SQL
         if (stripos($query, 'enum(') !== false) {
             $enums = array_reverse($this->stripos_all($query, 'enum('));
@@ -1540,8 +1585,10 @@ class SQL_Translations extends wpdb
         // remove IF NOT EXISTS as that doesn't exist in T-SQL
         $query = str_ireplace(' IF NOT EXISTS', '', $query);
     
-        // save array to file_maps
-        $this->fields_map->update_for($query);
+        // save array to file_maps (CREATE TABLE only — ALTER/INDEX strings are not column lists)
+        if ( $this->create_query && stripos( $query, ' TABLE ' ) !== false ) {
+            $this->fields_map->update_for($query);
+        }
 
         // change auto increment to indentity
         $start_positions = array_reverse($this->stripos_all($query, 'auto_increment'));
@@ -1550,10 +1597,9 @@ class SQL_Translations extends wpdb
                 $query = substr_replace($query, 'IDENTITY(1,1)', $start_pos, 14);
             }
         }
-        if(stripos($query, 'AFTER') > 0) {
-            $start_pos = stripos($query, 'AFTER');
-            $query = substr($query, 0, $start_pos);
-        }
+        // MySQL column-position AFTER `col` — strip the clause, do NOT truncate the query.
+        $query = preg_replace('/\s+AFTER\s+(?:`[^`]+`|\[[^\]]+\]|[\w]+)/i', '', $query);
+        $query = preg_replace('/\s+\bFIRST\b/i', '', $query);
         // replacement of certain data types and functions
         $fields = array(
             'int (',
@@ -1564,12 +1610,7 @@ class SQL_Translations extends wpdb
 
         // if alter table query - ADD COLUMN needs to become simply ADD
         if ($this->alter_query) {
-            if (( stripos($query, 'ALTER COLUMN') > 0) ||
-                 (stripos($query, 'CHANGE COLUMN') > 0) ||
-                 (stripos($query, 'ADD KEY') > 0)) {
-                $query = '';
-            }
-            $query = str_replace('ADD COLUMN', 'ADD', $query);
+            $query = str_ireplace('ADD COLUMN', 'ADD', $query);
         }
 
         foreach ( $fields as $field ) {
@@ -1591,6 +1632,7 @@ class SQL_Translations extends wpdb
         $query = str_ireplace("'0001-01-01 00:00:00'", 'getdate()', $query);
         $query = str_ireplace("'0000-00-00 00:00:00'", 'getdate()', $query);
         $query = str_ireplace("default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP", '', $query);
+        $query = preg_replace('/\s+ON\s+UPDATE\s+(?:CURRENT_TIMESTAMP(?:\(\))?|GETDATE\(\))/i', '', $query);
 
         // strip unsigned
         $query = str_ireplace("unsigned ", '', $query);
@@ -1599,11 +1641,15 @@ class SQL_Translations extends wpdb
         // change mediumint
         $query = str_ireplace("mediumint", "int", $query);
 
-        if ($this->create_query) {
+        if ($this->create_query && stripos($query, ' TABLE ') !== false) {
             // strip collation, engine type, etc from end of query
             $pos = stripos($query, '(', stripos($query, 'TABLE '));
-            $end = $this->get_matching_paren($query, $pos + 1);
-            $query = substr_replace($query, ');', $end);
+            if ( $pos !== false ) {
+                $end = $this->get_matching_paren($query, $pos + 1);
+                if ( $end ) {
+                    $query = substr_replace($query, ');', $end);
+                }
+            }
         }
 
         /* We remove character set and collation stuff because that information is per table in sql server */
@@ -1813,6 +1859,15 @@ class SQL_Translations extends wpdb
                 //$query = substr_replace($query, $key_str . ") ON [PRIMARY];", $lowest_start_pos);
             } else {
                 $query = substr_replace($query, $key_str . ");", $lowest_start_pos);
+            }
+        }
+
+        $query = $this->bracket_reserved_column_names( $query );
+
+        if ( $this->create_query && stripos( $this->preg_original, 'IF NOT EXISTS' ) !== false && stripos( $query, ' TABLE ' ) !== false ) {
+            if ( preg_match( '/CREATE\s+TABLE\s+(\S+)/i', $query, $tm ) ) {
+                $tbl = trim( $tm[1], '`"[](' );
+                $query = "IF OBJECT_ID(N'{$tbl}', N'U') IS NULL BEGIN {$query} END";
             }
         }
 
@@ -2299,6 +2354,289 @@ class SQL_Translations extends wpdb
         // Pattern constructed from grammar at https://dev.mysql.com/doc/refman/8.0/en/index-hints.html
         $query = preg_replace('/(FORCE|IGNORE|USE)\s+(INDEX|KEY)\s+(FOR.*)?\(.*\)/iU', "", $query);
         
+        return $query;
+    }
+
+    /**
+     * Normalize MySQL DDL (CREATE/ALTER/RENAME) into T-SQL.
+     *
+     * @param string $query
+     * @return string
+     */
+    function normalize_mysql_ddl( $query ) {
+        $qtrim = trim( $query );
+
+        if ( preg_match( '/^RENAME\s+TABLE\s+(\S+)\s+TO\s+(\S+)\s*;?\s*$/i', $qtrim, $m ) ) {
+            $old = trim( $m[1], '`"[] ;' );
+            $new = trim( $m[2], '`"[] ;' );
+            return "EXEC sp_rename N'{$old}', N'{$new}'";
+        }
+
+        if ( preg_match( '/^ALTER\s+TABLE\s+\S+\s+CONVERT\s+TO\s+/i', $qtrim ) ) {
+            return 'SELECT 1';
+        }
+
+        if ( preg_match( '/^ALTER\s+TABLE\s+(\S+)\s+CHANGE(?:\s+COLUMN)?\s+(\S+)\s+(\S+)\s+(.*)$/is', $qtrim, $m ) ) {
+            $table = trim( $m[1], '`"[]' );
+            $old   = trim( $m[2], '`"[]' );
+            $new   = trim( $m[3], '`"[]' );
+            $def   = rtrim( trim( $m[4] ), ';' );
+            $def   = $this->mysql_type_to_tsql( $def );
+            if ( strcasecmp( $old, $new ) !== 0 ) {
+                $this->preceeding_query = "EXEC sp_rename N'{$table}.{$old}', N'{$new}', N'COLUMN'";
+                $old = $new;
+            }
+            return "ALTER TABLE [{$table}] ALTER COLUMN [{$old}] {$def}";
+        }
+
+        $query = preg_replace( '/\s+AFTER\s+(?:`[^`]+`|\[[^\]]+\]|[\w]+)/i', '', $query );
+        $query = preg_replace( '/\s+\bFIRST\b/i', '', $query );
+        $query = preg_replace( "/\\s+COMMENT\\s+(?:'[^']*'|%[0-9]+\\\$s)/i", '', $query );
+        $query = preg_replace( '/\s+ZEROFILL\b/i', '', $query );
+        $query = preg_replace( '/\s+CHARACTER\s+SET\s+\S+/i', '', $query );
+        $query = preg_replace( '/\s+COLLATE\s+[`\w]+/i', '', $query );
+        $query = preg_replace( '/\s+ENGINE\s*=\s*\S+/i', '', $query );
+        $query = preg_replace( '/\s+ROW_FORMAT\s*=\s*\S+/i', '', $query );
+        $query = preg_replace( '/\s+DEFAULT\s+CHARSET\s*=\s*\S+/i', '', $query );
+        $query = preg_replace( '/\s+DEFAULT\s+CHARACTER\s+SET\s+\S+/i', '', $query );
+        $query = preg_replace( '/\s+ON\s+UPDATE\s+CURRENT_TIMESTAMP(?:\(\))?/i', '', $query );
+
+        $query = $this->mysql_type_to_tsql( $query );
+
+        if ( $this->alter_query ) {
+            $query = str_ireplace( 'ADD COLUMN', 'ADD', $query );
+        }
+
+        return $query;
+    }
+
+    /**
+     * Map MySQL data type names to T-SQL equivalents.
+     *
+     * @param string $sql
+     * @return string
+     */
+    function mysql_type_to_tsql( $sql ) {
+        $sql = preg_replace( '/\bCURRENT_TIMESTAMP(?:\(\))?/i', 'GETDATE()', $sql );
+        $sql = preg_replace( '/\blongblob\b/i', 'varbinary(max)', $sql );
+        $sql = preg_replace( '/\bmediumblob\b/i', 'varbinary(max)', $sql );
+        $sql = preg_replace( '/\btinyblob\b/i', 'varbinary(256)', $sql );
+        $sql = preg_replace( '/\bblob\b/i', 'varbinary(max)', $sql );
+        $sql = preg_replace( '/\blongtext\b/i', 'nvarchar(max)', $sql );
+        $sql = preg_replace( '/\bmediumtext\b/i', 'nvarchar(max)', $sql );
+        $sql = preg_replace( '/\btinytext\b/i', 'nvarchar(255)', $sql );
+        $sql = preg_replace( '/\bdouble(?:\s+precision)?\b/i', 'float', $sql );
+        $sql = preg_replace( '/\bbool(?:ean)?\b/i', 'bit', $sql );
+        // MySQL TIMESTAMP is datetime; T-SQL timestamp is rowversion. Never confuse them.
+        $sql = preg_replace( '/(?<!CURRENT_)(?<!@)\btimestamp\b(?!\s*\()/i', 'datetime2(0)', $sql );
+        return $sql;
+    }
+
+    /**
+     * Bracket T-SQL reserved words used as column names (Yoast `type`, `language`, `size`, ...).
+     *
+     * @param string $query
+     * @return string
+     */
+    function bracket_reserved_column_names( $query ) {
+        $cols = array( 'type', 'language', 'size', 'file', 'value', 'status', 'content', 'level' );
+        foreach ( $cols as $col ) {
+            $query = preg_replace( '/(?<=[,\(\s])(' . $col . ')(?=\s|,|\))/i', '[$1]', $query );
+        }
+        return $query;
+    }
+
+    /**
+     * DELETE ... ORDER BY ... LIMIT n is valid MySQL and illegal T-SQL.
+     * Unordered DELETE LIMIT n → DELETE TOP (n).
+     * Ordered → DELETE WHERE pk IN (SELECT TOP n ... ORDER BY).
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_delete_limit( $query ) {
+        if ( ! $this->delete_query ) {
+            return $query;
+        }
+        if ( ! preg_match( '/\bLIMIT\s+(\d+)\s*;?\s*$/i', $query, $lim ) ) {
+            return $query;
+        }
+        $n = $lim[1];
+        $wo_limit = rtrim( preg_replace( '/\s+LIMIT\s+\d+\s*;?\s*$/i', '', $query ) );
+
+        if ( preg_match( '/^DELETE\s+FROM\s+(\S+)\s+WHERE\s+(.*?)\s+ORDER\s+BY\s+(.*?)$/is', $wo_limit, $m ) ) {
+            $table = trim( $m[1], '`"[]' );
+            $where = $m[2];
+            $order = $m[3];
+            $id_col = 'id';
+            if ( preg_match( '/\boption_id\b/i', $order . ' ' . $where ) ) {
+                $id_col = 'option_id';
+            } elseif ( preg_match( '/ORDER\s+BY\s+[`\[\s]*(\w+)/i', 'ORDER BY ' . $order, $om ) ) {
+                $id_col = $om[1];
+            }
+            $out = "DELETE FROM {$table} WHERE {$id_col} IN (SELECT {$id_col} FROM (SELECT TOP ({$n}) {$id_col} FROM {$table} WHERE {$where} ORDER BY {$order}) AS _pn_del)";
+            return preg_replace( '/%(?!\d+\$s)/', '%%', $out );
+        }
+
+        $wo_limit = preg_replace( '/\s+ORDER\s+BY\s+.*/is', '', $wo_limit );
+        return preg_replace( '/^DELETE\s+/i', 'DELETE TOP (' . $n . ') ', $wo_limit );
+    }
+
+    /**
+     * INSERT IGNORE INTO → TRY/CATCH swallowing unique-key violations.
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_insert_ignore( $query ) {
+        if ( ! preg_match( '/^INSERT\s+IGNORE\s+INTO\s+/i', ltrim( $query ) ) ) {
+            return $query;
+        }
+        $insert = preg_replace( '/^INSERT\s+IGNORE\s+INTO\s+/i', 'INSERT INTO ', ltrim( $query ) );
+        $insert = rtrim( $insert, "; \t\n\r" );
+        return "BEGIN TRY {$insert}; END TRY BEGIN CATCH IF ERROR_NUMBER() NOT IN (2601, 2627) BEGIN THROW; END END CATCH";
+    }
+
+    /**
+     * REPLACE INTO t (cols) VALUES (vals) → MERGE on the first column (typically the PK).
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_replace_into( $query ) {
+        if ( ! preg_match( '/^REPLACE\s+INTO\s+/i', ltrim( $query ) ) ) {
+            return $query;
+        }
+        if ( ! preg_match( '/^REPLACE\s+INTO\s+(\S+)\s*\(([^)]+)\)\s*VALUES\s*\((.*)\)\s*;?\s*$/is', trim( $query ), $m ) ) {
+            return preg_replace( '/^REPLACE\s+INTO\s+/i', 'INSERT INTO ', ltrim( $query ) );
+        }
+        $table = trim( $m[1], '`"[]' );
+        $cols  = array();
+        foreach ( explode( ',', $m[2] ) as $c ) {
+            $cols[] = trim( $c, ' `"[]' );
+        }
+        $vals = $this->split_sql_list( $m[3] );
+        if ( empty( $cols ) || count( $cols ) !== count( $vals ) ) {
+            return preg_replace( '/^REPLACE\s+INTO\s+/i', 'INSERT INTO ', ltrim( $query ) );
+        }
+        $selects = array();
+        for ( $i = 0; $i < count( $cols ); $i++ ) {
+            $selects[] = $vals[ $i ] . ' AS [' . $cols[ $i ] . ']';
+        }
+        $pk = $cols[0];
+        $sets = array();
+        $insert_cols = array();
+        $insert_vals = array();
+        foreach ( $cols as $c ) {
+            $insert_cols[] = '[' . $c . ']';
+            $insert_vals[] = 'source.[' . $c . ']';
+            if ( $c !== $pk ) {
+                $sets[] = '[' . $c . '] = source.[' . $c . ']';
+            }
+        }
+        $sql  = "MERGE INTO [{$table}] WITH (HOLDLOCK) AS target USING (SELECT " . implode( ', ', $selects ) . ") AS source ON (target.[{$pk}] = source.[{$pk}])";
+        if ( ! empty( $sets ) ) {
+            $sql .= ' WHEN MATCHED THEN UPDATE SET ' . implode( ', ', $sets );
+        }
+        $sql .= ' WHEN NOT MATCHED THEN INSERT (' . implode( ', ', $insert_cols ) . ') VALUES (' . implode( ', ', $insert_vals ) . ');';
+        return $sql;
+    }
+
+    /**
+     * Split a comma-separated SQL value list, respecting quoted strings.
+     *
+     * @param string $list
+     * @return array
+     */
+    function split_sql_list( $list ) {
+        $out = array();
+        $buf = '';
+        $quote = null;
+        $len = strlen( $list );
+        for ( $i = 0; $i < $len; $i++ ) {
+            $ch = $list[ $i ];
+            if ( $quote ) {
+                $buf .= $ch;
+                if ( $ch === $quote ) {
+                    $quote = null;
+                }
+                continue;
+            }
+            if ( $ch === "'" || $ch === '"' ) {
+                $quote = $ch;
+                $buf .= $ch;
+                continue;
+            }
+            if ( $ch === ',' ) {
+                $out[] = trim( $buf );
+                $buf = '';
+                continue;
+            }
+            $buf .= $ch;
+        }
+        if ( strlen( trim( $buf ) ) ) {
+            $out[] = trim( $buf );
+        }
+        return $out;
+    }
+
+    /**
+     * FIELD(col, a, b, c) → CASE col WHEN a THEN 1 WHEN b THEN 2 ... ELSE 0 END
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_field_function( $query ) {
+        if ( stripos( $query, 'FIELD(' ) === false && stripos( $query, 'FIELD (' ) === false ) {
+            return $query;
+        }
+        return preg_replace_callback( '/FIELD\s*\(\s*([^,]+)\s*,\s*(.*?)\)/is', array( $this, 'replace_field_function' ), $query );
+    }
+
+    function replace_field_function( $m ) {
+        $col = trim( $m[1] );
+        $parts = $this->split_sql_list( $m[2] );
+        $whens = array();
+        $i = 1;
+        foreach ( $parts as $p ) {
+            $p = trim( $p );
+            if ( $p === '' ) {
+                continue;
+            }
+            $whens[] = "WHEN {$p} THEN {$i}";
+            $i++;
+        }
+        return '(CASE ' . $col . ' ' . implode( ' ', $whens ) . ' ELSE 0 END)';
+    }
+
+    /**
+     * GROUP_CONCAT(x [SEPARATOR ',']) → STRING_AGG (SQL Server 2017+ / Azure SQL).
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_group_concat( $query ) {
+        if ( stripos( $query, 'GROUP_CONCAT' ) === false ) {
+            return $query;
+        }
+        return preg_replace_callback( '/GROUP_CONCAT\s*\(\s*(?:DISTINCT\s+)?(.*?)(?:\s+SEPARATOR\s+(\'[^\']*\'))?\s*\)/is', array( $this, 'replace_group_concat' ), $query );
+    }
+
+    function replace_group_concat( $m ) {
+        $expr = trim( $m[1] );
+        $sep  = ( isset( $m[2] ) && $m[2] !== '' ) ? $m[2] : "','";
+        return "STRING_AGG(CAST({$expr} AS nvarchar(max)), {$sep})";
+    }
+
+    /**
+     * MOD(a, b) → (a % b). IFNULL already handled in translate_general.
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_mod_ifnull( $query ) {
+        $query = preg_replace( '/\bMOD\s*\(\s*([^,]+)\s*,\s*([^)]+)\)/i', '($1 % $2)', $query );
+        $query = preg_replace( '/\bIFNULL\s*\(/i', 'ISNULL(', $query );
         return $query;
     }
 

@@ -357,8 +357,8 @@ class WP_Site_Query {
 		$key          = md5( serialize( $_args ) );
 		$last_changed = wp_cache_get_last_changed( 'sites' );
 
-		$cache_key   = "get_sites:$key:$last_changed";
-		$cache_value = wp_cache_get( $cache_key, 'site-queries' );
+		$cache_key   = "get_sites:$key";
+		$cache_value = wp_cache_get_salted( $cache_key, 'site-queries', $last_changed );
 
 		if ( false === $cache_value ) {
 			$site_ids = $this->get_site_ids();
@@ -370,7 +370,7 @@ class WP_Site_Query {
 				'site_ids'    => $site_ids,
 				'found_sites' => $this->found_sites,
 			);
-			wp_cache_add( $cache_key, $cache_value, 'site-queries' );
+			wp_cache_set_salted( $cache_key, $cache_value, 'site-queries', $last_changed );
 		} else {
 			$site_ids          = $cache_value['site_ids'];
 			$this->found_sites = $cache_value['found_sites'];
@@ -680,12 +680,12 @@ class WP_Site_Query {
 		 */
 		$clauses = apply_filters_ref_array( 'sites_clauses', array( compact( $pieces ), &$this ) );
 
-		$fields  = isset( $clauses['fields'] ) ? $clauses['fields'] : '';
-		$join    = isset( $clauses['join'] ) ? $clauses['join'] : '';
-		$where   = isset( $clauses['where'] ) ? $clauses['where'] : '';
-		$orderby = isset( $clauses['orderby'] ) ? $clauses['orderby'] : '';
-		$limits  = isset( $clauses['limits'] ) ? $clauses['limits'] : '';
-		$groupby = isset( $clauses['groupby'] ) ? $clauses['groupby'] : '';
+		$fields  = $clauses['fields'] ?? '';
+		$join    = $clauses['join'] ?? '';
+		$where   = $clauses['where'] ?? '';
+		$orderby = $clauses['orderby'] ?? '';
+		$limits  = $clauses['limits'] ?? '';
+		$groupby = $clauses['groupby'] ?? '';
 
 		if ( $where ) {
 			$where = 'WHERE ' . $where;
@@ -799,12 +799,10 @@ class WP_Site_Query {
 
 		switch ( $orderby ) {
 			case 'site__in':
-				$site__in = implode( ',', array_map( 'absint', $this->query_vars['site__in'] ) );
-				$parsed   = "FIELD( {$wpdb->blogs}.blog_id, $site__in )";
+				$parsed = pn_sql_order_by_list( "{$wpdb->blogs}.blog_id", array_map( 'absint', $this->query_vars['site__in'] ) );
 				break;
 			case 'network__in':
-				$network__in = implode( ',', array_map( 'absint', $this->query_vars['network__in'] ) );
-				$parsed      = "FIELD( {$wpdb->blogs}.site_id, $network__in )";
+				$parsed = pn_sql_order_by_list( "{$wpdb->blogs}.site_id", array_map( 'absint', $this->query_vars['network__in'] ) );
 				break;
 			case 'domain':
 			case 'last_updated':
@@ -854,7 +852,7 @@ class WP_Site_Query {
 				}
 				break;
 			case 'meta_value_num':
-				$parsed = "{$primary_meta_query['alias']}.meta_value+0";
+				$parsed = "CAST({$primary_meta_query['alias']}.meta_value AS numeric)";
 				break;
 			default:
 				if ( isset( $meta_clauses[ $orderby ] ) ) {
