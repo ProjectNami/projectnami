@@ -2491,6 +2491,7 @@ class wpdb {
 		if ( ! $preflighted && ! empty( $errors ) && is_array( $errors ) ) {
             switch ( $errors[ 0 ][ 'code' ] ){
                 case 102:
+                case 1033:
                 case 105:
                 case 107:
                 case 145:

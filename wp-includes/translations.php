@@ -342,6 +342,7 @@ class SQL_Translations extends wpdb
             'translate_specific',
             'translate_if_not_exists_insert_merge',
             'translate_index_hints',
+            'translate_cte_orderby',
             'translate_insert_ignore',
             'translate_replace_into',
             'translate_field_function',
@@ -2373,6 +2374,25 @@ class SQL_Translations extends wpdb
         $query = preg_replace('/(FORCE|IGNORE|USE)\s+(INDEX|KEY)\s+(FOR.*)?\(.*\)/iU', "", $query);
         
         return $query;
+    }
+
+    /**
+     * SQL Server 1033: ORDER BY in a CTE/subquery needs TOP, OFFSET, or FOR XML.
+     * Yoast sitemap WITH ... ROW_NUMBER() OVER (ORDER BY col) ... ORDER BY col
+     * — the trailing ORDER BY is redundant.
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_cte_orderby( $query ) {
+        if ( ! preg_match( '/^\s*WITH\b/i', $query ) ) {
+            return $query;
+        }
+        return preg_replace(
+            '/(WITH\s+\S+\s+AS\s*\((?:[^()]|\([^()]*\))*?)\s+ORDER\s+BY\s+[\w.\[\]]+\s*(\))/is',
+            '$1$2',
+            $query
+        );
     }
 
     /**

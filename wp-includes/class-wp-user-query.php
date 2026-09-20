@@ -677,11 +677,26 @@ class WP_User_Query {
 		$this->query_orderby = 'ORDER BY ' . implode( ', ', $orderby_array );
 
 		if ( 0 === strncasecmp( ltrim( $this->query_fields ), 'DISTINCT ', 9 ) ) {
-			foreach ( $orderby_array as $ob ) {
+			$i = 0;
+			foreach ( $orderby_array as $k => $ob ) {
 				$expr = preg_replace( '/\s+(ASC|DESC)\s*$/i', '', $ob );
-				if ( $expr && 0 === strncasecmp( ltrim( $expr ), 'CASE ', 5 ) && false === stripos( $this->query_fields, $expr ) ) {
-					$this->query_fields .= ', ' . $expr;
+				$dir  = '';
+				if ( preg_match( '/\s+(ASC|DESC)\s*$/i', $ob, $m ) ) {
+					$dir = ' ' . strtoupper( $m[1] );
 				}
+				if ( '' === $expr ) {
+					continue;
+				}
+				if ( false !== stripos( $this->query_fields, $expr ) ) {
+					continue;
+				}
+				$alias                   = ( 0 === $i ) ? '[pn_ob]' : '[pn_ob' . $i . ']';
+				$this->query_fields     .= ', ' . $expr . ' AS ' . $alias;
+				$orderby_array[ $k ]     = $alias . $dir;
+				++$i;
+			}
+			if ( $i > 0 ) {
+				$this->query_orderby = 'ORDER BY ' . implode( ', ', $orderby_array );
 			}
 		}
 
