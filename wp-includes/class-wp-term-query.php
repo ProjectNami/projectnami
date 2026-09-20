@@ -704,6 +704,10 @@ class WP_Term_Query {
 		if ( ! empty( $this->query_vars['object_ids'] ) ) {
 			$join    .= " INNER JOIN {$wpdb->term_relationships} AS tr ON tr.term_taxonomy_id = tt.term_taxonomy_id";
 			$distinct = 'DISTINCT';
+			if ( 'count' === $args['fields'] ) {
+				$distinct = '';
+				$fields   = 'COUNT(DISTINCT t.term_id) as qty';
+			}
 		}
 
 		$where = implode( ' AND ', $this->sql_clauses['where'] );
@@ -751,7 +755,7 @@ class WP_Term_Query {
 		$this->sql_clauses['from']    = "FROM $wpdb->terms AS t $join";
 		$this->sql_clauses['orderby'] = $orderby ? "$orderby $order" : '';
 		$this->sql_clauses['limits']  = $limits;
-        if ( $distinct ) {
+        if ( $distinct && 'count' !== $_fields ) {
             $groupby = "group by $fields $orderby_fields";
         }
 
