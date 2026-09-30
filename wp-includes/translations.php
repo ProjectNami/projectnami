@@ -305,6 +305,10 @@ class SQL_Translations extends wpdb
             $this->prepared = FALSE;
         }
 
+        // MySQL "" is an empty string. SQL Server QUOTED_IDENTIFIER treats ""
+        // as an empty identifier (1038). Yoast: meta_value = "".
+        $query = preg_replace( '/(?<!")""(?!")/', "''", $query );
+
         // strip out any quoted strings and store them, replace with sprintf placeholders
         $query = preg_replace_callback("!'([^'\\\]*(\\\'[^'\\\]*)*)'!", array($this, 'strip_strings'), $query);
         $this->preg_location = 1;
@@ -334,6 +338,7 @@ class SQL_Translations extends wpdb
             'translate_distinct_orderby',
             'translate_replace_casting',
             'translate_sort_casting',
+            'translate_unique_orderby',
             'translate_column_type',
             'translate_remove_groupby',
             'translate_insert_nulltime',
@@ -842,8 +847,9 @@ class SQL_Translations extends wpdb
         $query = str_replace('LENGTH(', 'DATALENGTH(', $query);
         $query = str_replace('LENGTH (', 'DATALENGTH(', $query); 
 
-        // TICKS
-        $query = str_replace('`', '', $query);
+        // MySQL identifiers. Strip would turn `exp` into a bare name; bracket it.
+        $query = preg_replace( '/`([^`]+)`/', '[$1]', $query );
+        $query = str_replace( '`', '', $query );
 
         // IFNULL is MySQL; T-SQL uses ISNULL
         $query = preg_replace('/\bIFNULL\s*\(/i', 'ISNULL(', $query);
@@ -878,9 +884,9 @@ class SQL_Translations extends wpdb
             }
         }
         
-        // Project Nami
-        // Remove ORDER BY clauses from DELETE commands
-        if ( $this->delete_query ) {
+        // Strip leftover MySQL DELETE ... ORDER BY (no LIMIT). Do not touch
+        // translate_delete_limit() rewrites that keep ORDER BY inside SELECT TOP.
+        if ( $this->delete_query && ! preg_match( '/\bDELETE\s+TOP\s*\(|_pn_del/i', $query ) ) {
             $order_pos = stripos($query, 'ORDER BY');
             if ($order_pos !== false) {
                 $query = substr($query, 0, $order_pos);
@@ -1352,6 +1358,49 @@ class SQL_Translations extends wpdb
             }
         }
         return $query;
+    }
+
+    /**
+     * SQL Server 169: ORDER BY list columns must be unique.
+     * Yoast get_recently_modified_posts() calls order_by_desc() twice (MySQL allows it).
+     *
+     * @param string $query
+     * @return string
+     */
+    function translate_unique_orderby( $query ) {
+        if ( stripos( $query, 'ORDER BY' ) === false ) {
+            return $query;
+        }
+        if ( ! preg_match( '/^(.*)\bORDER\s+BY\s+(.+?)(\s+OFFSET\b.*|\s+FETCH\b.*|\s*)$/is', $query, $m ) ) {
+            return $query;
+        }
+        if ( preg_match( '/\bOVER\s*\(\s*$/i', $m[1] ) ) {
+            return $query;
+        }
+        $list = trim( $m[2] );
+        if ( $list === '' || preg_match( '/[()]/', $list ) ) {
+            return $query;
+        }
+        $parts = preg_split( '/\s*,\s*/', $list );
+        $seen  = array();
+        $out   = array();
+        foreach ( $parts as $p ) {
+            $p = trim( $p );
+            if ( $p === '' ) {
+                continue;
+            }
+            $key = strtolower( preg_replace( '/\s+(ASC|DESC)\s*$/i', '', $p ) );
+            $key = preg_replace( '/\s+/', ' ', $key );
+            if ( isset( $seen[ $key ] ) ) {
+                continue;
+            }
+            $seen[ $key ] = true;
+            $out[]        = $p;
+        }
+        if ( empty( $out ) ) {
+            return $query;
+        }
+        return $m[1] . 'ORDER BY ' . implode( ', ', $out ) . $m[3];
     }
 
     /**
@@ -2467,6 +2516,7 @@ class SQL_Translations extends wpdb
         $sql = preg_replace( '/\blongtext\b/i', 'nvarchar(max)', $sql );
         $sql = preg_replace( '/\bmediumtext\b/i', 'nvarchar(max)', $sql );
         $sql = preg_replace( '/\btinytext\b/i', 'nvarchar(255)', $sql );
+        $sql = preg_replace( '/\btext\b/i', 'nvarchar(max)', $sql );
         $sql = preg_replace( '/\bdouble(?:\s+precision)?\b/i', 'float', $sql );
         $sql = preg_replace( '/\bbool(?:ean)?\b/i', 'bit', $sql );
         // MySQL TIMESTAMP is datetime; T-SQL timestamp is rowversion. Never confuse them.

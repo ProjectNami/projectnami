@@ -3198,6 +3198,9 @@ class WP_Query {
 		}
 		if ( ! empty( $orderby ) ) {
 			$orderby = 'ORDER BY ' . $orderby;
+		} elseif ( ! empty( $limits ) && stripos( $limits, 'OFFSET' ) !== false ) {
+			// SQL Server 102: OFFSET/FETCH is illegal without ORDER BY.
+			$orderby = "ORDER BY {$wpdb->posts}.ID";
 		}
 
 		$found_rows = '';

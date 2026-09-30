@@ -1140,8 +1140,18 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = null ) 
 	 */
 	do_action( 'add_option', $option, $value );
 
-	$result = $wpdb->query_with_params( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] with (nolock) WHERE [option_name] = ?) INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES (?, ?, ?) else UPDATE [$wpdb->options] set [option_value] = ?, [autoload] = ? where [option_name] = ?", array( array($option, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN) ) );
-	if ( $result === false ) {
+	$result = $wpdb->query_with_params(
+		"INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload])
+		 SELECT ?, ?, ?
+		 WHERE NOT EXISTS (SELECT 1 FROM [$wpdb->options] WITH (UPDLOCK, HOLDLOCK) WHERE [option_name] = ?)",
+		array(
+			array( $option, SQLSRV_PARAM_IN ),
+			array( $serialized_value, SQLSRV_PARAM_IN ),
+			array( $autoload, SQLSRV_PARAM_IN ),
+			array( $option, SQLSRV_PARAM_IN ),
+		)
+	);
+	if ( ! $result ) {
 		return false;
 	}
 

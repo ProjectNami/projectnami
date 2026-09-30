@@ -1,7 +1,7 @@
 Project Nami
 ===============
 
-### Version: `4.1.1` ###
+### Version: `4.1.2` ###
 
 Tracks WordPress **7.1.1** (`$wp_db_version` 61833) on SQL Server 2012+ / Azure SQL.
 

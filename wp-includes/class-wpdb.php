@@ -2496,6 +2496,7 @@ class wpdb {
                 case 107:
                 case 145:
                 case 156:
+                case 169:
                 case 170:
                 case 195:
                 case 207:
