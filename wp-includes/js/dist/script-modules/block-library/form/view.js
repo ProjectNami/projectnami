@@ -1,5 +1,5 @@
-var __webpack_exports__ = {};
-let formSettings;
+// packages/block-library/build-module/form/view.mjs
+var formSettings;
 try {
   formSettings = JSON.parse(
     document.getElementById(
@@ -38,9 +38,8 @@ document.querySelectorAll("form.wp-block-form").forEach(function(form) {
       } else {
         redirectNotification("error");
       }
-    } catch (error) {
+    } catch {
       redirectNotification("error");
     }
   });
 });
-

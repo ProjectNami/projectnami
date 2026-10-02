@@ -16,14 +16,14 @@
  *
  * @global string $wp_version
  */
-$wp_version = '6.9.4';
+$wp_version = '7.1.2';
 
 /**
  * Holds the WordPress DB revision, increments when changes are made to the WordPress DB schema.
  *
  * @global int $wp_db_version
  */
-$wp_db_version = 60717;
+$wp_db_version = 61833;
 
 /**
  * Holds the TinyMCE version.
@@ -37,7 +37,7 @@ $tinymce_version = '49110-20250317';
  *
  * @global string $required_php_version
  */
-$required_php_version = '7.2.24';
+$required_php_version = '7.4';
 
 /**
  * Holds the names of required PHP extensions.
@@ -54,4 +54,4 @@ $required_php_extensions = array(
  *
  * @global string $required_mysql_version
  */
-$required_mysql_version = '5.5.5';
+$required_mysql_version = '11.0';
