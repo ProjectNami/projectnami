@@ -224,7 +224,7 @@ if ( $location ) {
 	 * Filters the taxonomy redirect destination URL.
 	 *
 	 * @since 4.6.0
-	 *
+	 * 
 	 * @param string      $location The destination URL.
 	 * @param WP_Taxonomy $tax      The taxonomy object.
 	 */
@@ -689,7 +689,7 @@ if ( $can_edit_terms ) {
 </div><!-- /wrap -->
 
 <?php if ( ! wp_is_mobile() ) : ?>
-<script type="text/javascript">
+<script>
 try{document.forms.addtag['tag-name'].focus();}catch(e){}
 </script>
 	<?php

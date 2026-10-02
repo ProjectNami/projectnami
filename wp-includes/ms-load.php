@@ -383,7 +383,7 @@ function ms_load_current_site_and_network( $domain, $path, $subdomain = false ) 
 
 	// No network has been found, bail.
 	if ( empty( $current_site ) ) {
-		/** This action is documented in wp-includes/ms-settings.php */
+		/** This action is documented in wp-includes/ms-load.php */
 		do_action( 'ms_network_not_found', $domain, $path );
 
 		return false;
@@ -419,7 +419,10 @@ function ms_load_current_site_and_network( $domain, $path, $subdomain = false ) 
 
 		if ( $subdomain && ! defined( 'NOBLOGREDIRECT' ) ) {
 			// For a "subdomain" installation, redirect to the signup form specifically.
-			$destination .= 'wp-signup.php?new=' . str_replace( '.' . $current_site->domain, '', $domain );
+			$path = 'wp-signup.php?new=' . str_replace( '.' . $current_site->domain, '', $domain );
+
+			/** This filter is documented in wp-includes/link-template.php */
+			$destination = apply_filters( 'network_site_url', $destination . $path, $path, $scheme );
 		} elseif ( $subdomain ) {
 			/*
 			 * For a "subdomain" installation, the NOBLOGREDIRECT constant
@@ -462,6 +465,7 @@ function ms_load_current_site_and_network( $domain, $path, $subdomain = false ) 
  *
  * @param string $domain The requested domain for the error to reference.
  * @param string $path   The requested path for the error to reference.
+ * @return never
  */
 function ms_not_installed( $domain, $path ) {
 	global $wpdb;
@@ -474,8 +478,8 @@ function ms_not_installed( $domain, $path ) {
 
 	$title = __( 'Error establishing a database connection' );
 
-	$msg   = '<h1>' . $title . '</h1>';
-	$msg  .= '<p>' . __( 'If your site does not display, please contact the owner of this network.' ) . '';
+	$msg  = '<h1>' . $title . '</h1>';
+	$msg .= '<p>' . __( 'If your site does not display, please contact the owner of this network.' ) . '';
 	$msg  .= ' ' . __( 'If you are the owner of this network please check that your host&#8217;s database server is running properly and all tables are error free.' ) . '</p>';
 	$query = $wpdb->prepare( "SELECT name FROM sysobjects WHERE type='u' AND name like %s", $wpdb->esc_like( $wpdb->site ) );
 	if ( false && ! $wpdb->get_var( $query ) ) {

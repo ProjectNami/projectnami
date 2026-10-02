@@ -521,19 +521,21 @@ class WP_User_Search {
 	}
 
 	/**
-	 * Prepares the user search query (legacy).
+	 * {@internal Missing Short Description}}
+	 *
+	 * {@internal Missing Long Description}}
 	 *
 	 * @since 2.1.0
 	 * @access public
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 */
-	public function prepare_query() {
+	function prepare_query() {
 		global $wpdb;
 		$this->first_user = ($this->page - 1) * $this->users_per_page;
 
 		$this->query_limit = $wpdb->prepare(" ORDER BY user_login DESC OFFSET %d ROWS FETCH NEXT %d ROWS ONLY", $this->first_user, $this->users_per_page);
-
+		
 		/* mssql rewrite note: ORDER BY and LIMIT are handled by mssql OFFSET in the above line. */
 		//$this->query_orderby = ' ORDER BY user_login';
 
@@ -1513,7 +1515,7 @@ function post_form_autocomplete_off() {
  */
 function options_permalink_add_js() {
 	?>
-	<script type="text/javascript">
+	<script>
 		jQuery( function() {
 			jQuery('.permalink-structure input:radio').change(function() {
 				if ( 'custom' == this.value )
@@ -1590,4 +1592,15 @@ function image_attachment_fields_to_save( $post, $attachment ) {
 	_deprecated_function( __FUNCTION__, '6.0.0' );
 
 	return $post;
+}
+
+/**
+ * Was used to add JavaScript to the delete users form.
+ *
+ * @since 3.5.0
+ * @deprecated 7.1.0
+ * @access private
+ */
+function delete_users_add_js() {
+	_deprecated_function( __FUNCTION__, '7.1.0' );
 }

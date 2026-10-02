@@ -8,7 +8,7 @@
 
 // Don't load directly.
 if ( ! defined( 'ABSPATH' ) ) {
-	die( '-1' );
+	exit;
 }
 
 /**
@@ -101,11 +101,12 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 		'php'                => $php_version,
 		'locale'             => $locale,
 		'mysql'              => $mysql_version,
-		'local_package'      => isset( $wp_local_package ) ? $wp_local_package : '',
+		'local_package'      => $wp_local_package ?? '',
 		'blogs'              => $num_blogs,
 		'users'              => get_user_count(),
 		'multisite_enabled'  => $multisite_enabled,
 		'initial_db_version' => get_site_option( 'initial_db_version' ),
+		'myisam_tables'      => array(),
 		'extensions'         => array_combine( $extensions, array_map( 'phpversion', $extensions ) ),
 		'platform_flags'     => array(
 			'os'   => PHP_OS,
@@ -179,7 +180,7 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 	);
 
 	if ( is_array( $extra_stats ) ) {
-		$post_body = array_merge( $post_body, $extra_stats );
+ 		$post_body = array_merge( $post_body, $extra_stats );
 	}
 
 	// Allow for WP_AUTO_UPDATE_CORE to specify beta/RC/development releases.
@@ -194,17 +195,17 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 	$ssl      = wp_http_supports( array( 'ssl' ) );
 
 	if ( $ssl ) {
-		$url = set_url_scheme( $url, 'https' );
+ 		$url = set_url_scheme( $url, 'https' );
 	}
 
 	$doing_cron = wp_doing_cron();
 
 	$options = array(
-		'timeout'    => $doing_cron ? 30 : 3,
+		'timeout' => $doing_cron ? 30 : 3,
 		'user-agent' => 'WordPress/' . wp_get_wp_version() . '; ' . home_url( '/' ),
-		'headers'    => array(
+		'headers' => array(
 			'wp_install' => $wp_install,
-			'wp_blog'    => home_url( '/' ),
+			'wp_blog' => home_url( '/' )
 		),
 		'body' => $post_body,
 	);
@@ -225,7 +226,7 @@ function wp_version_check( $extra_stats = array(), $force_check = false ) {
 	}
 
 	$response = wp_remote_post( $url, $options );
-
+	
 	if ( $ssl && is_wp_error( $response ) ) {
 		wp_trigger_error(
 			__FUNCTION__,
@@ -568,7 +569,7 @@ function wp_update_plugins( $extra_stats = array() ) {
 			foreach ( $update->translations as $translation ) {
 				if ( isset( $translation['language'], $translation['package'] ) ) {
 					$translation['type'] = 'plugin';
-					$translation['slug'] = isset( $update->slug ) ? $update->slug : $update->id;
+					$translation['slug'] = $update->slug ?? $update->id;
 
 					$updates->translations[] = $translation;
 				}
@@ -609,8 +610,6 @@ function wp_update_plugins( $extra_stats = array() ) {
  * if WordPress isn't installing.
  *
  * @since 2.7.0
- *
- * @global string $wp_version The WordPress version string.
  *
  * @param array $extra_stats Extra statistics to report to the WordPress.org API.
  */
@@ -855,7 +854,7 @@ function wp_update_themes( $extra_stats = array() ) {
 			foreach ( $update->translations as $translation ) {
 				if ( isset( $translation['language'], $translation['package'] ) ) {
 					$translation['type'] = 'theme';
-					$translation['slug'] = isset( $update->theme ) ? $update->theme : $update->id;
+					$translation['slug'] = $update->theme ?? $update->id;
 
 					$new_update->translations[] = $translation;
 				}

@@ -314,7 +314,7 @@ $tag_removed = __( '%s removed from permalink structure' );
 /* translators: %s: Permalink structure tag. */
 $tag_already_used = __( '%s (already used in permalink structure)' );
 ?>
-<h2 class="title"><?php _e( 'Common Settings' ); ?></h2>
+<h2 id="wp-settings-section-common-settings" class="title"><?php _e( 'Common Settings' ); ?></h2>
 <p>
 <?php
 printf(
@@ -405,8 +405,8 @@ printf(
 </tbody>
 </table>
 
-<h2 class="title"><?php _e( 'Optional' ); ?></h2>
-<p>
+<h2 id="wp-settings-section-optional" class="title"><?php _e( 'Optional' ); ?></h2>
+<p class="permalink-structure-optional-description">
 <?php
 printf(
 	/* translators: %s: Placeholder that must come at the start of the URL. */
@@ -424,10 +424,18 @@ printf(
 			</label>
 		</th>
 		<td>
-			<?php echo $blog_prefix; ?>
+		<?php if ( '' === $blog_prefix ) : ?>
 			<input name="category_base" id="category_base" type="text"
 				value="<?php echo esc_attr( $category_base ); ?>" class="regular-text code"
 			/>
+		<?php else : ?>
+			<span class="code permalink-structure-has-blog-prefix">
+				<code class="no-break"><?php echo $blog_prefix; ?></code>
+				<input name="category_base" id="category_base" type="text"
+					value="<?php echo esc_attr( $category_base ); ?>" class="regular-text code"
+				/>
+			</span>
+		<?php endif; ?>
 		</td>
 	</tr>
 	<tr>
@@ -435,10 +443,18 @@ printf(
 			<label for="tag_base"><?php _e( 'Tag base' ); ?></label>
 		</th>
 		<td>
-			<?php echo $blog_prefix; ?>
+		<?php if ( '' === $blog_prefix ) : ?>
 			<input name="tag_base" id="tag_base" type="text"
 				value="<?php echo esc_attr( $tag_base ); ?>" class="regular-text code"
 			/>
+		<?php else : ?>
+			<span class="code permalink-structure-has-blog-prefix">
+				<code class="no-break"><?php echo $blog_prefix; ?></code>
+				<input name="tag_base" id="tag_base" type="text"
+					value="<?php echo esc_attr( $tag_base ); ?>" class="regular-text code"
+				/>
+			</span>
+		<?php endif; ?>
 		</td>
 	</tr>
 	<?php do_settings_fields( 'permalink', 'optional' ); ?>
@@ -458,12 +474,12 @@ printf(
 				<p id="iis-description-a">
 				<?php
 				printf(
-					/* translators: 1: web.config, 2: Documentation URL, 3: Ctrl + A, 4: ⌘ + A, 5: Element code. */
+					/* translators: 1: web.config, 2: Documentation URL, 3: Ctrl + A, 4: Γîÿ + A, 5: Element code. */
 					__( '<strong>Error:</strong> Your %1$s file is not <a href="%2$s">writable</a>, so updating it automatically was not possible. This is the URL rewrite rule you should have in your %1$s file. Click in the field and press %3$s (or %4$s on Mac) to select all. Then insert this rule inside of the %5$s element in %1$s file.' ),
 					'<code>web.config</code>',
 					__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' ),
 					'<kbd>Ctrl + A</kbd>',
-					'<kbd>⌘ + A</kbd>',
+					'<kbd>Γîÿ + A</kbd>',
 					'<code>/&lt;configuration&gt;/&lt;system.webServer&gt;/&lt;rewrite&gt;/&lt;rules&gt;</code>'
 				);
 				?>
@@ -491,12 +507,12 @@ printf(
 				<p id="iis-description-b">
 				<?php
 				printf(
-					/* translators: 1: Documentation URL, 2: web.config, 3: Ctrl + A, 4: ⌘ + A */
+					/* translators: 1: Documentation URL, 2: web.config, 3: Ctrl + A, 4: Γîÿ + A */
 					__( '<strong>Error:</strong> The root directory of your site is not <a href="%1$s">writable</a>, so creating a file automatically was not possible. This is the URL rewrite rule you should have in your %2$s file. Create a new file called %2$s in the root directory of your site. Click in the field and press %3$s (or %4$s on Mac) to select all. Then insert this code into the %2$s file.' ),
 					__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' ),
 					'<code>web.config</code>',
 					'<kbd>Ctrl + A</kbd>',
-					'<kbd>⌘ + A</kbd>'
+					'<kbd>Γîÿ + A</kbd>'
 				);
 				?>
 				</p>
@@ -526,12 +542,12 @@ printf(
 			<p id="htaccess-description">
 			<?php
 			printf(
-				/* translators: 1: .htaccess, 2: Documentation URL, 3: Ctrl + A, 4: ⌘ + A */
+				/* translators: 1: .htaccess, 2: Documentation URL, 3: Ctrl + A, 4: Γîÿ + A */
 				__( '<strong>Error:</strong> Your %1$s file is not <a href="%2$s">writable</a>, so updating it automatically was not possible. These are the mod_rewrite rules you should have in your %1$s file. Click in the field and press %3$s (or %4$s on Mac) to select all.' ),
 				'<code>.htaccess</code>',
 				__( 'https://developer.wordpress.org/advanced-administration/server/file-permissions/' ),
 				'<kbd>Ctrl + A</kbd>',
-				'<kbd>⌘ + A</kbd>'
+				'<kbd>Γîÿ + A</kbd>'
 			);
 			?>
 			</p>

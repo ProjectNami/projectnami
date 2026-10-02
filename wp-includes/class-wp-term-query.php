@@ -445,7 +445,7 @@ class WP_Term_Query {
 			$_orderby = 'term_id';
 		}
 
-		$orderby_fields = '';
+        $orderby_fields = '';
 		$orderby = $this->parse_orderby( $_orderby, $orderby_fields );
 
 		if ( $orderby ) {
@@ -704,6 +704,10 @@ class WP_Term_Query {
 		if ( ! empty( $this->query_vars['object_ids'] ) ) {
 			$join    .= " INNER JOIN {$wpdb->term_relationships} AS tr ON tr.term_taxonomy_id = tt.term_taxonomy_id";
 			$distinct = 'DISTINCT';
+			if ( 'count' === $args['fields'] ) {
+				$distinct = '';
+				$fields   = 'COUNT(DISTINCT t.term_id) as qty';
+			}
 		}
 
 		$where = implode( ' AND ', $this->sql_clauses['where'] );
@@ -731,13 +735,13 @@ class WP_Term_Query {
 		 */
 		$clauses = apply_filters( 'terms_clauses', compact( $pieces ), $taxonomies, $args );
 
-		$fields   = isset( $clauses['fields'] ) ? $clauses['fields'] : '';
-		$join     = isset( $clauses['join'] ) ? $clauses['join'] : '';
-		$where    = isset( $clauses['where'] ) ? $clauses['where'] : '';
-		$distinct = isset( $clauses['distinct'] ) ? $clauses['distinct'] : '';
-		$orderby  = isset( $clauses['orderby'] ) ? $clauses['orderby'] : '';
-		$order    = isset( $clauses['order'] ) ? $clauses['order'] : '';
-		$limits   = isset( $clauses['limits'] ) ? $clauses['limits'] : '';
+		$fields   = $clauses['fields'] ?? '';
+		$join     = $clauses['join'] ?? '';
+		$where    = $clauses['where'] ?? '';
+		$distinct = $clauses['distinct'] ?? '';
+		$orderby  = $clauses['orderby'] ?? '';
+		$order    = $clauses['order'] ?? '';
+		$limits   = $clauses['limits'] ?? '';
 
 		$fields_is_filtered = implode( ', ', $selects ) !== $fields;
 
@@ -751,12 +755,12 @@ class WP_Term_Query {
 		$this->sql_clauses['from']    = "FROM $wpdb->terms AS t $join";
 		$this->sql_clauses['orderby'] = $orderby ? "$orderby $order" : '';
 		$this->sql_clauses['limits']  = $limits;
-        if ( $distinct ) {
+        if ( $distinct && 'count' !== $_fields ) {
             $groupby = "group by $fields $orderby_fields";
         }
 
 		// Beginning of the string is on a new line to prevent leading whitespace. See https://core.trac.wordpress.org/ticket/56841.
-		$this->request =
+		$this->request = 
 			"{$this->sql_clauses['select']}
 			{$this->sql_clauses['from']}
 			{$where}
@@ -941,11 +945,11 @@ class WP_Term_Query {
 			$orderby = 'tr.term_order';
 			$orderby_fields = ', tr.term_order';
 		} elseif ( 'include' === $_orderby && ! empty( $this->query_vars['include'] ) ) {
-			$include = implode( ',', wp_parse_id_list( $this->query_vars['include'] ) );
-			$orderby = "FIELD( t.term_id, $include )";
+			$orderby        = pn_sql_order_by_list( 't.term_id', wp_parse_id_list( $this->query_vars['include'] ) );
+			$orderby_fields = ', ' . $orderby;
 		} elseif ( 'slug__in' === $_orderby && ! empty( $this->query_vars['slug'] ) && is_array( $this->query_vars['slug'] ) ) {
-			$slugs   = implode( "', '", array_map( 'sanitize_title_for_query', $this->query_vars['slug'] ) );
-			$orderby = "FIELD( t.slug, '" . $slugs . "')";
+			$orderby        = pn_sql_order_by_list( 't.slug', array_map( 'sanitize_title_for_query', $this->query_vars['slug'] ), true );
+			$orderby_fields = ', ' . $orderby;
 		} elseif ( 'none' === $_orderby ) {
 			$orderby = '';
 		} elseif ( empty( $_orderby ) || 'id' === $_orderby || 'term_id' === $_orderby ) {

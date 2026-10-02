@@ -75,7 +75,7 @@ function get_hidden_columns( $screen ) {
 	 * Filters the list of hidden columns.
 	 *
 	 * @since 4.4.0
-	 * @since 4.4.1 Added the `use_defaults` parameter.
+	 * @since 4.4.1		Added the `use_defaults` parameter.
 	 *
 	 * @param string[]  $hidden       Array of IDs of hidden columns.
 	 * @param WP_Screen $screen       WP_Screen object of the current screen.
@@ -224,7 +224,7 @@ function add_screen_option( $option, $args = array() ) {
 function get_current_screen() {
 	global $current_screen;
 
-	if ( ! isset( $current_screen ) ) {
+	if ( ! $current_screen instanceof WP_Screen ) {
 		return null;
 	}
 

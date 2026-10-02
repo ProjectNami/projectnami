@@ -10,12 +10,12 @@
 if ( false ) {
 	?>
 <!DOCTYPE html>
-<html>
+<html lang="en-US">
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>Error: PHP is not running</title>
 </head>
-<body class="wp-core-ui">
+<body class="wp-core-ui admin-color-modern">
 	<h1>Error: PHP is not running</h1>
 	<p>WordPress requires that your web server is running PHP. Your server does not have PHP installed, or PHP is turned off.</p>
 </body>
@@ -52,7 +52,7 @@ $step = isset( $_GET['step'] ) ? (int) $_GET['step'] : 0;
  *
  * @since 2.5.0
  *
- * @param string $body_classes
+ * @param string $body_classes Class attribute values for the body tag.
  */
 function display_header( $body_classes = '' ) {
 	header( 'Content-Type: text/html; charset=utf-8' );
@@ -72,7 +72,7 @@ function display_header( $body_classes = '' ) {
 	<title><?php _e( 'WordPress &rsaquo; Installation' ); ?></title>
 	<?php wp_admin_css( 'install', true ); ?>
 </head>
-<body class="wp-core-ui<?php echo $body_classes; ?>">
+<body class="wp-core-ui admin-color-modern<?php echo $body_classes; ?>">
 <p id="logo"><?php _e( 'WordPress' ); ?></p>
 
 	<?php
@@ -85,7 +85,7 @@ function display_header( $body_classes = '' ) {
  *
  * @global wpdb $wpdb WordPress database abstraction object.
  *
- * @param string|null $error
+ * @param string|null $error Error message to display, if any.
  */
 function display_setup_form( $error = null ) {
 	global $wpdb;
@@ -144,7 +144,7 @@ function display_setup_form( $error = null ) {
 						<input type="password" name="admin_password" id="pass1" class="regular-text" autocomplete="new-password" spellcheck="false" data-reveal="1" data-pw="<?php echo esc_attr( $initial_password ); ?>" aria-describedby="pass-strength-result admin-password-desc" />
 						<div id="pass-strength-result" aria-live="polite"></div>
 					</div>
-					<button type="button" class="button wp-hide-pw hide-if-no-js" data-start-masked="<?php echo (int) isset( $_POST['admin_password'] ); ?>" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>">
+					<button type="button" class="button wp-hide-pw user-new-password-toggle hide-if-no-js" data-start-masked="<?php echo (int) isset( $_POST['admin_password'] ); ?>" data-toggle="0" aria-label="<?php esc_attr_e( 'Hide password' ); ?>">
 						<span class="dashicons dashicons-hidden"></span>
 						<span class="text"><?php _e( 'Hide' ); ?></span>
 					</button>
@@ -234,60 +234,36 @@ if ( is_blog_installed() ) {
 global $wp_version, $required_php_version, $required_php_extensions, $required_mysql_version, $wpdb;
 
 $php_version   = PHP_VERSION;
-$mysql_version = $wpdb->db_version();
-$php_compat    = version_compare( $php_version, $required_php_version, '>=' );
-$mysql_compat  = version_compare( $mysql_version, $required_mysql_version, '>=' ) || file_exists( WP_CONTENT_DIR . '/db.php' );
+$mysql_version  = $wpdb->db_version();
+$php_compat     = version_compare( $php_version, $required_php_version, '>=' );
+$mysql_compat   = version_compare( $mysql_version, $required_mysql_version, '>=' ) || file_exists( WP_CONTENT_DIR . '/db.php' );
 
-$version_url = sprintf(
+ $version_url = sprintf(
 	/* translators: %s: WordPress version. */
 	esc_url( __( 'https://wordpress.org/documentation/wordpress-version/version-%s/' ) ),
-	sanitize_title( $wp_version )
-);
+ 	sanitize_title( $wp_version )
+ );
 
-$php_update_message = '</p><p>' . sprintf(
-	/* translators: %s: URL to Update PHP page. */
-	__( '<a href="%s">Learn more about updating PHP</a>.' ),
-	esc_url( wp_get_update_php_url() )
-);
+/* translators: %s: URL to Update PHP page. */
+$php_update_message = '</p><p>' . sprintf( __( '<a href="%s">Learn more about updating PHP</a>.' ), esc_url( wp_get_update_php_url() ) );
 
 $annotation = wp_get_update_php_annotation();
-
 if ( $annotation ) {
 	$php_update_message .= '</p><p><em>' . $annotation . '</em>';
 }
 
-if ( ! $mysql_compat && ! $php_compat ) {
-	$compat = sprintf(
-		/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: Minimum required PHP version number, 4: Minimum required MySQL version number, 5: Current PHP version number, 6: Current MySQL version number. */
-		__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires PHP version %3$s or higher and MySQL version %4$s or higher. You are running PHP version %5$s and MySQL version %6$s.' ),
-		$version_url,
-		$wp_version,
-		$required_php_version,
-		$required_mysql_version,
-		$php_version,
-		$mysql_version
-	) . $php_update_message;
-} elseif ( ! $php_compat ) {
-	$compat = sprintf(
-		/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: Minimum required PHP version number, 4: Current PHP version number. */
-		__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires PHP version %3$s or higher. You are running version %4$s.' ),
-		$version_url,
-		$wp_version,
-		$required_php_version,
-		$php_version
-	) . $php_update_message;
-} elseif ( ! $mysql_compat ) {
-	$compat = sprintf(
-		/* translators: 1: URL to WordPress release notes, 2: WordPress version number, 3: Minimum required MySQL version number, 4: Current MySQL version number. */
-		__( 'You cannot install because <a href="%1$s">WordPress %2$s</a> requires MySQL version %3$s or higher. You are running version %4$s.' ),
-		$version_url,
-		$wp_version,
-		$required_mysql_version,
-		$mysql_version
-	);
+if ( !$mysql_compat && !$php_compat ) {
+	/* translators: 1: PN version number, 2: Minimum required PHP version number, 3: Minimum required MSSQL version number, 4: Current PHP version number, 5: Current MSSQL version number */
+	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher and MSSQL version %2$s or higher. You are running PHP version %3$s and MSSQL version %4$s.' ), $required_php_version, $required_mysql_version, $php_version, $mysql_version ) . $php_update_message;
+} elseif ( !$php_compat ) {
+	/* translators: 1: PN version number, 2: Minimum required PHP version number, 3: Current PHP version number */
+	$compat = sprintf( __( 'You cannot install because Project Nami requires PHP version %1$s or higher. You are running version %2$s.' ), $required_php_version, $php_version ) . $php_update_message;
+} elseif ( !$mysql_compat ) {
+	/* translators: 1: PN version number, 2: Minimum required MSSQL version number, 3: Current MSSQL version number */
+	$compat = sprintf( __( 'You cannot install because Project Nami requires MSSQL version %1$s or higher. You are running version %2$s.' ), $required_mysql_version, $mysql_version );
 }
 
-if ( ! $mysql_compat || ! $php_compat ) {
+if ( !$mysql_compat || !$php_compat ) {
 	display_header();
 	die( '<h1>' . __( 'Requirements Not Met' ) . '</h1><p>' . $compat . '</p></body></html>' );
 }
@@ -317,32 +293,34 @@ if ( isset( $required_php_extensions ) && is_array( $required_php_extensions ) )
 
 if ( ! is_string( $wpdb->base_prefix ) || '' === $wpdb->base_prefix ) {
 	display_header();
-	die(
-		'<h1>' . __( 'Configuration Error' ) . '</h1>' .
-		'<p>' . sprintf(
-			/* translators: %s: wp-config.php */
-			__( 'Your %s file has an empty database table prefix, which is not supported.' ),
-			'<code>wp-config.php</code>'
-		) . '</p></body></html>'
-	);
+	die( 
+		'<h1>' . __( 'Configuration Error' ) . '</h1>' . 
+		'<p>' . sprintf( 
+			/* translators: %s: wp-config.php */ 
+			__( 'Your %s file has an empty database table prefix, which is not supported.' ), 
+			'<code>wp-config.php</code>' 
+		) . '</p></body></html>' 
+	); 
 }
 
 // Set error message if DO_NOT_UPGRADE_GLOBAL_TABLES isn't set as it will break install.
 if ( defined( 'DO_NOT_UPGRADE_GLOBAL_TABLES' ) ) {
 	display_header();
-	die(
-		'<h1>' . __( 'Configuration Error' ) . '</h1>' .
-		'<p>' . sprintf(
-			/* translators: %s: DO_NOT_UPGRADE_GLOBAL_TABLES */
-			__( 'The constant %s cannot be defined when installing WordPress.' ),
-			'<code>DO_NOT_UPGRADE_GLOBAL_TABLES</code>'
-		) . '</p></body></html>'
-	);
+	die( '<h1>' . __( 'Configuration Error' ) . '</h1><p>' . __( 'The constant DO_NOT_UPGRADE_GLOBAL_TABLES cannot be defined when installing WordPress.' ) . '</p></body></html>' );
+	die( 
+		'<h1>' . __( 'Configuration Error' ) . '</h1>' . 
+		'<p>' . sprintf( 
+			/* translators: %s: DO_NOT_UPGRADE_GLOBAL_TABLES */ 
+			__( 'The constant %s cannot be defined when installing WordPress.' ), 
+			'<code>DO_NOT_UPGRADE_GLOBAL_TABLES</code>' 
+		) . '</p></body></html>' 
+	); 
 }
 
 /**
  * @global string    $wp_local_package Locale code of the package.
  * @global WP_Locale $wp_locale        WordPress date and time locale object.
+ * @global wpdb      $wpdb             WordPress database abstraction object.
  */
 $language = '';
 if ( ! empty( $_REQUEST['language'] ) ) {
@@ -471,13 +449,13 @@ switch ( $step ) {
 
 if ( ! wp_is_mobile() ) {
 	?>
-<script type="text/javascript">var t = document.getElementById('weblog_title'); if (t){ t.focus(); }</script>
+<script>var t = document.getElementById('weblog_title'); if (t){ t.focus(); }</script>
 	<?php
 }
 
 wp_print_scripts( $scripts_to_print );
 ?>
-<script type="text/javascript">
+<script>
 jQuery( function( $ ) {
 	$( '.hide-if-no-js' ).removeClass( 'hide-if-no-js' );
 } );

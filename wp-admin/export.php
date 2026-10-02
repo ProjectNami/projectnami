@@ -26,7 +26,7 @@ $title = __( 'Export' );
  */
 function export_add_js() {
 	?>
-<script type="text/javascript">
+<script>
 	jQuery( function($) {
 		var form = $('#export-filters'),
 			filters = form.find('.export-filters');
@@ -139,6 +139,11 @@ require_once ABSPATH . 'wp-admin/admin-header.php';
 function export_date_options( $post_type = 'post' ) {
 	global $wpdb, $wp_locale;
 
+	/*
+	 * PN Mod: Start
+	 * MSSQL can't ORDER BY post_date alone since it is not actually being SELECTed.
+	 * The workaround is to ORDER BY both YEAR( post_date ) DESC and MONTH( post_date ) DESC to get the same effect.
+	 */
 	$months = $wpdb->get_results(
 		$wpdb->prepare(
 			"SELECT DISTINCT YEAR( post_date ) AS year, MONTH( post_date ) AS month
@@ -148,6 +153,7 @@ function export_date_options( $post_type = 'post' ) {
 			$post_type
 		)
 	);
+	// PN Mod: End
 
 	$month_count = count( $months );
 	if ( ! $month_count || ( 1 === $month_count && 0 === (int) $months[0]->month ) ) {
@@ -156,7 +162,7 @@ function export_date_options( $post_type = 'post' ) {
 
 	foreach ( $months as $date ) {
 		if ( 0 === (int) $date->year ) {
-			continue;
+ 			continue;
 		}
 
 		$month = zeroise( $date->month, 2 );

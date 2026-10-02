@@ -1,7 +1,7 @@
 {
     "name": "projectnami/projectnami",
     "description": "WordPress powered by Microsoft SQL Server",
-    "version": "6.9.4",
+    "version": "7.1.2",
     "require": {
         "php": ">=7.0"
     }
