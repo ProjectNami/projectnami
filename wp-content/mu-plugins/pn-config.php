@@ -5,6 +5,21 @@
  */
 
 /*
+ * Azure App Service (and most reverse proxies) terminate TLS in front of PHP.
+ * nginx listens on 8080, so is_ssl() is false unless HTTPS is forced. The
+ * setup-config language screen then emits http:// CSS/JS and the browser
+ * blocks mixed content — unstyled "Welcome to WordPress" + logo as text.
+ *
+ * This mu-plugin loads during setup-config.php (WP_SETUP_CONFIG still bootstraps
+ * wp-settings.php). Keep the matching fastcgi_param HTTPS in nginx.azure.conf.
+ */
+if ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && 'https' === strtolower( (string) $_SERVER['HTTP_X_FORWARDED_PROTO'] ) ) {
+	$_SERVER['HTTPS'] = 'on';
+} elseif ( getenv( 'WEBSITE_SITE_NAME' ) ) {
+	$_SERVER['HTTPS'] = 'on';
+}
+
+/*
  * Stop Jetpack from writing to options with direct DB calls.
  */
 if ( ! defined( 'JETPACK_DISABLE_RAW_OPTIONS' ) ) {

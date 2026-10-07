@@ -218,4 +218,4 @@ if ( ! class_exists( 'wp_atom_server', false ) ) {
 			_deprecated_function( __CLASS__ . '::' . $name, '3.5.0', 'the Atom Publishing Protocol plugin' );
 		}
 	}
-}
+}

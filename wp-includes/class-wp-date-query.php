@@ -90,9 +90,9 @@ class WP_Date_Query {
 	 *                 or array of 'year', 'month', 'day' values.
 	 *
 	 *                 @type string $year  The four-digit year. Default empty. Accepts any four-digit year.
-	 *                 @type string $month Optional when passing array.The month of the year.
+	 *                 @type string $month Optional when passing array. The month of the year.
 	 *                                     Default (string:empty)|(array:1). Accepts numbers 1-12.
-	 *                 @type string $day   Optional when passing array.The day of the month.
+	 *                 @type string $day   Optional when passing array. The day of the month.
 	 *                                     Default (string:empty)|(array:1). Accepts numbers 1-31.
 	 *             }
 	 *             @type string|array $after {
@@ -102,7 +102,7 @@ class WP_Date_Query {
 	 *                 @type string $year  The four-digit year. Accepts any four-digit year. Default empty.
 	 *                 @type string $month Optional when passing array. The month of the year. Accepts numbers 1-12.
 	 *                                     Default (string:empty)|(array:12).
-	 *                 @type string $day   Optional when passing array.The day of the month. Accepts numbers 1-31.
+	 *                 @type string $day   Optional when passing array. The day of the month. Accepts numbers 1-31.
 	 *                                     Default (string:empty)|(array:last day of month).
 	 *             }
 	 *             @type string       $column        Optional. Used to add a clause comparing a column other than
@@ -111,16 +111,15 @@ class WP_Date_Query {
 	 *                                               the {@see 'date_query_valid_columns'} filter for the list
 	 *                                               of accepted values. Default is the value of top-level `$column`.
 	 *             @type string       $compare       Optional. The comparison operator. Accepts '=', '!=', '>', '>=',
-	 *                                               '<', '<=', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN'. 'IN',
-	 *                                               'NOT IN', 'BETWEEN', and 'NOT BETWEEN'. Comparisons support
-	 *                                               arrays in some time-related parameters. Default '='.
+	 *                                               '<', '<=', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN'. Comparisons
+	 *                                               support arrays in some time-related parameters. Default '='.
 	 *             @type bool         $inclusive     Optional. Include results from dates specified in 'before' or
 	 *                                               'after'. Default false.
 	 *             @type int|int[]    $year          Optional. The four-digit year number. Accepts any four-digit year
 	 *                                               or an array of years if `$compare` supports it. Default empty.
 	 *             @type int|int[]    $month         Optional. The two-digit month number. Accepts numbers 1-12 or an
 	 *                                               array of valid numbers if `$compare` supports it. Default empty.
-	 *             @type int|int[]    $week          Optional. The week number of the year. Accepts numbers 0-53 or an
+	 *             @type int|int[]    $week          Optional. The week number of the year. Accepts numbers 1-53 or an
 	 *                                               array of valid numbers if `$compare` supports it. Default empty.
 	 *             @type int|int[]    $dayofyear     Optional. The day number of the year. Accepts numbers 1-366 or an
 	 *                                               array of valid numbers if `$compare` supports it.
@@ -208,11 +207,7 @@ class WP_Date_Query {
 				continue;
 			}
 
-			if ( isset( $parent_query[ $dkey ] ) ) {
-				$queries[ $dkey ] = $parent_query[ $dkey ];
-			} else {
-				$queries[ $dkey ] = $dvalue;
-			}
+			$queries[ $dkey ] = $parent_query[ $dkey ] ?? $dvalue;
 		}
 
 		// Validate the dates passed in the query.
@@ -482,16 +477,24 @@ class WP_Date_Query {
 		global $wpdb;
 
 		$valid_columns = array(
-			'post_date',
-			'post_date_gmt',
-			'post_modified',
-			'post_modified_gmt',
-			'comment_date',
-			'comment_date_gmt',
-			'user_registered',
-			'registered',
-			'last_updated',
+			'post_date',         // Part of $wpdb->posts.
+			'post_date_gmt',     // Part of $wpdb->posts.
+			'post_modified',     // Part of $wpdb->posts.
+			'post_modified_gmt', // Part of $wpdb->posts.
+			'comment_date',      // Part of $wpdb->comments.
+			'comment_date_gmt',  // Part of $wpdb->comments.
+			'user_registered',   // Part of $wpdb->users.
 		);
+
+		if ( is_multisite() ) {
+			$valid_columns = array_merge(
+				$valid_columns,
+				array(
+					'registered',   // Part of $wpdb->blogs.
+					'last_updated', // Part of $wpdb->blogs.
+				)
+			);
+		}
 
 		// Attempt to detect a table prefix.
 		if ( ! str_contains( $column, '.' ) ) {
@@ -525,11 +528,14 @@ class WP_Date_Query {
 				$wpdb->users    => array(
 					'user_registered',
 				),
-				$wpdb->blogs    => array(
+			);
+
+			if ( is_multisite() ) {
+				$known_columns[ $wpdb->blogs ] = array(
 					'registered',
 					'last_updated',
-				),
-			);
+				);
+			}
 
 			// If it's a known column name, add the appropriate table prefix.
 			foreach ( $known_columns as $table_name => $table_columns ) {
@@ -764,8 +770,17 @@ class WP_Date_Query {
 							case '_wp_mysql_week':
 								$where_parts[] = _wp_mysql_week( $column ) . " $compare $value";
 								break;
+							case 'DAYOFMONTH':
+								$where_parts[] = "DATEPART(day, $column) $compare $value";
+								break;
+							case 'DAYOFYEAR':
+								$where_parts[] = "DATEPART(dayofyear, $column) $compare $value";
+								break;
+							case 'DAYOFWEEK':
+								$where_parts[] = "DATEPART(weekday, $column) $compare $value";
+								break;
 							case 'WEEKDAY':
-								$where_parts[] = "$sql_part( $column ) + 1 $compare $value";
+								$where_parts[] = "DATEPART(weekday, $column) $compare $value";
 								break;
 							default:
 								$where_parts[] = "$sql_part( $column ) $compare $value";
@@ -988,17 +1003,17 @@ class WP_Date_Query {
 
 			$value = $this->build_value( $compare, $hour );
 			if ( false !== $value ) {
-				$return[] = "HOUR( $column ) $compare $value";
+				$return[] = "DATEPART(hour, $column) $compare $value";
 			}
 
 			$value = $this->build_value( $compare, $minute );
 			if ( false !== $value ) {
-				$return[] = "MINUTE( $column ) $compare $value";
+				$return[] = "DATEPART(minute, $column) $compare $value";
 			}
 
 			$value = $this->build_value( $compare, $second );
 			if ( false !== $value ) {
-				$return[] = "SECOND( $column ) $compare $value";
+				$return[] = "DATEPART(second, $column) $compare $value";
 			}
 
 			return implode( ' AND ', $return );
@@ -1008,17 +1023,17 @@ class WP_Date_Query {
 		if ( isset( $hour ) && ! isset( $minute ) && ! isset( $second ) ) {
 			$value = $this->build_value( $compare, $hour );
 			if ( false !== $value ) {
-				return "HOUR( $column ) $compare $value";
+				return "DATEPART(hour, $column) $compare $value";
 			}
 		} elseif ( ! isset( $hour ) && isset( $minute ) && ! isset( $second ) ) {
 			$value = $this->build_value( $compare, $minute );
 			if ( false !== $value ) {
-				return "MINUTE( $column ) $compare $value";
+				return "DATEPART(minute, $column) $compare $value";
 			}
 		} elseif ( ! isset( $hour ) && ! isset( $minute ) && isset( $second ) ) {
 			$value = $this->build_value( $compare, $second );
 			if ( false !== $value ) {
-				return "SECOND( $column ) $compare $value";
+				return "DATEPART(second, $column) $compare $value";
 			}
 		}
 
@@ -1027,28 +1042,15 @@ class WP_Date_Query {
 			return false;
 		}
 
-		$format = '';
-		$time   = '';
+		$h = null !== $hour ? (int) $hour : 0;
+		$i = (int) $minute;
+		$s = isset( $second ) ? (int) $second : 0;
+		$packed = ( $h * 10000 ) + ( $i * 100 ) + $s;
 
-		// Hour.
-		if ( null !== $hour ) {
-			$format .= '%H.';
-			$time   .= sprintf( '%02d', $hour ) . '.';
-		} else {
-			$format .= '0.';
-			$time   .= '0.';
-		}
-
-		// Minute.
-		$format .= '%i';
-		$time   .= sprintf( '%02d', $minute );
-
-		if ( isset( $second ) ) {
-			$format .= '%s';
-			$time   .= sprintf( '%02d', $second );
-		}
-
-		return $wpdb->prepare( "DATE_FORMAT( $column, %s ) $compare %f", $format, $time );
+		return $wpdb->prepare(
+			"(DATEPART(hour, $column) * 10000 + DATEPART(minute, $column) * 100 + DATEPART(second, $column)) $compare %d",
+			$packed
+		);
 	}
 
 	/**

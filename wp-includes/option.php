@@ -951,7 +951,7 @@ function update_option( $option, $value, $autoload = null ) {
 		$update_args['autoload'] = wp_determine_option_autoload_value( $option, $value, $serialized_value, $autoload );
 	} else {
 		// Retrieve the current autoload value to reevaluate it in case it was set automatically.
-		$raw_autoload = $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM $wpdb->options WHERE option_name = %s LIMIT 1", $option ) );
+		$raw_autoload = $wpdb->get_var( $wpdb->prepare( "SELECT TOP 1 autoload FROM $wpdb->options WHERE option_name = %s", $option ) );
 		$allow_values = array( 'auto-on', 'auto-off', 'auto' );
 		if ( in_array( $raw_autoload, $allow_values, true ) ) {
 			$autoload = wp_determine_option_autoload_value( $option, $value, $serialized_value, $autoload );
@@ -1140,8 +1140,18 @@ function add_option( $option, $value = '', $deprecated = '', $autoload = null ) 
 	 */
 	do_action( 'add_option', $option, $value );
 
-	$result = $wpdb->query_with_params( "IF NOT EXISTS (SELECT * FROM [$wpdb->options] with (nolock) WHERE [option_name] = ?) INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload]) VALUES (?, ?, ?) else UPDATE [$wpdb->options] set [option_value] = ?, [autoload] = ? where [option_name] = ?", array( array($option, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($serialized_value, SQLSRV_PARAM_IN), array($autoload, SQLSRV_PARAM_IN), array($option, SQLSRV_PARAM_IN) ) );
-	if ( $result === false ) {
+	$result = $wpdb->query_with_params(
+		"INSERT INTO [$wpdb->options] ([option_name], [option_value], [autoload])
+		 SELECT ?, ?, ?
+		 WHERE NOT EXISTS (SELECT 1 FROM [$wpdb->options] WITH (UPDLOCK, HOLDLOCK) WHERE [option_name] = ?)",
+		array(
+			array( $option, SQLSRV_PARAM_IN ),
+			array( $serialized_value, SQLSRV_PARAM_IN ),
+			array( $autoload, SQLSRV_PARAM_IN ),
+			array( $option, SQLSRV_PARAM_IN ),
+		)
+	);
+	if ( ! $result ) {
 		return false;
 	}
 

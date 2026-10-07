@@ -165,7 +165,7 @@ class WP_Meta_Query {
 	 *     }
 	 * }
 	 */
-	public function __construct( $meta_query = false ) {
+	public function __construct( $meta_query = array() ) {
 		if ( ! $meta_query ) {
 			return;
 		}
@@ -628,7 +628,7 @@ class WP_Meta_Query {
 		$clause['alias'] = $alias;
 
 		// Determine the data type.
-		$_meta_type     = isset( $clause['type'] ) ? $clause['type'] : '';
+		$_meta_type     = $clause['type'] ?? '';
 		$meta_type      = $this->get_cast_for_type( $_meta_type );
 		$clause['cast'] = $meta_type;
 
@@ -691,8 +691,8 @@ class WP_Meta_Query {
 					case 'REGEXP':
 						$operator = $meta_compare_key;
 						if ( isset( $clause['type_key'] ) && 'BINARY' === strtoupper( $clause['type_key'] ) ) {
-							$cast     = 'BINARY';
-							$meta_key = "CAST($alias.meta_key AS BINARY)";
+							$cast     = '';
+							$meta_key = "$alias.meta_key COLLATE Latin1_General_BIN2";
 						} else {
 							$cast     = '';
 							$meta_key = "$alias.meta_key";
@@ -719,8 +719,8 @@ class WP_Meta_Query {
 					case 'NOT REGEXP':
 						$operator = $meta_compare_key;
 						if ( isset( $clause['type_key'] ) && 'BINARY' === strtoupper( $clause['type_key'] ) ) {
-							$cast     = 'BINARY';
-							$meta_key = "CAST($subquery_alias.meta_key AS BINARY)";
+							$cast     = '';
+							$meta_key = "$subquery_alias.meta_key COLLATE Latin1_General_BIN2";
 						} else {
 							$cast     = '';
 							$meta_key = "$subquery_alias.meta_key";
