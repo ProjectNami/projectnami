@@ -1,9 +1,9 @@
 Project Nami
 ===============
 
-### Version: `4.1.2` ###
+### Version: `4.1.3` ###
 
-Tracks WordPress **7.1.1** (`$wp_db_version` 61833) on SQL Server 2012+ / Azure SQL.
+Tracks WordPress **7.1.3** (`$wp_db_version` 61833) on SQL Server 2012+ / Azure SQL.
 
 ### Description: ###
 In its current form, Project Nami is basically WordPress powered by Microsoft SQL Server. **All** WordPress core features and functions are supported.
