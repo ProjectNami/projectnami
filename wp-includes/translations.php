@@ -2539,6 +2539,46 @@ class SQL_Translations extends wpdb
     }
 
     /**
+     * Primary key for a DELETE ... ORDER BY ... LIMIT rewrite.
+     *
+     * The ORDER BY column is not the row identity. Using it (user_id on
+     * usermeta) deletes every meta row for the matched users.
+     *
+     * @param string $table
+     * @param string $order
+     * @param string $where
+     * @return string
+     */
+    function delete_limit_key( $table, $order, $where ) {
+        $name = strtolower( trim( $table, '`"[]' ) );
+        if ( preg_match( '/usermeta$/', $name ) ) {
+            return 'umeta_id';
+        }
+        if ( preg_match( '/(?:post|comment|term)meta$/', $name ) ) {
+            return 'meta_id';
+        }
+        if ( preg_match( '/options$/', $name ) ) {
+            return 'option_id';
+        }
+        if ( preg_match( '/posts$/', $name ) ) {
+            return 'ID';
+        }
+        if ( preg_match( '/comments$/', $name ) ) {
+            return 'comment_ID';
+        }
+        if ( preg_match( '/(?:^|_)users$/', $name ) ) {
+            return 'ID';
+        }
+        if ( preg_match( '/\b(umeta_id|meta_id|option_id|comment_ID)\b/i', $order . ' ' . $where, $km ) ) {
+            return $km[1];
+        }
+        if ( preg_match( '/ORDER\s+BY\s+[`\[\s]*(\w+)/i', 'ORDER BY ' . $order, $om ) ) {
+            return $om[1];
+        }
+        return 'id';
+    }
+
+    /**
      * DELETE ... ORDER BY ... LIMIT n is valid MySQL and illegal T-SQL.
      * Unordered DELETE LIMIT n → DELETE TOP (n).
      * Ordered → DELETE WHERE pk IN (SELECT TOP n ... ORDER BY).
@@ -2560,12 +2600,7 @@ class SQL_Translations extends wpdb
             $table = trim( $m[1], '`"[]' );
             $where = $m[2];
             $order = $m[3];
-            $id_col = 'id';
-            if ( preg_match( '/\boption_id\b/i', $order . ' ' . $where ) ) {
-                $id_col = 'option_id';
-            } elseif ( preg_match( '/ORDER\s+BY\s+[`\[\s]*(\w+)/i', 'ORDER BY ' . $order, $om ) ) {
-                $id_col = $om[1];
-            }
+            $id_col = $this->delete_limit_key( $table, $order, $where );
             $out = "DELETE FROM {$table} WHERE {$id_col} IN (SELECT {$id_col} FROM (SELECT TOP ({$n}) {$id_col} FROM {$table} WHERE {$where} ORDER BY {$order}) AS _pn_del)";
             return preg_replace( '/%(?!\d+\$s)/', '%%', $out );
         }
